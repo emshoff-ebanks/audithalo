@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, Users } from "lucide-react";
+import { ArrowRight, CreditCard, Users } from "lucide-react";
 import { auth } from "@/auth";
 import { isManagerRole } from "@/lib/authz";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,6 +40,12 @@ export default async function DashboardPage() {
           <Link href="/dashboard/roster">
             <Users />
             Manage roster <ArrowRight />
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/dashboard/billing">
+            <CreditCard />
+            Billing
           </Link>
         </Button>
       </div>

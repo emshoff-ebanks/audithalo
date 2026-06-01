@@ -177,6 +177,12 @@ export const organizations = pgTable("organizations", {
   createdById: uuid("created_by_id")
     .notNull()
     .references(() => users.id),
+  // Billing state — synced from Stripe via webhook.
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  subscriptionStatus: text("subscription_status"),
+  subscriptionTier: text("subscription_tier"),
+  subscriptionPeriodEnd: timestamp("subscription_period_end", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
