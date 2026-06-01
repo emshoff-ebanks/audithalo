@@ -1,5 +1,11 @@
 export { evaluate } from "./evaluator";
 export { getRule, listRuleIds, loadAllRules } from "./loader";
+export {
+  severityStyles,
+  toneClasses,
+  riskBadgeVariant,
+  riskBadgeLabel,
+} from "./presentation";
 export type {
   EvaluationContext,
   EvaluationResult,

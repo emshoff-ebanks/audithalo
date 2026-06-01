@@ -3,12 +3,16 @@ import { redirect, notFound } from "next/navigation";
 import { and, eq, desc } from "drizzle-orm";
 import { ArrowLeft, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { auth } from "@/auth";
-import { isManagerRole } from "@/lib/authz";
+import { getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import {
   evaluate,
   getRule,
   loadAllRules,
+  riskBadgeLabel,
+  riskBadgeVariant,
+  severityStyles,
+  toneClasses,
   type EvaluationContext,
   type Rule,
 } from "@/lib/rules";
@@ -57,9 +61,7 @@ export default async function SuperviseeDetailPage({
   }
 
   // Verify the viewer shares an org with this supervisee
-  const myMembership = await db.query.orgMemberships.findFirst({
-    where: eq(schema.orgMemberships.userId, session.user.id),
-  });
+  const myMembership = await getCurrentMembership(session.user.id);
   if (!myMembership) notFound();
 
   const targetMembership = await db.query.orgMemberships.findFirst({
@@ -196,20 +198,10 @@ export default async function SuperviseeDetailPage({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <Badge
-                    variant={
-                      evalResult?.riskLevel === "red"
-                        ? "risk"
-                        : evalResult?.riskLevel === "yellow"
-                          ? "warning"
-                          : "success"
-                    }
+                    variant={riskBadgeVariant(evalResult?.riskLevel)}
                     className="mb-2"
                   >
-                    {evalResult?.riskLevel === "red"
-                      ? "At risk"
-                      : evalResult?.riskLevel === "yellow"
-                        ? "Watch"
-                        : "On track"}
+                    {riskBadgeLabel(evalResult?.riskLevel)}
                   </Badge>
                   <h2 className="font-display text-xl font-semibold text-foreground">
                     {rule.jurisdiction} {rule.license_code} v{rule.version}
@@ -241,35 +233,29 @@ export default async function SuperviseeDetailPage({
                 <div>
                   <p className="label-overline mb-2">Gaps and warnings</p>
                   <ul className="space-y-2">
-                    {evalResult.gaps.map((g, i) => (
-                      <li
-                        key={i}
-                        className={`flex gap-3 p-3 rounded-sm text-sm border ${
-                          g.severity === "blocker"
-                            ? "border-[color:var(--color-risk)]/20 bg-[color:var(--color-risk)]/5"
-                            : g.severity === "warning"
-                              ? "border-[color:var(--color-warning)]/20 bg-[color:var(--color-warning)]/5"
-                              : "border-border bg-muted/40"
-                        }`}
-                      >
-                        <AlertTriangle
-                          className={`h-4 w-4 mt-0.5 shrink-0 ${
-                            g.severity === "blocker"
-                              ? "text-[color:var(--color-risk)]"
-                              : g.severity === "warning"
-                                ? "text-[color:var(--color-warning)]"
-                                : "text-foreground/40"
-                          }`}
-                        />
-                        <span className="text-foreground/80">{g.message}</span>
-                      </li>
-                    ))}
+                    {evalResult.gaps.map((g, i) => {
+                      const t = toneClasses(severityStyles(g.severity).tone);
+                      return (
+                        <li
+                          key={i}
+                          className={`flex gap-3 p-3 rounded-sm text-sm border ${t.border} ${t.bg}`}
+                        >
+                          <AlertTriangle
+                            className={`h-4 w-4 mt-0.5 shrink-0 ${t.text}`}
+                          />
+                          <span className="text-foreground/80">{g.message}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
 
               {evalResult && evalResult.gaps.length === 0 && (
-                <div className="flex gap-3 p-3 rounded-sm text-sm border border-[color:var(--color-success)]/20 bg-[color:var(--color-success)]/5">
+                <div className={(() => {
+                  const t = toneClasses("success");
+                  return `flex gap-3 p-3 rounded-sm text-sm border ${t.border} ${t.bg}`;
+                })()}>
                   <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-success)]" />
                   <span className="text-foreground/80">
                     All checks pass. Hours are accruing correctly under{" "}

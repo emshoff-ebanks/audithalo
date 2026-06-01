@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { eq, and, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
-import { isManagerRole } from "@/lib/authz";
+import { getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import {
   generateInvitationToken,
@@ -40,10 +40,7 @@ export async function inviteSuperviseeAction(
   }
   const inviteEmail = parsed.data.email.toLowerCase();
 
-  // Pull the inviter's first org (assumption: one supervisor = one personal org for v1)
-  const membership = await db.query.orgMemberships.findFirst({
-    where: eq(schema.orgMemberships.userId, session.user.id),
-  });
+  const membership = await getCurrentMembership(session.user.id);
   if (!membership) {
     return { ok: false, error: "Your account has no organization yet." };
   }

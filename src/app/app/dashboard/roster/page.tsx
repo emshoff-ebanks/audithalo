@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { isManagerRole } from "@/lib/authz";
+import { getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,10 +22,7 @@ export default async function RosterPage() {
     redirect(`/dashboard/roster/${session.user.id}`);
   }
 
-  const membership = await db.query.orgMemberships.findFirst({
-    where: eq(schema.orgMemberships.userId, session.user.id),
-    with: { /* placeholder for relational query if defined later */ },
-  });
+  const membership = await getCurrentMembership(session.user.id);
   if (!membership) {
     return (
       <div className="mx-auto max-w-6xl px-6 py-12">

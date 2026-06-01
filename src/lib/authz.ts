@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
+import { db, schema } from "@/lib/db";
 
 const MANAGER_ROLES = new Set(["supervisor", "hr_admin", "executive"]);
 
@@ -22,4 +24,11 @@ export async function requireManager() {
     redirect(`/dashboard/roster/${session.user.id}`);
   }
   return session;
+}
+
+/** First org membership for a given user. v1 assumes one user = one org. */
+export async function getCurrentMembership(userId: string) {
+  return db.query.orgMemberships.findFirst({
+    where: eq(schema.orgMemberships.userId, userId),
+  });
 }

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { isManagerRole } from "@/lib/authz";
+import { getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { listRuleIds } from "@/lib/rules";
 
@@ -12,9 +12,7 @@ async function requireOrgAccess(superviseeId: string) {
   const session = await auth();
   if (!session?.user) throw new Error("Not authenticated");
 
-  const myMembership = await db.query.orgMemberships.findFirst({
-    where: eq(schema.orgMemberships.userId, session.user.id),
-  });
+  const myMembership = await getCurrentMembership(session.user.id);
   if (!myMembership) throw new Error("No organization");
 
   // Supervisees can only act on themselves; managers can act on anyone in the org.
