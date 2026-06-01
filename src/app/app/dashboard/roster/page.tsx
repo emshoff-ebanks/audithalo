@@ -87,8 +87,19 @@ export default async function RosterPage() {
               </thead>
               <tbody>
                 {memberships.map((m) => (
-                  <tr key={m.userId} className="border-t border-border">
-                    <td className="px-5 py-3 font-medium">{m.name}</td>
+                  <tr key={m.userId} className="border-t border-border hover:bg-accent/40">
+                    <td className="px-5 py-3 font-medium">
+                      {m.role === "supervisee" ? (
+                        <Link
+                          href={`/dashboard/roster/${m.userId}`}
+                          className="hover:underline"
+                        >
+                          {m.name}
+                        </Link>
+                      ) : (
+                        m.name
+                      )}
+                    </td>
                     <td className="px-5 py-3 text-foreground/70">{m.email}</td>
                     <td className="px-5 py-3 capitalize">{m.role.replace("_", " ")}</td>
                     <td className="px-5 py-3 font-mono text-xs text-foreground/60">

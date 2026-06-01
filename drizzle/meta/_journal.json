@@ -15,6 +15,13 @@
       "when": 1780347118747,
       "tag": "0001_orgs_memberships_invitations",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780347347930,
+      "tag": "0002_supervisee_assignments_session_events",
+      "breakpoints": true
     }
   ]
 }

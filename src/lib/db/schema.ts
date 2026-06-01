@@ -206,3 +206,57 @@ export const invitations = pgTable("invitations", {
   acceptedById: uuid("accepted_by_id").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// ===========================================================================
+// Rule engine inputs: which rule a supervisee is operating under, and the
+// session events that feed the evaluator.
+// ===========================================================================
+
+/** Pins a supervisee to a specific rule version. Versioning is statutory — a supervisee
+ *  who started under v1 stays under v1 even when v2 ships. */
+export const superviseeRuleAssignments = pgTable(
+  "supervisee_rule_assignments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    superviseeId: uuid("supervisee_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    /** Matches ruleId() in the rule registry — e.g., "nc-lcmhca-v1". */
+    ruleId: text("rule_id").notNull(),
+    obligationStartedAt: timestamp("obligation_started_at", {
+      withTimezone: true,
+    }).notNull(),
+    supervisionContractFiledAt: timestamp("supervision_contract_filed_at", {
+      withTimezone: true,
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  }
+);
+
+/** Practice or supervision session events that feed the rule engine. */
+export const sessionEvents = pgTable("session_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  superviseeId: uuid("supervisee_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  orgId: uuid("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(),
+  date: timestamp("date", { withTimezone: true }).notNull(),
+  durationHours: doublePrecision("duration_hours").notNull(),
+  sessionType: text("session_type"),
+  supervisorCredentials: jsonb("supervisor_credentials").$type<string[]>(),
+  groupAttendees: integer("group_attendees"),
+  loggedById: uuid("logged_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
