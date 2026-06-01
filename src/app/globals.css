@@ -1,0 +1,54 @@
+@import url("https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-background: #f8fafc;
+  --color-foreground: #0b1020;
+
+  --color-primary: #0b1020;
+  --color-primary-foreground: #f8fafc;
+
+  --color-secondary: #2563eb;
+  --color-secondary-foreground: #ffffff;
+
+  --color-muted: #e5e7eb;
+  --color-muted-foreground: #64748b;
+
+  --color-border: #e5e7eb;
+  --color-input: #e5e7eb;
+  --color-ring: #0b1020;
+
+  --color-accent-violet: #7c3aed;
+  --color-accent-gold: #d4a72c;
+
+  --color-success: #15803d;
+  --color-warning: #d97706;
+  --color-risk: #dc2626;
+
+  --font-display: "Cabinet Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+}
+
+html,
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.label-overline {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: color-mix(in oklab, var(--color-foreground) 60%, transparent);
+}

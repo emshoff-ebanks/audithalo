@@ -1,0 +1,161 @@
+// Drizzle schema for AuditHalo.
+// Mirrors the original Mongo collections from server.py, ported to relational Postgres.
+// Tables defined here; migrations are generated from this file with `drizzle-kit generate`.
+
+import {
+  pgTable,
+  text,
+  timestamp,
+  jsonb,
+  doublePrecision,
+  integer,
+  boolean,
+  uuid,
+  pgEnum,
+} from "drizzle-orm/pg-core";
+
+export const userRole = pgEnum("user_role", [
+  "supervisee",
+  "supervisor",
+  "hr_admin",
+  "executive",
+]);
+
+export const ruleShape = pgEnum("rule_shape", [
+  "ratio",
+  "cadence",
+  "accumulation",
+  "constraint",
+  "prerequisite",
+]);
+
+export const supervisionType = pgEnum("supervision_type", [
+  "individual",
+  "group",
+  "any",
+]);
+
+export const sessionStatus = pgEnum("session_status", [
+  "scheduled",
+  "completed",
+  "awaiting_signatures",
+  "signed",
+]);
+
+export const obligationStatus = pgEnum("obligation_status", [
+  "pending",
+  "completed",
+  "overdue",
+]);
+
+export const users = pgTable("users", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash"),
+  name: text("name").notNull(),
+  role: userRole("role").notNull().default("supervisee"),
+  state: text("state"),
+  licenseType: text("license_type"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const stateRules = pgTable("state_rules", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  state: text("state").notNull(),
+  licenseType: text("license_type").notNull(),
+  ruleShape: ruleShape("rule_shape").notNull(),
+  parameters: jsonb("parameters").notNull(),
+  evidenceRequirements: jsonb("evidence_requirements").notNull(),
+  effectiveStart: timestamp("effective_start", { withTimezone: true }).notNull(),
+  effectiveEnd: timestamp("effective_end", { withTimezone: true }),
+  description: text("description"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const obligations = pgTable("obligations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  superviseeId: uuid("supervisee_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  ruleId: uuid("rule_id")
+    .notNull()
+    .references(() => stateRules.id),
+  windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+  windowEnd: timestamp("window_end", { withTimezone: true }).notNull(),
+  requiredHours: doublePrecision("required_hours").notNull(),
+  completedHours: doublePrecision("completed_hours").notNull().default(0),
+  supervisionType: supervisionType("supervision_type").notNull().default("any"),
+  status: obligationStatus("status").notNull().default("pending"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const sessions = pgTable("sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  supervisorId: uuid("supervisor_id")
+    .notNull()
+    .references(() => users.id),
+  superviseeIds: jsonb("supervisee_ids").$type<string[]>().notNull(),
+  sessionType: supervisionType("session_type").notNull(),
+  scheduledAt: timestamp("scheduled_at", { withTimezone: true }).notNull(),
+  durationMinutes: integer("duration_minutes").notNull().default(60),
+  modality: text("modality").notNull().default("virtual"),
+  platform: text("platform"),
+  status: sessionStatus("status").notNull().default("scheduled"),
+  notes: text("notes"),
+  transcript: text("transcript"),
+  aiNotes: text("ai_notes"),
+  signatures: jsonb("signatures").$type<SessionSignature[]>().notNull().default([]),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type SessionSignature = {
+  signerId: string;
+  signerName: string;
+  signerRole: string;
+  signedAt: string;
+  ipAddress: string;
+  intentConfirmed: boolean;
+};
+
+export const evidencePackages = pgTable("evidence_packages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: uuid("session_id")
+    .notNull()
+    .references(() => sessions.id),
+  superviseeId: uuid("supervisee_id")
+    .notNull()
+    .references(() => users.id),
+  supervisorId: uuid("supervisor_id")
+    .notNull()
+    .references(() => users.id),
+  ruleVersion: text("rule_version").notNull(),
+  formVersion: text("form_version").notNull(),
+  signatures: jsonb("signatures").$type<SessionSignature[]>().notNull(),
+  documentHash: text("document_hash").notNull(),
+  documentContent: jsonb("document_content").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const notifications = pgTable("notifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  message: text("message").notNull(),
+  read: boolean("read").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const integrations = pgTable("integrations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  email: text("email"),
+  tenantId: text("tenant_id"),
+  clientId: text("client_id"),
+  settings: jsonb("settings"),
+  connectedAt: timestamp("connected_at", { withTimezone: true }).defaultNow().notNull(),
+});
