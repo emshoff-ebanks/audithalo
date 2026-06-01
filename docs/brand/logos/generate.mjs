@@ -104,6 +104,60 @@ const outDir = "docs/brand/logos";
 mkdirSync(dirname(outDir + "/x"), { recursive: true });
 
 /**
+ * Solid wavy halo + 22° sun-dog — the chosen direction, now as a single
+ * filled annulus instead of discrete ticks. Outer edge oscillates with the
+ * audire-waveform function; inner edge is a perfect circle. A background-
+ * colored knockout punches a clean gap for the dot.
+ */
+function solidWavyHaloOnLine({
+  innerRadius = 35,
+  outerBase = 42,
+  amplitude = 3,
+  harmonicA = 5,
+  harmonicB = 11,
+  samples = 360,
+  dotAngleDeg = -68,
+  dotRadius = 10,
+  knockoutPad = 5,
+}) {
+  // Outer wavy edge as a polyline approximating the smooth waveform
+  let outer = "";
+  for (let i = 0; i <= samples; i++) {
+    const angle = (i / samples) * TAU - Math.PI / 2;
+    const wave =
+      amplitude *
+      (0.55 * Math.sin(angle * harmonicA) +
+        0.35 * Math.sin(angle * harmonicB + 0.6) +
+        0.25 * Math.sin(angle * (harmonicA + harmonicB) * 0.5));
+    const r = outerBase + wave;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    outer += (i === 0 ? "M" : "L") + ` ${x.toFixed(2)} ${y.toFixed(2)} `;
+  }
+  outer += "Z";
+
+  // Inner perfect circle (counterclockwise via two arcs so evenodd makes it a hole)
+  const inner =
+    `M ${cx + innerRadius} ${cy} ` +
+    `A ${innerRadius} ${innerRadius} 0 1 0 ${cx - innerRadius} ${cy} ` +
+    `A ${innerRadius} ${innerRadius} 0 1 0 ${cx + innerRadius} ${cy} Z`;
+
+  let body = `<path d="${outer} ${inner}" fill="${GOLD}" fill-rule="evenodd"/>\n`;
+
+  // Sun-dog on the ring midline
+  const ringMidRadius = (innerRadius + outerBase) / 2;
+  const dotAngleRad = (dotAngleDeg * Math.PI) / 180;
+  const dotX = cx + ringMidRadius * Math.cos(dotAngleRad);
+  const dotY = cy + ringMidRadius * Math.sin(dotAngleRad);
+  const knockoutRadius = dotRadius + knockoutPad;
+
+  body += `<circle cx="${dotX.toFixed(2)}" cy="${dotY.toFixed(2)}" r="${knockoutRadius}" fill="${BG}"/>\n`;
+  body += `<circle cx="${dotX.toFixed(2)}" cy="${dotY.toFixed(2)}" r="${dotRadius}" fill="${GOLD}"/>\n`;
+
+  return svgWrap(body);
+}
+
+/**
  * Hybrid On-Line — Sound-Wave Halo + 22° sun-dog placed ON the ring with a
  * background-colored knockout that prevents the ticks from touching the dot.
  * The dot becomes part of the ring, not a satellite of it.
@@ -496,6 +550,50 @@ const concepts = [
       harmonicA: 3,
       harmonicB: 7,
       strokeWidth: 1.4,
+      dotAngleDeg: -68,
+      dotRadius: 10,
+      knockoutPad: 5,
+    }),
+  },
+  // Solid wavy ring variants — same waveform character, but as a continuous
+  // filled annulus rather than discrete ticks (no gaps). Three amplitudes.
+  {
+    file: "hybrid-solid-a-subtle.svg",
+    label: "Solid A — subtle wave (amplitude 2). Looks like a slightly textured ring.",
+    svg: solidWavyHaloOnLine({
+      innerRadius: 35,
+      outerBase: 42,
+      amplitude: 2,
+      harmonicA: 5,
+      harmonicB: 11,
+      dotAngleDeg: -68,
+      dotRadius: 10,
+      knockoutPad: 5,
+    }),
+  },
+  {
+    file: "hybrid-solid-b-clear.svg",
+    label: "Solid B — clear wave (amplitude 3, matches C4a's waveform exactly).",
+    svg: solidWavyHaloOnLine({
+      innerRadius: 35,
+      outerBase: 42,
+      amplitude: 3,
+      harmonicA: 5,
+      harmonicB: 11,
+      dotAngleDeg: -68,
+      dotRadius: 10,
+      knockoutPad: 5,
+    }),
+  },
+  {
+    file: "hybrid-solid-c-pronounced.svg",
+    label: "Solid C — pronounced wave (amplitude 4, slower harmonics). More dramatic outer-edge wobble.",
+    svg: solidWavyHaloOnLine({
+      innerRadius: 33,
+      outerBase: 43,
+      amplitude: 4,
+      harmonicA: 4,
+      harmonicB: 9,
       dotAngleDeg: -68,
       dotRadius: 10,
       knockoutPad: 5,

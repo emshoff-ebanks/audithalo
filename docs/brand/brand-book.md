@@ -260,7 +260,7 @@ Almost every page should work without a single photograph. Restraint signals con
 
 | # | Decision | Resolution |
 |---|---|---|
-| B1 | Primary logo direction | ✅ **Hybrid: Sound-Wave Halo ring + sun-dog at 22° clockwise from 12 o'clock, on the ring with a background-colored knockout gap.** Fuses both metaphors (audire ring + 22° atmospheric sun-dog) into a single inseparable mark — the medipyxis-style double-layer. Final spec: `hybrid-c4-a-clear.svg` — 48 ticks, ring inner 35 / outer 42, amplitude 3, dot r=10, knockout 5px. Source in `docs/brand/logos/generate.mjs`. (Locked 2026-06-01) |
+| B1 | Primary logo direction | ✅ **Hybrid: Solid wavy halo (audire waveform as continuous outer edge) + sun-dog at 22° clockwise from 12 o'clock, on the ring with a background-colored knockout gap.** Fuses both metaphors (audire ring + 22° atmospheric sun-dog) into a single inseparable mark — the medipyxis-style double-layer. **Final spec**: `hybrid-solid-a-subtle.svg` — solid filled annulus, inner radius 35, outer base 42, waveform amplitude 2 (harmonics 5 and 11), 360 samples on the outer edge, dot r=10, knockout pad 5px. Source generator in `docs/brand/logos/generate.mjs`. (Locked 2026-06-01) |
 | B2 | Palette refresh (warmer off-white, deeper navy, sage surfaces, signet gold, drop violet) | ✅ **Locked** — applied in `src/app/globals.css`. See §4 for tokens. (2026-06-01) |
 | B3 | Display font | ✅ **Keep Cabinet Grotesk for v1**, plan Söhne migration after first paid customer + designer engagement. (2026-06-01) |
 | B5 | Imagery: no photography in v1 | ✅ **Locked.** Restraint signals confidence; revisit when customer testimonials exist. (2026-06-01) |
@@ -268,14 +268,14 @@ Almost every page should work without a single photograph. Restraint signals con
 
 ## 12. The logo, locked
 
-**The AuditHalo mark** is a thin signet-gold ring composed of ~48 radial audio-waveform ticks (the *audire* etymology made visible — the audit is a halo of hearing), with a solid signet-gold sun-dog dot sitting *on the ring at 22° clockwise from 12 o'clock* (the 22° atmospheric halo reference — a ring that only forms when the underlying conditions are correct). A small background-colored knockout enforces a clean gap between the dot and the ring ticks.
+**The AuditHalo mark** is a solid signet-gold annulus whose outer edge oscillates with an audio-waveform function (the *audire* etymology made visible — the audit is a halo of hearing), with a solid signet-gold sun-dog dot sitting *on the ring at 22° clockwise from 12 o'clock* (the 22° atmospheric halo reference — a ring that only forms when the underlying conditions are correct). A small background-colored knockout enforces a clean gap between the dot and the ring.
 
 **Two metaphors, one mark**:
-- The ring = *audire* (Latin "to hear") — the audit visualized as a polar audio waveform
+- The ring = *audire* (Latin "to hear") — the audit visualized as a polar audio waveform on the outer edge
 - The dot = the 22° sun-dog — the precise scientific reference; a ring that only appears when geometry is right
 
 **Files**:
-- Canonical source: `docs/brand/logos/hybrid-c4-a-clear.svg`
+- Canonical source: `docs/brand/logos/hybrid-solid-a-subtle.svg`
 - Favicon: `src/app/icon.svg` (Next.js auto-serves at `/icon.svg`)
 - React component: `src/components/brand/AuditHaloMark.tsx` — exports `<AuditHaloMark />` (mark only) and `<AuditHaloWordmark />` (mark + "AuditHalo" type, gap-2.5, Cabinet Grotesk bold)
 - Generator (for future iterations): `docs/brand/logos/generate.mjs` (run with `node docs/brand/logos/generate.mjs`)
@@ -287,5 +287,5 @@ Almost every page should work without a single photograph. Restraint signals con
 
 **Clear space**: at least 1× the mark height of empty padding on all sides
 
-**Minimum size**: 16px (favicon) — the dense tick pattern degrades below 12px, so favicons below 16 should switch to a simplified glyph (TBD)
+**Minimum size**: 16px (favicon) — the solid ring with sun-dog reads cleanly down to 12-16px. Below 12px, drop the waveform variation entirely and use a smooth circle + dot fallback.
 
