@@ -58,10 +58,12 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "opentype.js": "^2.0.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "wawoff2": "^2.0.1"
   }
 }
