@@ -23,14 +23,11 @@ async function ensureFont() {
     { headers: { "User-Agent": "Mozilla/5.0" } }
   );
   const css = await cssRes.text();
-  // Fontshare serves the TTF directly alongside woff2/woff. Grab the TTF URL.
   const ttfMatch = css.match(/url\(['"]?(\/\/[^)'"]+\.ttf)['"]?\)/);
   if (!ttfMatch) throw new Error("Could not parse TTF URL from Fontshare CSS");
   const ttfUrl = `https:${ttfMatch[1]}`;
   console.log(`  → ${ttfUrl}`);
-  const fontRes = await fetch(ttfUrl, {
-    headers: { "User-Agent": "Mozilla/5.0" },
-  });
+  const fontRes = await fetch(ttfUrl, { headers: { "User-Agent": "Mozilla/5.0" } });
   const ttf = Buffer.from(await fontRes.arrayBuffer());
   writeFileSync(TTF_PATH, ttf);
   console.log(`  wrote ${TTF_PATH} (${ttf.length} bytes)`);
@@ -38,10 +35,11 @@ async function ensureFont() {
 }
 
 const ttf = await ensureFont();
-const font = opentype.parse(ttf.buffer.slice(ttf.byteOffset, ttf.byteOffset + ttf.byteLength));
+const font = opentype.parse(
+  ttf.buffer.slice(ttf.byteOffset, ttf.byteOffset + ttf.byteLength)
+);
 
-// --- Mark (lifted from the chosen logo) ----------------------------------------------
-// Inner ring: r=35, outer base: 42, knockout dot at -68° on mid radius.
+// --- Mark (lifted from the chosen logo) -----------------------------------
 const markInner = readFileSync(
   "docs/brand/logos/mark-transparent.svg",
   "utf8"
@@ -49,37 +47,66 @@ const markInner = readFileSync(
   .replace(/^<svg[^>]*>/, "")
   .replace(/<\/svg>\s*$/, "");
 
-// --- Text → path -------------------------------------------------------------------
-const text = "AuditHalo";
-const fontSize = 100;
-const path = font.getPath(text, 0, 0, fontSize);
-const bbox = path.getBoundingBox();
-const textPathData = path.toPathData(2);
-const textWidth = bbox.x2 - bbox.x1;
-const textHeight = bbox.y2 - bbox.y1;
+// --- Text → path -----------------------------------------------------------
+// Build the path data ourselves from opentype.js commands. This avoids any
+// number-formatting quirks in toPathData() that have caused mid-glyph NaN
+// emission in some versions of opentype.js.
+function commandsToD(commands) {
+  return commands
+    .map((c) => {
+      const n = (v) => (Number.isFinite(v) ? v.toFixed(2) : "0");
+      switch (c.type) {
+        case "M":
+          return `M${n(c.x)} ${n(c.y)}`;
+        case "L":
+          return `L${n(c.x)} ${n(c.y)}`;
+        case "Q":
+          return `Q${n(c.x1)} ${n(c.y1)} ${n(c.x)} ${n(c.y)}`;
+        case "C":
+          return `C${n(c.x1)} ${n(c.y1)} ${n(c.x2)} ${n(c.y2)} ${n(c.x)} ${n(c.y)}`;
+        case "Z":
+          return "Z";
+        default:
+          return "";
+      }
+    })
+    .join(" ");
+}
 
-// --- Compose horizontal wordmark ----------------------------------------------------
-// Mark from the source is in viewBox 0..200. Useful inner bounds ~40..160 (120 units).
-// We scale mark to match a target cap height so it visually balances the text.
-const targetMarkSize = 200; // units in our composed canvas
-const markScale = targetMarkSize / 200;
+const TEXT = "AuditHalo";
+const FONT_SIZE = 100;
+const opentypePath = font.getPath(TEXT, 0, 0, FONT_SIZE);
+const textPathData = commandsToD(opentypePath.commands);
+const tbb = opentypePath.getBoundingBox();
+const textWidth = tbb.x2 - tbb.x1;
+const textHeight = tbb.y2 - tbb.y1;
 
-// Text scale: we want text cap height around 60% of the mark height.
-const targetCapHeight = targetMarkSize * 0.6;
-const textScale = targetCapHeight / textHeight;
+// --- Compose horizontal wordmark ------------------------------------------
+// We use the mark's tight content bounds (40..160 in its native viewBox) by
+// reparenting it inside a group with translate(-40,-40) so its effective
+// origin is (0,0) and it occupies exactly 120 native units of space.
+const MARK_NATIVE = 120; // tight bounds 40..160
+const TARGET_MARK_PX = 240; // visual size of the mark in the composed canvas
+const markScale = TARGET_MARK_PX / MARK_NATIVE;
 
-// Translate text so its baseline aligns vertically with the mark center.
+// Text cap height should sit a bit BELOW the mark height so the mark reads
+// as the dominant element of the lockup.
+const TARGET_TEXT_HEIGHT = TARGET_MARK_PX * 0.55;
+const textScale = TARGET_TEXT_HEIGHT / textHeight;
+
+const GAP = TARGET_MARK_PX * 0.18;
 const textRenderWidth = textWidth * textScale;
-const gap = targetMarkSize * 0.12;
-const totalWidth = targetMarkSize + gap + textRenderWidth;
-const totalHeight = targetMarkSize;
+const totalWidth = TARGET_MARK_PX + GAP + textRenderWidth;
+const totalHeight = TARGET_MARK_PX;
 
-const textY = totalHeight / 2 + (targetCapHeight / 2);
-const textTx = targetMarkSize + gap - bbox.x1 * textScale;
-const textTy = textY - bbox.y2 * textScale;
+// Vertically center the text on the mark center
+const markCenterY = TARGET_MARK_PX / 2;
+const textTopY = markCenterY - TARGET_TEXT_HEIGHT / 2;
+const textTx = TARGET_MARK_PX + GAP - tbb.x1 * textScale;
+const textTy = textTopY - tbb.y1 * textScale;
 
 const composedTransparent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalWidth.toFixed(2)} ${totalHeight.toFixed(2)}" width="${totalWidth.toFixed(0)}" height="${totalHeight.toFixed(0)}">
-  <g transform="scale(${markScale.toFixed(4)})">${markInner}</g>
+  <g transform="scale(${markScale.toFixed(4)}) translate(-40 -40)">${markInner}</g>
   <path d="${textPathData}" transform="translate(${textTx.toFixed(2)} ${textTy.toFixed(2)}) scale(${textScale.toFixed(4)})" fill="${FG}"/>
 </svg>
 `;
@@ -95,10 +122,11 @@ writeFileSync(
   "docs/brand/logos/wordmark-horizontal-cream-bg.svg",
   composedLight
 );
+console.log(
+  `Wrote wordmark-horizontal.svg  (viewBox ${totalWidth.toFixed(0)}×${totalHeight.toFixed(0)})`
+);
 
-console.log(`Wrote wordmark-horizontal.svg (${totalWidth.toFixed(0)}×${totalHeight.toFixed(0)})`);
-
-// --- Export PNG variants ------------------------------------------------------------
+// --- Export PNG variants ---------------------------------------------------
 async function rasterize(svgString, outPath, scaleHeight) {
   const aspect = totalWidth / totalHeight;
   const h = scaleHeight;
