@@ -8,6 +8,7 @@ import { auth } from "@/auth";
 import { getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import type { SessionSignature } from "@/lib/db/schema";
+import { generateEvidencePackage } from "@/lib/evidence";
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -91,6 +92,11 @@ export async function signSessionAction(
       signedAt: fullySigned ? new Date() : null,
     })
     .where(eq(schema.sessionEvents.id, sessionEvent.id));
+
+  // When all required signers are in, mint the evidence package — hashed, immutable, audit-grade.
+  if (fullySigned) {
+    await generateEvidencePackage(sessionEvent.id);
+  }
 
   revalidatePath(`/dashboard/roster/${sessionEvent.superviseeId}`);
   return { ok: true };

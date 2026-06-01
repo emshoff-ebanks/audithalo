@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { and, eq, desc } from "drizzle-orm";
-import { ArrowLeft, AlertTriangle, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  AlertTriangle,
+  CheckCircle2,
+  Download,
+  FileSignature,
+} from "lucide-react";
 import { auth } from "@/auth";
 import { getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
@@ -90,6 +96,14 @@ export default async function SuperviseeDetailPage({
       eq(schema.sessionEvents.orgId, myMembership.orgId)
     ),
     orderBy: [desc(schema.sessionEvents.date)],
+  });
+
+  const evidencePackages = await db.query.evidencePackages.findMany({
+    where: and(
+      eq(schema.evidencePackages.superviseeId, superviseeId),
+      eq(schema.evidencePackages.orgId, myMembership.orgId)
+    ),
+    orderBy: [desc(schema.evidencePackages.createdAt)],
   });
 
   let rule: Rule | null = null;
@@ -279,6 +293,58 @@ export default async function SuperviseeDetailPage({
           </Card>
         </div>
       )}
+
+      <Card className="mt-6">
+        <CardContent className="p-0">
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+            <p className="label-overline">
+              Evidence packages ({evidencePackages.length})
+            </p>
+            {evidencePackages.length === 0 && (
+              <p className="text-xs text-foreground/50">
+                Minted when a session is fully signed
+              </p>
+            )}
+          </div>
+          {evidencePackages.length > 0 && (
+            <ul className="divide-y divide-border">
+              {evidencePackages.map((p) => {
+                const doc = p.documentContent as {
+                  session: { date: string; sessionType: string | null; kind: string };
+                };
+                return (
+                  <li
+                    key={p.id}
+                    className="px-6 py-4 flex items-center justify-between gap-4 hover:bg-accent/40"
+                  >
+                    <div className="flex gap-3 items-start min-w-0">
+                      <FileSignature className="h-4 w-4 mt-1 shrink-0 text-[color:var(--color-gold)]" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground">
+                          {doc.session.kind === "supervision"
+                            ? `${doc.session.sessionType ?? "supervision"} session`
+                            : "Practice session"}{" "}
+                          · {doc.session.date.slice(0, 10)}
+                        </p>
+                        <p className="font-mono text-xs text-foreground/50 truncate">
+                          {p.documentHash}
+                        </p>
+                      </div>
+                    </div>
+                    <a
+                      href={`/api/evidence/${p.id}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-secondary hover:underline shrink-0"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      PDF
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="mt-6">
         <CardContent className="p-0">

@@ -29,6 +29,13 @@
       "when": 1780353414481,
       "tag": "0003_session_signatures",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1780370000000,
+      "tag": "0004_evidence_packages_repoint",
+      "breakpoints": true
     }
   ]
 }

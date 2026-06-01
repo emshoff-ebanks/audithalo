@@ -119,19 +119,23 @@ export type SessionSignature = {
 
 export const evidencePackages = pgTable("evidence_packages", {
   id: uuid("id").defaultRandom().primaryKey(),
-  sessionId: uuid("session_id")
+  /** The signed session this package was minted from. */
+  sessionEventId: uuid("session_event_id")
     .notNull()
-    .references(() => sessions.id),
+    .references(() => sessionEvents.id, { onDelete: "cascade" })
+    .unique(),
+  orgId: uuid("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
   superviseeId: uuid("supervisee_id")
     .notNull()
-    .references(() => users.id),
-  supervisorId: uuid("supervisor_id")
-    .notNull()
-    .references(() => users.id),
-  ruleVersion: text("rule_version").notNull(),
-  formVersion: text("form_version").notNull(),
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** Canonical rule identifier ("nc-lcmhca-v1") so future board reviewers know which rule was in effect. */
+  ruleId: text("rule_id").notNull(),
   signatures: jsonb("signatures").$type<SessionSignature[]>().notNull(),
+  /** SHA-256 hex of the canonical document JSON. Independently verifiable. */
   documentHash: text("document_hash").notNull(),
+  /** The full canonical document — the audit artifact. */
   documentContent: jsonb("document_content").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
