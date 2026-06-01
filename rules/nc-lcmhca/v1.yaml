@@ -1,0 +1,119 @@
+# North Carolina LCMHCA — Licensed Clinical Mental Health Counselor Associate
+# Source: 21 NCAC 53 (NC Administrative Code, Title 21, Chapter 53)
+# Statute:  N.C. Gen. Stat. § 90-330 et seq.
+#
+# This is the live encoding used by the AuditHalo rule engine. Any change here
+# must be paired with a citation reference and a verification timestamp by a
+# licensed clinical supervisor.
+
+jurisdiction: NC
+license_code: LCMHCA
+license_name: Licensed Clinical Mental Health Counselor Associate
+issuing_board: North Carolina Board of Licensed Clinical Mental Health Counselors
+version: 1
+
+summary: |
+  3,000 supervised practice hours over 2-5 years post-master's. 100 supervision
+  hours total, of which at least 75% must be individual (one-to-one). At least
+  1 hour of individual supervision every 2 weeks, and at least 1 hour of
+  supervision per 40 practice hours. Supervisor must be NCBLCMHC-approved
+  (LCMHCS credential). Supervision contract must be filed with the board
+  BEFORE hours start counting.
+
+effective_start: 2024-01-01
+effective_end: null
+
+citation:
+  admincode: 21 NCAC 53
+  statute: N.C. Gen. Stat. § 90-330 et seq.
+  url: https://www.ncblcmhc.org/lcmhca
+
+verification:
+  last_verified_at: 2026-06-01
+  last_verified_by: founder
+  source_hash: pending
+
+structured:
+  total_practice_hours_required: 3000
+  total_supervision_hours_required: 100
+  min_duration_months: 24
+  max_duration_months: 60
+  group_max_attendees: 12
+  min_individual_supervision_fraction: 0.75
+
+checks:
+  - id: pre_registration_required
+    severity: blocker
+    description: Supervision contract must be filed with NCBLCMHC before any hour can count
+    params:
+      signal_field: supervisionContractFiledAt
+
+  - id: supervisor_credential_required
+    severity: blocker
+    description: Every supervision session must have a supervisor with LCMHCS credential
+    params:
+      accepted_credentials: [LCMHCS]
+
+  - id: individual_supervision_cadence
+    severity: warning
+    description: At least 1 hour of individual supervision every 14 days while logging practice hours
+    params:
+      max_gap_days: 14
+      min_hours_per_period: 1.0
+
+  - id: supervision_ratio_per_practice_block
+    severity: warning
+    description: Each 40-practice-hour block must include at least 1 hr individual OR 2 hr group supervision
+    params:
+      practice_hours_per_block: 40
+      individual_hours_required: 1.0
+      group_hours_required: 2.0
+
+  - id: individual_supervision_minimum_share
+    severity: warning
+    description: Of total supervision hours logged, at least 75% must be individual (enforced once 200+ practice hours accrued)
+    params:
+      min_individual_fraction: 0.75
+      enforce_after_practice_hours: 200
+
+  - id: group_size_limit
+    severity: blocker
+    description: No group supervision session may have more than 12 attendees
+    params:
+      max_attendees: 12
+
+  - id: total_practice_hours
+    severity: info
+    description: Must accumulate at least 3,000 supervised practice hours to apply for licensure
+    params:
+      required: 3000
+
+  - id: total_supervision_hours
+    severity: info
+    description: Must accumulate at least 100 supervision hours
+    params:
+      required: 100
+
+  - id: duration_window
+    severity: warning
+    description: Total time from start to completion must be between 24 and 60 months
+    params:
+      min_months: 24
+      max_months: 60
+
+evidence_requirements:
+  form_template_key: NC_SUPERVISION_NOTE_V1
+  required_signers:
+    - supervisor
+    - supervisee
+  required_artifacts:
+    - attendance
+    - session_metadata
+  optional_artifacts:
+    - transcript
+  immutability: sha256_signed_json
+
+notes:
+  - The supervisor's certified-supervisor status (LCMHCS) is itself subject to renewal; AuditHalo verifies supervisor credentials at the time each session is signed, not retrospectively.
+  - Triadic supervision (one supervisor + two supervisees) is treated as individual in NC if the supervisor attests it provides individual attention; for now AuditHalo treats triadic as group unless overridden by the supervisor's attestation.
+  - The 75% individual rule is enforced as a rolling fraction; an early-career supervisee with only group sessions in their first month does not trigger a violation until they accumulate enough hours to fall meaningfully below 75%.
