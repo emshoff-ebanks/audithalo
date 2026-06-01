@@ -4,13 +4,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* AuditHalo design tokens — Swiss High-Contrast + Organic Enterprise palette.
-   Carried over from the original design_guidelines.json. shadcn/ui semantic
-   tokens (--background, --foreground, --primary, etc.) are mapped to brand
-   colors here so shadcn components render in our palette out of the box. */
+/* AuditHalo brand tokens — synthesized from brand book v0.1 research.
+   Palette: warm clinical + compliance-authoritative hybrid.
+   - Deeper navy primary (#0F1F4C) for authority
+   - Warmer off-white background (#FAFAF7) to soften clinical-cold
+   - Sage (#7BA098) for humanity, surfaces/illustration only (fails AA at body sizes)
+   - Signet gold (#B8860B) reserved for sealed/verified/evidence states only
+   - Electric violet dropped (was AI-cliché)
+   - Semantic colors slightly desaturated for legal-grade restraint */
 
 @theme inline {
-  /* shadcn semantic tokens */
+  /* shadcn semantic tokens — driven by CSS variables below */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -31,17 +35,19 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* AuditHalo brand accents (use directly: bg-halo-blue, text-violet, etc.) */
-  --color-halo-blue: #2563eb;
-  --color-violet: #7c3aed;
-  --color-gold: #d4a72c;
-  --color-success: #15803d;
-  --color-warning: #d97706;
-  --color-risk: #dc2626;
+  /* AuditHalo brand accents */
+  --color-evidence-bg: var(--evidence-bg);
+  --color-halo-blue: #1d4ed8; /* sharper, more gravitas than #2563EB */
+  --color-sage: #7ba098;       /* humanity counterweight; surfaces only, not body */
+  --color-gold: #b8860b;       /* signet gold — reserved for sealed/verified states */
+  --color-success: #166534;
+  --color-warning: #b45309;
+  --color-risk: #b91c1c;
 
   /* Typography */
   --font-display: "Cabinet Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
   /* Radii — sharp by design language */
   --radius-sm: 2px;
@@ -51,35 +57,37 @@
 }
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0b1020;
+  --background: #fafaf7;       /* warmer off-white than #F8FAFC */
+  --foreground: #0a1428;       /* deeper navy-tinged near-black */
 
-  --card: #ffffff;
-  --card-foreground: #0b1020;
+  --evidence-bg: #f5f1e8;      /* warm oat for evidence packages, success surfaces */
+
+  --card: #ffffff;             /* pure white reserved for "official document" surfaces */
+  --card-foreground: #0a1428;
 
   --popover: #ffffff;
-  --popover-foreground: #0b1020;
+  --popover-foreground: #0a1428;
 
-  /* Primary is near-black (the AuditHalo "command" tone) */
-  --primary: #0b1020;
-  --primary-foreground: #f8fafc;
+  /* Primary is deep authoritative navy — used for top nav, primary CTAs */
+  --primary: #0f1f4c;
+  --primary-foreground: #fafaf7;
 
-  /* Secondary is Halo Blue — used for interactive CTAs and links */
-  --secondary: #2563eb;
+  /* Secondary is sharpened Halo Blue — used for links, secondary CTAs */
+  --secondary: #1d4ed8;
   --secondary-foreground: #ffffff;
 
-  --muted: #e5e7eb;
-  --muted-foreground: #64748b;
+  --muted: #e7e5dc;            /* warm-toned muted */
+  --muted-foreground: #5f6470;
 
-  --accent: #f1f5f9;
-  --accent-foreground: #0b1020;
+  --accent: #f5f1e8;           /* matches evidence surface */
+  --accent-foreground: #0a1428;
 
-  --destructive: #dc2626;
+  --destructive: #b91c1c;
   --destructive-foreground: #ffffff;
 
-  --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #0b1020;
+  --border: #e3e0d4;           /* warm-toned border */
+  --input: #e3e0d4;
+  --ring: #0f1f4c;
 }
 
 html,
@@ -95,10 +103,14 @@ body {
   letter-spacing: -0.02em;
 }
 
+.font-mono {
+  font-family: var(--font-mono);
+}
+
 .label-overline {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.06em;
   color: color-mix(in oklab, var(--color-foreground) 60%, transparent);
 }
