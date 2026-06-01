@@ -256,12 +256,36 @@ Almost every page should work without a single photograph. Restraint signals con
 
 ---
 
-## 11. Open decisions
+## 11. Locked decisions
 
-| # | Decision | Recommendation | Damon's call |
-|---|---|---|---|
-| B1 | Primary logo direction: Sound-Wave Halo (audire-fused) vs 22° Halo (scientific restraint) | **Sound-Wave Halo** — it owns the dual-meaning territory medipyxis-style | Pending — see generated samples below |
-| B2 | Lock new palette (warmer off-white, deeper navy, sage surfaces, signet gold, drop violet)? | **Yes** — synthesis of all three research streams converges here | Pending |
-| B3 | Display font: keep Cabinet Grotesk (free) or upgrade to Söhne (~$200/yr/weight, paid)? | **Keep CG for v1**, plan Söhne migration after first paid customer | Pending |
-| B4 | Commission the custom halo mark with a freelance designer or do an internal first pass via image generation + Figma? | **Internal first pass first** — generate samples, iterate fast, only commission for final polish at v1 launch | Pending |
-| B5 | Imagery: confirm "no photography in v1" rule? | **Yes** — restraint signals confidence; revisit only when customer testimonials exist | Pending |
+| # | Decision | Resolution |
+|---|---|---|
+| B1 | Primary logo direction | ✅ **Hybrid: Sound-Wave Halo ring + sun-dog at 22° clockwise from 12 o'clock, on the ring with a background-colored knockout gap.** Fuses both metaphors (audire ring + 22° atmospheric sun-dog) into a single inseparable mark — the medipyxis-style double-layer. Final spec: `hybrid-c4-a-clear.svg` — 48 ticks, ring inner 35 / outer 42, amplitude 3, dot r=10, knockout 5px. Source in `docs/brand/logos/generate.mjs`. (Locked 2026-06-01) |
+| B2 | Palette refresh (warmer off-white, deeper navy, sage surfaces, signet gold, drop violet) | ✅ **Locked** — applied in `src/app/globals.css`. See §4 for tokens. (2026-06-01) |
+| B3 | Display font | ✅ **Keep Cabinet Grotesk for v1**, plan Söhne migration after first paid customer + designer engagement. (2026-06-01) |
+| B5 | Imagery: no photography in v1 | ✅ **Locked.** Restraint signals confidence; revisit when customer testimonials exist. (2026-06-01) |
+| B4 | Logo execution path | ✅ **Internal SVG iteration** through this brand-book process. Logo is now production-ready. Consider commissioning a designer polish pass before paid-launch announcement, but the mark is shippable as-is. (2026-06-01) |
+
+## 12. The logo, locked
+
+**The AuditHalo mark** is a thin signet-gold ring composed of ~48 radial audio-waveform ticks (the *audire* etymology made visible — the audit is a halo of hearing), with a solid signet-gold sun-dog dot sitting *on the ring at 22° clockwise from 12 o'clock* (the 22° atmospheric halo reference — a ring that only forms when the underlying conditions are correct). A small background-colored knockout enforces a clean gap between the dot and the ring ticks.
+
+**Two metaphors, one mark**:
+- The ring = *audire* (Latin "to hear") — the audit visualized as a polar audio waveform
+- The dot = the 22° sun-dog — the precise scientific reference; a ring that only appears when geometry is right
+
+**Files**:
+- Canonical source: `docs/brand/logos/hybrid-c4-a-clear.svg`
+- Favicon: `src/app/icon.svg` (Next.js auto-serves at `/icon.svg`)
+- React component: `src/components/brand/AuditHaloMark.tsx` — exports `<AuditHaloMark />` (mark only) and `<AuditHaloWordmark />` (mark + "AuditHalo" type, gap-2.5, Cabinet Grotesk bold)
+- Generator (for future iterations): `docs/brand/logos/generate.mjs` (run with `node docs/brand/logos/generate.mjs`)
+
+**Color discipline**:
+- The mark is always signet gold (`#B8860B`) on warm off-white (`#FAFAF7`) or any light surface
+- On dark surfaces (dark navy headers if/when they exist), swap mark color to off-white `#FAFAF7`
+- The knockout color must always match the surface the mark sits on (the React component accepts a `bg` prop defaulting to `var(--color-background)`)
+
+**Clear space**: at least 1× the mark height of empty padding on all sides
+
+**Minimum size**: 16px (favicon) — the dense tick pattern degrades below 12px, so favicons below 16 should switch to a simplified glyph (TBD)
+

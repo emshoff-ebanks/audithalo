@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { AuditHaloWordmark } from "@/components/brand/AuditHaloMark";
 
 const navLinks = [
   { href: "/features", label: "Features" },
@@ -17,11 +18,8 @@ export default function MarketingLayout({
     <div className="flex flex-col flex-1 bg-background">
       <header className="border-b border-border bg-card sticky top-0 z-30">
         <nav className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between gap-8">
-          <Link
-            href="/"
-            className="font-display text-xl font-bold text-foreground shrink-0"
-          >
-            AuditHalo
+          <Link href="/" className="shrink-0" aria-label="AuditHalo home">
+            <AuditHaloWordmark />
           </Link>
           <ul className="hidden md:flex items-center gap-8 text-sm font-medium text-foreground/70">
             {navLinks.map((link) => (
@@ -51,9 +49,7 @@ export default function MarketingLayout({
       <footer className="border-t border-border bg-card">
         <div className="mx-auto max-w-6xl px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 md:col-span-1">
-            <p className="font-display text-lg font-bold text-foreground">
-              AuditHalo
-            </p>
+            <AuditHaloWordmark />
             <p className="mt-2 text-sm text-foreground/60 max-w-xs">
               Audit-ready supervision compliance for licensed counselors and
               their supervisors.

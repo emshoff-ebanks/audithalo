@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuditHaloWordmark } from "@/components/brand/AuditHaloMark";
 
 export default function AppLayout({
   children,
@@ -7,13 +8,10 @@ export default function AppLayout({
 }) {
   return (
     <div className="flex flex-col flex-1 min-h-screen bg-background">
-      <header className="border-b border-border bg-white">
+      <header className="border-b border-border bg-card">
         <nav className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
-          <Link
-            href="/"
-            className="font-display text-xl font-bold text-foreground"
-          >
-            AuditHalo
+          <Link href="/" aria-label="AuditHalo home">
+            <AuditHaloWordmark />
           </Link>
           <p className="label-overline">Application</p>
         </nav>
