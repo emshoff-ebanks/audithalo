@@ -15,9 +15,9 @@ const cy = 100;
 
 const SIZE = 200;
 
-function svgWrap(inner) {
+function svgWrap(inner, { transparent = false } = {}) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}">
-  <rect width="${SIZE}" height="${SIZE}" fill="${BG}"/>
+  ${transparent ? "" : `<rect width="${SIZE}" height="${SIZE}" fill="${BG}"/>`}
   ${inner}
 </svg>
 `;
@@ -119,6 +119,7 @@ function solidWavyHaloOnLine({
   dotAngleDeg = -68,
   dotRadius = 10,
   knockoutPad = 5,
+  transparent = false,
 }) {
   // Outer wavy edge as a polyline approximating the smooth waveform
   let outer = "";
@@ -142,8 +143,6 @@ function solidWavyHaloOnLine({
     `A ${innerRadius} ${innerRadius} 0 1 0 ${cx - innerRadius} ${cy} ` +
     `A ${innerRadius} ${innerRadius} 0 1 0 ${cx + innerRadius} ${cy} Z`;
 
-  let body = `<path d="${outer} ${inner}" fill="${GOLD}" fill-rule="evenodd"/>\n`;
-
   // Sun-dog on the ring midline
   const ringMidRadius = (innerRadius + outerBase) / 2;
   const dotAngleRad = (dotAngleDeg * Math.PI) / 180;
@@ -151,10 +150,22 @@ function solidWavyHaloOnLine({
   const dotY = cy + ringMidRadius * Math.sin(dotAngleRad);
   const knockoutRadius = dotRadius + knockoutPad;
 
-  body += `<circle cx="${dotX.toFixed(2)}" cy="${dotY.toFixed(2)}" r="${knockoutRadius}" fill="${BG}"/>\n`;
-  body += `<circle cx="${dotX.toFixed(2)}" cy="${dotY.toFixed(2)}" r="${dotRadius}" fill="${GOLD}"/>\n`;
+  // SVG <mask> punches a real hole in the ring at the dot position. White in
+  // the mask = visible; black = transparent. This makes the gap around the dot
+  // truly empty space, not a background-color filled circle — so the logo works
+  // on ANY surface (transparent PNG, navy header, photo background, etc.).
+  const maskId = "aud-knockout";
+  let body = `<defs>
+    <mask id="${maskId}" maskUnits="userSpaceOnUse">
+      <rect x="-1000" y="-1000" width="2200" height="2200" fill="white"/>
+      <circle cx="${dotX.toFixed(2)}" cy="${dotY.toFixed(2)}" r="${knockoutRadius}" fill="black"/>
+    </mask>
+  </defs>
+  <path d="${outer} ${inner}" fill="${GOLD}" fill-rule="evenodd" mask="url(#${maskId})"/>
+  <circle cx="${dotX.toFixed(2)}" cy="${dotY.toFixed(2)}" r="${dotRadius}" fill="${GOLD}"/>
+`;
 
-  return svgWrap(body);
+  return svgWrap(body, { transparent });
 }
 
 /**
@@ -569,6 +580,21 @@ const concepts = [
       dotAngleDeg: -68,
       dotRadius: 10,
       knockoutPad: 5,
+    }),
+  },
+  {
+    file: "mark-transparent.svg",
+    label: "Solid A — TRANSPARENT BG. The official mark, ready for any surface.",
+    svg: solidWavyHaloOnLine({
+      innerRadius: 35,
+      outerBase: 42,
+      amplitude: 2,
+      harmonicA: 5,
+      harmonicB: 11,
+      dotAngleDeg: -68,
+      dotRadius: 10,
+      knockoutPad: 5,
+      transparent: true,
     }),
   },
   {

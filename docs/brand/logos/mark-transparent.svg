@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-  <rect width="200" height="200" fill="#FAFAF7"/>
+  
   <defs>
     <mask id="aud-knockout" maskUnits="userSpaceOnUse">
       <rect x="-1000" y="-1000" width="2200" height="2200" fill="white"/>
