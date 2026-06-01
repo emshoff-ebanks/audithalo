@@ -297,23 +297,61 @@ export default async function SuperviseeDetailPage({
                   <th className="px-5 py-3 font-semibold">Kind</th>
                   <th className="px-5 py-3 font-semibold">Type</th>
                   <th className="px-5 py-3 font-semibold">Hours</th>
-                  <th className="px-5 py-3 font-semibold">Credentials</th>
+                  <th className="px-5 py-3 font-semibold">Signatures</th>
+                  <th className="px-5 py-3 font-semibold"></th>
                 </tr>
               </thead>
               <tbody>
-                {events.map((e) => (
-                  <tr key={e.id} className="border-t border-border">
-                    <td className="px-5 py-3 font-mono text-xs">
-                      {e.date.toISOString().slice(0, 10)}
-                    </td>
-                    <td className="px-5 py-3 capitalize">{e.kind}</td>
-                    <td className="px-5 py-3 capitalize">{e.sessionType ?? "—"}</td>
-                    <td className="px-5 py-3 font-mono">{e.durationHours.toFixed(1)}</td>
-                    <td className="px-5 py-3 text-xs text-foreground/60">
-                      {e.supervisorCredentials?.join(", ") || "—"}
-                    </td>
-                  </tr>
-                ))}
+                {events.map((e) => {
+                  const sigs = e.signatures ?? [];
+                  const myselfHasSigned = sigs.some(
+                    (s) => s.signerId === session.user.id
+                  );
+                  const fullySigned = !!e.signedAt;
+                  const isSelfSupervisee = session.user.id === e.superviseeId;
+                  const canSign =
+                    !fullySigned &&
+                    !myselfHasSigned &&
+                    (isSelfSupervisee || viewerIsManager);
+                  return (
+                    <tr key={e.id} className="border-t border-border">
+                      <td className="px-5 py-3 font-mono text-xs">
+                        {e.date.toISOString().slice(0, 10)}
+                      </td>
+                      <td className="px-5 py-3 capitalize">{e.kind}</td>
+                      <td className="px-5 py-3 capitalize">{e.sessionType ?? "—"}</td>
+                      <td className="px-5 py-3 font-mono">{e.durationHours.toFixed(1)}</td>
+                      <td className="px-5 py-3">
+                        {fullySigned ? (
+                          <Badge variant="success">Sealed</Badge>
+                        ) : sigs.length === 0 ? (
+                          <Badge variant="warning">Awaiting all signatures</Badge>
+                        ) : (
+                          <Badge variant="warning">
+                            {sigs.length} of 2 signed
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        {canSign ? (
+                          <Link
+                            href={`/sign/${e.id}`}
+                            className="text-secondary text-xs font-medium hover:underline"
+                          >
+                            Sign →
+                          </Link>
+                        ) : (
+                          <Link
+                            href={`/sign/${e.id}`}
+                            className="text-foreground/50 text-xs hover:underline"
+                          >
+                            View
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

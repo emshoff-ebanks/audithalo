@@ -256,6 +256,10 @@ export const sessionEvents = pgTable("session_events", {
   loggedById: uuid("logged_by_id")
     .notNull()
     .references(() => users.id),
+  /** Intent-confirmed signatures by required signers. Empty until anyone signs. */
+  signatures: jsonb("signatures").$type<SessionSignature[]>().default([]).notNull(),
+  /** Set when ALL required signers have signed. Once non-null the session is part of the audit trail. */
+  signedAt: timestamp("signed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
