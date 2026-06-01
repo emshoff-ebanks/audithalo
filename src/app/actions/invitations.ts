@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { eq, and, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
+import { isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import {
   generateInvitationToken,
@@ -45,6 +46,9 @@ export async function inviteSuperviseeAction(
   });
   if (!membership) {
     return { ok: false, error: "Your account has no organization yet." };
+  }
+  if (!isManagerRole(membership.role)) {
+    return { ok: false, error: "Only supervisors can invite supervisees." };
   }
 
   // If the email already corresponds to a registered user, surface a clear error.

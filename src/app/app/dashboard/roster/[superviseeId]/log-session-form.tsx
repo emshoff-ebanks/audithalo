@@ -6,7 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { logSessionAction, type ActionResult } from "@/app/actions/supervisee";
 
-export function LogSessionForm({ superviseeId }: { superviseeId: string }) {
+export function LogSessionForm({
+  superviseeId,
+  allowSupervision = true,
+}: {
+  superviseeId: string;
+  allowSupervision?: boolean;
+}) {
   const [state, formAction, pending] = useActionState<
     ActionResult | undefined,
     FormData
@@ -21,19 +27,25 @@ export function LogSessionForm({ superviseeId }: { superviseeId: string }) {
   return (
     <form ref={formRef} action={formAction} className="space-y-3">
       <input type="hidden" name="superviseeId" value={superviseeId} />
-      <div>
-        <Label htmlFor="kind">Session kind</Label>
-        <select
-          id="kind"
-          name="kind"
-          value={kind}
-          onChange={(e) => setKind(e.target.value as "practice" | "supervision")}
-          className="mt-1.5 flex h-10 w-full rounded-sm border border-input bg-card px-3 py-2 text-sm text-foreground"
-        >
-          <option value="practice">Practice (clinical work)</option>
-          <option value="supervision">Supervision (with supervisor)</option>
-        </select>
-      </div>
+      {allowSupervision ? (
+        <div>
+          <Label htmlFor="kind">Session kind</Label>
+          <select
+            id="kind"
+            name="kind"
+            value={kind}
+            onChange={(e) =>
+              setKind(e.target.value as "practice" | "supervision")
+            }
+            className="mt-1.5 flex h-10 w-full rounded-sm border border-input bg-card px-3 py-2 text-sm text-foreground"
+          >
+            <option value="practice">Practice (clinical work)</option>
+            <option value="supervision">Supervision (with supervisor)</option>
+          </select>
+        </div>
+      ) : (
+        <input type="hidden" name="kind" value="practice" />
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label htmlFor="date">Date</Label>

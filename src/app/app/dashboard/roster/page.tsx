@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
+import { isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +17,10 @@ export const metadata = {
 export default async function RosterPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  // Roster + invitations are supervisor-only.
+  if (!isManagerRole(session.user.role)) {
+    redirect(`/dashboard/roster/${session.user.id}`);
+  }
 
   const membership = await db.query.orgMemberships.findFirst({
     where: eq(schema.orgMemberships.userId, session.user.id),

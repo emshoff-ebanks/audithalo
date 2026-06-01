@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
+import { isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { listRuleIds } from "@/lib/rules";
 
@@ -16,6 +17,11 @@ async function requireOrgAccess(superviseeId: string) {
   });
   if (!myMembership) throw new Error("No organization");
 
+  // Supervisees can only act on themselves; managers can act on anyone in the org.
+  if (!isManagerRole(myMembership.role) && session.user.id !== superviseeId) {
+    throw new Error("Forbidden");
+  }
+
   const targetMembership = await db.query.orgMemberships.findFirst({
     where: and(
       eq(schema.orgMemberships.userId, superviseeId),
@@ -24,7 +30,7 @@ async function requireOrgAccess(superviseeId: string) {
   });
   if (!targetMembership) throw new Error("Not in your roster");
 
-  return { session, orgId: myMembership.orgId };
+  return { session, orgId: myMembership.orgId, viewerRole: myMembership.role };
 }
 
 const assignRuleSchema = z.object({
@@ -54,7 +60,16 @@ export async function assignRuleAction(
     return { ok: false, error: `Unknown rule "${parsed.data.ruleId}".` };
   }
 
-  const { orgId } = await requireOrgAccess(parsed.data.superviseeId);
+  let access;
+  try {
+    access = await requireOrgAccess(parsed.data.superviseeId);
+  } catch {
+    return { ok: false, error: "You can't manage this supervisee." };
+  }
+  if (!isManagerRole(access.viewerRole)) {
+    return { ok: false, error: "Only supervisors can assign rules." };
+  }
+  const { orgId } = access;
 
   // Upsert pattern: delete prior assignment for this supervisee+org+rule (rare in v1), insert fresh
   await db
@@ -109,7 +124,23 @@ export async function logSessionAction(
     return { ok: false, error: "Supervision sessions require a session type." };
   }
 
-  const { session, orgId } = await requireOrgAccess(parsed.data.superviseeId);
+  let access;
+  try {
+    access = await requireOrgAccess(parsed.data.superviseeId);
+  } catch {
+    return { ok: false, error: "You can't log sessions for this supervisee." };
+  }
+  // Supervisees can only log their own practice sessions; supervision attestation requires a supervisor.
+  if (
+    !isManagerRole(access.viewerRole) &&
+    parsed.data.kind === "supervision"
+  ) {
+    return {
+      ok: false,
+      error: "Supervision sessions must be logged by your supervisor.",
+    };
+  }
+  const { session, orgId } = access;
 
   const credentials = parsed.data.supervisorCredentials
     ? parsed.data.supervisorCredentials

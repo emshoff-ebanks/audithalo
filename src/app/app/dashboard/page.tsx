@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, Users } from "lucide-react";
 import { auth } from "@/auth";
+import { isManagerRole } from "@/lib/authz";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,12 @@ export const metadata = {
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+
+  // Supervisees land on their own detail page; the supervisor's roster view is
+  // not for them.
+  if (!isManagerRole(session.user.role)) {
+    redirect(`/dashboard/roster/${session.user.id}`);
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">

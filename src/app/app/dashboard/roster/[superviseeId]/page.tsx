@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { and, eq, desc } from "drizzle-orm";
 import { ArrowLeft, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { auth } from "@/auth";
+import { isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import {
   evaluate,
@@ -48,6 +49,12 @@ export default async function SuperviseeDetailPage({
   if (!session?.user) redirect("/login");
 
   const { superviseeId } = await params;
+
+  // Supervisees can only view themselves
+  const viewerIsManager = isManagerRole(session.user.role);
+  if (!viewerIsManager && session.user.id !== superviseeId) {
+    redirect(`/dashboard/roster/${session.user.id}`);
+  }
 
   // Verify the viewer shares an org with this supervisee
   const myMembership = await db.query.orgMemberships.findFirst({
@@ -131,15 +138,17 @@ export default async function SuperviseeDetailPage({
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
-      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
-        <Link href="/dashboard/roster">
-          <ArrowLeft />
-          Back to roster
-        </Link>
-      </Button>
+      {viewerIsManager && (
+        <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
+          <Link href="/dashboard/roster">
+            <ArrowLeft />
+            Back to roster
+          </Link>
+        </Button>
+      )}
 
       <Badge variant="outline" className="mb-3">
-        Supervisee
+        {viewerIsManager ? "Supervisee" : "Your account"}
       </Badge>
       <h1 className="font-display text-4xl font-semibold text-foreground">
         {supervisee.name}
@@ -152,17 +161,32 @@ export default async function SuperviseeDetailPage({
             <Badge variant="warning" className="mb-3">
               No rule assigned
             </Badge>
-            <h2 className="font-display text-xl font-semibold text-foreground">
-              Assign a state rule
-            </h2>
-            <p className="mt-2 text-foreground/70">
-              Pick the state and license type this supervisee is working toward. Their hour
-              progress and at-risk flags only start once a rule is assigned.
-            </p>
-            <AssignRuleForm
-              superviseeId={superviseeId}
-              availableRules={allRules}
-            />
+            {viewerIsManager ? (
+              <>
+                <h2 className="font-display text-xl font-semibold text-foreground">
+                  Assign a state rule
+                </h2>
+                <p className="mt-2 text-foreground/70">
+                  Pick the state and license type this supervisee is working toward. Their
+                  hour progress and at-risk flags only start once a rule is assigned.
+                </p>
+                <AssignRuleForm
+                  superviseeId={superviseeId}
+                  availableRules={allRules}
+                />
+              </>
+            ) : (
+              <>
+                <h2 className="font-display text-xl font-semibold text-foreground">
+                  Your supervisor hasn't assigned your state rule yet.
+                </h2>
+                <p className="mt-2 text-foreground/70">
+                  Reach out to your supervisor so they can pick the right rule (e.g., NC
+                  LCMHCA). Once they do, your hour progress and at-risk flags will start
+                  filling in here.
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -258,8 +282,13 @@ export default async function SuperviseeDetailPage({
 
           <Card>
             <CardContent className="p-6">
-              <p className="label-overline mb-3">Log a session</p>
-              <LogSessionForm superviseeId={superviseeId} />
+              <p className="label-overline mb-3">
+                {viewerIsManager ? "Log a session" : "Log practice hours"}
+              </p>
+              <LogSessionForm
+                superviseeId={superviseeId}
+                allowSupervision={viewerIsManager}
+              />
             </CardContent>
           </Card>
         </div>
