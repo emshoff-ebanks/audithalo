@@ -159,3 +159,50 @@ export const integrations = pgTable("integrations", {
   settings: jsonb("settings"),
   connectedAt: timestamp("connected_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// ===========================================================================
+// Organizations + memberships + invitations
+// An Organization is the unit of billing and of supervisee rostering. A
+// supervisor's signup automatically creates their personal org; if they later
+// join a group practice they can be added to additional orgs.
+// ===========================================================================
+
+export const organizations = pgTable("organizations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  createdById: uuid("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const orgMemberships = pgTable("org_memberships", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orgId: uuid("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  role: userRole("role").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const invitations = pgTable("invitations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orgId: uuid("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  name: text("name"),
+  role: userRole("role").notNull().default("supervisee"),
+  /** SHA-256 of the raw token, hex-encoded. The raw token never lives in the DB. */
+  tokenHash: text("token_hash").notNull().unique(),
+  invitedById: uuid("invited_by_id")
+    .notNull()
+    .references(() => users.id),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  acceptedById: uuid("accepted_by_id").references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});

@@ -1,7 +1,10 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ArrowRight, Users } from "lucide-react";
 import { auth } from "@/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const metadata = {
   title: "Dashboard — AuditHalo",
@@ -21,9 +24,18 @@ export default async function DashboardPage() {
       </h1>
       <p className="mt-3 text-foreground/70 max-w-2xl">
         You're signed in as a <span className="font-medium">{session.user.role}</span>.
-        Your roster and supervision dashboard land in the next sprint — for now this
-        confirms auth is wired against Neon and your session is real.
+        The full supervision dashboard with hour progress and at-risk flags lands in
+        Phase 1.6. For now you can build your roster.
       </p>
+
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Button asChild>
+          <Link href="/dashboard/roster">
+            <Users />
+            Manage roster <ArrowRight />
+          </Link>
+        </Button>
+      </div>
 
       <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>

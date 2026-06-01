@@ -1,0 +1,146 @@
+"use server";
+
+import { z } from "zod";
+import { revalidatePath } from "next/cache";
+import { eq, and, isNull } from "drizzle-orm";
+import { auth } from "@/auth";
+import { db, schema } from "@/lib/db";
+import {
+  generateInvitationToken,
+  hashToken,
+  invitationExpiresAt,
+} from "@/lib/invitations";
+import { sendEmail } from "@/lib/email";
+
+const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
+
+const inviteSchema = z.object({
+  email: z.string().email("Enter a valid email address."),
+  name: z.string().optional(),
+});
+
+export type InviteResult =
+  | { ok: true; sentTo: string }
+  | { ok: false; error: string };
+
+export async function inviteSuperviseeAction(
+  _prev: InviteResult | undefined,
+  formData: FormData
+): Promise<InviteResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const parsed = inviteSchema.safeParse({
+    email: formData.get("email"),
+    name: formData.get("name") || undefined,
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+  const inviteEmail = parsed.data.email.toLowerCase();
+
+  // Pull the inviter's first org (assumption: one supervisor = one personal org for v1)
+  const membership = await db.query.orgMemberships.findFirst({
+    where: eq(schema.orgMemberships.userId, session.user.id),
+  });
+  if (!membership) {
+    return { ok: false, error: "Your account has no organization yet." };
+  }
+
+  // If the email already corresponds to a registered user, surface a clear error.
+  const existing = await db.query.users.findFirst({
+    where: eq(schema.users.email, inviteEmail),
+  });
+  if (existing) {
+    return {
+      ok: false,
+      error: "That email already has an AuditHalo account. Ask them to sign in.",
+    };
+  }
+
+  // Re-issue if a non-accepted invitation already exists for this email + org.
+  const openInvite = await db.query.invitations.findFirst({
+    where: and(
+      eq(schema.invitations.orgId, membership.orgId),
+      eq(schema.invitations.email, inviteEmail),
+      isNull(schema.invitations.acceptedAt)
+    ),
+  });
+  if (openInvite) {
+    // Generate a fresh token and update; the old link will no longer work.
+    const fresh = generateInvitationToken();
+    await db
+      .update(schema.invitations)
+      .set({
+        tokenHash: hashToken(fresh),
+        expiresAt: invitationExpiresAt(),
+        invitedById: session.user.id,
+        name: parsed.data.name ?? openInvite.name,
+      })
+      .where(eq(schema.invitations.id, openInvite.id));
+    await sendInviteEmail({
+      to: inviteEmail,
+      name: parsed.data.name ?? null,
+      token: fresh,
+      supervisorName: session.user.name ?? session.user.email,
+    });
+    revalidatePath("/dashboard/roster");
+    return { ok: true, sentTo: inviteEmail };
+  }
+
+  const token = generateInvitationToken();
+  await db.insert(schema.invitations).values({
+    orgId: membership.orgId,
+    email: inviteEmail,
+    name: parsed.data.name ?? null,
+    role: "supervisee",
+    tokenHash: hashToken(token),
+    invitedById: session.user.id,
+    expiresAt: invitationExpiresAt(),
+  });
+
+  await sendInviteEmail({
+    to: inviteEmail,
+    name: parsed.data.name ?? null,
+    token,
+    supervisorName: session.user.name ?? session.user.email,
+  });
+
+  revalidatePath("/dashboard/roster");
+  return { ok: true, sentTo: inviteEmail };
+}
+
+async function sendInviteEmail(opts: {
+  to: string;
+  name: string | null;
+  token: string;
+  supervisorName: string;
+}) {
+  const link = `${APP_URL}/accept-invite/${opts.token}`;
+  const greeting = opts.name ? `Hi ${opts.name},` : "Hi,";
+  await sendEmail({
+    to: opts.to,
+    subject: `${opts.supervisorName} invited you to AuditHalo`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#0A1428; max-width: 560px;">
+        <h2 style="font-size: 24px; margin: 0 0 16px;">You're on a supervision roster.</h2>
+        <p style="font-size: 16px; line-height: 1.6;">
+          ${greeting} <strong>${opts.supervisorName}</strong> has added you to their AuditHalo roster.
+          Your supervisee account is free, forever — AuditHalo tracks your supervised hours
+          against your state's licensure rule, prompts you about upcoming sessions, and keeps your
+          evidence packages audit-ready.
+        </p>
+        <p style="margin: 32px 0;">
+          <a href="${link}" style="display: inline-block; padding: 12px 24px; background:#0F1F4C; color:#FAFAF7; text-decoration:none; font-weight:600; border-radius: 4px;">
+            Accept invite and create account
+          </a>
+        </p>
+        <p style="font-size: 13px; color: #5f6470;">
+          Or copy this link: ${link}<br />
+          This invitation expires in 7 days.
+        </p>
+      </div>
+    `,
+    text: `${greeting} ${opts.supervisorName} has added you to their AuditHalo roster. Accept the invite and create your free supervisee account: ${link}\n\nThis invitation expires in 7 days.`,
+  });
+}

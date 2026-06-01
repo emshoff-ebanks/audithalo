@@ -40,10 +40,30 @@ export async function signupAction(
 
   const passwordHash = await bcrypt.hash(password, 12);
 
-  await db.insert(schema.users).values({
-    email: emailLower,
-    passwordHash,
-    name,
+  // Create the user, then create their personal organization, then a membership
+  // tying them to it as a supervisor. Default org name uses their first name.
+  const [user] = await db
+    .insert(schema.users)
+    .values({
+      email: emailLower,
+      passwordHash,
+      name,
+      role: "supervisor",
+    })
+    .returning();
+
+  const firstName = name.split(" ")[0] ?? name;
+  const [org] = await db
+    .insert(schema.organizations)
+    .values({
+      name: `${firstName}'s practice`,
+      createdById: user.id,
+    })
+    .returning();
+
+  await db.insert(schema.orgMemberships).values({
+    orgId: org.id,
+    userId: user.id,
     role: "supervisor",
   });
 
