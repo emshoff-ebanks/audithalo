@@ -10,7 +10,7 @@ const navLinks = [
   { href: "/pricing", label: "Pricing" },
   { href: "/states", label: "States" },
   { href: "/for-supervisors", label: "For Supervisors" },
-  { href: "/for-practices", label: "For Practices" },
+  { href: "/for-group-practices", label: "For Practices" },
   { href: "/security", label: "Security" },
 ];
 
