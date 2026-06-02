@@ -5,7 +5,7 @@ import { PRICES, stripe } from "@/lib/stripe";
 
 type Org = typeof schema.organizations.$inferSelect;
 
-const ACTIVE_STATUSES = new Set(["trialing", "active", "past_due"]);
+export const ACTIVE_STATUSES = new Set(["trialing", "active", "past_due"]);
 
 /** Seat cap for this org's current plan. null = unlimited. 0 = no plan, can't invite. */
 export function seatCap(

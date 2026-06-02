@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,7 +68,15 @@ export function RegisterForm() {
       </Button>
 
       <p className="text-xs text-foreground/60">
-        By creating an account you agree to our Terms and Privacy Policy.
+        By creating an account you agree to our{" "}
+        <Link href="/legal/terms" className="text-secondary hover:underline">
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link href="/legal/privacy" className="text-secondary hover:underline">
+          Privacy Policy
+        </Link>
+        .
       </p>
     </form>
   );
