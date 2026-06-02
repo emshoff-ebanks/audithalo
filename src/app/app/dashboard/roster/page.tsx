@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
+import { riskBadgeVariant, riskBadgeLabel } from "@/lib/rules";
+import { getOrgRosterWithCompliance } from "@/lib/db/roster-queries";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,25 +37,17 @@ export default async function RosterPage() {
     where: eq(schema.organizations.id, membership.orgId),
   });
 
-  // Fetch all members of this org
-  const memberships = await db
-    .select({
-      userId: schema.orgMemberships.userId,
-      role: schema.orgMemberships.role,
-      joinedAt: schema.orgMemberships.createdAt,
-      name: schema.users.name,
-      email: schema.users.email,
-      state: schema.users.state,
-      licenseType: schema.users.licenseType,
-    })
-    .from(schema.orgMemberships)
-    .innerJoin(schema.users, eq(schema.users.id, schema.orgMemberships.userId))
-    .where(eq(schema.orgMemberships.orgId, membership.orgId));
+  // Fetch all supervisees with compliance data (3 batch queries)
+  const rosterRows = await getOrgRosterWithCompliance(membership.orgId);
 
-  // Fetch pending invitations
+  // Fetch pending invitations separately
   const pendingInvites = await db.query.invitations.findMany({
     where: eq(schema.invitations.orgId, membership.orgId),
   });
+
+  const atRiskCount = rosterRows.filter(
+    (r) => r.evaluation?.riskLevel === "red"
+  ).length;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
@@ -75,6 +69,17 @@ export default async function RosterPage() {
         moment they accept the invitation, and you'll see their hour progress here.
       </p>
 
+      {atRiskCount > 0 && (
+        <div className="mt-6 flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <span className="font-semibold">
+            {atRiskCount} supervisee{atRiskCount === 1 ? "" : "s"} at risk
+          </span>
+          <span className="text-destructive/70">
+            — review their compliance status below.
+          </span>
+        </div>
+      )}
+
       <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardContent className="p-0">
@@ -82,33 +87,68 @@ export default async function RosterPage() {
               <thead className="bg-accent">
                 <tr className="text-left">
                   <th className="px-5 py-3 font-semibold">Name</th>
-                  <th className="px-5 py-3 font-semibold">Email</th>
-                  <th className="px-5 py-3 font-semibold">Role</th>
-                  <th className="px-5 py-3 font-semibold">Joined</th>
+                  <th className="px-5 py-3 font-semibold">Credential</th>
+                  <th className="px-5 py-3 font-semibold">Practice hrs</th>
+                  <th className="px-5 py-3 font-semibold">Status</th>
+                  <th className="px-5 py-3 font-semibold">Pending sigs</th>
                 </tr>
               </thead>
               <tbody>
-                {memberships.map((m) => (
-                  <tr key={m.userId} className="border-t border-border hover:bg-accent/40">
-                    <td className="px-5 py-3 font-medium">
-                      {m.role === "supervisee" ? (
+                {rosterRows.map((row) => {
+                  const pct = row.evaluation?.progress.practiceProgressPct ?? 0;
+                  const practiced = row.evaluation?.totals.practiceHours ?? 0;
+
+                  return (
+                    <tr key={row.userId} className="border-t border-border hover:bg-accent/40">
+                      <td className="px-5 py-3 font-medium">
                         <Link
-                          href={`/dashboard/roster/${m.userId}`}
+                          href={`/dashboard/roster/${row.userId}`}
                           className="hover:underline"
                         >
-                          {m.name}
+                          {row.name}
                         </Link>
-                      ) : (
-                        m.name
-                      )}
-                    </td>
-                    <td className="px-5 py-3 text-foreground/70">{m.email}</td>
-                    <td className="px-5 py-3 capitalize">{m.role.replace("_", " ")}</td>
-                    <td className="px-5 py-3 font-mono text-xs text-foreground/60">
-                      {new Date(m.joinedAt).toISOString().slice(0, 10)}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-5 py-3 text-foreground/70">
+                        {row.state && row.licenseType
+                          ? `${row.state} · ${row.licenseType}`
+                          : row.state ?? row.licenseType ?? (
+                              <span className="italic text-foreground/40">—</span>
+                            )}
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2 min-w-[120px]">
+                          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-[color:var(--color-gold)] transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="font-mono text-xs text-foreground/60">
+                            {practiced}h
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3">
+                        {row.evaluation ? (
+                          <Badge variant={riskBadgeVariant(row.evaluation.riskLevel)}>
+                            {riskBadgeLabel(row.evaluation.riskLevel)}
+                          </Badge>
+                        ) : (
+                          <span className="text-foreground/40 italic text-xs">No rule</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3">
+                        {row.pendingSignatureCount > 0 ? (
+                          <Badge variant="warning">
+                            {row.pendingSignatureCount}
+                          </Badge>
+                        ) : (
+                          <span className="text-foreground/40">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
                 {pendingInvites
                   .filter((i) => !i.acceptedAt)
                   .map((i) => (
@@ -118,10 +158,13 @@ export default async function RosterPage() {
                       </td>
                       <td className="px-5 py-3 text-foreground/70">{i.email}</td>
                       <td className="px-5 py-3">
-                        <Badge variant="warning">Pending</Badge>
+                        <span className="text-foreground/40 italic text-xs">—</span>
                       </td>
-                      <td className="px-5 py-3 font-mono text-xs text-foreground/60">
-                        invited {new Date(i.createdAt).toISOString().slice(0, 10)}
+                      <td className="px-5 py-3">
+                        <Badge variant="warning">Pending invite</Badge>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className="text-foreground/40">—</span>
                       </td>
                     </tr>
                   ))}
