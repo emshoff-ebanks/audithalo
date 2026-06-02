@@ -85,20 +85,52 @@ describe("seatCapBlockedReason", () => {
 describe("shouldSyncSeats", () => {
   it("returns true for practice with subscription id", () => {
     expect(
-      shouldSyncSeats({ subscriptionTier: "practice", stripeSubscriptionId: "sub_123" })
+      shouldSyncSeats({
+        subscriptionTier: "practice",
+        subscriptionStatus: "active",
+        stripeSubscriptionId: "sub_123"
+      })
     ).toBe(true);
   });
 
   it("returns false for solo even with subscription id", () => {
     expect(
-      shouldSyncSeats({ subscriptionTier: "solo", stripeSubscriptionId: "sub_123" })
+      shouldSyncSeats({
+        subscriptionTier: "solo",
+        subscriptionStatus: "active",
+        stripeSubscriptionId: "sub_123"
+      })
     ).toBe(false);
   });
 
   it("returns false for practice without subscription id", () => {
     expect(
-      shouldSyncSeats({ subscriptionTier: "practice", stripeSubscriptionId: null })
+      shouldSyncSeats({
+        subscriptionTier: "practice",
+        subscriptionStatus: "active",
+        stripeSubscriptionId: null
+      })
     ).toBe(false);
+  });
+
+  it("returns false for practice with canceled subscription", () => {
+    expect(
+      shouldSyncSeats({
+        subscriptionTier: "practice",
+        subscriptionStatus: "canceled",
+        stripeSubscriptionId: "sub_123",
+      })
+    ).toBe(false);
+  });
+
+  it("returns true for practice with active subscription", () => {
+    expect(
+      shouldSyncSeats({
+        subscriptionTier: "practice",
+        subscriptionStatus: "active",
+        stripeSubscriptionId: "sub_123",
+      })
+    ).toBe(true);
   });
 });
 
@@ -128,5 +160,13 @@ describe("findSeatItem", () => {
   it("returns null when subscription has no items", () => {
     const sub = mkSub([]);
     expect(findSeatItem(sub, "price_seat")).toBeNull();
+  });
+
+  it("returns the matching item when it's the first item", () => {
+    const sub = mkSub([
+      { id: "si_seat", priceId: "price_seat" },
+      { id: "si_base", priceId: "price_base" },
+    ]);
+    expect(findSeatItem(sub, "price_seat")?.id).toBe("si_seat");
   });
 });

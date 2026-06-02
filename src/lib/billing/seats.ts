@@ -37,9 +37,14 @@ export function seatCapBlockedReason(
 
 /** Pure: should this org sync seat quantity to Stripe? */
 export function shouldSyncSeats(
-  org: Pick<Org, "subscriptionTier" | "stripeSubscriptionId">
+  org: Pick<Org, "subscriptionTier" | "subscriptionStatus" | "stripeSubscriptionId">
 ): boolean {
-  return org.subscriptionTier === "practice" && !!org.stripeSubscriptionId;
+  return (
+    org.subscriptionTier === "practice" &&
+    !!org.stripeSubscriptionId &&
+    !!org.subscriptionStatus &&
+    ACTIVE_STATUSES.has(org.subscriptionStatus)
+  );
 }
 
 /** Pure: find the seat item in a Stripe subscription, or null if not present. */
@@ -52,7 +57,9 @@ export function findSeatItem(
 
 /**
  * Count supervisee MEMBERSHIPS (not open invites) — these are who Stripe bills for.
- * Differs from the cap-count helper, which also includes open invites.
+ * Note: the seat-CAP check in src/app/actions/invitations.ts counts members + open
+ * invites (preventing oversubscribing). Billing only counts members (you pay for
+ * who's actually using the seat, not pending invites).
  */
 export async function countBillableSeats(orgId: string): Promise<number> {
   const members = await db.query.orgMemberships.findMany({
@@ -83,7 +90,7 @@ export async function syncPracticeSeatQuantity(orgId: string): Promise<void> {
   const sub = await stripe.subscriptions.retrieve(org.stripeSubscriptionId!);
   const seatItem = findSeatItem(sub, PRICES.practice_seat);
   if (!seatItem) {
-    console.warn(
+    console.error(
       `[billing] sub ${sub.id} for org ${orgId} has no item matching seat price ${PRICES.practice_seat}`
     );
     return;
