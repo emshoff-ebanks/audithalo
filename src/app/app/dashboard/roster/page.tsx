@@ -46,7 +46,7 @@ export default async function RosterPage() {
   });
 
   const atRiskCount = rosterRows.filter(
-    (r) => r.evaluation?.riskLevel === "red"
+    (r) => r.evaluation?.riskLevel === "red" || r.evaluation?.riskLevel === "yellow"
   ).length;
 
   return (
@@ -116,17 +116,21 @@ export default async function RosterPage() {
                             )}
                       </td>
                       <td className="px-5 py-3">
-                        <div className="flex items-center gap-2 min-w-[120px]">
-                          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-[color:var(--color-gold)] transition-all"
-                              style={{ width: `${pct}%` }}
-                            />
+                        {row.evaluation !== null ? (
+                          <div className="flex items-center gap-2 min-w-[120px]">
+                            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[color:var(--color-gold)] transition-all"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="font-mono text-xs text-foreground/60">
+                              {practiced}h
+                            </span>
                           </div>
-                          <span className="font-mono text-xs text-foreground/60">
-                            {practiced}h
-                          </span>
-                        </div>
+                        ) : (
+                          <span className="text-foreground/40 italic text-xs">no rule</span>
+                        )}
                       </td>
                       <td className="px-5 py-3">
                         {row.evaluation ? (
@@ -149,6 +153,14 @@ export default async function RosterPage() {
                     </tr>
                   );
                 })}
+                {rosterRows.length === 0 &&
+                  pendingInvites.filter((i) => !i.acceptedAt).length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-5 py-8 text-center text-foreground/50 text-sm">
+                        No supervisees yet. Invite one using the form →
+                      </td>
+                    </tr>
+                  )}
                 {pendingInvites
                   .filter((i) => !i.acceptedAt)
                   .map((i) => (

@@ -23,6 +23,7 @@ import type { SessionSignature } from "@/lib/db/schema";
 // Defined here so the type is usable in tests without triggering the DB import.
 // ---------------------------------------------------------------------------
 
+// SYNC WITH schema.sessionEvents — update if columns change
 export type SessionEventRecord = {
   id: string;
   superviseeId: string;
@@ -186,7 +187,7 @@ export function computeRosterCompliance(entries: RawEntry[]): RosterRow[] {
 export async function getOrgRosterWithCompliance(
   orgId: string
 ): Promise<RosterRow[]> {
-  const [{ db, schema }, { eq, inArray }] = await Promise.all([
+  const [{ db, schema }, { and, eq, inArray }] = await Promise.all([
     import("@/lib/db"),
     import("drizzle-orm"),
   ]);
@@ -202,7 +203,12 @@ export async function getOrgRosterWithCompliance(
     })
     .from(schema.orgMemberships)
     .innerJoin(schema.users, eq(schema.users.id, schema.orgMemberships.userId))
-    .where(eq(schema.orgMemberships.orgId, orgId));
+    .where(
+      and(
+        eq(schema.orgMemberships.orgId, orgId),
+        eq(schema.orgMemberships.role, "supervisee")
+      )
+    );
 
   const superviseeIds = superviseeRows.map((r) => r.userId);
   if (superviseeIds.length === 0) return [];
@@ -212,7 +218,10 @@ export async function getOrgRosterWithCompliance(
     .select()
     .from(schema.superviseeRuleAssignments)
     .where(
-      inArray(schema.superviseeRuleAssignments.superviseeId, superviseeIds)
+      and(
+        inArray(schema.superviseeRuleAssignments.superviseeId, superviseeIds),
+        eq(schema.superviseeRuleAssignments.orgId, orgId)
+      )
     );
 
   const assignmentByUser = new Map(
@@ -223,7 +232,12 @@ export async function getOrgRosterWithCompliance(
   const events = await db
     .select()
     .from(schema.sessionEvents)
-    .where(inArray(schema.sessionEvents.superviseeId, superviseeIds));
+    .where(
+      and(
+        inArray(schema.sessionEvents.superviseeId, superviseeIds),
+        eq(schema.sessionEvents.orgId, orgId)
+      )
+    );
 
   // Group events by superviseeId
   const eventsByUser = new Map<string, typeof events>();
