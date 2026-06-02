@@ -28,7 +28,7 @@ export function AuditHaloMark({
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="40 40 120 120"
+      viewBox="25 25 150 150"
       role="img"
       aria-label={title}
       className={cn("h-7 w-7 text-[color:var(--color-gold)]", className)}
