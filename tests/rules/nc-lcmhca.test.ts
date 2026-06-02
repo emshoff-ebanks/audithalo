@@ -1,60 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { evaluate, getRule } from "@/lib/rules";
 import type { EvaluationContext } from "@/lib/rules";
-
-/** Helper: build a series of practice and individual-supervision sessions over time. */
-function buildLog(opts: {
-  contractFiledAt?: string;
-  startedAt: string;
-  practiceDays: number[];          // ISO offsets from start, each adds 8 practice hours
-  individualSupDays?: number[];     // ISO offsets where 1 hr individual sup occurs (with LCMHCS)
-  groupSupDays?: number[];          // ISO offsets where 2 hr group sup occurs (with LCMHCS)
-  asOf?: string;
-}): EvaluationContext {
-  const start = Date.parse(opts.startedAt);
-  const dayMs = 1000 * 60 * 60 * 24;
-  const sessions: EvaluationContext["sessions"] = [];
-
-  for (const [i, offset] of opts.practiceDays.entries()) {
-    sessions.push({
-      kind: "practice",
-      id: `p${i}`,
-      date: new Date(start + offset * dayMs).toISOString(),
-      durationHours: 8,
-    });
-  }
-  for (const [i, offset] of (opts.individualSupDays ?? []).entries()) {
-    sessions.push({
-      kind: "supervision",
-      id: `i${i}`,
-      date: new Date(start + offset * dayMs).toISOString(),
-      durationHours: 1,
-      sessionType: "individual",
-      supervisorCredentials: ["LCMHCS"],
-    });
-  }
-  for (const [i, offset] of (opts.groupSupDays ?? []).entries()) {
-    sessions.push({
-      kind: "supervision",
-      id: `g${i}`,
-      date: new Date(start + offset * dayMs).toISOString(),
-      durationHours: 2,
-      sessionType: "group",
-      supervisorCredentials: ["LCMHCS"],
-      groupAttendees: 6,
-    });
-  }
-
-  return {
-    superviseeId: "test-supervisee",
-    startedAt: opts.startedAt,
-    supervisionContractFiledAt: opts.contractFiledAt,
-    sessions,
-    asOf: opts.asOf,
-  };
-}
+import { buildLog } from "./_helpers";
 
 const NC = getRule("NC", "LCMHCA", 1);
+const ACCEPTED_CREDS = ["LCMHCS"];
 
 describe("NC LCMHCA rule", () => {
   it("loads and identifies itself correctly", () => {
@@ -70,6 +20,7 @@ describe("NC LCMHCA rule", () => {
       startedAt: "2026-01-01T00:00:00Z",
       practiceDays: [0, 1, 2],
       individualSupDays: [3],
+      supervisorCredentials: ACCEPTED_CREDS,
       asOf: "2026-02-01T00:00:00Z",
       // contractFiledAt intentionally omitted
     });
@@ -133,6 +84,7 @@ describe("NC LCMHCA rule", () => {
       startedAt: "2026-01-01T00:00:00Z",
       practiceDays: Array.from({ length: 20 }, (_, i) => i + 1),
       individualSupDays: [], // none
+      supervisorCredentials: ACCEPTED_CREDS,
       asOf: "2026-02-01T00:00:00Z",
     });
     const r = evaluate(ctx, NC);
@@ -150,6 +102,7 @@ describe("NC LCMHCA rule", () => {
       startedAt: "2026-01-01T00:00:00Z",
       practiceDays,
       individualSupDays: indDays,
+      supervisorCredentials: ACCEPTED_CREDS,
       asOf: "2026-03-01T00:00:00Z",
     });
     const r = evaluate(ctx, NC);
@@ -164,6 +117,7 @@ describe("NC LCMHCA rule", () => {
       practiceDays: [1, 2, 3, 4, 5], // 5 * 8 = 40 practice hours
       individualSupDays: [7, 14, 21], // 3 hours individual
       groupSupDays: [10], // 2 hours group
+      supervisorCredentials: ACCEPTED_CREDS,
       asOf: "2026-02-01T00:00:00Z",
     });
     const r = evaluate(ctx, NC);
@@ -179,6 +133,7 @@ describe("NC LCMHCA rule", () => {
       startedAt: "2026-01-01T00:00:00Z",
       practiceDays: Array.from({ length: 400 }, (_, i) => i + 1), // 3200 practice hours
       individualSupDays: Array.from({ length: 110 }, (_, i) => i * 4), // > 100 sup hours
+      supervisorCredentials: ACCEPTED_CREDS,
       asOf: "2027-06-01T00:00:00Z",
     });
     const r = evaluate(ctx, NC);
