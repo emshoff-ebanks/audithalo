@@ -12,6 +12,7 @@ import {
   invitationExpiresAt,
 } from "@/lib/invitations";
 import { sendEmail } from "@/lib/email";
+import { seatCapBlockedReason } from "@/lib/billing/seats";
 
 const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
 
@@ -87,6 +88,35 @@ export async function inviteSuperviseeAction(
     });
     revalidatePath("/dashboard/roster");
     return { ok: true, sentTo: inviteEmail };
+  }
+
+  const [org, members, openInvites] = await Promise.all([
+    db.query.organizations.findFirst({
+      where: eq(schema.organizations.id, membership.orgId),
+    }),
+    db.query.orgMemberships.findMany({
+      where: and(
+        eq(schema.orgMemberships.orgId, membership.orgId),
+        eq(schema.orgMemberships.role, "supervisee")
+      ),
+    }),
+    db.query.invitations.findMany({
+      where: and(
+        eq(schema.invitations.orgId, membership.orgId),
+        eq(schema.invitations.role, "supervisee"),
+        isNull(schema.invitations.acceptedAt)
+      ),
+    }),
+  ]);
+
+  if (!org) {
+    return { ok: false, error: "Organization not found." };
+  }
+
+  const used = members.length + openInvites.length;
+  const blocked = seatCapBlockedReason(org, used);
+  if (blocked) {
+    return { ok: false, error: blocked };
   }
 
   const token = generateInvitationToken();
