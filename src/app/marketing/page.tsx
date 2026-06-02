@@ -11,26 +11,32 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
+export const metadata = {
+  title: "AuditHalo — Clinical Supervision Tracking Software",
+  description:
+    "Supervision records your state board will never question. AuditHalo tracks supervised hours, captures e-signed session notes, and generates tamper-evident audit packages for LCMHCA, APCC, LPC-A, RMHCI, and LP-MHC supervisors.",
+};
+
 const features = [
   {
     icon: ShieldCheck,
     title: "Multi-state rules engine",
-    body: "Encode supervision requirements per state and license type. NC LCMHCA, CA APCC, TX LPC-A, FL RMHCI, NY limited permit — supported out of the box.",
+    body: "Every hour evaluated against your state board's exact requirements. NC LCMHCA, CA APCC, TX LPC-A, FL RMHCI, NY LP-MHC — citation-linked and re-verified quarterly.",
   },
   {
     icon: Sparkles,
-    title: "AI-written session notes",
-    body: "Drop in a Teams transcript with PHI pre-scan. Get a structured supervision note your supervisor can sign in two minutes instead of thirty.",
+    title: "AI-assisted session notes",
+    body: "Paste a supervision transcript and get a structured session note — topics covered, competencies addressed, supervisor feedback, next steps. Ready to sign in minutes.",
   },
   {
     icon: FileSignature,
     title: "Tamper-evident e-signatures",
-    body: "Supervisor and supervisee sign with intent confirmation. Evidence packages are SHA-256 hashed and immutable — the same proof your state board would build.",
+    body: "Supervisor and supervisee sign with intent confirmation. Each evidence package is SHA-256 hashed and immutable — independently verifiable if your board asks.",
   },
   {
     icon: BarChart3,
     title: "Role-based dashboards",
-    body: "Supervisees see hour progress at a glance. Supervisors manage rosters. HR sees compliance heatmaps. Executives see risk.",
+    body: "Supervisees see hour progress at a glance. Supervisors manage rosters. HR sees compliance heatmaps. Executives see risk across the practice.",
   },
 ];
 
@@ -39,7 +45,7 @@ const states = [
   { code: "CA", license: "APCC", href: "/states/ca-apcc" },
   { code: "TX", license: "LPC-A", href: "/states/tx-lpc-associate" },
   { code: "FL", license: "RMHCI", href: "/states/fl-rmhci" },
-  { code: "NY", license: "LP-MHC", href: "/states/ny-permit" },
+  { code: "NY", license: "LP-MHC", href: "/states/ny-lmhc-lp" },
 ];
 
 export default function MarketingHome() {
@@ -48,26 +54,25 @@ export default function MarketingHome() {
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 py-24 lg:py-32">
         <Badge variant="outline" className="mb-6">
-          Clinical supervision compliance
+          Clinical supervision compliance software
         </Badge>
         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-3xl leading-[1.05]">
-          The audit-ready command center for licensed counselors and their
-          supervisors.
+          Supervision records your board will never question.
         </h1>
         <p className="mt-6 text-lg text-foreground/70 max-w-2xl leading-relaxed">
-          Track supervision hours against state board rules. Generate AI session
-          notes from Teams transcripts. Capture intent-confirmed e-signatures.
-          Publish tamper-evident evidence packages — without a single
-          spreadsheet.
+          AuditHalo tracks supervised hours against state board rules, captures
+          intent-confirmed e-signatures, and generates tamper-evident audit
+          packages — built for LCMHCA, APCC, LPC-A, RMHCI, and LP-MHC
+          supervisors.
         </p>
         <div className="mt-10 flex flex-wrap items-center gap-3">
           <Button asChild size="lg">
             <a href="https://app.audithalo.com/register">
-              Start free trial <ArrowRight />
+              Start your supervisor account <ArrowRight />
             </a>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link href="/features">See how it works</Link>
+            <Link href="/for-supervisors">See how it works</Link>
           </Button>
         </div>
         <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/60">
@@ -77,40 +82,32 @@ export default function MarketingHome() {
           </span>
           <span className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
-            No credit card
+            No credit card required
           </span>
           <span className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
-            Supervisees always free
+            Supervisee accounts always free
           </span>
         </div>
       </section>
 
       {/* Features grid */}
-      <section
-        id="features"
-        className="border-t border-border bg-card"
-      >
+      <section id="features" className="border-t border-border bg-card">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
             What you get
           </Badge>
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground max-w-2xl">
-            Built for the four roles that touch every supervision hour.
+            Everything a state board audit requires. Nothing it doesn't.
           </h2>
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-px bg-border">
             {features.map((f) => (
               <div key={f.title} className="bg-card p-8">
-                <f.icon
-                  className="h-6 w-6 text-secondary"
-                  strokeWidth={1.75}
-                />
+                <f.icon className="h-6 w-6 text-secondary" strokeWidth={1.75} />
                 <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
                   {f.title}
                 </h3>
-                <p className="mt-2 text-foreground/70 leading-relaxed">
-                  {f.body}
-                </p>
+                <p className="mt-2 text-foreground/70 leading-relaxed">{f.body}</p>
               </div>
             ))}
           </div>
@@ -124,11 +121,12 @@ export default function MarketingHome() {
             Supported states
           </Badge>
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground max-w-2xl">
-            Compliance, encoded.
+            State board requirements, encoded.
           </h2>
           <p className="mt-3 text-foreground/70 max-w-2xl">
-            Five states at launch, more on the way. Every rule is citation-linked
-            to the state administrative code and re-verified quarterly.
+            Five states at launch — covering the majority of pre-licensed
+            counselors in the US. Every rule is citation-linked to the state
+            administrative code and re-verified quarterly.
           </p>
           <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-border">
             {states.map((s) => (
@@ -142,7 +140,7 @@ export default function MarketingHome() {
                 </p>
                 <p className="mt-1 text-sm text-foreground/70">{s.license}</p>
                 <p className="mt-4 text-xs font-medium text-secondary group-hover:underline">
-                  View rule →
+                  View requirements →
                 </p>
               </Link>
             ))}
@@ -163,21 +161,21 @@ export default function MarketingHome() {
               </h2>
               <p className="mt-4 text-foreground/70">
                 Citation-linked, versioned, and audit-defensible. When a board
-                changes the rule, we version it — your in-flight hours stay
+                updates a rule, we version it — your in-progress hours stay
                 grandfathered under the rule you started under.
               </p>
             </div>
             <Card className="lg:col-span-2">
               <CardContent className="p-8">
                 <p className="text-sm font-mono text-foreground/60 mb-3">
-                  21 NCAC 53 · Rule shape: ratio
+                  21 NCAC 53 · NC Board of Licensed Clinical Mental Health Counselors
                 </p>
                 <p className="text-foreground text-lg leading-relaxed">
                   1 hour of individual <em>or</em> 2 hours of group supervision
                   per{" "}
                   <span className="font-semibold">40 practice hours</span>. At
                   least <span className="font-semibold">75%</span> must be
-                  individual. Group sessions max 12 attendees.
+                  individual. Group sessions capped at 12 attendees.
                 </p>
                 <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
                   <div>
@@ -199,16 +197,15 @@ export default function MarketingHome() {
       <section className="border-t border-border">
         <div className="mx-auto max-w-6xl px-6 py-20 text-center">
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
-            Get your roster audit-ready in an afternoon.
+            Set up your roster. Get audit-ready today.
           </h2>
           <p className="mt-4 text-lg text-foreground/70 max-w-xl mx-auto">
-            14-day free trial. No credit card. Your supervisees stay free
-            forever.
+            14-day free trial. No credit card. Supervisee accounts are free — always.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg">
               <a href="https://app.audithalo.com/register">
-                Start free trial <ArrowRight />
+                Start your supervisor account <ArrowRight />
               </a>
             </Button>
             <Button asChild size="lg" variant="outline">

@@ -76,7 +76,7 @@ export default function StatesIndexPage() {
             state additions in contract.
           </p>
           <Button asChild size="lg" variant="outline" className="mt-8">
-            <a href="mailto:hello@audithalo.com?subject=State%20rule%20request">
+            <a href="mailto:info@audithalo.com?subject=State%20rule%20request">
               Request a state <ArrowRight />
             </a>
           </Button>

@@ -225,19 +225,18 @@ export default function PricingPage() {
             </div>
             <div>
               <h3 className="font-display text-lg font-semibold text-foreground">
-                Is my client data safe?
+                How is my data protected?
               </h3>
               <p className="mt-2 text-foreground/70">
-                Today we don't accept PHI on the platform. Our PHI pre-scan
-                checks every transcript before submission and warns you about
-                anything that looks personally identifying. When you're ready
-                for full HIPAA hosting with a signed BAA, that's our Enterprise
-                tier.{" "}
+                Supervision records are encrypted in transit and at rest.
+                Evidence packages are SHA-256 hashed at sealing — independently
+                verifiable. Supervision notes document the supervisory
+                relationship, not client records.{" "}
                 <Link
                   href="/security"
                   className="text-secondary hover:underline"
                 >
-                  Read our security posture →
+                  See our security details →
                 </Link>
               </p>
             </div>

@@ -36,15 +36,14 @@ const featureSections = [
   },
   {
     icon: Sparkles,
-    title: "AI session notes",
+    title: "AI-assisted session notes",
     intro:
-      "Paste a Teams transcript. Get a structured supervision note your supervisor can sign in two minutes.",
+      "Paste a supervision transcript. Get a structured session note your supervisor can review and sign in minutes.",
     bullets: [
-      "7-section structured note: overview, topics, cases reviewed (no PHI), competencies, goals, supervisor feedback, next steps",
-      "PHI pre-scan flags anything that looks personally identifying before submission",
-      "Prompt is versioned alongside the rule version — auditors can see exactly what the AI was instructed to do",
-      "Supervisor reviews and edits before signing",
-      "Original transcript is never persisted (Solo + Practice tiers); Enterprise tier offers encrypted storage with signed BAA",
+      "7-section structured note: overview, topics covered, competencies addressed, goals, supervisor feedback, and next steps",
+      "Prompt is versioned alongside the rule version — auditors can see exactly what the AI was instructed to produce",
+      "Supervisor reviews and edits the note before signing — the final record is always human-approved",
+      "Supervision notes document the supervisory relationship and counselor development, not client details",
     ],
   },
   {
@@ -110,15 +109,14 @@ const featureSections = [
   },
   {
     icon: Lock,
-    title: "Security posture (current)",
+    title: "Data security",
     intro:
-      "Honest about where we are. Building toward where serious customers need us to be.",
+      "Supervision records are sensitive. Here's exactly how we protect them.",
     bullets: [
-      "Today: passwords bcrypt-hashed, sessions in HttpOnly cookies host-scoped to app.audithalo.com",
-      "Today: no PHI accepted on the platform — pre-upload scan + user-warrant model",
-      "On request: BAA via Enterprise tier with AWS + Azure OpenAI infrastructure",
-      "SOC 2 controls in place; formal audit when revenue justifies",
-      "See our full security posture →",
+      "Passwords bcrypt-hashed; sessions in HttpOnly cookies host-scoped to app.audithalo.com",
+      "All traffic TLS 1.3 in transit; data at rest encrypted by Neon Postgres and Vercel",
+      "Evidence packages SHA-256 hashed at sealing — independently verifiable by anyone with the JSON",
+      "7-year immutable per-organization audit log — meets most state board record-retention requirements",
     ],
   },
 ];

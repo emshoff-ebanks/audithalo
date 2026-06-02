@@ -194,7 +194,7 @@ export default function ForPracticesPage() {
               </a>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <a href="mailto:hello@audithalo.com?subject=Practice%20plan%20demo">
+              <a href="mailto:info@audithalo.com?subject=Practice%20plan%20demo">
                 Talk to us first
               </a>
             </Button>

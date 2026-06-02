@@ -212,7 +212,7 @@ export default async function BillingPage({
             </div>
             <div className="mt-6">
               <Button asChild variant="outline" className="w-full">
-                <a href="mailto:hello@audithalo.com?subject=Enterprise plan">
+                <a href="mailto:info@audithalo.com?subject=Enterprise plan">
                   Talk to sales <ArrowRight />
                 </a>
               </Button>

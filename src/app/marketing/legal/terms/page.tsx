@@ -64,20 +64,12 @@ export default function TermsPage() {
             </div>
 
             <div>
-              <h2 className="font-display text-2xl font-semibold text-foreground mb-4">4. PHI prohibition and user warrant</h2>
+              <h2 className="font-display text-2xl font-semibold text-foreground mb-4">4. Supervision content</h2>
               <p className="mb-3">
-                <strong className="text-foreground">Free, Solo Supervisor, and Practice accounts may not upload Protected Health Information (PHI) to the platform.</strong> PHI includes any information that could identify a specific client or patient, as defined by the HIPAA Privacy Rule's 18 safe-harbor identifiers.
+                AuditHalo is a supervision compliance platform. Supervision notes document the supervisory relationship — counselor competencies, professional development, and clinical skill — not patient or client records.
               </p>
-              <p className="mb-3">
-                Before submitting any transcript for AI processing, you confirm that the transcript has been reviewed and contains no PHI. By submitting, you warrant to AuditHalo that:
-              </p>
-              <ul className="space-y-2 list-disc list-inside text-foreground/70">
-                <li>The submitted content does not contain PHI as defined by HIPAA</li>
-                <li>You have authority to submit the content for processing</li>
-                <li>You have complied with any applicable confidentiality obligations</li>
-              </ul>
-              <p className="mt-3">
-                Violation of this warrant is grounds for immediate account termination. Enterprise customers with signed BAAs may be permitted to submit PHI-containing content under their contract terms.
+              <p>
+                You are responsible for submitting accurate supervision records. Content submitted must pertain to the supervisory relationship and your professional development as a clinician. You have authority to submit any content you provide to the platform for processing.
               </p>
             </div>
 
@@ -154,7 +146,7 @@ export default function TermsPage() {
             <div>
               <h2 className="font-display text-2xl font-semibold text-foreground mb-4">11. Termination</h2>
               <p>
-                You may delete your account at any time. We may suspend or terminate accounts that violate these Terms, particularly the PHI prohibition, acceptable use policy, or e-signature accuracy requirements. On termination, evidence packages previously issued remain in the system for the applicable retention period to protect supervisees' records.
+                You may delete your account at any time. We may suspend or terminate accounts that violate these Terms, particularly the acceptable use policy or e-signature accuracy requirements. On termination, evidence packages previously issued remain in the system for the applicable retention period to protect supervisees' records.
               </p>
             </div>
 
@@ -176,8 +168,8 @@ export default function TermsPage() {
               <h2 className="font-display text-2xl font-semibold text-foreground mb-4">14. Contact</h2>
               <p>
                 Questions about these Terms:{" "}
-                <a href="mailto:hello@audithalo.com" className="text-secondary hover:underline">
-                  hello@audithalo.com
+                <a href="mailto:info@audithalo.com" className="text-secondary hover:underline">
+                  info@audithalo.com
                 </a>
               </p>
             </div>
