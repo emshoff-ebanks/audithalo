@@ -33,6 +33,7 @@ export async function GET(
     <EvidencePdf
       document={pkg.documentContent as never}
       documentHash={pkg.documentHash}
+      packageId={pkg.id}
     />
   );
 
