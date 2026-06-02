@@ -4,6 +4,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { and, eq, isNull } from "drizzle-orm";
 import { AuthError } from "next-auth";
+import { syncPracticeSeatQuantity } from "@/lib/billing/seats";
 import { db, schema } from "@/lib/db";
 import { hashToken } from "@/lib/invitations";
 import { signIn } from "@/auth";
@@ -80,6 +81,13 @@ export async function acceptInviteAction(
       acceptedById: user.id,
     })
     .where(eq(schema.invitations.id, invite.id));
+
+  try {
+    await syncPracticeSeatQuantity(invite.orgId);
+  } catch (err) {
+    // Don't block the user accept on a Stripe sync failure — we'll reconcile later.
+    console.error(`[accept-invite] seat sync failed for org ${invite.orgId}:`, err);
+  }
 
   try {
     await signIn("credentials", {

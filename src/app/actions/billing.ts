@@ -3,6 +3,7 @@
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getCurrentMembership, isManagerRole } from "@/lib/authz";
+import { countBillableSeats } from "@/lib/billing/seats";
 import { db, schema } from "@/lib/db";
 import { PRICES, requireStripe, type PlanKey } from "@/lib/stripe";
 
@@ -78,10 +79,11 @@ export async function startCheckoutAction(formData: FormData): Promise<Result> {
   } else if (plan === "solo_yearly") {
     lineItems = [{ price: PRICES.solo_yearly, quantity: 1 }];
   } else {
-    // Practice: base flat fee + metered per-seat. No quantity for the metered line.
+    // Practice: $49 base flat fee + $25 per supervisee per month (per-unit licensed pricing)
+    const seatCount = Math.max(1, await countBillableSeats(org.id));
     lineItems = [
       { price: PRICES.practice_base, quantity: 1 },
-      { price: PRICES.practice_seat },
+      { price: PRICES.practice_seat, quantity: seatCount },
     ];
   }
 

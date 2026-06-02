@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { seatCap, seatCapBlockedReason } from "@/lib/billing/seats";
+import {
+  findSeatItem,
+  seatCap,
+  seatCapBlockedReason,
+  shouldSyncSeats,
+} from "@/lib/billing/seats";
 
 describe("seatCap", () => {
   it("returns 0 when no subscription", () => {
@@ -74,5 +79,54 @@ describe("seatCapBlockedReason", () => {
       4
     );
     expect(msg).not.toBeNull();
+  });
+});
+
+describe("shouldSyncSeats", () => {
+  it("returns true for practice with subscription id", () => {
+    expect(
+      shouldSyncSeats({ subscriptionTier: "practice", stripeSubscriptionId: "sub_123" })
+    ).toBe(true);
+  });
+
+  it("returns false for solo even with subscription id", () => {
+    expect(
+      shouldSyncSeats({ subscriptionTier: "solo", stripeSubscriptionId: "sub_123" })
+    ).toBe(false);
+  });
+
+  it("returns false for practice without subscription id", () => {
+    expect(
+      shouldSyncSeats({ subscriptionTier: "practice", stripeSubscriptionId: null })
+    ).toBe(false);
+  });
+});
+
+describe("findSeatItem", () => {
+  function mkSub(items: Array<{ id: string; priceId: string }>) {
+    return {
+      items: {
+        data: items.map((i) => ({ id: i.id, price: { id: i.priceId } })),
+      },
+    } as unknown as import("stripe").Stripe.Subscription;
+  }
+
+  it("returns the matching item by price id", () => {
+    const sub = mkSub([
+      { id: "si_base", priceId: "price_base" },
+      { id: "si_seat", priceId: "price_seat" },
+    ]);
+    const found = findSeatItem(sub, "price_seat");
+    expect(found?.id).toBe("si_seat");
+  });
+
+  it("returns null when no item matches", () => {
+    const sub = mkSub([{ id: "si_base", priceId: "price_base" }]);
+    expect(findSeatItem(sub, "price_seat")).toBeNull();
+  });
+
+  it("returns null when subscription has no items", () => {
+    const sub = mkSub([]);
+    expect(findSeatItem(sub, "price_seat")).toBeNull();
   });
 });
