@@ -45,15 +45,17 @@ export function toneClasses(tone: "risk" | "warning" | "muted" | "success") {
 }
 
 export function riskBadgeVariant(
-  risk: RiskLevel | undefined
-): "risk" | "warning" | "success" {
-  if (risk === "red") return "risk";
-  if (risk === "yellow") return "warning";
-  return "success";
+  level: RiskLevel | undefined
+): "ok" | "outline-warn" | "critical" | "outline" {
+  if (level === "green") return "ok";
+  if (level === "yellow") return "outline-warn";
+  if (level === "red") return "critical";
+  return "outline";
 }
 
-export function riskBadgeLabel(risk: RiskLevel | undefined): string {
-  if (risk === "red") return "At risk";
-  if (risk === "yellow") return "Watch";
-  return "On track";
+export function riskBadgeLabel(level: RiskLevel | undefined): string {
+  if (level === "green") return "On track";
+  if (level === "yellow") return "Needs attention";
+  if (level === "red") return "At risk";
+  return "No rule";
 }

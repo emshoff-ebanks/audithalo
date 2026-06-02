@@ -17,6 +17,15 @@ const badgeVariants = cva(
           "border border-transparent bg-[color:var(--color-warning)]/10 text-[color:var(--color-warning)]",
         risk: "border border-transparent bg-[color:var(--color-risk)]/10 text-[color:var(--color-risk)]",
         outline: "border border-border text-foreground",
+        ok: "border border-transparent bg-transparent text-[color:var(--color-ok-700)] gap-1.5",
+        "outline-warn":
+          "border border-[color:var(--color-warn-500)] bg-[color:var(--color-warn-50)] text-[color:var(--color-warn-700)] gap-1.5",
+        critical:
+          "border border-transparent bg-[color:var(--color-risk-600)] text-white gap-1.5",
+        blocking:
+          "border border-transparent bg-[color:var(--color-risk-900)] text-white gap-1.5",
+        sealed:
+          "border border-transparent bg-[color:var(--color-gold)]/10 text-[color:var(--color-gold)] gap-1.5",
       },
     },
     defaultVariants: {

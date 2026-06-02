@@ -57,6 +57,21 @@
 }
 
 :root {
+  /* OK / Compliant */
+  --color-ok-50: #F0F4EE;
+  --color-ok-700: #166534;
+
+  /* Warning */
+  --color-warn-50: #FEF3E2;
+  --color-warn-500: #D97706;
+  --color-warn-700: #B45309;
+
+  /* Critical / Risk */
+  --color-risk-50: #FEE2E2;
+  --color-risk-600: #DC2626;
+  --color-risk-700: #B91C1C;
+  --color-risk-900: #7F1D1D;
+
   --background: #fafaf7;       /* warmer off-white than #F8FAFC */
   --foreground: #0a1428;       /* deeper navy-tinged near-black */
 
