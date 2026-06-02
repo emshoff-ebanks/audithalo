@@ -116,11 +116,10 @@ export function computeRosterCompliance(entries: RawEntry[]): RosterRow[] {
     }
 
     // Map DB session events to EvaluationContext sessions.
-    // Only sealed (signedAt != null) events count toward compliance hours.
+    // All logged events count toward compliance hours; signed vs. unsigned status
+    // is tracked separately via pendingSignatureCount and the evidence package layer.
     const sessions: EvaluationContext["sessions"] = [];
     for (const evt of entry.rawEvents) {
-      if (evt.signedAt === null) continue; // pending — not yet part of the audit trail
-
       if (evt.kind === "practice") {
         sessions.push({
           kind: "practice",
