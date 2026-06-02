@@ -5,12 +5,9 @@ import { ArrowRight, FileSignature, AlertTriangle, CheckCircle2 } from "lucide-r
 import { getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import {
-  evaluate,
-  getRule,
+  resolveEvaluation,
   riskBadgeLabel,
   riskBadgeVariant,
-  type EvaluationContext,
-  type Rule,
 } from "@/lib/rules";
 import { pendingSignaturesForUser } from "@/lib/supervisee";
 import { Badge } from "@/components/ui/badge";
@@ -68,45 +65,9 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
     orderBy: [desc(schema.sessionEvents.date)],
   });
 
-  let rule: Rule | null = null;
-  let evalResult: ReturnType<typeof evaluate> | null = null;
-  const [, juris, lic, vRaw] =
-    assignment.ruleId.match(/^(.+?)-(.+?)-v(\d+)$/) ?? [];
-  if (juris && lic && vRaw) {
-    try {
-      rule = getRule(juris.toUpperCase(), lic.toUpperCase(), parseInt(vRaw, 10));
-      const ctx: EvaluationContext = {
-        superviseeId: userId,
-        startedAt: assignment.obligationStartedAt.toISOString(),
-        supervisionContractFiledAt:
-          assignment.supervisionContractFiledAt?.toISOString(),
-        sessions: events.map((e) =>
-          e.kind === "practice"
-            ? {
-                kind: "practice" as const,
-                id: e.id,
-                date: e.date.toISOString(),
-                durationHours: e.durationHours,
-              }
-            : {
-                kind: "supervision" as const,
-                id: e.id,
-                date: e.date.toISOString(),
-                durationHours: e.durationHours,
-                sessionType:
-                  (e.sessionType as "individual" | "triadic" | "group") ??
-                  "individual",
-                supervisorCredentials: e.supervisorCredentials ?? [],
-                groupAttendees: e.groupAttendees ?? undefined,
-              }
-        ),
-        asOf: new Date().toISOString(),
-      };
-      evalResult = evaluate(ctx, rule);
-    } catch {
-      // rule registry miss — fall through; pretend no rule
-    }
-  }
+  const resolved = resolveEvaluation(assignment, events);
+  const rule = resolved?.rule ?? null;
+  const evalResult = resolved?.evaluation ?? null;
 
   const pendingForMe = pendingSignaturesForUser(events, userId);
   const recent = events.slice(0, 5);

@@ -14,6 +14,8 @@ export {
   riskBadgeVariant,
   riskBadgeLabel,
 } from "./presentation";
+export { resolveEvaluation } from "./evaluation-context";
+export type { ResolvedEvaluation } from "./evaluation-context";
 export type {
   EvaluationContext,
   EvaluationResult,

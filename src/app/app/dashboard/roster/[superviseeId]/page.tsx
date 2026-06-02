@@ -12,15 +12,12 @@ import { auth } from "@/auth";
 import { getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import {
-  evaluate,
-  getRule,
   loadAllRules,
+  resolveEvaluation,
   riskBadgeLabel,
   riskBadgeVariant,
   severityStyles,
   toneClasses,
-  type EvaluationContext,
-  type Rule,
 } from "@/lib/rules";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -107,45 +104,9 @@ export default async function SuperviseeDetailPage({
     orderBy: [desc(schema.evidencePackages.createdAt)],
   });
 
-  let rule: Rule | null = null;
-  let evalResult: ReturnType<typeof evaluate> | null = null;
-  if (assignment) {
-    const [, juris, lic, vRaw] = assignment.ruleId.match(/^(.+?)-(.+?)-v(\d+)$/) ?? [];
-    if (juris && lic && vRaw) {
-      try {
-        rule = getRule(juris.toUpperCase(), lic.toUpperCase(), parseInt(vRaw, 10));
-        const ctx: EvaluationContext = {
-          superviseeId,
-          startedAt: assignment.obligationStartedAt.toISOString(),
-          supervisionContractFiledAt: assignment.supervisionContractFiledAt?.toISOString(),
-          sessions: events.map((e) =>
-            e.kind === "practice"
-              ? {
-                  kind: "practice" as const,
-                  id: e.id,
-                  date: e.date.toISOString(),
-                  durationHours: e.durationHours,
-                }
-              : {
-                  kind: "supervision" as const,
-                  id: e.id,
-                  date: e.date.toISOString(),
-                  durationHours: e.durationHours,
-                  sessionType:
-                    (e.sessionType as "individual" | "triadic" | "group") ??
-                    "individual",
-                  supervisorCredentials: e.supervisorCredentials ?? [],
-                  groupAttendees: e.groupAttendees ?? undefined,
-                }
-          ),
-          asOf: new Date().toISOString(),
-        };
-        evalResult = evaluate(ctx, rule);
-      } catch {
-        // Rule not in registry — fall through to "no rule" UI
-      }
-    }
-  }
+  const resolved = assignment ? resolveEvaluation(assignment, events) : null;
+  const rule = resolved?.rule ?? null;
+  const evalResult = resolved?.evaluation ?? null;
 
   const allRules = [...loadAllRules().values()].map((r) => ({
     id: `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`,
