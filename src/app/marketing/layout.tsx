@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AuditHaloWordmark } from "@/components/brand/AuditHaloMark";
+import { MobileNav } from "@/components/marketing/mobile-nav";
 
 const navLinks = [
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
   { href: "/states", label: "States" },
   { href: "/for-supervisors", label: "For Supervisors" },
+  { href: "/for-practices", label: "For Practices" },
   { href: "/security", label: "Security" },
 ];
 
@@ -35,12 +37,13 @@ export default function MarketingLayout({
             ))}
           </ul>
           <div className="flex items-center gap-2 shrink-0">
-            <Button asChild variant="ghost" size="sm">
+            <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
               <a href="https://app.audithalo.com/login">Sign in</a>
             </Button>
-            <Button asChild size="sm">
+            <Button asChild size="sm" className="hidden md:inline-flex">
               <a href="https://app.audithalo.com/register">Start free trial</a>
             </Button>
+            <MobileNav />
           </div>
         </nav>
       </header>
@@ -88,18 +91,20 @@ export default function MarketingLayout({
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/for-practices"
-                  className="hover:text-foreground"
-                >
+                <Link href="/for-practices" className="hover:text-foreground">
                   Practices
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <p className="label-overline mb-3">Legal</p>
+            <p className="label-overline mb-3">Company</p>
             <ul className="space-y-2 text-sm text-foreground/70">
+              <li>
+                <Link href="/contact" className="hover:text-foreground">
+                  Contact
+                </Link>
+              </li>
               <li>
                 <Link href="/legal/privacy" className="hover:text-foreground">
                   Privacy
