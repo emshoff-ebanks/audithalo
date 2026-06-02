@@ -4,7 +4,6 @@ import { db, schema } from "@/lib/db";
 import { canonicalJson, sha256Hex } from "@/lib/evidence";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { AuditHaloWordmark } from "@/components/brand/AuditHaloMark";
 
 export const metadata = { title: "Verify evidence — AuditHalo" };
 
@@ -20,7 +19,7 @@ export default async function VerifyPage({
 
   if (!providedHash) {
     return (
-      <Layout>
+      <div className="mx-auto max-w-3xl px-6 py-12">
         <Badge variant="outline" className="mb-3">Verifier</Badge>
         <h1 className="font-display text-3xl font-semibold text-foreground">
           Provide a document hash to verify
@@ -33,7 +32,7 @@ export default async function VerifyPage({
           </span>
           .
         </p>
-      </Layout>
+      </div>
     );
   }
 
@@ -73,7 +72,7 @@ export default async function VerifyPage({
   };
 
   return (
-    <Layout>
+    <div className="mx-auto max-w-3xl px-6 py-12">
       <Badge variant="success" className="mb-3">
         <CheckCircle2 className="h-3.5 w-3.5" />
         Verified
@@ -116,26 +115,13 @@ export default async function VerifyPage({
           </div>
         </CardContent>
       </Card>
-    </Layout>
-  );
-}
-
-function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <nav className="mx-auto max-w-3xl px-6 py-4">
-          <AuditHaloWordmark />
-        </nav>
-      </header>
-      <main className="mx-auto max-w-3xl px-6 py-12">{children}</main>
     </div>
   );
 }
 
 function Mismatch({ packageId, reason }: { packageId: string; reason: string }) {
   return (
-    <Layout>
+    <div className="mx-auto max-w-3xl px-6 py-12">
       <Badge variant="critical" className="mb-3">
         <XCircle className="h-3.5 w-3.5" />
         Mismatch
@@ -167,7 +153,7 @@ function Mismatch({ packageId, reason }: { packageId: string; reason: string }) 
           </div>
         </CardContent>
       </Card>
-    </Layout>
+    </div>
   );
 }
 
