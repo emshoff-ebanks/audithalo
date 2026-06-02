@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,13 +68,23 @@ export function RegisterForm() {
 
       <p className="text-xs text-foreground/60">
         By creating an account you agree to our{" "}
-        <Link href="/legal/terms" className="text-secondary hover:underline">
+        <a
+          href="https://audithalo.com/legal/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-secondary hover:underline"
+        >
           Terms
-        </Link>{" "}
+        </a>{" "}
         and{" "}
-        <Link href="/legal/privacy" className="text-secondary hover:underline">
+        <a
+          href="https://audithalo.com/legal/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-secondary hover:underline"
+        >
           Privacy Policy
-        </Link>
+        </a>
         .
       </p>
     </form>
