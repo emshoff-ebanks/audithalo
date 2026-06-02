@@ -27,6 +27,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AssignRuleForm } from "./assign-rule-form";
 import { LogSessionForm } from "./log-session-form";
+import { SessionLog } from "@/components/app/session-log";
 
 export const metadata = {
   title: "Supervisee — AuditHalo",
@@ -347,79 +348,27 @@ export default async function SuperviseeDetailPage({
       </Card>
 
       <Card className="mt-6">
-        <CardContent className="p-0">
-          <div className="px-6 py-4 border-b border-border">
-            <p className="label-overline">Session log ({events.length})</p>
-          </div>
+        <CardContent className="p-6">
+          <p className="label-overline mb-4">Session log ({events.length})</p>
           {events.length === 0 ? (
-            <p className="px-6 py-8 text-sm text-foreground/60">
+            <p className="text-sm text-foreground/60 py-4">
               No sessions logged yet.
             </p>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-accent">
-                <tr className="text-left">
-                  <th className="px-5 py-3 font-semibold">Date</th>
-                  <th className="px-5 py-3 font-semibold">Kind</th>
-                  <th className="px-5 py-3 font-semibold">Type</th>
-                  <th className="px-5 py-3 font-semibold">Hours</th>
-                  <th className="px-5 py-3 font-semibold">Signatures</th>
-                  <th className="px-5 py-3 font-semibold"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {events.map((e) => {
-                  const sigs = e.signatures ?? [];
-                  const myselfHasSigned = sigs.some(
-                    (s) => s.signerId === session.user.id
-                  );
-                  const fullySigned = !!e.signedAt;
-                  const isSelfSupervisee = session.user.id === e.superviseeId;
-                  const canSign =
-                    !fullySigned &&
-                    !myselfHasSigned &&
-                    (isSelfSupervisee || viewerIsManager);
-                  return (
-                    <tr key={e.id} className="border-t border-border">
-                      <td className="px-5 py-3 font-mono text-xs">
-                        {e.date.toISOString().slice(0, 10)}
-                      </td>
-                      <td className="px-5 py-3 capitalize">{e.kind}</td>
-                      <td className="px-5 py-3 capitalize">{e.sessionType ?? "—"}</td>
-                      <td className="px-5 py-3 font-mono">{e.durationHours.toFixed(1)}</td>
-                      <td className="px-5 py-3">
-                        {fullySigned ? (
-                          <Badge variant="success">Sealed</Badge>
-                        ) : sigs.length === 0 ? (
-                          <Badge variant="warning">Awaiting all signatures</Badge>
-                        ) : (
-                          <Badge variant="warning">
-                            {sigs.length} of 2 signed
-                          </Badge>
-                        )}
-                      </td>
-                      <td className="px-5 py-3 text-right">
-                        {canSign ? (
-                          <Link
-                            href={`/sign/${e.id}`}
-                            className="text-secondary text-xs font-medium hover:underline"
-                          >
-                            Sign →
-                          </Link>
-                        ) : (
-                          <Link
-                            href={`/sign/${e.id}`}
-                            className="text-foreground/50 text-xs hover:underline"
-                          >
-                            View
-                          </Link>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <SessionLog
+              events={events.map((e) => ({
+                id: e.id,
+                kind: e.kind,
+                date: e.date,
+                durationHours: e.durationHours,
+                sessionType: e.sessionType,
+                signedAt: e.signedAt,
+                signatures: e.signatures ?? [],
+              }))}
+              viewerIsManager={viewerIsManager}
+              viewerUserId={session.user.id}
+              superviseeId={superviseeId}
+            />
           )}
         </CardContent>
       </Card>
