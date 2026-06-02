@@ -25,6 +25,11 @@ describe("canonicalize", () => {
     expect(canonicalize(null)).toBe(null);
     expect(canonicalize(true)).toBe(true);
   });
+
+  it("treats Date as a scalar (does not flatten to {})", () => {
+    const d = new Date("2026-01-01T00:00:00.000Z");
+    expect(JSON.stringify(canonicalize(d))).toBe('"2026-01-01T00:00:00.000Z"');
+  });
 });
 
 describe("canonicalJson + sha256Hex", () => {
