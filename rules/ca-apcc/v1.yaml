@@ -97,6 +97,49 @@ evidence_requirements:
     - transcript
   immutability: sha256_signed_json
 
+page_content:
+  intro: |
+    The Associate Professional Clinical Counselor (APCC) is California's pre-licensure
+    registration for counselors working toward the Licensed Professional Clinical Counselor
+    (LPCC) credential issued by the California Board of Behavioral Sciences (BBS). Unlike
+    North Carolina's ratio-based system, California uses a weekly cadence model: if you
+    had more than 10 hours of direct client contact in a given week, you must have received
+    at least one hour of individual or triadic supervision that week.
+
+    California requires 3,000 post-degree supervised experience hours, of which at least
+    1,750 must be direct counseling hours. The APCC registration must be issued by the
+    BBS before any hours begin counting, and all hours must be earned within the 6 years
+    preceding your LPCC application. California's supervisor pool is broader than most
+    states — any licensed LPCC, LMFT, LCSW, licensed psychologist, or licensed
+    psychiatrist can supervise an APCC, provided they have completed the required
+    supervisor training.
+
+  supervisor_qualifications:
+    - "Must hold an active California license as LPCC, LMFT, LCSW, Licensed Psychologist, or Licensed Psychiatrist"
+    - "Must have completed 15 hours of supervisor training as required under 16 CCR §1822 (or the current regulation at time of supervision)"
+    - "APCC registration must be obtained from the BBS before any hours begin counting — experience before registration does not count toward licensure"
+    - "Triadic supervision (one supervisor, two supervisees) counts as individual supervision in California"
+    - "No more than 5 supervision hours per week count toward the experience total — additional supervision beyond 5 hours/week is not credited"
+
+  key_warnings:
+    - "Do not begin accruing hours before your APCC registration is issued by the BBS — pre-registration hours are not creditable under any circumstances"
+    - "California's 6-year lookback window means hours older than 6 years before your LPCC application date will not count — plan your timeline accordingly"
+    - "The 5-hour weekly cap on supervision hours is a ceiling, not a floor — you can receive more supervision, but only 5 hours/week will count toward your total"
+    - "The 1,750 direct counseling hours requirement is a subset of the 3,000 total — track them separately from the start"
+    - "Supervisors must verify their own 15-hour training requirement is current — supervising without completed training may invalidate supervised hours"
+
+  faq:
+    - q: "How many supervised hours does an APCC need in California?"
+      a: "3,000 post-degree supervised experience hours total, of which at least 1,750 must be direct counseling contact hours. All hours must be earned after your APCC registration is issued and within 6 years of your LPCC application date."
+    - q: "How often do I need supervision in California?"
+      a: "California uses a weekly cadence model, not a per-practice-hour ratio. In any week where you had more than 10 hours of direct client contact, you must receive at least 1 hour of individual or triadic supervision. AuditHalo tracks this on a week-by-week basis and flags any weeks where you fell below the threshold."
+    - q: "Who qualifies as an approved supervisor for a California APCC?"
+      a: "Any of the following with a current California license: Licensed Professional Clinical Counselor (LPCC), Licensed Marriage and Family Therapist (LMFT), Licensed Clinical Social Worker (LCSW), Licensed Psychologist, or Licensed Psychiatrist. The supervisor must also have completed the 15-hour BBS supervisor training requirement."
+    - q: "Does my APCC registration expire?"
+      a: "Your APCC registration itself renews, but the experience hours must all be completed within 6 years of your LPCC application. The practical clock is the application deadline, not the registration expiration."
+    - q: "Can I use supervision hours from before my APCC registration?"
+      a: "No. Hours earned before the BBS issues your APCC registration do not count toward LPCC licensure under California law."
+
 notes:
   - "PRELIMINARY rule — DO NOT use for production user assignment until a CA-licensed Qualified Supervisor reviews. Multiple numeric values are LIKELY, not VERIFIED."
   - "CA's actual supervision rule is a WEEKLY CADENCE conditional on direct-contact volume (1 hr individual/triadic per week if >10 direct client contact hours that week). Our existing `individual_supervision_cadence` check approximates this with a 7-day max gap. A future v2 check (`weekly_supervision_cadence`) will handle the conditional threshold properly."

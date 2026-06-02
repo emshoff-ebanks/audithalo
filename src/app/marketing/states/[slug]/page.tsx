@@ -7,6 +7,7 @@ import {
   FileSignature,
   CalendarClock,
   AlertTriangle,
+  TriangleAlert,
 } from "lucide-react";
 import {
   getLatestRuleByJurLic,
@@ -32,9 +33,13 @@ export async function generateMetadata({ params }: { params: Params }) {
   if (!parsed) return { title: "Not found — AuditHalo" };
   const rule = getLatestRuleByJurLic(parsed.jurisdiction, parsed.licenseCode);
   if (!rule) return { title: "Not found — AuditHalo" };
+  const pc = rule.page_content;
+  const desc = pc?.intro
+    ? pc.intro.replace(/\s+/g, " ").trim().slice(0, 160)
+    : rule.summary.replace(/\s+/g, " ").trim().slice(0, 160);
   return {
-    title: `${rule.jurisdiction} ${rule.license_code} supervision compliance — AuditHalo`,
-    description: `Track your ${rule.jurisdiction} ${rule.license_code} supervised practice hours against ${rule.citation.admincode}. ${rule.summary.replace(/\s+/g, " ").trim().slice(0, 140)}`,
+    title: `${rule.jurisdiction} ${rule.license_code} Supervision Hours & Requirements — AuditHalo`,
+    description: desc,
   };
 }
 
@@ -50,9 +55,11 @@ export default async function StateRulePage({ params }: { params: Params }) {
       ? rule.verification.last_verified_at.slice(0, 10)
       : "—";
   const isPreliminary = rule.verification.last_verified_by.includes("preliminary");
+  const pc = rule.page_content;
 
   return (
     <>
+      {/* Header */}
       <section className="mx-auto max-w-6xl px-6 pt-12 pb-8">
         <Button asChild variant="ghost" size="sm" className="-ml-3 mb-4">
           <Link href="/states">
@@ -76,99 +83,144 @@ export default async function StateRulePage({ params }: { params: Params }) {
         <p className="mt-3 text-foreground/70">{rule.issuing_board}</p>
       </section>
 
+      {/* Intro + technical requirements */}
       <section className="border-t border-border bg-card">
         <div className="mx-auto max-w-6xl px-6 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Summary + hour totals */}
-            <Card className="lg:col-span-2">
-              <CardContent className="p-8 space-y-6">
-                <div>
-                  <p className="label-overline mb-2">Summary</p>
-                  <p className="text-foreground/80 leading-relaxed whitespace-pre-line">
-                    {rule.summary}
-                  </p>
-                </div>
-
-                <div className="border-t border-border pt-6">
-                  <p className="label-overline mb-3">Hour requirements</p>
-                  <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                    <div>
-                      <dt className="text-foreground/60">Total practice hours</dt>
-                      <dd className="mt-1 font-display text-2xl font-semibold text-foreground">
-                        {rule.structured.total_practice_hours_required.toLocaleString()}
-                      </dd>
+            {/* Main content */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Intro paragraphs */}
+              {pc?.intro && (
+                <Card>
+                  <CardContent className="p-8">
+                    <p className="label-overline mb-3">Overview</p>
+                    <div className="space-y-4 text-foreground/80 leading-relaxed">
+                      {pc.intro.trim().split(/\n\s*\n/).map((para, i) => (
+                        <p key={i}>{para.trim()}</p>
+                      ))}
                     </div>
-                    <div>
-                      <dt className="text-foreground/60">Total supervision hours</dt>
-                      <dd className="mt-1 font-display text-2xl font-semibold text-foreground">
-                        {rule.structured.total_supervision_hours_required.toLocaleString()}
-                      </dd>
-                    </div>
-                    {rule.structured.min_individual_supervision_fraction != null && (
-                      <div>
-                        <dt className="text-foreground/60">
-                          Min. individual supervision share
-                        </dt>
-                        <dd className="mt-1 font-display text-2xl font-semibold text-foreground">
-                          {(
-                            rule.structured.min_individual_supervision_fraction * 100
-                          ).toFixed(0)}
-                          %
-                        </dd>
-                      </div>
-                    )}
-                    {rule.structured.group_max_attendees != null && (
-                      <div>
-                        <dt className="text-foreground/60">Group session max</dt>
-                        <dd className="mt-1 font-display text-2xl font-semibold text-foreground">
-                          {rule.structured.group_max_attendees}{" "}
-                          <span className="text-base text-foreground/60">
-                            attendees
-                          </span>
-                        </dd>
-                      </div>
-                    )}
-                    {(rule.structured.min_duration_months != null ||
-                      rule.structured.max_duration_months != null) && (
-                      <div className="col-span-2">
-                        <dt className="text-foreground/60">Duration window</dt>
-                        <dd className="mt-1 font-display text-xl font-semibold text-foreground">
-                          {rule.structured.min_duration_months ?? "—"} to{" "}
-                          {rule.structured.max_duration_months ?? "—"} months
-                        </dd>
-                      </div>
-                    )}
-                  </dl>
-                </div>
+                  </CardContent>
+                </Card>
+              )}
 
-                <div className="border-t border-border pt-6">
-                  <p className="label-overline mb-3">Checks AuditHalo runs</p>
-                  <ul className="space-y-3 text-sm">
-                    {rule.checks.map((c) => (
-                      <li key={c.id} className="flex gap-3">
-                        {c.severity === "blocker" ? (
-                          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-risk)]" />
-                        ) : c.severity === "warning" ? (
-                          <CalendarClock className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-warning)]" />
-                        ) : (
-                          <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-success)]" />
-                        )}
+              {/* Hour requirements */}
+              <Card>
+                <CardContent className="p-8 space-y-6">
+                  <div>
+                    <p className="label-overline mb-2">Summary</p>
+                    <p className="text-foreground/80 leading-relaxed whitespace-pre-line">
+                      {rule.summary}
+                    </p>
+                  </div>
+
+                  <div className="border-t border-border pt-6">
+                    <p className="label-overline mb-3">Hour requirements</p>
+                    <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                      <div>
+                        <dt className="text-foreground/60">Total practice hours</dt>
+                        <dd className="mt-1 font-display text-2xl font-semibold text-foreground">
+                          {rule.structured.total_practice_hours_required.toLocaleString()}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-foreground/60">Total supervision hours</dt>
+                        <dd className="mt-1 font-display text-2xl font-semibold text-foreground">
+                          {rule.structured.total_supervision_hours_required.toLocaleString()}
+                        </dd>
+                      </div>
+                      {rule.structured.min_individual_supervision_fraction != null && (
                         <div>
-                          <p className="font-medium text-foreground">
-                            {c.description}
-                          </p>
-                          <p className="text-xs font-mono text-foreground/50 mt-0.5">
-                            {c.id} · {c.severity}
-                          </p>
+                          <dt className="text-foreground/60">Min. individual share</dt>
+                          <dd className="mt-1 font-display text-2xl font-semibold text-foreground">
+                            {(rule.structured.min_individual_supervision_fraction * 100).toFixed(0)}%
+                          </dd>
                         </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
+                      )}
+                      {rule.structured.group_max_attendees != null && (
+                        <div>
+                          <dt className="text-foreground/60">Group session max</dt>
+                          <dd className="mt-1 font-display text-2xl font-semibold text-foreground">
+                            {rule.structured.group_max_attendees}{" "}
+                            <span className="text-base text-foreground/60">attendees</span>
+                          </dd>
+                        </div>
+                      )}
+                      {(rule.structured.min_duration_months != null ||
+                        rule.structured.max_duration_months != null) && (
+                        <div className="col-span-2">
+                          <dt className="text-foreground/60">Duration window</dt>
+                          <dd className="mt-1 font-display text-xl font-semibold text-foreground">
+                            {rule.structured.min_duration_months ?? "—"} to{" "}
+                            {rule.structured.max_duration_months ?? "—"} months
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
+                  </div>
 
-            {/* Citation + evidence + verification */}
+                  <div className="border-t border-border pt-6">
+                    <p className="label-overline mb-3">Checks AuditHalo runs</p>
+                    <ul className="space-y-3 text-sm">
+                      {rule.checks.map((c) => (
+                        <li key={c.id} className="flex gap-3">
+                          {c.severity === "blocker" ? (
+                            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-risk)]" />
+                          ) : c.severity === "warning" ? (
+                            <CalendarClock className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-warning)]" />
+                          ) : (
+                            <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-success)]" />
+                          )}
+                          <div>
+                            <p className="font-medium text-foreground">{c.description}</p>
+                            <p className="text-xs font-mono text-foreground/50 mt-0.5">
+                              {c.id} · {c.severity}
+                            </p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Supervisor qualifications */}
+              {pc?.supervisor_qualifications && pc.supervisor_qualifications.length > 0 && (
+                <Card>
+                  <CardContent className="p-8">
+                    <p className="label-overline mb-3">Supervisor qualifications</p>
+                    <ul className="space-y-3 text-sm text-foreground/80">
+                      {pc.supervisor_qualifications.map((q, i) => (
+                        <li key={i} className="flex gap-3">
+                          <FileSignature className="h-4 w-4 mt-0.5 shrink-0 text-secondary" strokeWidth={1.75} />
+                          <span className="leading-relaxed">{q}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Key warnings */}
+              {pc?.key_warnings && pc.key_warnings.length > 0 && (
+                <Card className="border-[color:var(--color-warning)]/30">
+                  <CardContent className="p-8">
+                    <p className="label-overline mb-3 text-[color:var(--color-warning)]">
+                      Common mistakes to avoid
+                    </p>
+                    <ul className="space-y-3 text-sm text-foreground/80">
+                      {pc.key_warnings.map((w, i) => (
+                        <li key={i} className="flex gap-3">
+                          <TriangleAlert className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-warning)]" strokeWidth={1.75} />
+                          <span className="leading-relaxed">{w}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Sidebar */}
             <div className="space-y-6">
               <Card>
                 <CardContent className="p-6">
@@ -202,17 +254,15 @@ export default async function StateRulePage({ params }: { params: Params }) {
                     </div>
                     <div>
                       <dt className="text-foreground/60">Verified by</dt>
-                      <dd className="text-foreground">
-                        {rule.verification.last_verified_by}
-                      </dd>
+                      <dd className="text-foreground">{rule.verification.last_verified_by}</dd>
                     </div>
                   </dl>
                   {isPreliminary && (
                     <p className="mt-4 text-xs text-foreground/60 leading-relaxed">
-                      This encoding is preliminary — drafted from public sources, awaiting
-                      QA by a licensed clinical supervisor in this jurisdiction before
-                      we treat it as production-grade. Use the citation link to verify
-                      anything that matters.
+                      This encoding is preliminary — drafted from public sources,
+                      awaiting QA by a licensed clinical supervisor in this
+                      jurisdiction. Use the citation link to verify anything that
+                      matters for your specific situation.
                     </p>
                   )}
                 </CardContent>
@@ -235,25 +285,65 @@ export default async function StateRulePage({ params }: { params: Params }) {
                   </p>
                 </CardContent>
               </Card>
+
+              <div className="border border-border rounded-sm p-6 bg-card">
+                <p className="font-display text-base font-semibold text-foreground mb-2">
+                  Track your {rule.jurisdiction} hours
+                </p>
+                <p className="text-sm text-foreground/70 mb-4">
+                  AuditHalo evaluates every hour you log against this rule and
+                  flags issues before they become problems.
+                </p>
+                <Button asChild size="sm" className="w-full">
+                  <a href="https://app.audithalo.com/register">
+                    Start free <ArrowRight />
+                  </a>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-3xl px-6 py-20 text-center">
+      {/* FAQ */}
+      {pc?.faq && pc.faq.length > 0 && (
+        <section className="border-t border-border">
+          <div className="mx-auto max-w-3xl px-6 py-16 lg:py-20">
+            <Badge variant="outline" className="mb-4">
+              Frequently asked
+            </Badge>
+            <h2 className="font-display text-3xl font-semibold text-foreground">
+              {rule.jurisdiction} {rule.license_code} — common questions.
+            </h2>
+            <div className="mt-10 space-y-8">
+              {pc.faq.map((item, i) => (
+                <div key={i}>
+                  <h3 className="font-display text-lg font-semibold text-foreground">
+                    {item.q}
+                  </h3>
+                  <p className="mt-2 text-foreground/70 leading-relaxed">{item.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* CTA */}
+      <section className="border-t border-border bg-card">
+        <div className="mx-auto max-w-3xl px-6 py-16 text-center">
           <Badge variant="outline" className="mb-4">
             Start tracking
           </Badge>
           <h2 className="font-display text-3xl font-semibold text-foreground">
-            Track your {rule.jurisdiction} {rule.license_code} hours, audit-ready.
+            Track your {rule.jurisdiction} {rule.license_code} supervision hours, audit-ready.
           </h2>
           <p className="mt-4 text-foreground/70">
-            14-day free trial. No credit card. Supervisees stay free forever.
+            14-day free trial. No credit card. Supervisee accounts are free — always.
           </p>
           <Button asChild size="lg" className="mt-8">
-            <a href="https://app.audithalo.com/register">
-              Start free trial <ArrowRight />
+            <a href={`https://app.audithalo.com/register?state=${rule.jurisdiction.toLowerCase()}`}>
+              Start your supervisor account <ArrowRight />
             </a>
           </Button>
         </div>

@@ -94,6 +94,50 @@ evidence_requirements:
     - transcript
   immutability: sha256_signed_json
 
+page_content:
+  intro: |
+    The Registered Mental Health Counselor Intern (RMHCI) is Florida's pre-licensure
+    registration for counselors working toward full Licensed Mental Health Counselor
+    (LMHC) status under the Florida Board of Clinical Social Work, Marriage and Family
+    Therapy, and Mental Health Counseling. Florida has one feature that makes it
+    different from every other state in our coverage area: the RMHCI registration is
+    valid for 60 months and is NOT RENEWABLE. There are no extensions, no exceptions.
+    Every hour, every supervision session, and the NCMHCE exam must be completed
+    within that 60-month window.
+
+    Florida requires 1,500 hours of supervised post-master's experience (the lowest
+    total of any state we cover) earned over at least 100 weeks, plus 100 supervision
+    hours with at least 50 of those hours being individual supervision. The combination
+    of a lower hour requirement with a hard 5-year non-renewable deadline means the
+    risk in Florida isn't falling short on hours — it's running out of time. AuditHalo
+    flags your RMHCI supervisees 180, 90, and 30 days before their registration expires.
+
+  supervisor_qualifications:
+    - "Must hold the Florida Qualified Supervisor (QS) designation issued by the Florida Board"
+    - "The QS designation requires: active licensure as LMHC, LMFT, LCSW, or Licensed Psychologist in Florida; at least 5 years of post-licensure clinical experience; and completion of a 15-hour board-approved supervisor training course"
+    - "RMHCI registration must be issued by the Florida Board before any hours begin counting"
+    - "Both individual and group supervision must be provided by a QS-designated supervisor — no exceptions"
+    - "Group supervision sessions are capped at approximately 6 supervisees per session (verify current F.A.C. 64B4 text)"
+
+  key_warnings:
+    - "The 60-month RMHCI registration window is non-renewable — there are no extensions and no exceptions; all 1,500 hours, 100 supervision hours, and the NCMHCE must be completed before expiration"
+    - "Florida requires at least 1,000 of the 1,500 hours to be face-to-face psychotherapy — track these separately to ensure you're meeting this subset requirement"
+    - "The 100-week minimum duration requirement is separate from the 60-month maximum — you must accumulate hours over a minimum of 100 weeks even if you could complete the hours faster"
+    - "Supervision must be delivered by a Florida QS-designated supervisor, not just any LMHC or licensed clinician — verify your supervisor's QS designation before your first session"
+    - "A supervisee who approaches the 60-month deadline without completing hours has no path forward except reapplying and restarting from zero — AuditHalo is built to prevent this scenario"
+
+  faq:
+    - q: "How many supervised hours does a Florida RMHCI need?"
+      a: "1,500 hours of supervised post-master's experience, including at least 1,000 hours of face-to-face psychotherapy. Additionally, you need 100 supervision hours with at least 50 being individual supervision. All of this must be completed within 60 months of your RMHCI registration issuance — the registration does not renew."
+    - q: "What happens if I don't complete my hours within 60 months in Florida?"
+      a: "Your RMHCI registration expires and cannot be renewed. You would need to reapply for a new RMHCI registration and restart the supervised hours requirement from zero. This is why AuditHalo flags Florida supervisees at 180, 90, and 30 days before their registration expiration — it's the most consequential deadline in the states we cover."
+    - q: "Who qualifies as a Florida Qualified Supervisor?"
+      a: "A Florida Qualified Supervisor (QS) must hold an active Florida license as LMHC, LMFT, LCSW, or Licensed Psychologist, have at least 5 years of post-licensure clinical experience, and have completed a 15-hour board-approved clinical supervisor training course. The QS designation is issued by the Florida Board — it's not automatic with licensure."
+    - q: "Can I work toward LMHC licensure in Florida if I'm also working in another state?"
+      a: "Florida joined the Counseling Compact. However, Compact privileges apply to fully licensed LMHCs, not RMHCIs. If you practice in another state during your intern period, you must hold a registration or license in that state. Your Florida RMHCI hours still count only toward Florida licensure."
+    - q: "Does AuditHalo track the 1,000-hour direct psychotherapy subset requirement?"
+      a: "The direct psychotherapy subset tracking is on our near-term roadmap. The current version tracks your total practice hours and supervision hours against state requirements and warns on the 60-month expiration window. We'll add the face-to-face psychotherapy hour subset as a separate counter in an upcoming update."
+
 notes:
   - "PRELIMINARY rule — DO NOT use for production user assignment until a Florida Qualified Supervisor reviews. Several numeric values are LIKELY, not VERIFIED."
   - "FLORIDA'S DEFINING FEATURE: registration is valid for 60 months and IS NOT RENEWABLE (F.S. 491.0045(4)). All 1,500 hours, the 100 supervision hours, and the NCMHCE exam must be completed within the window. This is the single most important compliance pressure point. A future v2 check (`permit_expiration_window`) will warn the supervisee at 180/90/30 days remaining."

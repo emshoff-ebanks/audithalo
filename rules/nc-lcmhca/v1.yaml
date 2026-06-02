@@ -113,6 +113,48 @@ evidence_requirements:
     - transcript
   immutability: sha256_signed_json
 
+page_content:
+  intro: |
+    The Licensed Clinical Mental Health Counselor Associate (LCMHCA) is North Carolina's
+    pre-licensure credential for counselors working toward full LCMHC licensure. To
+    earn the LCMHCA credential, candidates must complete a master's degree in counseling
+    or a related field from a CACREP-accredited program (or equivalent), pass the
+    National Counselor Examination (NCE) or National Clinical Mental Health Counseling
+    Examination (NCMHCE), and then accumulate 3,000 hours of supervised practice under
+    an NC Board-approved clinical supervisor (LCMHCS) over a two-to-five-year window.
+
+    North Carolina's supervision rules are ratio-based rather than weekly-cadence-based:
+    you need at least one hour of individual supervision for every 40 practice hours
+    logged. At least 75% of all supervision hours must be individual (one supervisor
+    to one supervisee). AuditHalo tracks this ratio continuously and flags your roster
+    when any supervisee falls behind — so you catch problems at 200 hours, not 2,900.
+
+  supervisor_qualifications:
+    - "Must hold the LCMHCS (Licensed Clinical Mental Health Counselor Supervisor) credential issued by the NC Board of Licensed Clinical Mental Health Counselors"
+    - "LCMHCS credential requires at least 2 years post-LCMHC experience plus a board-approved supervisor training course"
+    - "Supervision contract (Form LCS-100) must be filed with the NC Board BEFORE any hours begin counting — hours logged before the contract is on file do not count toward licensure"
+    - "Triadic supervision (one supervisor + two supervisees) is treated as individual supervision in NC if the supervisor attests it provides individual-quality attention"
+    - "Group supervision sessions are capped at 12 supervisees per session"
+
+  key_warnings:
+    - "Do not log practice hours before your NC Board supervision contract is filed and approved — this is the most common and most costly mistake LCMHCA candidates make"
+    - "The 75% individual supervision requirement is enforced as a rolling fraction across all logged hours, not per session or per month — track it from day one"
+    - "The 2-to-5-year window is real: hours logged after 60 months from the start of the LCMHCA period may not count toward a single licensure application"
+    - "Supervisors must maintain their LCMHCS credential throughout the supervision period — a lapsed LCMHCS credential invalidates the supervision logged under it"
+    - "Group supervision hours count at a 2:1 ratio (2 hours of group = 1 hour of supervision credit toward the cadence requirement)"
+
+  faq:
+    - q: "How many supervised hours does an LCMHCA need in North Carolina?"
+      a: "3,000 hours of supervised professional practice, completed over a minimum of 2 years and no more than 5 years. Within those 3,000 hours, you must accumulate at least 100 supervision hours, of which at least 75 must be individual (one-on-one with your supervisor)."
+    - q: "What qualifies as an approved supervisor in NC?"
+      a: "Your supervisor must hold the LCMHCS (Licensed Clinical Mental Health Counselor Supervisor) credential issued by the NC Board. No other license type — LCSW, LPC, LMFT, psychologist — satisfies the NC requirement. Your supervisor must also have a current supervision contract on file with the board for your supervision relationship."
+    - q: "What happens if the NC Board changes the supervision rules while I'm mid-licensure?"
+      a: "AuditHalo versions every rule with an effective date. If the NC Board updates requirements, the new rule takes effect from its effective date — your hours logged before that date remain valid under the rule version in effect when they were logged. This is the same grandfathering protection a board-experienced attorney would advise you to document."
+    - q: "Can I count supervision hours from before I received my LCMHCA?"
+      a: "No. Hours accrued before your LCMHCA is issued and your supervision contract is on file with the NC Board do not count toward the 3,000-hour requirement. The clock starts the day your contract is approved."
+    - q: "Does AuditHalo generate the documentation the NC Board requires?"
+      a: "AuditHalo generates a tamper-evident evidence package for each completed supervision session: date, duration, session type, supervisor credentials, session note, and intent-confirmed signatures from both supervisor and supervisee. The package is SHA-256 hashed and immutable — the same standard of proof the board would build themselves."
+
 notes:
   - The supervisor's certified-supervisor status (LCMHCS) is itself subject to renewal; AuditHalo verifies supervisor credentials at the time each session is signed, not retrospectively.
   - Triadic supervision (one supervisor + two supervisees) is treated as individual in NC if the supervisor attests it provides individual attention; for now AuditHalo treats triadic as group unless overridden by the supervisor's attestation.

@@ -59,6 +59,18 @@ export const ruleEvidenceSchema = z.object({
   immutability: z.string(),
 });
 
+export const ruleFaqItemSchema = z.object({
+  q: z.string(),
+  a: z.string(),
+});
+
+export const rulePageContentSchema = z.object({
+  intro: z.string().optional(),
+  supervisor_qualifications: z.array(z.string()).optional(),
+  key_warnings: z.array(z.string()).optional(),
+  faq: z.array(ruleFaqItemSchema).optional(),
+}).optional();
+
 export const ruleSchema = z
   .object({
     jurisdiction: z.string().length(2),
@@ -75,6 +87,7 @@ export const ruleSchema = z
     checks: z.array(ruleCheckSchema),
     evidence_requirements: ruleEvidenceSchema,
     notes: z.array(z.string()).default([]),
+    page_content: rulePageContentSchema,
   })
   .strict();
 export type Rule = z.infer<typeof ruleSchema>;

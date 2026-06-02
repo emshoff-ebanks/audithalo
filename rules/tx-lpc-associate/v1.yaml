@@ -93,6 +93,50 @@ evidence_requirements:
     - transcript
   immutability: sha256_signed_json
 
+page_content:
+  intro: |
+    The Licensed Professional Counselor Associate (LPC-Associate) is Texas's pre-licensure
+    credential for counselors working toward full LPC licensure under the oversight of the
+    Texas State Board of Examiners of Professional Counselors (TSBEP). Texas uses a
+    monthly supervision cadence: you must receive at least 4 hours of supervision per
+    month, of which at least 1 hour must be individual (one-on-one). This structure
+    gives supervisors and supervisees a predictable monthly rhythm compared to
+    ratio-based states.
+
+    Texas requires 3,000 total supervised experience hours, with at least 1,500 of
+    those hours being direct client contact. The LPC-Associate license and a board-filed
+    Supervisory Agreement must both be in place before any hours begin counting. The
+    minimum supervision period is 18 months, and your supervisor must hold the
+    LPC-Supervisor designation — not just an LPC license. Texas's supervisor designation
+    requires 5 years as a licensed LPC plus completion of a 40-hour board-approved
+    supervisor training course.
+
+  supervisor_qualifications:
+    - "Must hold an active Texas LPC license with the LPC-Supervisor designation (not just a standard LPC license)"
+    - "LPC-Supervisor designation requires a minimum of 5 years as a licensed LPC and completion of a 40-hour board-approved clinical supervision course"
+    - "A Supervisory Agreement must be filed with TSBEP before any hours begin counting — verbal agreements do not satisfy this requirement"
+    - "The LPC-Associate must also have an active LPC-Associate license issued by TSBEP before any hours are creditable"
+    - "Group supervision may not exceed 12 supervisees per session (pending verification)"
+
+  key_warnings:
+    - "Both the LPC-Associate license AND the Supervisory Agreement must be on file with TSBEP before any hours count — missing either one invalidates hours logged during that period"
+    - "Texas requires at least 1,500 of the 3,000 hours to be direct client contact — track these separately from day one, as the split between direct and indirect hours matters at application"
+    - "The LPC-Supervisor designation is a separate credential from the LPC license — verify your supervisor holds both before signing any supervision agreement"
+    - "Counseling Compact (HB 4533, 2023): Texas joined the Counseling Compact, but Compact privileges apply to fully licensed LPCs, not LPC-Associates — your supervision requirements are not affected by the Compact"
+    - "Texas requires the title 'LPC Associate' on all professional materials — using 'LPC' without the Associate designation is a licensing violation"
+
+  faq:
+    - q: "How many supervised hours does a Texas LPC-Associate need?"
+      a: "3,000 total supervised experience hours, of which at least 1,500 must be direct client contact hours. The supervision period must be at least 18 months, and you must receive at least 4 hours of supervision per month with at least 1 of those hours being individual supervision."
+    - q: "What is the LPC-Supervisor designation and why does it matter?"
+      a: "The LPC-Supervisor is a separate designation that Texas LPCs must earn before they can legally supervise LPC-Associates. It requires 5 years of post-licensure experience as an LPC plus a 40-hour board-approved clinical supervision training course. If your supervisor does not hold this designation, the hours they supervise do not count toward your licensure — regardless of their clinical qualifications."
+    - q: "What is a Supervisory Agreement and when do I need to file it?"
+      a: "The Supervisory Agreement is a formal document filed with TSBEP that establishes the supervision relationship, the setting, the supervisor's credentials, and the terms of supervision. It must be on file with the board BEFORE you begin accumulating supervised hours. Hours logged without a filed agreement are not creditable."
+    - q: "How does AuditHalo handle Texas's monthly supervision cadence?"
+      a: "AuditHalo tracks supervision hours on a rolling monthly basis and flags any month where you logged fewer than 4 total supervision hours or fewer than 1 individual supervision hour. Supervisors see this on their dashboard 30 days before the end of each calendar month — enough time to schedule a session before falling out of cadence."
+    - q: "Can a Texas LPC-Associate work in another state while completing their hours?"
+      a: "Texas joined the Counseling Compact in 2024. However, Compact privileges apply to fully licensed LPCs, not LPC-Associates. If you need to work across state lines during your associate period, you must hold a license or registration in each state where you practice."
+
 notes:
   - "PRELIMINARY rule — DO NOT use for production user assignment until a Texas LPC-Supervisor reviews. Several numeric values are LIKELY, not VERIFIED."
   - "TX uses a MONTHLY cadence (4 hrs/month total, ≥1 individual), NOT a per-practice-hour ratio. Our `individual_supervision_cadence` check with max_gap_days=30 approximates this; a future v2 check will properly model 'at least 4 supervision hours per calendar month with at least 1 individual'."

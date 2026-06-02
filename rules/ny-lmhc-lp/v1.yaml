@@ -95,6 +95,50 @@ evidence_requirements:
     - transcript
   immutability: sha256_signed_json
 
+page_content:
+  intro: |
+    New York does not use an "associate license" model for pre-licensed mental health
+    counselors. Instead, the New York State Education Department (NYSED) issues a
+    Limited Permit to counselors who have completed their master's degree and met
+    initial requirements. This Limited Permit allows holders to practice under
+    supervision while accumulating the 3,000 hours required for full Licensed Mental
+    Health Counselor (LMHC) licensure under Article 163 of New York Education Law.
+
+    New York's supervision framework is notably broad: unlike NC (which requires a
+    specific LCMHCS credential) or TX (which requires an LPC-Supervisor designation),
+    New York accepts supervisors from five different license types — LMHC, LCSW,
+    Licensed Psychologist, Licensed Psychiatrist, and LMFT. The Limited Permit is
+    valid for 2 years initially, with one renewal available for up to 1 additional
+    year — for a maximum of 3 years total. An important distinction: New York Limited
+    Permit holders may NOT use "LMHC-LP" or any credential designation in professional
+    materials. The permit authorizes practice but does not confer a licensure title.
+
+  supervisor_qualifications:
+    - "Must hold an active New York license as LMHC, LCSW, Licensed Psychologist, Licensed Psychiatrist, or LMFT"
+    - "No separate supervisor designation is required in New York — the underlying license suffices (unlike NC, TX, or FL)"
+    - "The supervisor and practice setting must be listed on the Limited Permit when it is issued by NYSED — changes to supervisor or setting require a permit amendment"
+    - "LCAT (Licensed Creative Arts Therapist) and LP (Licensed Psychoanalyst) may also qualify as supervisors under Article 163 — verify current NYSED guidance"
+    - "NYSED's framework gives the supervisor legal co-responsibility for the client's assessment, evaluation, and treatment — not just the supervisee's professional development"
+
+  key_warnings:
+    - "Limited Permit holders may NOT use any credential abbreviation (including 'LMHC-LP') in professional materials — this is explicitly prohibited by NYSED and can jeopardize your permit"
+    - "The Limited Permit is valid for 2 years initially, renewable once for up to 1 additional year — the hard maximum is 3 years from issuance; plan your timeline with no margin for renewal delays"
+    - "Hours accrued before the Limited Permit is issued do not count toward licensure — the clock starts on the permit issuance date, not degree conferral"
+    - "New York uses qualitative 'regular and consistent' language for supervision cadence rather than a specific per-session or per-week requirement — AuditHalo applies a 14-day gap proxy; verify your supervisor's interpretation of this requirement"
+    - "New York requires at least 1,500 of the 3,000 hours to be direct client contact — track this subset separately"
+
+  faq:
+    - q: "What is a New York LMHC Limited Permit and how is it different from an associate license?"
+      a: "New York does not have an 'associate' or 'intern' license for mental health counselors. Instead, NYSED issues a Limited Permit that authorizes pre-licensed counselors to practice under supervision. The permit is tied to a specific supervisor and practice setting. It's functionally similar to an associate license in other states but operates under NYSED's education law framework rather than a professional licensing board."
+    - q: "How many supervised hours does a New York Limited Permit holder need?"
+      a: "3,000 hours of supervised post-master's experience, including at least 1,500 hours of direct client contact. All hours must be accumulated under the Limited Permit, meaning after NYSED issues the permit and while it remains valid (maximum 3 years)."
+    - q: "Who can supervise a New York LMHC Limited Permit holder?"
+      a: "New York has the broadest supervisor pool of any state we cover: LMHC, LCSW, Licensed Psychologist, Licensed Psychiatrist, or LMFT — all with active New York licenses. No separate supervisor training or designation is required, which is a significant difference from states like NC, TX, and FL."
+    - q: "Can I renew my New York Limited Permit if I haven't completed my hours?"
+      a: "Once. The initial permit is valid for 2 years and can be renewed once for up to 1 additional year — for a maximum of 3 years total from the original issuance date. There is no second renewal. Plan your timeline assuming 3 years is the hard ceiling."
+    - q: "Can I use 'LMHC-LP' as my credential in New York?"
+      a: "No. NYSED explicitly prohibits Limited Permit holders from using any credential abbreviation — including 'LMHC-LP,' 'LP-MHC,' or similar — in professional materials. You may describe yourself as 'Mental Health Counselor (Limited Permit)' but cannot use a post-nominal abbreviation. AuditHalo's user interface does not display credential abbreviations for New York permit holders for this reason."
+
 notes:
   - "PRELIMINARY rule — DO NOT use for production user assignment until a New York LMHC or NYSED-credentialed reviewer signs off. Multiple values are LIKELY or UNKNOWN, not VERIFIED."
   - "NEW YORK DEFINING FEATURES: (a) No 'associate license' — pre-licensed counselors practice under a LIMITED PERMIT. (b) NO post-nominal credential is authorized for permit holders. UI must NEVER show 'LMHC-LP' as a user-facing credential string. (c) The supervisor pool is unusually broad — 5 to 7 license types qualify, vs NC's LCMHCS-only or TX's LPC-Supervisor-only."
