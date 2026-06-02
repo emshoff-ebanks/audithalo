@@ -14,8 +14,6 @@ import { db, schema } from "@/lib/db";
 import {
   loadAllRules,
   resolveEvaluation,
-  riskBadgeLabel,
-  riskBadgeVariant,
   severityStyles,
   toneClasses,
 } from "@/lib/rules";
@@ -24,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AssignRuleForm } from "./assign-rule-form";
 import { LogSessionForm } from "./log-session-form";
+import { RuleSummaryCard } from "./rule-summary-card";
 import { SessionLog } from "@/components/app/session-log";
 
 export const metadata = {
@@ -171,30 +170,28 @@ export default async function SuperviseeDetailPage({
         <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2">
             <CardContent className="p-6 space-y-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <Badge
-                    variant={riskBadgeVariant(evalResult?.riskLevel)}
-                    className="mb-2"
-                  >
-                    {riskBadgeLabel(evalResult?.riskLevel)}
-                  </Badge>
-                  <h2 className="font-display text-xl font-semibold text-foreground">
-                    {rule.jurisdiction} {rule.license_code} v{rule.version}
-                  </h2>
-                  <p className="mt-1 text-sm font-mono text-foreground/60">
-                    {rule.citation.admincode}
-                  </p>
-                </div>
-                <a
-                  href={rule.citation.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-secondary hover:underline"
-                >
-                  View source ↗
-                </a>
-              </div>
+              <RuleSummaryCard
+                superviseeId={superviseeId}
+                viewerIsManager={viewerIsManager}
+                currentRule={{
+                  jurisdiction: rule.jurisdiction,
+                  licenseCode: rule.license_code,
+                  version: rule.version,
+                  admincode: rule.citation.admincode,
+                  sourceUrl: rule.citation.url,
+                  riskLevel: evalResult?.riskLevel,
+                }}
+                currentRuleId={assignment!.ruleId}
+                currentObligationStartedAt={assignment!.obligationStartedAt
+                  .toISOString()
+                  .slice(0, 10)}
+                currentContractFiledAt={
+                  assignment!.supervisionContractFiledAt
+                    ?.toISOString()
+                    .slice(0, 10) ?? null
+                }
+                availableRules={allRules}
+              />
 
               <ProgressBar
                 pct={evalResult?.progress.practiceProgressPct ?? 0}

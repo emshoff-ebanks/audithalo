@@ -9,9 +9,22 @@ import { assignRuleAction, type ActionResult } from "@/app/actions/supervisee";
 type Props = {
   superviseeId: string;
   availableRules: { id: string; label: string; summary: string }[];
+  defaultRuleId?: string;
+  defaultObligationStartedAt?: string; // YYYY-MM-DD
+  defaultContractFiledAt?: string; // YYYY-MM-DD
+  submitLabel?: string; // default "Assign rule"
+  onCancel?: () => void; // if provided, render a Cancel button
 };
 
-export function AssignRuleForm({ superviseeId, availableRules }: Props) {
+export function AssignRuleForm({
+  superviseeId,
+  availableRules,
+  defaultRuleId,
+  defaultObligationStartedAt,
+  defaultContractFiledAt,
+  submitLabel,
+  onCancel,
+}: Props) {
   const [state, formAction, pending] = useActionState<
     ActionResult | undefined,
     FormData
@@ -26,7 +39,7 @@ export function AssignRuleForm({ superviseeId, availableRules }: Props) {
           id="ruleId"
           name="ruleId"
           required
-          defaultValue={availableRules[0]?.id}
+          defaultValue={defaultRuleId ?? availableRules[0]?.id}
           className="mt-1.5 flex h-10 w-full rounded-sm border border-input bg-card px-3 py-2 text-sm text-foreground"
         >
           {availableRules.map((r) => (
@@ -44,6 +57,7 @@ export function AssignRuleForm({ superviseeId, availableRules }: Props) {
             name="obligationStartedAt"
             type="date"
             required
+            defaultValue={defaultObligationStartedAt}
             className="mt-1.5"
           />
         </div>
@@ -53,6 +67,7 @@ export function AssignRuleForm({ superviseeId, availableRules }: Props) {
             id="supervisionContractFiledAt"
             name="supervisionContractFiledAt"
             type="date"
+            defaultValue={defaultContractFiledAt}
             className="mt-1.5"
           />
         </div>
@@ -67,9 +82,21 @@ export function AssignRuleForm({ superviseeId, availableRules }: Props) {
         </p>
       )}
 
-      <Button type="submit" disabled={pending}>
-        {pending ? "Assigning…" : "Assign rule"}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button type="submit" disabled={pending}>
+          {pending ? "Assigning…" : (submitLabel ?? "Assign rule")}
+        </Button>
+        {onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={pending}
+          >
+            Cancel
+          </Button>
+        )}
+      </div>
     </form>
   );
 }
