@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Circle, AlertTriangle, AlertOctagon } from "lucide-react";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getCurrentMembership, isManagerRole } from "@/lib/authz";
@@ -98,8 +98,18 @@ export default async function RosterPage() {
                   const pct = row.evaluation?.progress.practiceProgressPct ?? 0;
                   const practiced = row.evaluation?.totals.practiceHours ?? 0;
 
+                  const rowClasses = (() => {
+                    if (row.evaluation?.riskLevel === "red") {
+                      return "border-l-[3px] border-l-[color:var(--color-risk-600)] bg-[color:var(--color-risk-50)]/30";
+                    }
+                    if (row.evaluation?.riskLevel === "yellow") {
+                      return "border-l-[3px] border-l-[color:var(--color-warn-500)] bg-[color:var(--color-warn-50)]/30";
+                    }
+                    return "";
+                  })();
+
                   return (
-                    <tr key={row.userId} className="border-t border-border hover:bg-accent/40">
+                    <tr key={row.userId} className={`border-t border-border hover:bg-accent/40 ${rowClasses}`}>
                       <td className="px-5 py-3 font-medium">
                         <Link
                           href={`/dashboard/roster/${row.userId}`}
@@ -135,6 +145,9 @@ export default async function RosterPage() {
                       <td className="px-5 py-3">
                         {row.evaluation ? (
                           <Badge variant={riskBadgeVariant(row.evaluation.riskLevel)}>
+                            {row.evaluation.riskLevel === "green" && <Circle className="h-2 w-2 fill-current" />}
+                            {row.evaluation.riskLevel === "yellow" && <AlertTriangle className="h-3 w-3" />}
+                            {row.evaluation.riskLevel === "red" && <AlertOctagon className="h-3 w-3" />}
                             {riskBadgeLabel(row.evaluation.riskLevel)}
                           </Badge>
                         ) : (
