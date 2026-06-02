@@ -4,7 +4,7 @@ import { db, schema } from "@/lib/db";
 import { getRule } from "@/lib/rules";
 
 /** Stable JSON.stringify — keys sorted recursively so the same input always hashes the same. */
-function canonicalize(value: unknown): unknown {
+export function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === "object" && !(value instanceof Date)) {
     const sorted: Record<string, unknown> = {};
