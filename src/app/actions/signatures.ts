@@ -3,11 +3,12 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import type { SessionSignature } from "@/lib/db/schema";
+import { decideNextSignature } from "@/lib/signatures";
 import { generateEvidencePackage } from "@/lib/evidence";
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -30,20 +31,10 @@ export async function signSessionAction(
   const session = await auth();
   if (!session?.user) return { ok: false, error: "Not authenticated." };
 
-  // Intent confirmation is non-negotiable for legal-grade e-sign
-  if (formData.get("intent") !== "on") {
-    return {
-      ok: false,
-      error: "You must confirm intent before signing.",
-    };
-  }
-
   const parsed = signSchema.safeParse({
     sessionEventId: formData.get("sessionEventId"),
   });
-  if (!parsed.success) {
-    return { ok: false, error: "Invalid session." };
-  }
+  if (!parsed.success) return { ok: false, error: "Invalid session." };
 
   const sessionEvent = await db.query.sessionEvents.findFirst({
     where: eq(schema.sessionEvents.id, parsed.data.sessionEventId),
@@ -55,7 +46,6 @@ export async function signSessionAction(
     return { ok: false, error: "You can't sign sessions in this organization." };
   }
 
-  // Determine the signer's role for this specific session
   let signerRole: "supervisee" | "supervisor";
   if (session.user.id === sessionEvent.superviseeId) {
     signerRole = "supervisee";
@@ -65,35 +55,52 @@ export async function signSessionAction(
     return { ok: false, error: "You aren't a required signer for this session." };
   }
 
-  const existing = sessionEvent.signatures ?? [];
-  if (existing.some((s) => s.signerId === session.user.id)) {
-    return { ok: false, error: "You already signed this session." };
-  }
-
-  const newSig: SessionSignature = {
+  const candidate: SessionSignature = {
     signerId: session.user.id,
     signerName: session.user.name ?? session.user.email,
     signerRole,
     signedAt: new Date().toISOString(),
     ipAddress: await clientIp(),
-    intentConfirmed: true,
+    intentConfirmed: formData.get("intent") === "on",
   };
-  const updated = [...existing, newSig];
 
-  // Required signers: supervisee + supervisor
-  const fullySigned =
-    updated.some((s) => s.signerRole === "supervisee") &&
-    updated.some((s) => s.signerRole === "supervisor");
+  // Pure decision first — produces the next array shape + friendly error messages.
+  const decision = decideNextSignature(sessionEvent.signatures ?? [], candidate);
+  if (!decision.ok) return decision;
 
-  await db
-    .update(schema.sessionEvents)
-    .set({
-      signatures: updated,
-      signedAt: fullySigned ? new Date() : null,
-    })
-    .where(eq(schema.sessionEvents.id, sessionEvent.id));
+  // Atomic SQL append — protects against the read-modify-write race when two
+  // signers click "Sign" simultaneously. We append to whatever signatures are
+  // CURRENTLY in the row (not the snapshot we read above), and decide
+  // signed_at from the post-append array — all in one statement.
+  // The WHERE clause's NOT EXISTS guards against the same signer appending twice
+  // even if the JS-level check raced past.
+  const newSigJson = JSON.stringify(candidate);
+  const result = await db.execute(sql`
+    UPDATE session_events
+    SET
+      signatures = signatures || ${newSigJson}::jsonb,
+      signed_at = CASE
+        WHEN (signatures || ${newSigJson}::jsonb) @> '[{"signerRole":"supervisee"}]'::jsonb
+         AND (signatures || ${newSigJson}::jsonb) @> '[{"signerRole":"supervisor"}]'::jsonb
+        THEN NOW()
+        ELSE signed_at
+      END
+    WHERE id = ${sessionEvent.id}
+      AND NOT EXISTS (
+        SELECT 1 FROM jsonb_array_elements(signatures) AS s
+        WHERE s->>'signerId' = ${candidate.signerId}
+      )
+    RETURNING signed_at
+  `);
 
-  // When all required signers are in, mint the evidence package — hashed, immutable, audit-grade.
+  // rowCount semantics vary by driver — neon-http returns rows array.
+  // If zero rows updated, the NOT EXISTS guard triggered (duplicate signer).
+  const rows = (result as unknown as { rows: { signed_at: string | null }[] }).rows;
+  if (rows.length === 0) {
+    return { ok: false, error: "You already signed this session." };
+  }
+
+  const fullySigned = rows[0].signed_at !== null;
   if (fullySigned) {
     await generateEvidencePackage(sessionEvent.id);
   }
