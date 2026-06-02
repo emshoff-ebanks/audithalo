@@ -83,6 +83,7 @@ npx vitest run
 Most context lives in `/docs`:
 
 - **[`docs/HANDOFF.md`](docs/HANDOFF.md)** — read this first to get the full project state in one document
+- **[`docs/PUSHING.md`](docs/PUSHING.md)** — how to commit and push (read this before your first push)
 - **[`docs/strategy/01-launch-plan.md`](docs/strategy/01-launch-plan.md)** — GTM, pricing, roadmap, locked decisions
 - **[`docs/brand/brand-book.md`](docs/brand/brand-book.md)** — palette, typography, voice, logo
 - **[`docs/brand/messaging.md`](docs/brand/messaging.md)** — taglines, elevator pitches, headline bank
