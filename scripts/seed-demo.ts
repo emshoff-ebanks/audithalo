@@ -90,7 +90,6 @@ type SessionEventRow = PracticeEventRow | SupervisionEventRow;
 function buildPracticeEvents(
   superviseeId: string,
   orgId: string,
-  supervisorId: string,
   startDate: Date,
   monthCount: number,
   hoursPerMonth: number
@@ -156,33 +155,7 @@ async function main() {
 
   console.log("Seeding demo data...");
 
-  // ── 1. Create supervisor ─────────────────────────────────────────────────
-  const [supervisor] = await db
-    .insert(schema.users)
-    .values({
-      email: "demo-supervisor@audithalo.com",
-      passwordHash: PASSWORD_HASH,
-      name: "Dr. Alex Rivera",
-      role: "supervisor",
-      state: "NC",
-      licenseType: "LCMHCS",
-    })
-    .returning({ id: schema.users.id });
-
-  console.log(`  Created supervisor: ${supervisor.id}`);
-
-  // ── 2. Create org ────────────────────────────────────────────────────────
-  const [org] = await db
-    .insert(schema.organizations)
-    .values({
-      name: "NC Counseling Demo Practice",
-      createdById: supervisor.id,
-    })
-    .returning({ id: schema.organizations.id });
-
-  console.log(`  Created org: ${org.id}`);
-
-  // ── 3. Create supervisees ────────────────────────────────────────────────
+  // ── Define supervisee data (used in tx and summary) ──────────────────────
   const superviseeData = [
     {
       email: "demo-supervisee1@audithalo.com",
@@ -201,133 +174,159 @@ async function main() {
     },
   ];
 
-  const supervisees = await db
-    .insert(schema.users)
-    .values(
-      superviseeData.map((s) => ({
-        email: s.email,
+  await db.transaction(async (tx) => {
+    // ── 1. Create supervisor ───────────────────────────────────────────────
+    const [supervisor] = await tx
+      .insert(schema.users)
+      .values({
+        email: "demo-supervisor@audithalo.com",
         passwordHash: PASSWORD_HASH,
-        name: s.name,
-        role: "supervisee" as const,
+        name: "Dr. Alex Rivera",
+        role: "supervisor",
         state: "NC",
-        licenseType: "LCMHCA",
-      }))
-    )
-    .returning({ id: schema.users.id, email: schema.users.email });
+        licenseType: "LCMHCS",
+      })
+      .returning({ id: schema.users.id });
 
-  const [jamie, morgan, riley] = supervisees;
-  console.log(`  Created supervisees: ${supervisees.map((s) => s.id).join(", ")}`);
+    console.log(`  Created supervisor: ${supervisor.id}`);
 
-  // ── 4. Org memberships ───────────────────────────────────────────────────
-  await db.insert(schema.orgMemberships).values([
-    { orgId: org.id, userId: supervisor.id, role: "supervisor" },
-    { orgId: org.id, userId: jamie.id, role: "supervisee" },
-    { orgId: org.id, userId: morgan.id, role: "supervisee" },
-    { orgId: org.id, userId: riley.id, role: "supervisee" },
-  ]);
+    // ── 2. Create org ──────────────────────────────────────────────────────
+    const [org] = await tx
+      .insert(schema.organizations)
+      .values({
+        name: "NC Counseling Demo Practice",
+        createdById: supervisor.id,
+      })
+      .returning({ id: schema.organizations.id });
 
-  console.log("  Created org memberships");
+    console.log(`  Created org: ${org.id}`);
 
-  // ── 5. Rule assignments ──────────────────────────────────────────────────
-  // Jamie started 2024-06-01, Morgan 2025-01-01, Riley 2023-01-01
-  const jamieStart = new Date("2024-06-01T00:00:00Z");
-  const morganStart = new Date("2025-01-01T00:00:00Z");
-  const rileyStart = new Date("2023-01-01T00:00:00Z");
+    // ── 3. Create supervisees ──────────────────────────────────────────────
+    const supervisees = await tx
+      .insert(schema.users)
+      .values(
+        superviseeData.map((s) => ({
+          email: s.email,
+          passwordHash: PASSWORD_HASH,
+          name: s.name,
+          role: "supervisee" as const,
+          state: "NC",
+          licenseType: "LCMHCA",
+        }))
+      )
+      .returning({ id: schema.users.id, email: schema.users.email });
 
-  await db.insert(schema.superviseeRuleAssignments).values([
-    {
-      superviseeId: jamie.id,
-      orgId: org.id,
-      ruleId: RULE_ID,
-      obligationStartedAt: jamieStart,
-      supervisionContractFiledAt: jamieStart,
-    },
-    {
-      superviseeId: morgan.id,
-      orgId: org.id,
-      ruleId: RULE_ID,
-      obligationStartedAt: morganStart,
-      supervisionContractFiledAt: morganStart,
-    },
-    {
-      superviseeId: riley.id,
-      orgId: org.id,
-      ruleId: RULE_ID,
-      obligationStartedAt: rileyStart,
-      supervisionContractFiledAt: rileyStart,
-    },
-  ]);
+    const [jamie, morgan, riley] = supervisees;
+    console.log(`  Created supervisees: ${supervisees.map((s) => s.id).join(", ")}`);
 
-  console.log("  Created rule assignments");
+    // ── 4. Org memberships ─────────────────────────────────────────────────
+    await tx.insert(schema.orgMemberships).values([
+      { orgId: org.id, userId: supervisor.id, role: "supervisor" },
+      { orgId: org.id, userId: jamie.id, role: "supervisee" },
+      { orgId: org.id, userId: morgan.id, role: "supervisee" },
+      { orgId: org.id, userId: riley.id, role: "supervisee" },
+    ]);
 
-  // ── 6. Session events ────────────────────────────────────────────────────
-  // Jamie (65%): target ~1,920 practice + 24 supervision hrs
-  //   24 months from 2024-06-01: 80 hrs/month practice = 1,920 hrs total
-  //   1 hr individual supervision every 2 weeks = 2/month × 24 months = 48 sessions × 0.5hr = 24 hrs
-  const jamieEvents: SessionEventRow[] = [
-    ...buildPracticeEvents(jamie.id, org.id, supervisor.id, jamieStart, 24, 80),
-    // 1 hr supervision every 2 weeks = 2 sessions per month, each 1 hr
-    ...buildSupervisionEvents(jamie.id, org.id, supervisor.id, jamieStart, 24, 1, 1),
-  ];
+    console.log("  Created org memberships");
 
-  // Morgan (15%): target ~350 practice + 5 supervision hrs
-  //   5 months from 2025-01-01: 70 hrs/month practice = 350 hrs total
-  //   1 supervision session per month × 5 months = 5 hrs
-  const morganEvents: SessionEventRow[] = [
-    ...buildPracticeEvents(morgan.id, org.id, supervisor.id, morganStart, 5, 70),
-    ...buildSupervisionEvents(morgan.id, org.id, supervisor.id, morganStart, 5, 1, 1),
-  ];
+    // ── 5. Rule assignments ────────────────────────────────────────────────
+    // Jamie started 2024-06-01, Morgan 2025-01-01, Riley 2023-01-01
+    const jamieStart = new Date("2024-06-01T00:00:00Z");
+    const morganStart = new Date("2025-01-01T00:00:00Z");
+    const rileyStart = new Date("2023-01-01T00:00:00Z");
 
-  // Riley (95%): target ~2,850 practice + 92 supervision hrs
-  //   36 months from 2023-01-01: ~79.2 hrs/month practice ≈ 80 hrs/month = 2,880 hrs
-  //   (use 79 to get exactly 2,844 which is ~94.8%, close enough; actual target 2,850)
-  //   Supervision: 1 hr every 2 weeks (2/month) × 36 months = 72 sessions × ... let's do
-  //   monthly 2.56 hrs = 92 hrs / 36 ≈ 2.56/month; simplify: 2 sessions/month × 36 = 72 × 1hr +
-  //   extra months. Let's do 2 sessions/month for 36 months at 1.28hr each = 92.16 hrs.
-  //   Simpler: 2 events per month at 1.28hr ≈ 92 hrs. Use 1 event/month at 2.56 hr.
-  const rileyPracticeEvents = buildPracticeEvents(riley.id, org.id, supervisor.id, rileyStart, 36, 80);
-  // Supervision: 1 session/month × 36 months at 2.56 hrs = 92.16 ≈ 92 hrs
-  const rileySupervisionEvents = buildSupervisionEvents(
-    riley.id, org.id, supervisor.id, rileyStart, 36, 1, 2.56
-  );
-  const rileyEvents: SessionEventRow[] = [...rileyPracticeEvents, ...rileySupervisionEvents];
+    await tx.insert(schema.superviseeRuleAssignments).values([
+      {
+        superviseeId: jamie.id,
+        orgId: org.id,
+        ruleId: RULE_ID,
+        obligationStartedAt: jamieStart,
+        supervisionContractFiledAt: jamieStart,
+      },
+      {
+        superviseeId: morgan.id,
+        orgId: org.id,
+        ruleId: RULE_ID,
+        obligationStartedAt: morganStart,
+        supervisionContractFiledAt: morganStart,
+      },
+      {
+        superviseeId: riley.id,
+        orgId: org.id,
+        ruleId: RULE_ID,
+        obligationStartedAt: rileyStart,
+        supervisionContractFiledAt: rileyStart,
+      },
+    ]);
 
-  // Insert all events in batches (Neon http has a statement limit)
-  const allEvents = [...jamieEvents, ...morganEvents, ...rileyEvents];
-  const BATCH_SIZE = 50;
+    console.log("  Created rule assignments");
 
-  for (let i = 0; i < allEvents.length; i += BATCH_SIZE) {
-    const batch = allEvents.slice(i, i + BATCH_SIZE);
-    await db.insert(schema.sessionEvents).values(
-      batch.map((e) => ({
-        superviseeId: e.superviseeId,
-        orgId: e.orgId,
-        kind: e.kind,
-        date: e.date,
-        durationHours: e.durationHours,
-        sessionType: e.kind === "supervision" ? (e as SupervisionEventRow).sessionType : undefined,
-        supervisorCredentials:
-          e.kind === "supervision" ? (e as SupervisionEventRow).supervisorCredentials : undefined,
-        loggedById: e.loggedById,
-        signatures: [],
-      }))
+    // ── 6. Session events ──────────────────────────────────────────────────
+    // Jamie (65%): target ~1,920 practice + 24 supervision hrs
+    //   24 months from 2024-06-01: 80 hrs/month practice = 1,920 hrs total
+    //   1 hr individual supervision every 2 weeks = 2/month × 24 months = 24 × 1hr sessions = 24 hrs
+    const jamieEvents: SessionEventRow[] = [
+      ...buildPracticeEvents(jamie.id, org.id, jamieStart, 24, 80),
+      // 1 hr supervision every 2 weeks = 2 sessions per month, each 1 hr
+      ...buildSupervisionEvents(jamie.id, org.id, supervisor.id, jamieStart, 24, 1, 1),
+    ];
+
+    // Morgan (15%): target ~350 practice + 5 supervision hrs
+    //   5 months from 2025-01-01: 70 hrs/month practice = 350 hrs total
+    //   1 supervision session per month × 5 months = 5 hrs
+    const morganEvents: SessionEventRow[] = [
+      ...buildPracticeEvents(morgan.id, org.id, morganStart, 5, 70),
+      ...buildSupervisionEvents(morgan.id, org.id, supervisor.id, morganStart, 5, 1, 1),
+    ];
+
+    // Riley (95%): target ~2,880 practice + 92 supervision hrs
+    //   36 months from 2023-01-01: 80 hrs/month practice = 2,880 hrs total
+    //   1 session/month × 36 months × ~2.56 hrs avg = 92 hrs total
+    const rileyPracticeEvents = buildPracticeEvents(riley.id, org.id, rileyStart, 36, 80);
+    // Supervision: 1 session/month × 36 months at 2.56 hrs = 92.16 ≈ 92 hrs
+    const rileySupervisionEvents = buildSupervisionEvents(
+      riley.id, org.id, supervisor.id, rileyStart, 36, 1, 2.56
     );
-  }
+    const rileyEvents: SessionEventRow[] = [...rileyPracticeEvents, ...rileySupervisionEvents];
 
-  console.log(`  Inserted ${allEvents.length} session events`);
+    // Insert all events in batches (Neon http has a statement limit)
+    const allEvents = [...jamieEvents, ...morganEvents, ...rileyEvents];
+    const BATCH_SIZE = 50;
 
-  // ── Summary ──────────────────────────────────────────────────────────────
-  const jamieHrs = jamieEvents.reduce((s, e) => s + e.durationHours, 0);
-  const morganHrs = morganEvents.reduce((s, e) => s + e.durationHours, 0);
-  const rileyHrs = rileyEvents.reduce((s, e) => s + e.durationHours, 0);
+    for (let i = 0; i < allEvents.length; i += BATCH_SIZE) {
+      const batch = allEvents.slice(i, i + BATCH_SIZE);
+      await tx.insert(schema.sessionEvents).values(
+        batch.map((e) => ({
+          superviseeId: e.superviseeId,
+          orgId: e.orgId,
+          kind: e.kind,
+          date: e.date,
+          durationHours: e.durationHours,
+          sessionType: e.kind === "supervision" ? (e as SupervisionEventRow).sessionType : undefined,
+          supervisorCredentials:
+            e.kind === "supervision" ? (e as SupervisionEventRow).supervisorCredentials : undefined,
+          loggedById: e.loggedById,
+          signatures: [],
+        }))
+      );
+    }
 
-  console.log(`
+    console.log(`  Inserted ${allEvents.length} session events`);
+
+    // ── Summary ────────────────────────────────────────────────────────────
+    const jamieHrs = jamieEvents.reduce((s, e) => s + e.durationHours, 0);
+    const morganHrs = morganEvents.reduce((s, e) => s + e.durationHours, 0);
+    const rileyHrs = rileyEvents.reduce((s, e) => s + e.durationHours, 0);
+    const [jamieData, morganData, rileyData] = superviseeData;
+
+    console.log(`
 Done. Demo accounts:
-  Supervisor:             demo-supervisor@audithalo.com  / Demo1234!
-  Jamie Chen  (65%):     demo-supervisee1@audithalo.com / Demo1234!  [${jamieHrs} total hrs]
-  Morgan Taylor (15%):   demo-supervisee2@audithalo.com / Demo1234!  [${morganHrs} total hrs]
-  Riley Park  (95%):     demo-supervisee3@audithalo.com / Demo1234!  [${rileyHrs} total hrs]
+  Supervisor:              demo-supervisor@audithalo.com  / Demo1234!
+  Jamie Chen   Progress: ${jamieData.label}   demo-supervisee1@audithalo.com / Demo1234!  [${jamieHrs} total hrs]
+  Morgan Taylor Progress: ${morganData.label}   demo-supervisee2@audithalo.com / Demo1234!  [${morganHrs} total hrs]
+  Riley Park   Progress: ${rileyData.label}   demo-supervisee3@audithalo.com / Demo1234!  [${rileyHrs} total hrs]
 `);
+  });
 }
 
 main().catch((err) => {
