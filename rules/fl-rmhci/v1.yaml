@@ -1,0 +1,104 @@
+# Florida RMHCI — Registered Mental Health Counselor Intern
+# PRELIMINARY — drafted from public-source recall without live verification.
+# Re-verify against live F.S. 491 + F.A.C. 64B4 before relying on this in production.
+
+jurisdiction: FL
+license_code: RMHCI
+license_name: Registered Mental Health Counselor Intern
+issuing_board: Florida Board of Clinical Social Work, Marriage and Family Therapy, and Mental Health Counseling
+version: 1
+
+summary: |
+  1,500 hours of supervised post-master's experience (including ≥1,000 hours of
+  face-to-face psychotherapy) earned over at least 100 weeks. At least 100 hours
+  of supervision, with at least half being individual. Supervision must be
+  delivered by a Florida Qualified Supervisor (LMHC/LMFT/LCSW/Licensed
+  Psychologist with 5+ years post-licensure and a 15-hour supervisor course).
+  Intern registration is valid for 60 months and IS NOT RENEWABLE — the binding
+  cap on the supervision window.
+
+effective_start: 2024-01-01
+effective_end: null
+
+citation:
+  admincode: F.A.C. 64B4
+  statute: F.S. 491
+  url: https://floridasmentalhealthprofessions.gov/
+
+verification:
+  last_verified_at: 2026-06-02
+  last_verified_by: founder (preliminary — drafted from training data, no live F.A.C. source pulled)
+  source_hash: pending
+
+structured:
+  total_practice_hours_required: 1500     # VERIFIED — F.S. 491.005(4)(c)
+  total_supervision_hours_required: 100   # VERIFIED — F.S. 491.005(4)(c)
+  min_duration_months: 23                  # VERIFIED — 100-week minimum, ≈ 23 months
+  max_duration_months: 60                  # VERIFIED — 60-month NON-RENEWABLE registration
+  group_max_attendees: 6                   # LIKELY — needs re-verification
+
+checks:
+  - id: pre_registration_required
+    severity: blocker
+    description: RMHCI registration must be issued by the Florida Board before any hour can count
+    params:
+      signal_field: supervisionContractFiledAt
+
+  - id: supervisor_credential_required
+    severity: blocker
+    description: Each supervision session must have a Florida Qualified Supervisor (LMHC, LMFT, LCSW, or Licensed Psychologist with the QS designation)
+    params:
+      accepted_credentials: [Qualified-Supervisor, LMHC, LMFT, LCSW, Psychologist]
+
+  - id: individual_supervision_cadence
+    severity: warning
+    description: Supervision cadence — approximately 1 hour per 2 weeks of practice (Florida's regulatory phrasing)
+    params:
+      max_gap_days: 14
+      min_hours_per_period: 1.0
+
+  - id: group_size_limit
+    severity: blocker
+    description: Group supervision size cap (LIKELY 6 supervisees per group session)
+    params:
+      max_attendees: 6
+
+  - id: total_practice_hours
+    severity: info
+    description: 1,500 hours of supervised post-master's experience
+    params:
+      required: 1500
+
+  - id: total_supervision_hours
+    severity: info
+    description: 100 hours of supervision (≥50% individual)
+    params:
+      required: 100
+
+  - id: duration_window
+    severity: warning
+    description: Hours earned over at least 100 weeks; registration is non-renewable and expires 60 months after issuance
+    params:
+      min_months: 23
+      max_months: 60
+
+evidence_requirements:
+  form_template_key: FL_RMHCI_SUPERVISION_AGREEMENT_V1
+  required_signers:
+    - supervisor
+    - supervisee
+  required_artifacts:
+    - attendance
+    - session_metadata
+  optional_artifacts:
+    - transcript
+  immutability: sha256_signed_json
+
+notes:
+  - "PRELIMINARY rule — DO NOT use for production user assignment until a Florida Qualified Supervisor reviews. Several numeric values are LIKELY, not VERIFIED."
+  - "FLORIDA'S DEFINING FEATURE: registration is valid for 60 months and IS NOT RENEWABLE (F.S. 491.0045(4)). All 1,500 hours, the 100 supervision hours, and the NCMHCE exam must be completed within the window. This is the single most important compliance pressure point. A future v2 check (`permit_expiration_window`) will warn the supervisee at 180/90/30 days remaining."
+  - "FL requires ≥1,000 hours of face-to-face psychotherapy (subset of the 1,500). Not yet separately enforced — flagged for v2 via `direct_client_contact_minimum`."
+  - "FL Qualified Supervisor designation requires a 15-hour supervisor training course. Not yet separately enforced — flagged for v2 via `supervisor_training_course_required`."
+  - "Counseling Compact: Florida joined ~2023. Privilege-to-practice is for fully-licensed LMHCs; RMHCIs are not eligible. If a trainee is practicing under Compact privilege instead of RMHCI registration, this rule should not apply."
+  - "Supervision cadence (weekly vs every-two-weeks) is the highest-risk LIKELY value here. Verify the exact F.A.C. text."
+  - "Group size cap (6 vs other) is the second-highest-risk LIKELY value."

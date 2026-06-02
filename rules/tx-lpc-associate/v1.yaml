@@ -1,0 +1,102 @@
+# Texas LPC-Associate (Licensed Professional Counselor Associate)
+# PRELIMINARY — drafted from public-source recall without live verification.
+# Re-verify against live 22 TAC Ch. 681 before relying on this in production.
+
+jurisdiction: TX
+license_code: LPC-Associate
+license_name: Licensed Professional Counselor Associate
+issuing_board: Texas State Board of Examiners of Professional Counselors
+version: 1
+
+summary: |
+  3,000 clock hours of supervised experience (including ≥1,500 hours of direct
+  client contact) earned over not less than 18 months. Monthly supervision
+  cadence: at least 4 hours per month with at least 1 hour individual.
+  Supervisor must hold an active Texas LPC license with the LPC-Supervisor
+  designation (5+ years as LPC and a 40-hour board-approved supervisor course).
+  Supervisory Agreement must be on file before hours count.
+
+effective_start: 2020-09-01
+effective_end: null
+
+citation:
+  admincode: 22 TAC Ch. 681
+  statute: Tex. Occ. Code Ch. 503
+  url: https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC?tac_view=4&ti=22&pt=30&ch=681
+
+verification:
+  last_verified_at: 2026-06-02
+  last_verified_by: founder (preliminary — drafted from training data, no live TAC source pulled)
+  source_hash: pending
+
+structured:
+  total_practice_hours_required: 3000     # VERIFIED — 22 TAC §681.93
+  total_supervision_hours_required: 72    # LIKELY — derived: 4 hrs/month × 18 months minimum
+  min_duration_months: 18                  # VERIFIED
+  max_duration_months: 60                  # LIKELY — 5-year cap
+  group_max_attendees: 12                  # LIKELY — needs re-verification
+
+checks:
+  - id: pre_registration_required
+    severity: blocker
+    description: LPC-Associate license issued AND Supervisory Agreement filed with the board before any hour can count
+    params:
+      signal_field: supervisionContractFiledAt
+
+  - id: supervisor_credential_required
+    severity: blocker
+    description: Each supervision session must have a Texas LPC-Supervisor (5+ years as LPC, 40-hour training completed)
+    params:
+      accepted_credentials: [LPC-Supervisor]
+
+  - id: individual_supervision_cadence
+    severity: warning
+    description: At least 1 hour of individual supervision per ~30 days (Texas's monthly cadence floor)
+    params:
+      max_gap_days: 30
+      min_hours_per_period: 1.0
+
+  - id: group_size_limit
+    severity: blocker
+    description: No group supervision session may exceed 12 supervisees
+    params:
+      max_attendees: 12
+
+  - id: total_practice_hours
+    severity: info
+    description: 3,000 clock hours of supervised experience (22 TAC §681.93)
+    params:
+      required: 3000
+
+  - id: total_supervision_hours
+    severity: info
+    description: Supervision hours total (derived from monthly cadence × 18+ months)
+    params:
+      required: 72
+
+  - id: duration_window
+    severity: warning
+    description: 3,000 hours earned in not less than 18 months and (LIKELY) not more than 60 months from LPC-A license issuance
+    params:
+      min_months: 18
+      max_months: 60
+
+evidence_requirements:
+  form_template_key: TX_LPC_SUPERVISORY_AGREEMENT_V1
+  required_signers:
+    - supervisor
+    - supervisee
+  required_artifacts:
+    - attendance
+    - session_metadata
+  optional_artifacts:
+    - transcript
+  immutability: sha256_signed_json
+
+notes:
+  - "PRELIMINARY rule — DO NOT use for production user assignment until a Texas LPC-Supervisor reviews. Several numeric values are LIKELY, not VERIFIED."
+  - "TX uses a MONTHLY cadence (4 hrs/month total, ≥1 individual), NOT a per-practice-hour ratio. Our `individual_supervision_cadence` check with max_gap_days=30 approximates this; a future v2 check will properly model 'at least 4 supervision hours per calendar month with at least 1 individual'."
+  - "TX requires at least 1,500 hours to be direct client contact within the 3,000 total. Not yet enforced — flagged for a new `direct_client_contact_minimum` check in v2."
+  - "TX requires the title 'LPC Associate' on all professional materials. Not yet enforced — flagged for a new `title_use_required` check in v2."
+  - "Counseling Compact (HB 4533, 2023): Texas joined. Privilege-to-practice is for fully-licensed LPCs only. Whether Compact-privilege LPCs can act as TX supervisors is unclear and out of scope for v1."
+  - "Group size cap (12 vs 6) is the highest-risk LIKELY value in this rule. Verify before production."

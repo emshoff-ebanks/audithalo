@@ -1,0 +1,107 @@
+# California APCC — Associate Professional Clinical Counselor
+# PRELIMINARY — drafted from public-source recall without live verification.
+# Many fields tagged LIKELY rather than VERIFIED. Re-verify against the live
+# California Board of Behavioral Sciences (BBS) "LPCC Statutes & Regulations"
+# PDF and have a CA-licensed supervisor sign off before relying on this for
+# any user assignment.
+
+jurisdiction: CA
+license_code: APCC
+license_name: Associate Professional Clinical Counselor
+issuing_board: California Board of Behavioral Sciences
+version: 1
+
+summary: |
+  3,000 supervised post-degree experience hours toward LPCC licensure, of which
+  at least 1,750 must be direct counseling. Supervision is cadence-based, NOT
+  ratio-based: at least 1 hour of individual or triadic supervision per week in
+  any week with more than 10 hours of direct client contact. Maximum 5 weekly
+  supervision hours count toward the 3,000. Group supervision capped at 8
+  supervisees per session. Hours only count after APCC registration is issued,
+  and must be earned within 6 years preceding the LPCC application.
+
+effective_start: 2023-01-01
+effective_end: null
+
+citation:
+  admincode: 16 CCR §1820 et seq.
+  statute: Cal. Bus. & Prof. Code §§4999.10–4999.46.3
+  url: https://www.bbs.ca.gov/applicants/lpcc.html
+
+verification:
+  last_verified_at: 2026-06-02
+  last_verified_by: founder (preliminary — drafted from training data, no live BBS source pulled)
+  source_hash: pending
+
+structured:
+  total_practice_hours_required: 3000     # VERIFIED — BPC §4999.46
+  total_supervision_hours_required: 100   # PLACEHOLDER — CA actually uses weekly cadence, not a fixed total. 100 is a conservative floor implied by 100 weeks × 1 hr/week minimum.
+  min_duration_months: 24                  # LIKELY — derived from 104-week minimum
+  max_duration_months: 72                  # LIKELY — per the 6-year lookback at LPCC application
+  group_max_attendees: 8                   # LIKELY — 16 CCR §1820 cap
+
+checks:
+  - id: pre_registration_required
+    severity: blocker
+    description: APCC registration must be issued by the BBS before any hour can count
+    params:
+      signal_field: supervisionContractFiledAt
+
+  - id: supervisor_credential_required
+    severity: blocker
+    description: Each supervision session must have a supervisor with a qualifying CA license (LPCC, LMFT, LCSW, Licensed Psychologist, or Licensed Psychiatrist)
+    params:
+      accepted_credentials: [LPCC, LMFT, LCSW, Psychologist, Psychiatrist]
+
+  - id: individual_supervision_cadence
+    severity: warning
+    description: At least 1 hour of individual or triadic supervision per week in any week the APCC accrued client contact (CA uses a weekly cadence, not a per-practice-hour ratio)
+    params:
+      max_gap_days: 7
+      min_hours_per_period: 1.0
+
+  - id: group_size_limit
+    severity: blocker
+    description: No group supervision session may have more than 8 supervisees (16 CCR §1820)
+    params:
+      max_attendees: 8
+
+  - id: total_practice_hours
+    severity: info
+    description: 3,000 supervised post-degree experience hours required (BPC §4999.46)
+    params:
+      required: 3000
+
+  - id: total_supervision_hours
+    severity: info
+    description: Cumulative supervision hours (cadence-driven; placeholder floor)
+    params:
+      required: 100
+
+  - id: duration_window
+    severity: warning
+    description: All hours must be earned within 6 years preceding the LPCC application
+    params:
+      min_months: 24
+      max_months: 72
+
+evidence_requirements:
+  form_template_key: CA_LPCC_SUPERVISION_AGREEMENT_V1
+  required_signers:
+    - supervisor
+    - supervisee
+  required_artifacts:
+    - attendance
+    - session_metadata
+  optional_artifacts:
+    - transcript
+  immutability: sha256_signed_json
+
+notes:
+  - "PRELIMINARY rule — DO NOT use for production user assignment until a CA-licensed Qualified Supervisor reviews. Multiple numeric values are LIKELY, not VERIFIED."
+  - "CA's actual supervision rule is a WEEKLY CADENCE conditional on direct-contact volume (1 hr individual/triadic per week if >10 direct client contact hours that week). Our existing `individual_supervision_cadence` check approximates this with a 7-day max gap. A future v2 check (`weekly_supervision_cadence`) will handle the conditional threshold properly."
+  - "CA caps countable supervision at 5 hours per week. Not yet enforced in the check library."
+  - "CA requires the supervisor to have completed 15 hours of supervisor training (16 CCR §1822 or current). Not yet enforced — flagged for v2."
+  - "CA's '90-day post-degree' filing window for APCC application affects which hours count back to degree-conferral. Not yet enforced — flagged for v2."
+  - "Counseling Compact: CA had NOT joined as of training cutoff (Jan 2026). Verify current status."
+  - "If supervisee plans to treat couples/families post-licensure, an additional 150 hours of dedicated training is needed (scope-of-practice gate). Not yet enforced."

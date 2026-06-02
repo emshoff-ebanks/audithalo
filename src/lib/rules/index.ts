@@ -1,5 +1,13 @@
 export { evaluate } from "./evaluator";
-export { getRule, listRuleIds, loadAllRules } from "./loader";
+export {
+  getRule,
+  listRuleIds,
+  loadAllRules,
+  ruleSlug,
+  parseSlug,
+  getLatestRuleByJurLic,
+  listLatestRules,
+} from "./loader";
 export {
   severityStyles,
   toneClasses,

@@ -63,3 +63,49 @@ export function getRule(
 export function listRuleIds(): string[] {
   return [...loadAllRules().keys()];
 }
+
+/** URL slug for a rule (jurisdiction-license_code, lowercase). Versionless. */
+export function ruleSlug(jurisdiction: string, licenseCode: string): string {
+  return `${jurisdiction}-${licenseCode}`.toLowerCase();
+}
+
+/** Parse a slug back into jurisdiction + license code. */
+export function parseSlug(
+  slug: string
+): { jurisdiction: string; licenseCode: string } | null {
+  const m = slug.match(/^([a-z]{2})-(.+)$/i);
+  if (!m) return null;
+  return {
+    jurisdiction: m[1].toUpperCase(),
+    licenseCode: m[2].toUpperCase(),
+  };
+}
+
+/** Returns the latest-version rule for a jurisdiction + license_code pair. */
+export function getLatestRuleByJurLic(
+  jurisdiction: string,
+  licenseCode: string
+): Rule | null {
+  const matches = [...loadAllRules().values()].filter(
+    (r) =>
+      r.jurisdiction.toUpperCase() === jurisdiction.toUpperCase() &&
+      r.license_code.toUpperCase() === licenseCode.toUpperCase()
+  );
+  if (matches.length === 0) return null;
+  return matches.sort((a, b) => b.version - a.version)[0];
+}
+
+/** All distinct (jurisdiction, license_code) pairs currently encoded, each pointing at the latest version. */
+export function listLatestRules(): Rule[] {
+  const byKey = new Map<string, Rule>();
+  for (const r of loadAllRules().values()) {
+    const key = ruleSlug(r.jurisdiction, r.license_code);
+    const existing = byKey.get(key);
+    if (!existing || existing.version < r.version) {
+      byKey.set(key, r);
+    }
+  }
+  return [...byKey.values()].sort((a, b) =>
+    a.jurisdiction.localeCompare(b.jurisdiction)
+  );
+}

@@ -68,7 +68,7 @@ This is the **fallback** if the sound-wave direction proves too poetic or hard t
 ### Four other directions explored but not recommended
 
 | Direction | Why not |
-|---|---|
+| --- | --- |
 | **Mandorla Threshold** (two overlapping circles) | Strong supervision-as-relationship metaphor, but the vesica piscis carries Christian/esoteric overtones that don't serve compliance trust. |
 | **Closing Ring** (incomplete ring with a tick notch) | Tick + ring is well-trodden territory (SOC2/ISO badges). Hard to escape feeling generic. |
 | **Supervisor's Arc** (F1 HALO inspired) | Strong protection metaphor but the F1 reference only registers for motorsport fans; reads as "bridge" or "rainbow" to others. |
@@ -85,7 +85,7 @@ Final palette synthesizes the warmer/humane direction (b) with the authoritative
 ### Core
 
 | Role | Token | Hex | Notes |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Foreground (near-black) | `--foreground` | `#0A1428` | Deeper, more navy-tinged than the previous `#0B1020`. Reads authoritative-tech without going gothic. |
 | Background | `--background` | `#FAFAF7` | **Warmer** off-white than `#F8FAFC`. Reduces clinical-cold feel for the supervisor persona without losing crispness. |
 | Evidence surface | `--evidence-bg` | `#F5F1E8` | Warm oat. Used for the calmest, most human surfaces: evidence package previews, success states, supervisee progress views. |
@@ -94,7 +94,7 @@ Final palette synthesizes the warmer/humane direction (b) with the authoritative
 ### Brand accents
 
 | Role | Token | Hex | Use |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Primary navy | `--primary` | `#0F1F4C` | Deep authoritative navy. Used for top nav, headers, primary buttons. Replaces the near-black `#0B1020` in primary CTA role. |
 | Halo Blue | `--secondary` | `#1D4ED8` | Sharper, more gravitas than the previous `#2563EB`. Used for links, secondary CTAs, focused interactive state. |
 | Sage (humanity counterweight) | `--sage` | `#7BA098` | **Surfaces and illustration only — never body text** (fails AA contrast). Used for success-adjacent moments, supervisee-care surfaces, illustration tinting. |
@@ -103,7 +103,7 @@ Final palette synthesizes the warmer/humane direction (b) with the authoritative
 ### Semantic (slightly desaturated for legal-grade restraint)
 
 | Role | Token | Hex |
-|---|---|---|
+| --- | --- | --- |
 | Success | `--success` | `#166534` (forest, not emerald) |
 | Warning | `--warning` | `#B45309` |
 | Risk | `--risk` | `#B91C1C` (deeper than #DC2626) |
@@ -125,7 +125,7 @@ Final palette synthesizes the warmer/humane direction (b) with the authoritative
 ### Stack
 
 | Role | Font | Reason |
-|---|---|---|
+| --- | --- | --- |
 | **Display** | **Cabinet Grotesk** (current) — revisit later | Free via Fontshare, already wired in. Research noted Söhne (Klim) would be the premium signaling upgrade — but Söhne is paid (~$200/yr per weight). Keep Cabinet Grotesk for v1; plan a swap to Söhne when first paid customer lands and a designer is engaged. |
 | **Body** | **IBM Plex Sans** (current) | Designed for technical density. Strong at small sizes. Neutral-authoritative — perfect for compliance UIs. Keep. |
 | **Audit trail / evidence / timestamps** | **IBM Plex Mono** (NEW) | Monospace signals *"machine record, immutable"* — exactly the trust cue HR/compliance buyers need. Use for: timestamps, hash values, case IDs, evidence-package metadata, audit-log entries. |
@@ -134,7 +134,7 @@ Final palette synthesizes the warmer/humane direction (b) with the authoritative
 ### Hierarchy
 
 | Element | Size | Weight | Line-height | Tracking |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | H1 | 48–56px | 600 | 1.1 | -0.02em |
 | H2 | 32–36px | 600 | 1.2 | -0.01em |
 | H3 | 20–24px | 600 | 1.3 | normal |
@@ -228,7 +228,7 @@ Almost every page should work without a single photograph. Restraint signals con
 ### Examples
 
 | Avoid | Use |
-|---|---|
+| --- | --- |
 | "Crush your supervision compliance" | "Get your roster audit-ready in an afternoon." |
 | "Holistic supervisor toolkit" | "One dashboard, every supervisee, every state rule, current." |
 | "AI-powered session notes" | "AI-assisted session notes from your Teams transcripts." |
@@ -247,7 +247,7 @@ Almost every page should work without a single photograph. Restraint signals con
 ## 10. Don't list (consolidated)
 
 | Category | Don't |
-|---|---|
+| --- | --- |
 | Color | Pastel blob gradients · Pure teal/aqua (owned by SimplePractice/BetterHelp) · Gradient mesh backgrounds · Electric violet (AI cliché) · Emerald primary (overused) |
 | Logo | Shield + lock + checkmark · Caduceus · Brain silhouette · Sparkle for AI |
 | Type | All-caps tracked-out wordmark · Hand-painted display fonts · Title Case headlines |
@@ -259,7 +259,7 @@ Almost every page should work without a single photograph. Restraint signals con
 ## 11. Locked decisions
 
 | # | Decision | Resolution |
-|---|---|---|
+| --- | --- | --- |
 | B1 | Primary logo direction | ✅ **Hybrid: Solid wavy halo (audire waveform as continuous outer edge) + sun-dog at 22° clockwise from 12 o'clock, on the ring with a background-colored knockout gap.** Fuses both metaphors (audire ring + 22° atmospheric sun-dog) into a single inseparable mark — the medipyxis-style double-layer. **Final spec**: `hybrid-solid-a-subtle.svg` — solid filled annulus, inner radius 35, outer base 42, waveform amplitude 2 (harmonics 5 and 11), 360 samples on the outer edge, dot r=10, knockout pad 5px. Source generator in `docs/brand/logos/generate.mjs`. (Locked 2026-06-01) |
 | B2 | Palette refresh (warmer off-white, deeper navy, sage surfaces, signet gold, drop violet) | ✅ **Locked** — applied in `src/app/globals.css`. See §4 for tokens. (2026-06-01) |
 | B3 | Display font | ✅ **Keep Cabinet Grotesk for v1**, plan Söhne migration after first paid customer + designer engagement. (2026-06-01) |
@@ -288,4 +288,3 @@ Almost every page should work without a single photograph. Restraint signals con
 **Clear space**: at least 1× the mark height of empty padding on all sides
 
 **Minimum size**: 16px (favicon) — the solid ring with sun-dog reads cleanly down to 12-16px. Below 12px, drop the waveform variation entirely and use a smooth circle + dot fallback.
-

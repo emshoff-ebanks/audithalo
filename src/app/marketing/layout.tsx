@@ -5,6 +5,7 @@ import { AuditHaloWordmark } from "@/components/brand/AuditHaloMark";
 const navLinks = [
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/states", label: "States" },
   { href: "/for-supervisors", label: "For Supervisors" },
   { href: "/security", label: "Security" },
 ];

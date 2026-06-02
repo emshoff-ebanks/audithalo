@@ -1,0 +1,106 @@
+# New York LMHC Limited Permit
+# PRELIMINARY — drafted from public-source recall without live verification.
+# Re-verify against live NY Education Law Article 163 + 8 NYCRR Part 79
+# before relying on this in production.
+
+jurisdiction: NY
+license_code: LMHC-LP
+license_name: Licensed Mental Health Counselor — Limited Permit
+issuing_board: New York State Education Department, Office of the Professions
+version: 1
+
+summary: |
+  3,000 hours of supervised post-master's experience (including LIKELY ≥1,500
+  hours of direct client contact) accrued under a Limited Permit issued by
+  NYSED. New York's supervisor pool is unusually broad — any of LMHC, LCSW,
+  Licensed Psychologist, NY-licensed Psychiatrist, or LMFT qualifies. The
+  Limited Permit is valid for 2 years initially, renewable once for up to 1
+  additional year. NO post-nominal credential is authorized; permit holders
+  must NOT display "LMHC-LP" or any credential string in professional materials.
+
+effective_start: 2026-06-02
+effective_end: null
+
+citation:
+  admincode: 8 NYCRR Part 79
+  statute: NY Education Law Article 163
+  url: https://www.op.nysed.gov/professions/mental-health-counselors
+
+verification:
+  last_verified_at: 2026-06-02
+  last_verified_by: founder (preliminary — drafted from training data, no live NYSED source pulled)
+  source_hash: pending
+
+structured:
+  total_practice_hours_required: 3000     # VERIFIED — long-standing under Article 163
+  total_supervision_hours_required: 100   # LIKELY — needs re-verification
+  min_duration_months: 12                  # LIKELY — at least 1 year post-master's
+  max_duration_months: 36                  # LIKELY — 2-year permit + 1-year renewal cap
+  group_max_attendees: 8                   # UNKNOWN — placeholder; NY does not explicitly cap group size in the typical sources
+
+checks:
+  - id: pre_registration_required
+    severity: blocker
+    description: Limited Permit must be issued by NYSED before any hour can count; supervisor and practice setting approved on the permit
+    params:
+      signal_field: supervisionContractFiledAt
+
+  - id: supervisor_credential_required
+    severity: blocker
+    description: Supervisor must hold an active New York license in one of the accepted credential types
+    params:
+      accepted_credentials: [LMHC, LCSW, Psychologist, Psychiatrist, LMFT, LCAT, LP]
+
+  - id: individual_supervision_cadence
+    severity: warning
+    description: NY uses qualitative "regular and consistent" language rather than a fixed weekly minimum; default 14-day gap as a reasonable proxy
+    params:
+      max_gap_days: 14
+      min_hours_per_period: 1.0
+
+  - id: group_size_limit
+    severity: blocker
+    description: Group supervision size placeholder (NY does not publish a clear numeric cap in standard sources)
+    params:
+      max_attendees: 8
+
+  - id: total_practice_hours
+    severity: info
+    description: 3,000 hours of supervised post-master's experience
+    params:
+      required: 3000
+
+  - id: total_supervision_hours
+    severity: info
+    description: Approximately 100 hours of supervision (≥50% individual)
+    params:
+      required: 100
+
+  - id: duration_window
+    severity: warning
+    description: Permit valid for 2 years initially with 1-year renewal (LIKELY hard cap at 3 years total)
+    params:
+      min_months: 12
+      max_months: 36
+
+evidence_requirements:
+  form_template_key: NY_LMHC_LIMITED_PERMIT_V1
+  required_signers:
+    - supervisor
+    - supervisee
+  required_artifacts:
+    - attendance
+    - session_metadata
+  optional_artifacts:
+    - transcript
+  immutability: sha256_signed_json
+
+notes:
+  - "PRELIMINARY rule — DO NOT use for production user assignment until a New York LMHC or NYSED-credentialed reviewer signs off. Multiple values are LIKELY or UNKNOWN, not VERIFIED."
+  - "NEW YORK DEFINING FEATURES: (a) No 'associate license' — pre-licensed counselors practice under a LIMITED PERMIT. (b) NO post-nominal credential is authorized for permit holders. UI must NEVER show 'LMHC-LP' as a user-facing credential string. (c) The supervisor pool is unusually broad — 5 to 7 license types qualify, vs NC's LCMHCS-only or TX's LPC-Supervisor-only."
+  - "Permit expiration is a hard event (LIKELY 2 years + 1 renewal = 3 years max). A future v2 check (`permit_expiration_window`) will warn at 180/90/30 days remaining. For now, the `duration_window` check approximates."
+  - "NY does NOT publish a clear weekly supervision minimum — the regulation uses qualitative language ('regular and consistent'). The 14-day gap proxy is a placeholder."
+  - "Group size cap is UNKNOWN — the placeholder of 8 is a conservative guess. Verify."
+  - "LCAT (Licensed Creative Arts Therapist) and LP (Licensed Psychoanalyst) are LIKELY accepted as supervisors per Article 163's broader pool. Verify."
+  - "No formal supervisor training requirement in NY (unlike NC, CA, TX, FL). Underlying license suffices."
+  - "Pre-permit hours do NOT count. Hours dated before the permit's issuance must be excluded by the rule engine."
