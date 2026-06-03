@@ -82,6 +82,13 @@ checks:
       min_months: 23
       max_months: 60
 
+  - id: permit_expiration_window
+    severity: warning
+    description: RMHCI registration is valid for 5 years and is non-renewable — the registration must be completed within the 60-month window (F.S. 491.0045(4))
+    params:
+      max_months: 60
+      warning_window_days: 90
+
 evidence_requirements:
   form_template_key: FL_RMHCI_SUPERVISION_AGREEMENT_V1
   required_signers:

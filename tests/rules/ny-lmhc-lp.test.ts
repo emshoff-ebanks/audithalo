@@ -132,6 +132,23 @@ describe("NY LMHC-LP rule", () => {
     expect(durationGap!.severity).toBe("warning");
   });
 
+  it("warns when NY permit is within 90 days of its expiration window", () => {
+    // Started 58 months ago — ~61 days remaining against the 60-month cap,
+    // inside the 90-day warning window for permit_expiration_window.
+    const monthsAgo = 58;
+    const ctx: EvaluationContext = {
+      superviseeId: "x",
+      startedAt: new Date(Date.now() - monthsAgo * 30.44 * 24 * 60 * 60 * 1000).toISOString(),
+      supervisionContractFiledAt: new Date(Date.now() - monthsAgo * 30.44 * 24 * 60 * 60 * 1000).toISOString(),
+      asOf: new Date().toISOString(),
+      sessions: [],
+    };
+    const r = evaluate(ctx, NY);
+    const gap = r.gaps.find((g) => g.code === "permit_expiration_window");
+    expect(gap).toBeTruthy();
+    expect(gap!.severity).toBe("warning");
+  });
+
   it("computes correct totals for NY sessions", () => {
     const ctx = buildLog({
       contractFiledAt: "2025-12-15T00:00:00Z",

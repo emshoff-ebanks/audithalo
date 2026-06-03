@@ -100,36 +100,50 @@ describe("CA APCC rule", () => {
     expect(r.gaps.find((g) => g.code === "group_size_limit")).toBeUndefined();
   });
 
-  it("warns when individual supervision cadence exceeds CA's 7-day max gap", () => {
-    // 20 days of practice with no individual sup → gap >> 7 days
+  it("flags weeks with >10 direct hours but no individual supervision (CA's conditional cadence)", () => {
+    // Single ISO week (W02 of 2026: Jan 5-11) with 24 practice hrs (Mon/Tue/Wed)
+    // and zero individual or triadic supervision → 1 offending week.
     const ctx = buildLog({
       contractFiledAt: "2025-12-15T00:00:00Z",
-      startedAt: "2026-01-01T00:00:00Z",
-      practiceDays: Array.from({ length: 15 }, (_, i) => i + 1),
-      individualSupDays: [],
+      startedAt: "2026-01-05T00:00:00Z", // Monday — ISO 2026-W02
+      practiceDays: [0, 1, 2], // 3 days × 8 hrs = 24 hrs in W02
+      individualSupDays: [], // no individual or triadic supervision
       supervisorCredentials: ACCEPTED_CREDS,
-      asOf: "2026-01-25T00:00:00Z",
+      asOf: "2026-02-01T00:00:00Z",
     });
     const r = evaluate(ctx, CA);
-    expect(r.gaps.find((g) => g.code === "individual_supervision_cadence")).toBeTruthy();
+    expect(r.gaps.find((g) => g.code === "weekly_supervision_cadence")).toBeTruthy();
     expect(r.riskLevel).toBe("yellow");
   });
 
-  it("is green and compliant for a healthy log meeting CA's 7-day cadence", () => {
-    // Weekly individual sup for ~8 weeks of practice
-    const practiceDays = Array.from({ length: 40 }, (_, i) => i + 1);
-    const indDays = [6, 13, 20, 27, 34, 41]; // every 7 days
+  it("does NOT flag a low-volume week (< 10 direct hours)", () => {
+    // 8 practice hours in a week is under the 10-hour threshold — the weekly
+    // rule does not apply, so absence of supervision is not a violation.
     const ctx = buildLog({
       contractFiledAt: "2025-12-15T00:00:00Z",
-      startedAt: "2026-01-01T00:00:00Z",
-      practiceDays,
-      individualSupDays: indDays,
+      startedAt: "2026-01-05T00:00:00Z", // Monday — ISO 2026-W02
+      practiceDays: [0], // 8 hrs total in W02
+      individualSupDays: [],
       supervisorCredentials: ACCEPTED_CREDS,
-      asOf: "2026-02-12T00:00:00Z",
+      asOf: "2026-02-01T00:00:00Z",
     });
     const r = evaluate(ctx, CA);
-    expect(r.compliant).toBe(true);
-    expect(r.riskLevel).not.toBe("red");
+    expect(r.gaps.find((g) => g.code === "weekly_supervision_cadence")).toBeFalsy();
+  });
+
+  it("is happy when a 24-hour practice week has ≥1 hr individual supervision in the same week", () => {
+    // 24 practice hours Mon-Wed + 1 hr individual on Thursday — same ISO week,
+    // so the cadence requirement is satisfied for the week.
+    const ctx = buildLog({
+      contractFiledAt: "2025-12-15T00:00:00Z",
+      startedAt: "2026-01-05T00:00:00Z", // Monday — ISO 2026-W02
+      practiceDays: [0, 1, 2],
+      individualSupDays: [3], // Thursday of same week — 1 hr individual
+      supervisorCredentials: ACCEPTED_CREDS,
+      asOf: "2026-02-01T00:00:00Z",
+    });
+    const r = evaluate(ctx, CA);
+    expect(r.gaps.find((g) => g.code === "weekly_supervision_cadence")).toBeFalsy();
   });
 
   it("warns when the obligation exceeds CA's 72-month max duration window", () => {

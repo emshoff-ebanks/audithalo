@@ -147,6 +147,37 @@ describe("FL RMHCI rule", () => {
     expect(durationGap!.severity).toBe("warning");
   });
 
+  it("warns when FL permit is within 90 days of 60-month expiry", () => {
+    // Started 58 months ago — ~61 days remaining, inside the 90-day warning window.
+    const monthsAgo = 58;
+    const ctx: EvaluationContext = {
+      superviseeId: "x",
+      startedAt: new Date(Date.now() - monthsAgo * 30.44 * 24 * 60 * 60 * 1000).toISOString(),
+      supervisionContractFiledAt: new Date(Date.now() - monthsAgo * 30.44 * 24 * 60 * 60 * 1000).toISOString(),
+      asOf: new Date().toISOString(),
+      sessions: [],
+    };
+    const r = evaluate(ctx, FL);
+    const gap = r.gaps.find((g) => g.code === "permit_expiration_window");
+    expect(gap).toBeTruthy();
+    expect(gap!.severity).toBe("warning");
+  });
+
+  it("blocks when FL permit has expired past 60 months", () => {
+    // Started 65 months ago — past the 60-month non-renewable cap.
+    const ctx: EvaluationContext = {
+      superviseeId: "x",
+      startedAt: new Date(Date.now() - 65 * 30.44 * 24 * 60 * 60 * 1000).toISOString(),
+      supervisionContractFiledAt: new Date(Date.now() - 65 * 30.44 * 24 * 60 * 60 * 1000).toISOString(),
+      asOf: new Date().toISOString(),
+      sessions: [],
+    };
+    const r = evaluate(ctx, FL);
+    const gap = r.gaps.find((g) => g.code === "permit_expiration_window");
+    expect(gap).toBeTruthy();
+    expect(gap!.severity).toBe("blocker");
+  });
+
   it("computes correct totals for FL sessions", () => {
     const ctx = buildLog({
       contractFiledAt: "2025-12-15T00:00:00Z",

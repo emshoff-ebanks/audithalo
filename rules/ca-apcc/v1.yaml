@@ -53,12 +53,12 @@ checks:
     params:
       accepted_credentials: [LPCC, LMFT, LCSW, Psychologist, Psychiatrist]
 
-  - id: individual_supervision_cadence
+  - id: weekly_supervision_cadence
     severity: warning
-    description: At least 1 hour of individual or triadic supervision per week in any week the APCC accrued client contact (CA uses a weekly cadence, not a per-practice-hour ratio)
+    description: At least 1 hour of individual or triadic supervision in any week where APCC accrued more than 10 hours of direct client contact (16 CCR §1820)
     params:
-      max_gap_days: 7
-      min_hours_per_period: 1.0
+      min_direct_hours_threshold: 10
+      min_individual_hours_per_week: 1.0
 
   - id: group_size_limit
     severity: blocker
@@ -142,7 +142,6 @@ page_content:
 
 notes:
   - "PRELIMINARY rule — DO NOT use for production user assignment until a CA-licensed Qualified Supervisor reviews. Multiple numeric values are LIKELY, not VERIFIED."
-  - "CA's actual supervision rule is a WEEKLY CADENCE conditional on direct-contact volume (1 hr individual/triadic per week if >10 direct client contact hours that week). Our existing `individual_supervision_cadence` check approximates this with a 7-day max gap. A future v2 check (`weekly_supervision_cadence`) will handle the conditional threshold properly."
   - "CA caps countable supervision at 5 hours per week. Not yet enforced in the check library."
   - "CA requires the supervisor to have completed 15 hours of supervisor training (16 CCR §1822 or current). Not yet enforced — flagged for v2."
   - "CA's '90-day post-degree' filing window for APCC application affects which hours count back to degree-conferral. Not yet enforced — flagged for v2."

@@ -41,6 +41,24 @@ function daysBetween(a: string, b: string): number {
   return ms / (1000 * 60 * 60 * 24);
 }
 
+/** ISO 8601 week key in "YYYY-Www" form (Mon-Sun week; Thursday determines year). */
+function isoWeekKey(isoDate: string): string {
+  const d = new Date(isoDate);
+  // Mon=0...Sun=6
+  const day = (d.getUTCDay() + 6) % 7;
+  // Move to Thursday of the same ISO week — Thursday determines the ISO year
+  d.setUTCDate(d.getUTCDate() - day + 3);
+  const thursdayYear = d.getUTCFullYear();
+  const firstThursday = new Date(Date.UTC(thursdayYear, 0, 4));
+  const firstDay = (firstThursday.getUTCDay() + 6) % 7;
+  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDay + 3);
+  const weekNum =
+    Math.round(
+      (d.getTime() - firstThursday.getTime()) / (7 * 24 * 3600 * 1000)
+    ) + 1;
+  return `${thursdayYear}-W${weekNum.toString().padStart(2, "0")}`;
+}
+
 // ---------------------------------------------------------------------------
 // Checks
 // ---------------------------------------------------------------------------
@@ -152,6 +170,63 @@ const individualSupervisionCadence: CheckFn = (ctx, _rule, check) => {
   void minHoursPerPeriod;
 
   return gaps;
+};
+
+/** Warning: in any ISO week with > min_direct_hours_threshold practice hours,
+ *  there must be at least min_individual_hours_per_week of individual or
+ *  triadic supervision in that same week. Models CA's 16 CCR §1820 cadence. */
+const weeklySupervisionCadence: CheckFn = (ctx, _rule, check) => {
+  const threshold = (check.params.min_direct_hours_threshold as number) ?? 0;
+  const minInd = (check.params.min_individual_hours_per_week as number) ?? 1;
+
+  // Bucket sessions by ISO week (Mon-Sun). ISO week key: "YYYY-Www".
+  const buckets = new Map<
+    string,
+    { practiceHours: number; individualHours: number; firstDate: string }
+  >();
+  for (const s of ctx.sessions) {
+    const weekKey = isoWeekKey(s.date);
+    const bucket =
+      buckets.get(weekKey) ?? {
+        practiceHours: 0,
+        individualHours: 0,
+        firstDate: s.date,
+      };
+    if (s.kind === "practice") {
+      bucket.practiceHours += s.durationHours;
+    } else if (
+      s.kind === "supervision" &&
+      (s.sessionType === "individual" || s.sessionType === "triadic")
+    ) {
+      bucket.individualHours += s.durationHours;
+    }
+    buckets.set(weekKey, bucket);
+  }
+
+  const offendingWeeks: Array<{
+    week: string;
+    practiceHours: number;
+    individualHours: number;
+  }> = [];
+  for (const [weekKey, b] of buckets) {
+    if (b.practiceHours > threshold && b.individualHours < minInd) {
+      offendingWeeks.push({
+        week: weekKey,
+        practiceHours: b.practiceHours,
+        individualHours: b.individualHours,
+      });
+    }
+  }
+
+  if (offendingWeeks.length === 0) return [];
+  return [
+    {
+      code: check.id,
+      severity: check.severity,
+      message: `${offendingWeeks.length} week(s) exceeded ${threshold} practice hours without ${minInd} hr individual/triadic supervision.`,
+      detail: { offendingWeeks: offendingWeeks.slice(0, 10) },
+    },
+  ];
 };
 
 /** Warning: each block of practice_hours_per_block must include enough supervision (individual OR group). */
@@ -313,6 +388,43 @@ const durationWindow: CheckFn = (ctx, _rule, check) => {
   return gaps;
 };
 
+/** Permit/registration expiration check: blocker when past max_months,
+ *  warning when within warning_window_days of expiry. The check overrides
+ *  the YAML-declared severity dynamically based on state. */
+const permitExpirationWindow: CheckFn = (ctx, _rule, check) => {
+  const maxMonths = check.params.max_months as number;
+  const warningWindowDays =
+    (check.params.warning_window_days as number) ?? 90;
+
+  const start = Date.parse(ctx.startedAt);
+  const now = ctx.asOf ? Date.parse(ctx.asOf) : Date.now();
+  const monthsElapsed = (now - start) / (1000 * 60 * 60 * 24 * 30.44);
+  const monthsRemaining = maxMonths - monthsElapsed;
+  const daysRemaining = monthsRemaining * 30.44;
+
+  if (monthsElapsed > maxMonths) {
+    return [
+      {
+        code: check.id,
+        severity: "blocker", // override: past expiry is always blocker
+        message: `Permit / registration expired ${(monthsElapsed - maxMonths).toFixed(1)} months ago. Non-renewable permits cannot be extended — the supervisee must re-apply.`,
+        detail: { monthsElapsed, maxMonths },
+      },
+    ];
+  }
+  if (daysRemaining > 0 && daysRemaining <= warningWindowDays) {
+    return [
+      {
+        code: check.id,
+        severity: "warning", // override: in window is always warning
+        message: `Permit / registration expires in ${Math.round(daysRemaining)} days. Plan the final supervision sessions accordingly.`,
+        detail: { daysRemaining: Math.round(daysRemaining), maxMonths },
+      },
+    ];
+  }
+  return [];
+};
+
 // ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
@@ -321,12 +433,14 @@ export const CHECK_REGISTRY: Record<string, CheckFn> = {
   pre_registration_required: preRegistrationRequired,
   supervisor_credential_required: supervisorCredentialRequired,
   individual_supervision_cadence: individualSupervisionCadence,
+  weekly_supervision_cadence: weeklySupervisionCadence,
   supervision_ratio_per_practice_block: supervisionRatioPerPracticeBlock,
   individual_supervision_minimum_share: individualSupervisionMinimumShare,
   group_size_limit: groupSizeLimit,
   total_practice_hours: totalPracticeHours,
   total_supervision_hours: totalSupervisionHours,
   duration_window: durationWindow,
+  permit_expiration_window: permitExpirationWindow,
 };
 
 export function runCheck(

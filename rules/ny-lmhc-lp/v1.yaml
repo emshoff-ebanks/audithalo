@@ -83,6 +83,13 @@ checks:
       min_months: 12
       max_months: 36
 
+  - id: permit_expiration_window
+    severity: warning
+    description: NY limited permits expire and require renewal — supervised hours must be completed within the permit validity window
+    params:
+      max_months: 60
+      warning_window_days: 90
+
 evidence_requirements:
   form_template_key: NY_LMHC_LIMITED_PERMIT_V1
   required_signers:
