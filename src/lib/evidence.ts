@@ -1,7 +1,4 @@
 import { createHash } from "node:crypto";
-import { eq } from "drizzle-orm";
-import { db, schema } from "@/lib/db";
-import { getRule } from "@/lib/rules";
 
 /** Stable JSON.stringify — keys sorted recursively so the same input always hashes the same. */
 export function canonicalize(value: unknown): unknown {
@@ -29,6 +26,10 @@ export function sha256Hex(value: string): string {
  * Safe to call multiple times — if a package already exists for this session, do nothing.
  */
 export async function generateEvidencePackage(sessionEventId: string): Promise<void> {
+  const { eq } = await import("drizzle-orm");
+  const { db, schema } = await import("@/lib/db");
+  const { getRule } = await import("@/lib/rules");
+
   const existing = await db.query.evidencePackages.findFirst({
     where: eq(schema.evidencePackages.sessionEventId, sessionEventId),
   });
