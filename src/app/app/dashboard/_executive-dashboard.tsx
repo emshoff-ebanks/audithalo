@@ -157,6 +157,9 @@ export async function ExecutiveDashboard({
             View full roster <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
+        <Button asChild variant="outline">
+          <Link href="/dashboard/audit-log">Audit log</Link>
+        </Button>
       </div>
 
       {/* Bottom 3 at-risk */}

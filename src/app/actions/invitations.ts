@@ -13,6 +13,7 @@ import {
 } from "@/lib/invitations";
 import { sendEmail } from "@/lib/email";
 import { seatCapBlockedReason } from "@/lib/billing/seats";
+import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
 
@@ -92,6 +93,21 @@ export async function inviteSuperviseeAction(
       token: fresh,
       supervisorName: session.user.name ?? session.user.email,
     });
+    try {
+      await logAuditEvent({
+        orgId: membership.orgId,
+        actorUserId: session.user.id,
+        action: AUDIT_ACTIONS.INVITATION_RESENT,
+        resourceType: "invitation",
+        resourceId: openInvite.id,
+        details: {
+          email: inviteEmail,
+          role: "supervisee",
+        },
+      });
+    } catch (err) {
+      console.error("[audit-log] failed to record invitation.resent:", err);
+    }
     revalidatePath("/dashboard/roster");
     return { ok: true, sentTo: inviteEmail };
   }
@@ -126,15 +142,18 @@ export async function inviteSuperviseeAction(
   }
 
   const token = generateInvitationToken();
-  await db.insert(schema.invitations).values({
-    orgId: membership.orgId,
-    email: inviteEmail,
-    name: parsed.data.name ?? null,
-    role: "supervisee",
-    tokenHash: hashToken(token),
-    invitedById: session.user.id,
-    expiresAt: invitationExpiresAt(),
-  });
+  const [insertedInvitation] = await db
+    .insert(schema.invitations)
+    .values({
+      orgId: membership.orgId,
+      email: inviteEmail,
+      name: parsed.data.name ?? null,
+      role: "supervisee",
+      tokenHash: hashToken(token),
+      invitedById: session.user.id,
+      expiresAt: invitationExpiresAt(),
+    })
+    .returning({ id: schema.invitations.id });
 
   await sendInviteEmail({
     to: inviteEmail,
@@ -142,6 +161,22 @@ export async function inviteSuperviseeAction(
     token,
     supervisorName: session.user.name ?? session.user.email,
   });
+
+  try {
+    await logAuditEvent({
+      orgId: membership.orgId,
+      actorUserId: session.user.id,
+      action: AUDIT_ACTIONS.INVITATION_SENT,
+      resourceType: "invitation",
+      resourceId: insertedInvitation.id,
+      details: {
+        email: inviteEmail,
+        role: "supervisee",
+      },
+    });
+  } catch (err) {
+    console.error("[audit-log] failed to record invitation.sent:", err);
+  }
 
   revalidatePath("/dashboard/roster");
   return { ok: true, sentTo: inviteEmail };
@@ -225,6 +260,22 @@ export async function cancelInvitationAction(
     .delete(schema.invitations)
     .where(eq(schema.invitations.id, parsed.data.invitationId));
 
+  try {
+    await logAuditEvent({
+      orgId: membership.orgId,
+      actorUserId: session.user.id,
+      action: AUDIT_ACTIONS.INVITATION_CANCELED,
+      resourceType: "invitation",
+      resourceId: parsed.data.invitationId,
+      details: {
+        email: invite.email,
+        role: invite.role,
+      },
+    });
+  } catch (err) {
+    console.error("[audit-log] failed to record invitation.canceled:", err);
+  }
+
   revalidatePath("/dashboard/roster");
   return { ok: true };
 }
@@ -281,6 +332,22 @@ export async function resendInvitationAction(
     token: fresh,
     supervisorName: session.user.name ?? session.user.email,
   });
+
+  try {
+    await logAuditEvent({
+      orgId: membership.orgId,
+      actorUserId: session.user.id,
+      action: AUDIT_ACTIONS.INVITATION_RESENT,
+      resourceType: "invitation",
+      resourceId: invite.id,
+      details: {
+        email: invite.email,
+        role: invite.role,
+      },
+    });
+  } catch (err) {
+    console.error("[audit-log] failed to record invitation.resent:", err);
+  }
 
   revalidatePath("/dashboard/roster");
   return { ok: true };

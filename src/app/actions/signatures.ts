@@ -14,6 +14,7 @@ import {
   sendCountersignatureNeededEmail,
   sendEvidenceSealedEmail,
 } from "@/lib/email";
+import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -114,6 +115,29 @@ export async function signSessionAction(
   const fullySigned = rows[0].signed_at !== null;
   if (fullySigned) {
     await generateEvidencePackage(sessionEvent.id);
+  }
+
+  try {
+    await logAuditEvent({
+      orgId: sessionEvent.orgId,
+      actorUserId: session.user.id,
+      action: AUDIT_ACTIONS.SESSION_SIGNED,
+      resourceType: "session_event",
+      resourceId: sessionEvent.id,
+      details: { signerRole, sessionType: sessionEvent.sessionType ?? null },
+    });
+    if (fullySigned) {
+      await logAuditEvent({
+        orgId: sessionEvent.orgId,
+        actorUserId: session.user.id,
+        action: AUDIT_ACTIONS.SESSION_SEALED,
+        resourceType: "session_event",
+        resourceId: sessionEvent.id,
+        details: {},
+      });
+    }
+  } catch (err) {
+    console.error("[audit-log] failed to record session sign:", err);
   }
 
   // If the session is now fully sealed, notify both signers with a closing

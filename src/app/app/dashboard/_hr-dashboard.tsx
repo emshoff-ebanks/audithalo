@@ -87,6 +87,9 @@ export async function HrDashboard({ userId, userName, userEmail }: Props) {
         <Button asChild variant="outline">
           <Link href="/dashboard/billing">Billing</Link>
         </Button>
+        <Button asChild variant="outline">
+          <Link href="/dashboard/audit-log">Audit log</Link>
+        </Button>
       </div>
 
       {/* Compliance heatmap */}

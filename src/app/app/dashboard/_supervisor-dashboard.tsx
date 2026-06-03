@@ -97,6 +97,9 @@ export async function SupervisorDashboard({ userId, userName, userEmail }: Props
             <Link href="/dashboard/team">Team</Link>
           </Button>
         )}
+        <Button asChild variant="outline">
+          <Link href="/dashboard/audit-log">Audit log</Link>
+        </Button>
       </div>
 
       {atRiskCount > 0 && (

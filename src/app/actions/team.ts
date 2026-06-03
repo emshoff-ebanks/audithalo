@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
+import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -81,6 +82,22 @@ export async function updateMemberRoleAction(
         eq(schema.orgMemberships.orgId, membership.orgId)
       )
     );
+
+  try {
+    await logAuditEvent({
+      orgId: membership.orgId,
+      actorUserId: session.user.id,
+      action: AUDIT_ACTIONS.MEMBER_ROLE_CHANGED,
+      resourceType: "user",
+      resourceId: parsed.data.targetUserId,
+      details: {
+        priorRole: targetMembership.role,
+        newRole: parsed.data.newRole,
+      },
+    });
+  } catch (err) {
+    console.error("[audit-log] failed to record role change:", err);
+  }
 
   revalidatePath("/dashboard/team");
   return { ok: true };

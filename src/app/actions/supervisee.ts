@@ -11,6 +11,7 @@ import {
   sendRuleChangedEmail,
   sendSupervisionLoggedEmail,
 } from "@/lib/email";
+import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 /**
  * Resolves a stored rule ID (e.g. "nc-lcmhca-v1") into a human-friendly label
@@ -116,6 +117,25 @@ export async function assignRuleAction(
       ? new Date(parsed.data.supervisionContractFiledAt)
       : null,
   });
+
+  try {
+    await logAuditEvent({
+      orgId,
+      actorUserId: access.session.user.id,
+      action: priorAssignment
+        ? AUDIT_ACTIONS.RULE_CHANGED
+        : AUDIT_ACTIONS.RULE_ASSIGNED,
+      resourceType: "supervisee",
+      resourceId: parsed.data.superviseeId,
+      details: {
+        ruleId: parsed.data.ruleId,
+        priorRuleId: priorAssignment?.ruleId ?? null,
+        obligationStartedAt: parsed.data.obligationStartedAt,
+      },
+    });
+  } catch (err) {
+    console.error("[audit-log] failed to record rule assignment:", err);
+  }
 
   // Notify the supervisee that their rule changed, but ONLY when:
   //   (a) there was a prior assignment (first-time assignment uses a different flow)
@@ -247,6 +267,25 @@ export async function logSessionAction(
     })
     .returning({ id: schema.sessionEvents.id });
   const insertedId = inserted.id;
+
+  try {
+    await logAuditEvent({
+      orgId,
+      actorUserId: session.user.id,
+      action: AUDIT_ACTIONS.SESSION_LOGGED,
+      resourceType: "session_event",
+      resourceId: insertedId,
+      details: {
+        superviseeId: parsed.data.superviseeId,
+        kind: parsed.data.kind,
+        date: parsed.data.date,
+        durationHours: parsed.data.durationHours,
+        sessionType: parsed.data.sessionType ?? null,
+      },
+    });
+  } catch (err) {
+    console.error("[audit-log] failed to record session.logged:", err);
+  }
 
   // Notify supervisee if this is a supervision event (practice events don't need signatures).
   // Email failure must NEVER block the underlying action — wrapped in try/catch.

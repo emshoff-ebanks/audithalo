@@ -9,6 +9,7 @@ import { db, schema } from "@/lib/db";
 import { sendInviteAcceptedEmail } from "@/lib/email";
 import { hashToken } from "@/lib/invitations";
 import { signIn } from "@/auth";
+import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 const acceptSchema = z.object({
   token: z.string().length(64, "Invalid invitation token."),
@@ -82,6 +83,19 @@ export async function acceptInviteAction(
       acceptedById: user.id,
     })
     .where(eq(schema.invitations.id, invite.id));
+
+  try {
+    await logAuditEvent({
+      orgId: invite.orgId,
+      actorUserId: user.id,
+      action: AUDIT_ACTIONS.INVITATION_ACCEPTED,
+      resourceType: "invitation",
+      resourceId: invite.id,
+      details: { email: invite.email },
+    });
+  } catch (err) {
+    console.error("[audit-log] failed to record invitation.accepted:", err);
+  }
 
   try {
     await syncPracticeSeatQuantity(invite.orgId);

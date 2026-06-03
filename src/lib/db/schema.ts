@@ -337,3 +337,27 @@ export const sessionEvents = pgTable("session_events", {
     .defaultNow()
     .notNull(),
 });
+
+/** Append-only audit log per organization. Records who-did-what-when for
+ *  every state-changing action. 7-year retention per Practice tier promise. */
+export const auditLogEntries = pgTable("audit_log_entries", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orgId: uuid("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  /** User who took the action. Null if action was system-initiated (e.g., webhook). */
+  actorUserId: uuid("actor_user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  /** Short snake_case action verb, e.g. "rule.assigned", "session.signed", "member.role_changed". */
+  action: text("action").notNull(),
+  /** Type of resource the action affected, e.g. "supervisee", "session_event", "invitation". */
+  resourceType: text("resource_type"),
+  /** Identifier of the affected resource (usually a UUID). */
+  resourceId: text("resource_id"),
+  /** Structured detail: arbitrary JSON describing the change. */
+  details: jsonb("details").$type<Record<string, unknown>>(),
+  /** IP address of the actor at the time of the action. */
+  ipAddress: text("ip_address"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
