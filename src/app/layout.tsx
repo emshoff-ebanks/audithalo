@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
+import { PostHogProvider } from "@/components/observability/posthog-provider";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -38,15 +39,17 @@ export default function RootLayout({
       className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <NextTopLoader
-          color="#166534"
-          height={2}
-          showSpinner={false}
-          shadow={false}
-          crawlSpeed={200}
-          initialPosition={0.15}
-        />
-        {children}
+        <PostHogProvider>
+          <NextTopLoader
+            color="#166534"
+            height={2}
+            showSpinner={false}
+            shadow={false}
+            crawlSpeed={200}
+            initialPosition={0.15}
+          />
+          {children}
+        </PostHogProvider>
       </body>
     </html>
   );

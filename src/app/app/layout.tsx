@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { AuditHaloWordmark } from "@/components/brand/AuditHaloMark";
+import { PostHogIdentify } from "@/components/observability/posthog-identify";
 import { UserMenu } from "./user-menu";
 
 export default async function AppLayout({
@@ -12,6 +13,13 @@ export default async function AppLayout({
 
   return (
     <div className="flex flex-col flex-1 min-h-screen bg-background">
+      {session?.user?.id && session.user.email ? (
+        <PostHogIdentify
+          userId={session.user.id}
+          email={session.user.email}
+          role={session.user.role}
+        />
+      ) : null}
       <header className="border-b border-border bg-card">
         <nav className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between gap-4">
           <Link href="/" aria-label="AuditHalo home">
