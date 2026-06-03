@@ -6,6 +6,7 @@ import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
+import { isValidStateCode } from "@/lib/us-states";
 import { getRule, listRuleIds } from "@/lib/rules";
 import {
   sendRuleChangedEmail,
@@ -184,6 +185,7 @@ const logSessionSchema = z.object({
   date: z.string(),
   durationHours: z.coerce.number().positive(),
   directContactHours: z.coerce.number().nonnegative().optional(),
+  practiceState: z.string().length(2).optional(),
   sessionType: z.enum(["individual", "triadic", "group"]).optional(),
   supervisorCredentials: z.string().optional(),
   groupAttendees: z.coerce.number().int().positive().optional(),
@@ -199,6 +201,7 @@ export async function logSessionAction(
     date: formData.get("date"),
     durationHours: formData.get("durationHours"),
     directContactHours: formData.get("directContactHours") || undefined,
+    practiceState: (formData.get("practiceState") as string) || undefined,
     sessionType: formData.get("sessionType") || undefined,
     supervisorCredentials: formData.get("supervisorCredentials") || undefined,
     groupAttendees: formData.get("groupAttendees") || undefined,
@@ -208,6 +211,12 @@ export async function logSessionAction(
   }
   if (parsed.data.kind === "supervision" && !parsed.data.sessionType) {
     return { ok: false, error: "Supervision sessions require a session type." };
+  }
+  if (
+    parsed.data.practiceState &&
+    !isValidStateCode(parsed.data.practiceState)
+  ) {
+    return { ok: false, error: "Invalid state code." };
   }
 
   let access;
@@ -259,6 +268,7 @@ export async function logSessionAction(
       date: new Date(parsed.data.date),
       durationHours: parsed.data.durationHours,
       directContactHours: parsed.data.directContactHours ?? null,
+      practiceState: parsed.data.practiceState ?? null,
       sessionType: parsed.data.sessionType ?? null,
       supervisorCredentials: credentials,
       supervisorTrainingHours: supervisorTrainingHoursSnapshot,

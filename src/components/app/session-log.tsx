@@ -19,6 +19,7 @@ type SessionEvent = {
   sessionType: string | null;
   signedAt: Date | string | null;
   signatures: unknown[];
+  practiceState?: string | null;
 };
 
 type Props = {
@@ -26,11 +27,18 @@ type Props = {
   viewerIsManager: boolean;
   viewerUserId: string;
   superviseeId: string;
+  superviseeState?: string | null;
 };
 
 type Filter = "all" | "pending" | "signed";
 
-export function SessionLog({ events, viewerIsManager, viewerUserId, superviseeId }: Props) {
+export function SessionLog({
+  events,
+  viewerIsManager,
+  viewerUserId,
+  superviseeId,
+  superviseeState,
+}: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -194,7 +202,19 @@ export function SessionLog({ events, viewerIsManager, viewerUserId, superviseeId
                             <td className="px-4 py-2 font-mono text-xs">
                               {format(d, "MMM d")}
                             </td>
-                            <td className="px-4 py-2 capitalize">{e.kind}</td>
+                            <td className="px-4 py-2 capitalize">
+                              {e.kind}
+                              {e.kind === "practice" &&
+                                e.practiceState &&
+                                e.practiceState !== superviseeState && (
+                                  <Badge
+                                    variant="outline"
+                                    className="ml-2 text-[10px]"
+                                  >
+                                    in {e.practiceState}
+                                  </Badge>
+                                )}
+                            </td>
                             <td className="px-4 py-2 capitalize text-foreground/70">
                               {e.sessionType ?? "—"}
                             </td>

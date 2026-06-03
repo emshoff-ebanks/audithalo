@@ -333,10 +333,12 @@ export default async function SuperviseeDetailPage({
                 sessionType: e.sessionType,
                 signedAt: e.signedAt,
                 signatures: e.signatures ?? [],
+                practiceState: e.practiceState,
               }))}
               viewerIsManager={viewerIsManager}
               viewerUserId={session.user.id}
               superviseeId={superviseeId}
+              superviseeState={supervisee.state ?? null}
             />
           )}
         </CardContent>

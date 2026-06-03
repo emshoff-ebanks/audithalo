@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { logSessionAction, type ActionResult } from "@/app/actions/supervisee";
+import { US_STATES } from "@/lib/us-states";
 
 export function LogSessionForm({
   superviseeId,
@@ -91,6 +92,33 @@ export function LogSessionForm({
             Optional — if all your practice was direct client contact, leave
             blank. The rule engine will count duration as direct contact by
             default.
+          </p>
+        </div>
+      )}
+
+      {kind === "practice" && (
+        <div>
+          <Label htmlFor="practiceState">
+            State where practice happened (optional)
+          </Label>
+          <select
+            id="practiceState"
+            name="practiceState"
+            defaultValue=""
+            className="mt-1.5 flex h-10 w-full rounded-sm border border-input bg-card px-3 py-2 text-sm text-foreground"
+          >
+            <option value="">{`Same as supervisee's state`}</option>
+            {US_STATES.map((s) => (
+              <option key={s.code} value={s.code}>
+                {s.code} — {s.name}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-foreground/60">
+            If this practice block happened in a different state than your
+            supervisee&apos;s current licensure state (e.g. before they
+            relocated), record it here. Used by the Counseling Compact and
+            Social Work Compact when counting hours.
           </p>
         </div>
       )}

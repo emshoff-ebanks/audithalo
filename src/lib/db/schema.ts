@@ -307,6 +307,10 @@ export const sessionEvents = pgTable("session_events", {
   /** Practice events only: direct client contact subset of durationHours.
    *  NULL means "treat as equal to durationHours" (backward compat for older events). */
   directContactHours: doublePrecision("direct_contact_hours"),
+  /** Two-letter US state code where the practice happened. NULL means "assume
+   *  supervisee's current state" (backward compat for events logged before this
+   *  field existed). Used by future compact-aware rule logic. */
+  practiceState: text("practice_state"),
   sessionType: text("session_type"),
   supervisorCredentials: jsonb("supervisor_credentials").$type<string[]>(),
   /** Supervision events only: snapshot of the supervisor's verified training hours

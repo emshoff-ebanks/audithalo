@@ -109,6 +109,8 @@ export const sessionEventSchema = z.discriminatedUnion("kind", [
     durationHours: z.number().positive(),
     /** Direct client contact hours; defaults to durationHours when not specified. */
     directContactHours: z.number().nonnegative().optional(),
+    /** Two-letter state code. When undefined, treat as supervisee's current state. */
+    practiceState: z.string().length(2).optional(),
   }),
   z.object({
     kind: z.literal("supervision"),

@@ -48,6 +48,7 @@ export function resolveEvaluation(
             date: e.date.toISOString(),
             durationHours: e.durationHours,
             directContactHours: e.directContactHours ?? undefined,
+            practiceState: e.practiceState ?? undefined,
           }
         : {
             kind: "supervision" as const,
