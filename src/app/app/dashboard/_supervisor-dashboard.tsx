@@ -92,6 +92,11 @@ export async function SupervisorDashboard({ userId, userName, userEmail }: Props
         <Button asChild variant="outline">
           <Link href="/dashboard/billing">Billing</Link>
         </Button>
+        {org && org.createdById === userId && (
+          <Button asChild variant="outline">
+            <Link href="/dashboard/team">Team</Link>
+          </Button>
+        )}
       </div>
 
       {atRiskCount > 0 && (

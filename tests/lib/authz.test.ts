@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from "vitest";
 // dragging the auth runtime into the test environment.
 vi.mock("@/auth", () => ({ auth: vi.fn() }));
 
-import { isManagerRole, canSupervise } from "@/lib/authz";
+import { isManagerRole, canSupervise, isOrgOwner } from "@/lib/authz";
 
 describe("isManagerRole", () => {
   it("returns true for supervisor", () => {
@@ -45,5 +45,17 @@ describe("canSupervise", () => {
   it("returns false for null/undefined", () => {
     expect(canSupervise(null)).toBe(false);
     expect(canSupervise(undefined)).toBe(false);
+  });
+});
+
+describe("isOrgOwner", () => {
+  it("returns true when userId matches org.createdById", () => {
+    const userId = "11111111-1111-1111-1111-111111111111";
+    expect(isOrgOwner(userId, { createdById: userId })).toBe(true);
+  });
+  it("returns false when userId does not match org.createdById", () => {
+    const userId = "11111111-1111-1111-1111-111111111111";
+    const otherId = "22222222-2222-2222-2222-222222222222";
+    expect(isOrgOwner(userId, { createdById: otherId })).toBe(false);
   });
 });

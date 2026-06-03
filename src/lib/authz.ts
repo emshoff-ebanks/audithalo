@@ -39,3 +39,8 @@ export async function getCurrentMembership(userId: string) {
     where: eq(schema.orgMemberships.userId, userId),
   });
 }
+
+/** Pure: is this user the creator of this org? Used to gate team-management actions. */
+export function isOrgOwner(userId: string, org: { createdById: string }): boolean {
+  return userId === org.createdById;
+}
