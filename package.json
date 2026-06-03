@@ -13,6 +13,7 @@
     "db:migrate": "tsx src/lib/db/migrate.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "seed:demo": "tsx scripts/seed-demo.ts",
     "auth:secret": "npx auth secret"
   },
   "dependencies": {

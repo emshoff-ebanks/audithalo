@@ -72,6 +72,9 @@ export default function MarketingHome() {
             </a>
           </Button>
           <Button asChild size="lg" variant="outline">
+            <Link href="/demo">Try the demo</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
             <Link href="/for-supervisors">See how it works</Link>
           </Button>
         </div>
