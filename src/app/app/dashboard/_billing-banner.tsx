@@ -10,7 +10,8 @@ export function BillingBanner({ org }: { org: Org | null | undefined }) {
   const banner = computeBillingBanner(org);
   if (!banner) return null;
 
-  const isPastDue = banner.kind === "past_due";
+  const isPastDue =
+    banner.kind === "past_due" || banner.kind === "past_due_expired";
   const Icon = isPastDue ? CreditCard : AlertTriangle;
 
   return (

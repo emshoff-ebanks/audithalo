@@ -1,9 +1,10 @@
 import type { schema } from "@/lib/db";
+import { isPastDueGracePeriodExpired } from "@/lib/billing/seats";
 
 type Org = typeof schema.organizations.$inferSelect;
 
 export type BillingBanner = {
-  kind: "trial_ending" | "past_due";
+  kind: "trial_ending" | "past_due" | "past_due_expired";
   message: string;
   ctaLabel: string;
   ctaHref: string;
@@ -28,6 +29,15 @@ export function computeBillingBanner(
   now: Date = new Date()
 ): BillingBanner | null {
   if (org.subscriptionStatus === "past_due") {
+    if (isPastDueGracePeriodExpired(org, now)) {
+      return {
+        kind: "past_due_expired",
+        message:
+          "Your account is restricted. Update your payment method to restore access.",
+        ctaLabel: "Update payment method",
+        ctaHref: "/dashboard/billing",
+      };
+    }
     return {
       kind: "past_due",
       message:

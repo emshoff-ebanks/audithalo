@@ -7,11 +7,41 @@ type Org = typeof schema.organizations.$inferSelect;
 
 export const ACTIVE_STATUSES = new Set(["trialing", "active", "past_due"]);
 
+const PAST_DUE_GRACE_PERIOD_DAYS = 7;
+const PAST_DUE_GRACE_PERIOD_MS = PAST_DUE_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000;
+
+/**
+ * Pure: an org in past_due status is still "active" for the first 7 days after
+ * their billing period ended (Stripe is retrying payment in the background).
+ * After that grace period expires, treat them as restricted.
+ *
+ * Stripe behavior: when a payment fails, status flips to `past_due` but
+ * `subscriptionPeriodEnd` does NOT advance until payment succeeds — so
+ * `subscriptionPeriodEnd` is effectively the "last good through" date.
+ */
+export function isPastDueGracePeriodExpired(
+  org: Pick<Org, "subscriptionStatus" | "subscriptionPeriodEnd">,
+  now: Date = new Date()
+): boolean {
+  if (org.subscriptionStatus !== "past_due") return false;
+  if (!org.subscriptionPeriodEnd) return false; // defensive — shouldn't happen for past_due orgs
+  return (
+    now.getTime() > org.subscriptionPeriodEnd.getTime() + PAST_DUE_GRACE_PERIOD_MS
+  );
+}
+
 /** Seat cap for this org's current plan. null = unlimited. 0 = no plan, can't invite. */
 export function seatCap(
-  org: Pick<Org, "subscriptionStatus" | "subscriptionTier">
+  org: Pick<
+    Org,
+    "subscriptionStatus" | "subscriptionTier" | "subscriptionPeriodEnd"
+  >,
+  now: Date = new Date()
 ): number | null {
   if (!org.subscriptionStatus || !ACTIVE_STATUSES.has(org.subscriptionStatus)) {
+    return 0;
+  }
+  if (isPastDueGracePeriodExpired(org, now)) {
     return 0;
   }
   if (org.subscriptionTier === "solo") return 3;
@@ -21,12 +51,19 @@ export function seatCap(
 
 /** Returns a user-facing block message if the org cannot invite another supervisee, or null if allowed. */
 export function seatCapBlockedReason(
-  org: Pick<Org, "subscriptionStatus" | "subscriptionTier">,
-  used: number
+  org: Pick<
+    Org,
+    "subscriptionStatus" | "subscriptionTier" | "subscriptionPeriodEnd"
+  >,
+  used: number,
+  now: Date = new Date()
 ): string | null {
-  const cap = seatCap(org);
+  const cap = seatCap(org, now);
   if (cap === null) return null;
   if (cap === 0) {
+    if (isPastDueGracePeriodExpired(org, now)) {
+      return "Your payment is overdue. Update your payment method to restore access — visit Billing.";
+    }
     return "You need an active subscription to invite supervisees. Visit Billing to start your 14-day trial.";
   }
   if (used >= cap) {
@@ -37,9 +74,16 @@ export function seatCapBlockedReason(
 
 /** AI note quota for an org's current plan. null = unlimited. 0 = no AI access. */
 export function aiNoteQuotaPerMonth(
-  org: Pick<Org, "subscriptionStatus" | "subscriptionTier">
+  org: Pick<
+    Org,
+    "subscriptionStatus" | "subscriptionTier" | "subscriptionPeriodEnd"
+  >,
+  now: Date = new Date()
 ): number | null {
   if (!org.subscriptionStatus || !ACTIVE_STATUSES.has(org.subscriptionStatus)) {
+    return 0;
+  }
+  if (isPastDueGracePeriodExpired(org, now)) {
     return 0;
   }
   if (org.subscriptionTier === "solo") return 10;
@@ -49,12 +93,19 @@ export function aiNoteQuotaPerMonth(
 
 /** User-facing message when AI quota would be exceeded. null = allowed. */
 export function aiNoteQuotaBlockedReason(
-  org: Pick<Org, "subscriptionStatus" | "subscriptionTier">,
-  usedThisMonth: number
+  org: Pick<
+    Org,
+    "subscriptionStatus" | "subscriptionTier" | "subscriptionPeriodEnd"
+  >,
+  usedThisMonth: number,
+  now: Date = new Date()
 ): string | null {
-  const quota = aiNoteQuotaPerMonth(org);
+  const quota = aiNoteQuotaPerMonth(org, now);
   if (quota === null) return null; // unlimited
   if (quota === 0) {
+    if (isPastDueGracePeriodExpired(org, now)) {
+      return "Your payment is overdue. Update your payment method to restore AI session notes — visit Billing.";
+    }
     return "AI session notes require an active subscription. Visit Billing to start your trial.";
   }
   if (usedThisMonth >= quota) {

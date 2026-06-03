@@ -88,7 +88,7 @@ describe("computeBillingBanner", () => {
     ).toBeNull();
   });
 
-  it("returns past_due banner regardless of periodEnd", () => {
+  it("returns past_due banner when periodEnd is in the future (within grace)", () => {
     const b = computeBillingBanner(
       {
         subscriptionStatus: "past_due",
@@ -101,6 +101,46 @@ describe("computeBillingBanner", () => {
     expect(b?.message).toMatch(/payment failed/i);
     expect(b?.ctaHref).toBe("/dashboard/billing");
     expect(b?.ctaLabel).toBe("Update payment method");
+  });
+
+  it("returns past_due banner when periodEnd was 3 days ago (within 7-day grace)", () => {
+    const b = computeBillingBanner(
+      {
+        subscriptionStatus: "past_due",
+        subscriptionPeriodEnd: inDays(-3),
+        subscriptionTier: "solo",
+      },
+      NOW
+    );
+    expect(b?.kind).toBe("past_due");
+    expect(b?.message).toMatch(/payment failed/i);
+  });
+
+  it("returns past_due_expired banner when periodEnd was 10 days ago (past grace)", () => {
+    const b = computeBillingBanner(
+      {
+        subscriptionStatus: "past_due",
+        subscriptionPeriodEnd: inDays(-10),
+        subscriptionTier: "solo",
+      },
+      NOW
+    );
+    expect(b?.kind).toBe("past_due_expired");
+    expect(b?.message).toMatch(/restricted/i);
+    expect(b?.ctaHref).toBe("/dashboard/billing");
+    expect(b?.ctaLabel).toBe("Update payment method");
+  });
+
+  it("returns past_due (not expired) when periodEnd is null (defensive)", () => {
+    const b = computeBillingBanner(
+      {
+        subscriptionStatus: "past_due",
+        subscriptionPeriodEnd: null,
+        subscriptionTier: "solo",
+      },
+      NOW
+    );
+    expect(b?.kind).toBe("past_due");
   });
 
   it("returns null for canceled subscription", () => {

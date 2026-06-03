@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   findSeatItem,
+  isPastDueGracePeriodExpired,
   seatCap,
   seatCapBlockedReason,
   shouldSyncSeats,
@@ -8,31 +9,187 @@ import {
 
 describe("seatCap", () => {
   it("returns 0 when no subscription", () => {
-    expect(seatCap({ subscriptionStatus: null, subscriptionTier: null })).toBe(0);
+    expect(
+      seatCap({
+        subscriptionStatus: null,
+        subscriptionTier: null,
+        subscriptionPeriodEnd: null,
+      })
+    ).toBe(0);
   });
 
   it("returns 0 when subscription is canceled", () => {
-    expect(seatCap({ subscriptionStatus: "canceled", subscriptionTier: "solo" })).toBe(0);
+    expect(
+      seatCap({
+        subscriptionStatus: "canceled",
+        subscriptionTier: "solo",
+        subscriptionPeriodEnd: null,
+      })
+    ).toBe(0);
   });
 
   it("returns 3 for trialing solo", () => {
-    expect(seatCap({ subscriptionStatus: "trialing", subscriptionTier: "solo" })).toBe(3);
+    expect(
+      seatCap({
+        subscriptionStatus: "trialing",
+        subscriptionTier: "solo",
+        subscriptionPeriodEnd: null,
+      })
+    ).toBe(3);
   });
 
   it("returns 3 for active solo", () => {
-    expect(seatCap({ subscriptionStatus: "active", subscriptionTier: "solo" })).toBe(3);
+    expect(
+      seatCap({
+        subscriptionStatus: "active",
+        subscriptionTier: "solo",
+        subscriptionPeriodEnd: null,
+      })
+    ).toBe(3);
   });
 
   it("returns 3 for past_due solo (grace period)", () => {
-    expect(seatCap({ subscriptionStatus: "past_due", subscriptionTier: "solo" })).toBe(3);
+    expect(
+      seatCap({
+        subscriptionStatus: "past_due",
+        subscriptionTier: "solo",
+        subscriptionPeriodEnd: null,
+      })
+    ).toBe(3);
   });
 
   it("returns null (unlimited) for active practice", () => {
-    expect(seatCap({ subscriptionStatus: "active", subscriptionTier: "practice" })).toBeNull();
+    expect(
+      seatCap({
+        subscriptionStatus: "active",
+        subscriptionTier: "practice",
+        subscriptionPeriodEnd: null,
+      })
+    ).toBeNull();
   });
 
   it("returns 0 when active but tier is null (defensive)", () => {
-    expect(seatCap({ subscriptionStatus: "active", subscriptionTier: null })).toBe(0);
+    expect(
+      seatCap({
+        subscriptionStatus: "active",
+        subscriptionTier: null,
+        subscriptionPeriodEnd: null,
+      })
+    ).toBe(0);
+  });
+
+  it("returns 0 when past_due grace period (7d) has expired", () => {
+    const expiredPeriodEnd = new Date(
+      Date.now() - 10 * 24 * 60 * 60 * 1000
+    ); // 10 days ago
+    expect(
+      seatCap({
+        subscriptionStatus: "past_due",
+        subscriptionTier: "solo",
+        subscriptionPeriodEnd: expiredPeriodEnd,
+      })
+    ).toBe(0);
+  });
+
+  it("still returns 3 (solo) when past_due within grace period", () => {
+    const recentPeriodEnd = new Date(
+      Date.now() - 3 * 24 * 60 * 60 * 1000
+    ); // 3 days ago, within 7-day grace
+    expect(
+      seatCap({
+        subscriptionStatus: "past_due",
+        subscriptionTier: "solo",
+        subscriptionPeriodEnd: recentPeriodEnd,
+      })
+    ).toBe(3);
+  });
+
+  it("still returns null (practice unlimited) when past_due within grace period", () => {
+    const recentPeriodEnd = new Date(
+      Date.now() - 3 * 24 * 60 * 60 * 1000
+    );
+    expect(
+      seatCap({
+        subscriptionStatus: "past_due",
+        subscriptionTier: "practice",
+        subscriptionPeriodEnd: recentPeriodEnd,
+      })
+    ).toBeNull();
+  });
+
+  it("returns 0 for past_due practice when grace expired", () => {
+    const expiredPeriodEnd = new Date(
+      Date.now() - 10 * 24 * 60 * 60 * 1000
+    );
+    expect(
+      seatCap({
+        subscriptionStatus: "past_due",
+        subscriptionTier: "practice",
+        subscriptionPeriodEnd: expiredPeriodEnd,
+      })
+    ).toBe(0);
+  });
+});
+
+describe("isPastDueGracePeriodExpired", () => {
+  it("returns false when not past_due", () => {
+    expect(
+      isPastDueGracePeriodExpired({
+        subscriptionStatus: "active",
+        subscriptionPeriodEnd: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      })
+    ).toBe(false);
+  });
+
+  it("returns false when past_due but periodEnd is null (defensive)", () => {
+    expect(
+      isPastDueGracePeriodExpired({
+        subscriptionStatus: "past_due",
+        subscriptionPeriodEnd: null,
+      })
+    ).toBe(false);
+  });
+
+  it("returns false when past_due within grace period (3 days ago)", () => {
+    expect(
+      isPastDueGracePeriodExpired({
+        subscriptionStatus: "past_due",
+        subscriptionPeriodEnd: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      })
+    ).toBe(false);
+  });
+
+  it("returns true when past_due beyond grace period (10 days ago)", () => {
+    expect(
+      isPastDueGracePeriodExpired({
+        subscriptionStatus: "past_due",
+        subscriptionPeriodEnd: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      })
+    ).toBe(true);
+  });
+
+  it("respects the now argument", () => {
+    const periodEnd = new Date("2026-01-01T00:00:00Z");
+    // 6 days after periodEnd — within grace
+    expect(
+      isPastDueGracePeriodExpired(
+        {
+          subscriptionStatus: "past_due",
+          subscriptionPeriodEnd: periodEnd,
+        },
+        new Date("2026-01-07T00:00:00Z")
+      )
+    ).toBe(false);
+    // 8 days after periodEnd — past grace
+    expect(
+      isPastDueGracePeriodExpired(
+        {
+          subscriptionStatus: "past_due",
+          subscriptionPeriodEnd: periodEnd,
+        },
+        new Date("2026-01-09T00:00:00Z")
+      )
+    ).toBe(true);
   });
 });
 
@@ -40,7 +197,11 @@ describe("seatCapBlockedReason", () => {
   it("returns null when within cap on solo", () => {
     expect(
       seatCapBlockedReason(
-        { subscriptionStatus: "trialing", subscriptionTier: "solo" },
+        {
+          subscriptionStatus: "trialing",
+          subscriptionTier: "solo",
+          subscriptionPeriodEnd: null,
+        },
         2
       )
     ).toBeNull();
@@ -49,7 +210,11 @@ describe("seatCapBlockedReason", () => {
   it("returns null for practice regardless of used count", () => {
     expect(
       seatCapBlockedReason(
-        { subscriptionStatus: "active", subscriptionTier: "practice" },
+        {
+          subscriptionStatus: "active",
+          subscriptionTier: "practice",
+          subscriptionPeriodEnd: null,
+        },
         9999
       )
     ).toBeNull();
@@ -57,7 +222,11 @@ describe("seatCapBlockedReason", () => {
 
   it("returns the no-plan message when no subscription", () => {
     const msg = seatCapBlockedReason(
-      { subscriptionStatus: null, subscriptionTier: null },
+      {
+        subscriptionStatus: null,
+        subscriptionTier: null,
+        subscriptionPeriodEnd: null,
+      },
       0
     );
     expect(msg).toMatch(/active subscription/i);
@@ -66,7 +235,11 @@ describe("seatCapBlockedReason", () => {
 
   it("returns the upgrade message when solo is at cap", () => {
     const msg = seatCapBlockedReason(
-      { subscriptionStatus: "active", subscriptionTier: "solo" },
+      {
+        subscriptionStatus: "active",
+        subscriptionTier: "solo",
+        subscriptionPeriodEnd: null,
+      },
       3
     );
     expect(msg).toMatch(/Solo plan covers 3 supervisees/);
@@ -75,10 +248,30 @@ describe("seatCapBlockedReason", () => {
 
   it("blocks one over the cap (4 with solo)", () => {
     const msg = seatCapBlockedReason(
-      { subscriptionStatus: "active", subscriptionTier: "solo" },
+      {
+        subscriptionStatus: "active",
+        subscriptionTier: "solo",
+        subscriptionPeriodEnd: null,
+      },
       4
     );
     expect(msg).not.toBeNull();
+  });
+
+  it("returns the past_due message when grace expired", () => {
+    const expiredPeriodEnd = new Date(
+      Date.now() - 10 * 24 * 60 * 60 * 1000
+    );
+    const msg = seatCapBlockedReason(
+      {
+        subscriptionStatus: "past_due",
+        subscriptionTier: "solo",
+        subscriptionPeriodEnd: expiredPeriodEnd,
+      },
+      0
+    );
+    expect(msg).toMatch(/overdue/i);
+    expect(msg).toMatch(/Billing/);
   });
 });
 
