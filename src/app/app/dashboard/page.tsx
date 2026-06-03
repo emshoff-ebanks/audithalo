@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { isManagerRole } from "@/lib/authz";
 import { SupervisorDashboard } from "./_supervisor-dashboard";
 import { SuperviseeDashboard } from "./_supervisee-dashboard";
+import { HrDashboard } from "./_hr-dashboard";
+import { ExecutiveDashboard } from "./_executive-dashboard";
 
 export const metadata = { title: "Dashboard — AuditHalo" };
 
@@ -16,9 +17,17 @@ export default async function DashboardPage() {
     userEmail: session.user.email,
   };
 
-  return isManagerRole(session.user.role) ? (
-    <SupervisorDashboard {...props} />
-  ) : (
-    <SuperviseeDashboard {...props} />
-  );
+  const role = session.user.role;
+
+  if (role === "supervisee") {
+    return <SuperviseeDashboard {...props} />;
+  }
+  if (role === "hr_admin") {
+    return <HrDashboard {...props} />;
+  }
+  if (role === "executive") {
+    return <ExecutiveDashboard {...props} />;
+  }
+  // supervisor (default for any other manager-like role)
+  return <SupervisorDashboard {...props} />;
 }
