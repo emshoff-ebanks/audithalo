@@ -70,6 +70,13 @@ export const users = pgTable("users", {
   /** Self-reported supervisor training hours (e.g., CA 16 CCR §1822 requires 15).
    *  Snapshotted onto each supervision session at log time. */
   supervisorTrainingHours: integer("supervisor_training_hours"),
+  /** TOTP secret (base32-encoded). NULL if 2FA is not enabled for this user. */
+  totpSecret: text("totp_secret"),
+  /** Timestamp when 2FA was enabled. NULL if not enabled. */
+  totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),
+  /** Backup codes (hashed). Single-use codes for recovery if the user loses their device.
+   *  Each entry is a SHA-256 hash of a single backup code. NULL if 2FA not enabled. */
+  totpBackupCodes: jsonb("totp_backup_codes").$type<string[]>(),
 });
 
 // ===========================================================================

@@ -112,15 +112,23 @@ export async function signupAction(
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address."),
   password: z.string().min(1, "Enter your password."),
+  // Optional second factor — only relevant for users with 2FA enabled.
+  // Left blank by users without 2FA; ignored on the server in that case.
+  totpCode: z.string().optional(),
 });
 
 export async function loginAction(
   _prev: AuthActionResult | undefined,
   formData: FormData
 ): Promise<AuthActionResult> {
+  const rawTotp = formData.get("totpCode");
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    totpCode:
+      typeof rawTotp === "string" && rawTotp.trim().length > 0
+        ? rawTotp
+        : undefined,
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
@@ -130,11 +138,14 @@ export async function loginAction(
     await signIn("credentials", {
       email: parsed.data.email.toLowerCase(),
       password: parsed.data.password,
+      totpCode: parsed.data.totpCode ?? "",
       redirectTo: "/dashboard",
     });
     return { ok: true };
   } catch (err) {
     if (err instanceof AuthError) {
+      // Generic message — deliberately doesn't reveal whether email,
+      // password, or 2FA was the failing factor.
       return { ok: false, error: "Invalid email or password." };
     }
     throw err;

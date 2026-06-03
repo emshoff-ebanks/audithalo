@@ -18,6 +18,12 @@ import {
   sendEmailVerificationEmail,
   sendPasswordResetEmail,
 } from "@/lib/email";
+import {
+  buildOtpAuthUri,
+  generateBackupCodes,
+  generateTotpSecret,
+  verifyTotpCode,
+} from "@/lib/totp";
 
 const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
 
@@ -563,4 +569,168 @@ export async function updateSupervisorTrainingHoursAction(
 
   revalidatePath("/dashboard/account");
   return { ok: true, message: "Training hours updated." };
+}
+
+// ----------------------------------------------------------------------------
+// Two-factor authentication (TOTP)
+//
+// Three-step flow:
+//   1. startTotpSetupAction  — generate a fresh secret + QR URI, return
+//                              (NOT persisted until the user verifies a code).
+//   2. enableTotpAction      — verify the user's first 6-digit code (proves the
+//                              QR scan worked), then persist the secret + mint
+//                              + return 10 single-use backup codes.
+//   3. disableTotpAction     — requires current password; clears all 2FA fields.
+//
+// Enable and disable BOTH bump `sessionsValidFrom` to force re-login on every
+// other device — the same posture as password change.
+// ----------------------------------------------------------------------------
+
+/**
+ * Begin TOTP setup. Returns a fresh secret + otpauth URI for the client to
+ * render as a QR code. The secret is NOT yet saved — the user must prove
+ * the QR scan worked by submitting a valid 6-digit code via enableTotpAction.
+ */
+export async function startTotpSetupAction(): Promise<
+  | { ok: true; secret: string; otpAuthUri: string }
+  | { ok: false; error: string }
+> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const user = await db.query.users.findFirst({
+    where: eq(schema.users.id, session.user.id),
+  });
+  if (!user) return { ok: false, error: "Account not found." };
+  if (user.totpEnabledAt) {
+    return {
+      ok: false,
+      error:
+        "Two-factor authentication is already enabled. Disable it first to set up a new device.",
+    };
+  }
+
+  const secret = generateTotpSecret();
+  const otpAuthUri = buildOtpAuthUri(secret, user.email);
+  return { ok: true, secret, otpAuthUri };
+}
+
+const enableTotpSchema = z.object({
+  secret: z.string().min(16).max(64),
+  code: z.string().regex(/^\d{6}$/, "Enter the 6-digit code from your authenticator app."),
+});
+
+export type EnableTotpResult =
+  | { ok: true; backupCodes: string[] }
+  | { ok: false; error: string };
+
+/**
+ * Verify the user's first 6-digit code against the just-generated secret;
+ * on success, persist the secret + 10 backup codes (hashed) and force-revoke
+ * other sessions. Returns the plaintext backup codes ONCE — the user must
+ * save them, after which we only have the hashes.
+ */
+export async function enableTotpAction(
+  _prev: EnableTotpResult | undefined,
+  formData: FormData
+): Promise<EnableTotpResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const parsed = enableTotpSchema.safeParse({
+    secret: formData.get("secret"),
+    code: formData.get("code"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+
+  if (!verifyTotpCode(parsed.data.code, parsed.data.secret)) {
+    return {
+      ok: false,
+      error:
+        "Code didn't match. Try again — codes refresh every 30 seconds.",
+    };
+  }
+
+  const { plaintextCodes, hashedCodes } = generateBackupCodes();
+
+  await db
+    .update(schema.users)
+    .set({
+      totpSecret: parsed.data.secret,
+      totpEnabledAt: new Date(),
+      totpBackupCodes: hashedCodes,
+      // Enabling 2FA is a security event — invalidate every prior session
+      // on every device so other devices must re-login (and provide the
+      // newly required TOTP code).
+      sessionsValidFrom: new Date(),
+    })
+    .where(eq(schema.users.id, session.user.id));
+
+  revalidatePath("/dashboard/account");
+  return { ok: true, backupCodes: plaintextCodes };
+}
+
+const disableTotpSchema = z.object({
+  currentPassword: z.string().min(1, "Enter your current password."),
+});
+
+/**
+ * Disable TOTP. Requires the user's current password — defence against a
+ * session-hijack attacker who would otherwise be able to remove the second
+ * factor on a compromised account. Also bumps sessionsValidFrom so any
+ * other live sessions get forced back through the login screen.
+ */
+export async function disableTotpAction(
+  _prev: AccountActionResult | undefined,
+  formData: FormData
+): Promise<AccountActionResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const parsed = disableTotpSchema.safeParse({
+    currentPassword: formData.get("currentPassword"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Enter your current password.",
+    };
+  }
+
+  const user = await db.query.users.findFirst({
+    where: eq(schema.users.id, session.user.id),
+  });
+  if (!user || !user.passwordHash) {
+    return { ok: false, error: "Account not found." };
+  }
+  if (!user.totpEnabledAt) {
+    return { ok: false, error: "Two-factor isn't enabled." };
+  }
+
+  const passwordOk = await bcrypt.compare(
+    parsed.data.currentPassword,
+    user.passwordHash
+  );
+  if (!passwordOk) {
+    return { ok: false, error: "Current password is incorrect." };
+  }
+
+  await db
+    .update(schema.users)
+    .set({
+      totpSecret: null,
+      totpEnabledAt: null,
+      totpBackupCodes: null,
+      // Disabling 2FA is also a security event — kill other sessions.
+      sessionsValidFrom: new Date(),
+    })
+    .where(eq(schema.users.id, session.user.id));
+
+  revalidatePath("/dashboard/account");
+  return { ok: true, message: "Two-factor authentication disabled." };
 }

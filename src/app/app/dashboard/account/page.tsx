@@ -11,6 +11,8 @@ import { EmailVerificationStatus } from "./email-verification-status";
 import { EmailChangeForm } from "./email-change-form";
 import { SupervisorTrainingForm } from "./supervisor-training-form";
 import { SignOutEverywhereButton } from "./sign-out-everywhere-button";
+import { TotpSetupWizard } from "./totp-setup";
+import { TotpDisableForm } from "./totp-disable-form";
 
 export const metadata = { title: "Account — AuditHalo" };
 
@@ -84,6 +86,40 @@ export default async function AccountPage() {
         </CardHeader>
         <CardContent>
           <PasswordForm />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between gap-3">
+            <span>Two-factor authentication</span>
+            {user.totpEnabledAt ? (
+              <Badge variant="success">Active</Badge>
+            ) : (
+              <Badge variant="outline">Off</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {user.totpEnabledAt ? (
+            <div className="space-y-4">
+              <p className="text-sm text-foreground/70">
+                Active since{" "}
+                <span className="font-medium text-foreground">
+                  {user.totpEnabledAt.toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+                . You&apos;ll be asked for a 6-digit code from your
+                authenticator app every time you sign in.
+              </p>
+              <TotpDisableForm />
+            </div>
+          ) : (
+            <TotpSetupWizard />
+          )}
         </CardContent>
       </Card>
 

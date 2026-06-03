@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ export function LoginForm() {
     AuthActionResult | undefined,
     FormData
   >(loginAction, undefined);
+  const [showTotp, setShowTotp] = useState(false);
 
   return (
     <form action={formAction} className="mt-8 space-y-4">
@@ -47,6 +48,33 @@ export function LoginForm() {
           className="mt-2"
         />
       </div>
+
+      {showTotp ? (
+        <div>
+          <Label htmlFor="totpCode">Two-factor code</Label>
+          <Input
+            id="totpCode"
+            name="totpCode"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="123456"
+            className="mt-2 font-mono tracking-widest"
+          />
+          <p className="mt-1.5 text-xs text-foreground/60">
+            Enter the 6-digit code from your authenticator app, or one of your
+            8-character backup codes.
+          </p>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowTotp(true)}
+          className="block text-xs text-secondary font-medium hover:underline"
+        >
+          Have two-factor enabled? Enter a code
+        </button>
+      )}
 
       {state && state.ok === false && (
         <p
