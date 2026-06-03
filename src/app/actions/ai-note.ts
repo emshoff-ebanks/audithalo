@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { getCurrentMembership, isManagerRole } from "@/lib/authz";
+import { canSupervise, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { generateSessionNote } from "@/lib/ai/session-note";
 
@@ -51,7 +51,7 @@ export async function generateSessionNoteAction(
   if (!membership || membership.orgId !== sessionEvent.orgId) {
     return { ok: false, error: "You can't generate notes for this session." };
   }
-  if (!isManagerRole(membership.role)) {
+  if (!canSupervise(membership.role)) {
     return { ok: false, error: "Only supervisors can generate AI notes." };
   }
 

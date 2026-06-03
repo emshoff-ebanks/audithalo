@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { ArrowLeft, FileSignature } from "lucide-react";
 import { auth } from "@/auth";
-import { getCurrentMembership, isManagerRole } from "@/lib/authz";
+import { canSupervise, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,7 +41,7 @@ export default async function SignSessionPage({
   // Who am I as a signer for this session?
   let signerRole: "supervisee" | "supervisor" | null = null;
   if (session.user.id === sessionEvent.superviseeId) signerRole = "supervisee";
-  else if (isManagerRole(membership.role)) signerRole = "supervisor";
+  else if (canSupervise(membership.role)) signerRole = "supervisor";
 
   const signatures = sessionEvent.signatures ?? [];
   const alreadySignedByMe = signatures.some(
@@ -134,7 +134,7 @@ export default async function SignSessionPage({
 
           {/* AI session note — supervisor-only, supervision-only, before sealing */}
           {sessionEvent.kind === "supervision" &&
-            isManagerRole(membership.role) && (
+            canSupervise(membership.role) && (
             <div className="pt-4 border-t border-border">
               {sessionEvent.aiNote ? (
                 <SessionNoteDisplay note={sessionEvent.aiNote as never} />

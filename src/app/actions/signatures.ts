@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { and, eq, sql } from "drizzle-orm";
 import { auth } from "@/auth";
-import { getCurrentMembership, isManagerRole } from "@/lib/authz";
+import { canSupervise, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import type { SessionSignature } from "@/lib/db/schema";
 import { decideNextSignature } from "@/lib/signatures";
@@ -53,7 +53,7 @@ export async function signSessionAction(
   let signerRole: "supervisee" | "supervisor";
   if (session.user.id === sessionEvent.superviseeId) {
     signerRole = "supervisee";
-  } else if (isManagerRole(membership.role)) {
+  } else if (canSupervise(membership.role)) {
     signerRole = "supervisor";
   } else {
     return { ok: false, error: "You aren't a required signer for this session." };

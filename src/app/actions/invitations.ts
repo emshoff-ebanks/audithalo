@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { eq, and, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
-import { getCurrentMembership, isManagerRole } from "@/lib/authz";
+import { canSupervise, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import {
   generateInvitationToken,
@@ -45,7 +45,7 @@ export async function inviteSuperviseeAction(
   if (!membership) {
     return { ok: false, error: "Your account has no organization yet." };
   }
-  if (!isManagerRole(membership.role)) {
+  if (!canSupervise(membership.role)) {
     return { ok: false, error: "Only supervisors can invite supervisees." };
   }
 

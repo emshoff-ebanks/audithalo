@@ -9,7 +9,7 @@ import { AssignRuleForm } from "./assign-rule-form";
 
 type Props = {
   superviseeId: string;
-  viewerIsManager: boolean;
+  viewerCanSupervise: boolean;
   // Current assignment (read-only display)
   currentRule: {
     jurisdiction: string;
@@ -29,7 +29,7 @@ type Props = {
 
 export function RuleSummaryCard({
   superviseeId,
-  viewerIsManager,
+  viewerCanSupervise,
   currentRule,
   currentRuleId,
   currentObligationStartedAt,
@@ -94,7 +94,7 @@ export function RuleSummaryCard({
         >
           View source ↗
         </a>
-        {viewerIsManager && (
+        {viewerCanSupervise && (
           <Button
             type="button"
             variant="ghost"

@@ -9,7 +9,7 @@ import {
   FileSignature,
 } from "lucide-react";
 import { auth } from "@/auth";
-import { getCurrentMembership, isManagerRole } from "@/lib/authz";
+import { canSupervise, getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import {
   loadAllRules,
@@ -59,6 +59,7 @@ export default async function SuperviseeDetailPage({
 
   // Supervisees can only view themselves
   const viewerIsManager = isManagerRole(session.user.role);
+  const viewerCanSupervise = canSupervise(session.user.role);
   if (!viewerIsManager && session.user.id !== superviseeId) {
     redirect(`/dashboard/roster/${session.user.id}`);
   }
@@ -138,7 +139,7 @@ export default async function SuperviseeDetailPage({
             <Badge variant="warning" className="mb-3">
               No rule assigned
             </Badge>
-            {viewerIsManager ? (
+            {viewerCanSupervise ? (
               <>
                 <h2 className="font-display text-xl font-semibold text-foreground">
                   Assign a state rule
@@ -151,6 +152,16 @@ export default async function SuperviseeDetailPage({
                   superviseeId={superviseeId}
                   availableRules={allRules}
                 />
+              </>
+            ) : viewerIsManager ? (
+              <>
+                <h2 className="font-display text-xl font-semibold text-foreground">
+                  No rule assigned yet.
+                </h2>
+                <p className="mt-2 text-foreground/70">
+                  This supervisee's licensed supervisor hasn't picked a state rule yet.
+                  Hour progress and at-risk flags will start once they do.
+                </p>
               </>
             ) : (
               <>
@@ -172,7 +183,7 @@ export default async function SuperviseeDetailPage({
             <CardContent className="p-6 space-y-6">
               <RuleSummaryCard
                 superviseeId={superviseeId}
-                viewerIsManager={viewerIsManager}
+                viewerCanSupervise={viewerCanSupervise}
                 currentRule={{
                   jurisdiction: rule.jurisdiction,
                   licenseCode: rule.license_code,
@@ -246,7 +257,7 @@ export default async function SuperviseeDetailPage({
               </p>
               <LogSessionForm
                 superviseeId={superviseeId}
-                allowSupervision={viewerIsManager}
+                allowSupervision={viewerCanSupervise}
               />
             </CardContent>
           </Card>

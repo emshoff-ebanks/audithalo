@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { getCurrentMembership, isManagerRole } from "@/lib/authz";
+import { canSupervise, getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { getRule, listRuleIds } from "@/lib/rules";
 import {
@@ -85,7 +85,7 @@ export async function assignRuleAction(
   } catch {
     return { ok: false, error: "You can't manage this supervisee." };
   }
-  if (!isManagerRole(access.viewerRole)) {
+  if (!canSupervise(access.viewerRole)) {
     return { ok: false, error: "Only supervisors can assign rules." };
   }
   const { orgId } = access;
@@ -196,7 +196,7 @@ export async function logSessionAction(
   }
   // Supervisees can only log their own practice sessions; supervision attestation requires a supervisor.
   if (
-    !isManagerRole(access.viewerRole) &&
+    !canSupervise(access.viewerRole) &&
     parsed.data.kind === "supervision"
   ) {
     return {

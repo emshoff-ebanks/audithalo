@@ -5,8 +5,15 @@ import { db, schema } from "@/lib/db";
 
 const MANAGER_ROLES = new Set(["supervisor", "hr_admin", "executive"]);
 
+/** Roles that can READ management surfaces (roster, supervisee details, dashboards). */
 export function isManagerRole(role: string | undefined | null): boolean {
   return !!role && MANAGER_ROLES.has(role);
+}
+
+/** Roles that can PERFORM supervisor actions: invite, assign rules, log supervision sessions,
+ *  sign as supervisor. HR + Executive can READ everything but can't act as a supervisor. */
+export function canSupervise(role: string | undefined | null): boolean {
+  return role === "supervisor";
 }
 
 export async function requireSession() {
