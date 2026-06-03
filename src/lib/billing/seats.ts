@@ -35,6 +35,34 @@ export function seatCapBlockedReason(
   return null;
 }
 
+/** AI note quota for an org's current plan. null = unlimited. 0 = no AI access. */
+export function aiNoteQuotaPerMonth(
+  org: Pick<Org, "subscriptionStatus" | "subscriptionTier">
+): number | null {
+  if (!org.subscriptionStatus || !ACTIVE_STATUSES.has(org.subscriptionStatus)) {
+    return 0;
+  }
+  if (org.subscriptionTier === "solo") return 10;
+  if (org.subscriptionTier === "practice") return null;
+  return 0;
+}
+
+/** User-facing message when AI quota would be exceeded. null = allowed. */
+export function aiNoteQuotaBlockedReason(
+  org: Pick<Org, "subscriptionStatus" | "subscriptionTier">,
+  usedThisMonth: number
+): string | null {
+  const quota = aiNoteQuotaPerMonth(org);
+  if (quota === null) return null; // unlimited
+  if (quota === 0) {
+    return "AI session notes require an active subscription. Visit Billing to start your trial.";
+  }
+  if (usedThisMonth >= quota) {
+    return `You've used ${usedThisMonth} of ${quota} AI session notes this month on the Solo plan. Upgrade to Practice for unlimited transcripts.`;
+  }
+  return null;
+}
+
 /** Pure: should this org sync seat quantity to Stripe? */
 export function shouldSyncSeats(
   org: Pick<Org, "subscriptionTier" | "subscriptionStatus" | "stripeSubscriptionId">

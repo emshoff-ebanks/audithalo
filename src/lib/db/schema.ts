@@ -320,6 +320,8 @@ export const sessionEvents = pgTable("session_events", {
     model: string;              // e.g. "gpt-4o-2024-08-06"
     transcriptHash: string;     // SHA-256 of input transcript (for audit only; transcript itself not stored)
     transcriptWordCount: number;
+    editedAt?: string;          // ISO timestamp — set when a supervisor manually edits after generation
+    editedByUserId?: string;    // UUID of the supervisor who edited it
   }>(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

@@ -159,6 +159,14 @@ type EvidenceDoc = {
     signedAt: string;
     ipAddress: string;
   }>;
+  aiNote?: {
+    topics: string[];
+    competencies: string[];
+    supervisorFeedback: string;
+    nextSteps: string[];
+    generatedAt: string;
+    model: string;
+  } | null;
 };
 
 type Props = {
@@ -261,6 +269,70 @@ export function EvidencePdf({ document: d, documentHash, packageId }: Props) {
           label="Sealed at"
           value={d.session.signedAt.replace("T", " ").slice(0, 19) + "Z"}
         />
+
+        {d.aiNote && (
+          <>
+            <Text style={styles.h2}>AI session note</Text>
+            <Row label="Generated" value={d.aiNote.generatedAt.slice(0, 10)} />
+            <Row label="Model" value={d.aiNote.model} />
+            {d.aiNote.topics.length > 0 && (
+              <>
+                <Text style={[styles.labelCol, { marginTop: 8, marginBottom: 4 }]}>
+                  Topics covered
+                </Text>
+                {d.aiNote.topics.map((t, i) => (
+                  <Text
+                    key={`topic-${i}`}
+                    style={[styles.valueCol, { marginBottom: 2, paddingLeft: 8 }]}
+                  >
+                    • {t}
+                  </Text>
+                ))}
+              </>
+            )}
+            {d.aiNote.competencies.length > 0 && (
+              <>
+                <Text style={[styles.labelCol, { marginTop: 8, marginBottom: 4 }]}>
+                  Competencies addressed
+                </Text>
+                {d.aiNote.competencies.map((c, i) => (
+                  <Text
+                    key={`comp-${i}`}
+                    style={[styles.valueCol, { marginBottom: 2, paddingLeft: 8 }]}
+                  >
+                    • {c}
+                  </Text>
+                ))}
+              </>
+            )}
+            {d.aiNote.supervisorFeedback && (
+              <>
+                <Text style={[styles.labelCol, { marginTop: 8, marginBottom: 4 }]}>
+                  Supervisor feedback
+                </Text>
+                <Text style={[styles.valueCol, { lineHeight: 1.5, paddingLeft: 8 }]}>
+                  {d.aiNote.supervisorFeedback}
+                </Text>
+              </>
+            )}
+            {d.aiNote.nextSteps.length > 0 && (
+              <>
+                <Text style={[styles.labelCol, { marginTop: 8, marginBottom: 4 }]}>
+                  Next steps
+                </Text>
+                {d.aiNote.nextSteps.map((s, i) => (
+                  <Text
+                    key={`step-${i}`}
+                    style={[styles.valueCol, { marginBottom: 2, paddingLeft: 8 }]}
+                  >
+                    • {s}
+                  </Text>
+                ))}
+              </>
+            )}
+            <View style={styles.divider} />
+          </>
+        )}
 
         <Text style={styles.h2}>Signatures with intent</Text>
         {d.signatures.map((s, i) => (

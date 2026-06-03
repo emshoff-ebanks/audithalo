@@ -137,7 +137,11 @@ export default async function SignSessionPage({
             canSupervise(membership.role) && (
             <div className="pt-4 border-t border-border">
               {sessionEvent.aiNote ? (
-                <SessionNoteDisplay note={sessionEvent.aiNote as never} />
+                <SessionNoteDisplay
+                  note={sessionEvent.aiNote as never}
+                  sessionEventId={sessionEvent.id}
+                  canEdit={canSupervise(membership.role) && !fullySigned}
+                />
               ) : !fullySigned ? (
                 <>
                   <p className="label-overline mb-3">AI session note</p>

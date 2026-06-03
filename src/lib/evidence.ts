@@ -103,6 +103,7 @@ export async function generateEvidencePackage(sessionEventId: string): Promise<v
         assignment.supervisionContractFiledAt?.toISOString() ?? null,
     },
     signatures: event.signatures ?? [],
+    aiNote: event.aiNote ?? null,
   };
 
   const canonical = canonicalJson(document);

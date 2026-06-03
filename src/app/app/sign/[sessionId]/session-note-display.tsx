@@ -1,4 +1,6 @@
 import { CheckCircle2, BookOpen, MessageSquare, ListChecks } from "lucide-react";
+import { RegenerateNoteSlot } from "./regenerate-note-button";
+import { EditNoteSlot } from "./edit-note-form";
 
 type AiNote = {
   topics: string[];
@@ -10,16 +12,45 @@ type AiNote = {
   model: string;
   transcriptHash: string;
   transcriptWordCount: number;
+  editedAt?: string;
+  editedByUserId?: string;
 };
 
-export function SessionNoteDisplay({ note }: { note: AiNote }) {
+export function SessionNoteDisplay({
+  note,
+  sessionEventId,
+  canEdit = false,
+}: {
+  note: AiNote;
+  sessionEventId: string;
+  canEdit?: boolean;
+}) {
   return (
     <div className="space-y-5">
       <div className="flex items-baseline justify-between flex-wrap gap-2">
-        <p className="label-overline">AI session note</p>
-        <p className="text-xs text-foreground/50 font-mono">
-          {note.transcriptWordCount} words · {note.model} · {note.generatedAt.slice(0, 10)}
-        </p>
+        <div className="space-y-1">
+          <p className="label-overline">AI session note</p>
+          <p className="text-xs text-foreground/50 font-mono">
+            {note.transcriptWordCount} words · {note.model} · {note.generatedAt.slice(0, 10)}
+            {note.editedAt && (
+              <> · edited {note.editedAt.slice(0, 10)}</>
+            )}
+          </p>
+        </div>
+        {canEdit && (
+          <div className="flex gap-2">
+            <EditNoteSlot
+              sessionEventId={sessionEventId}
+              initial={{
+                topics: note.topics,
+                competencies: note.competencies,
+                supervisorFeedback: note.supervisorFeedback,
+                nextSteps: note.nextSteps,
+              }}
+            />
+            <RegenerateNoteSlot sessionEventId={sessionEventId} />
+          </div>
+        )}
       </div>
 
       {note.topics.length > 0 && (
