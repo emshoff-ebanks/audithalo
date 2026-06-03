@@ -10,7 +10,10 @@ import { db, schema } from "@/lib/db";
 import type { SessionSignature } from "@/lib/db/schema";
 import { decideNextSignature } from "@/lib/signatures";
 import { generateEvidencePackage } from "@/lib/evidence";
-import { sendCountersignatureNeededEmail } from "@/lib/email";
+import {
+  sendCountersignatureNeededEmail,
+  sendEvidenceSealedEmail,
+} from "@/lib/email";
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -111,6 +114,43 @@ export async function signSessionAction(
   const fullySigned = rows[0].signed_at !== null;
   if (fullySigned) {
     await generateEvidencePackage(sessionEvent.id);
+  }
+
+  // If the session is now fully sealed, notify both signers with a closing
+  // confirmation that includes the evidence-package download URL and a public
+  // verify URL suitable for forwarding to state boards. Email failure must
+  // NEVER block the action — wrapped in try/catch.
+  if (fullySigned) {
+    try {
+      const pkg = await db.query.evidencePackages.findFirst({
+        where: eq(schema.evidencePackages.sessionEventId, sessionEvent.id),
+      });
+      const supervisee = await db.query.users.findFirst({
+        where: eq(schema.users.id, sessionEvent.superviseeId),
+      });
+      const superviseeName = supervisee?.name ?? supervisee?.email ?? "supervisee";
+      if (pkg) {
+        for (const sig of rows[0].signatures) {
+          const signerUser = await db.query.users.findFirst({
+            where: eq(schema.users.id, sig.signerId),
+          });
+          if (signerUser?.email) {
+            await sendEvidenceSealedEmail({
+              to: signerUser.email,
+              recipientName: signerUser.name ?? signerUser.email,
+              superviseeName,
+              sessionDate: sessionEvent.date.toISOString().slice(0, 10),
+              sessionType: sessionEvent.sessionType ?? "individual",
+              durationHours: sessionEvent.durationHours,
+              packageId: pkg.id,
+              documentHash: pkg.documentHash,
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.error("[email] evidence-sealed notification failed:", err);
+    }
   }
 
   // If this was the FIRST signer (post-update signatures length === 1) and the

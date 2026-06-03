@@ -274,6 +274,17 @@ export const superviseeRuleAssignments = pgTable(
   }
 );
 
+/** Tracks which Stripe webhook event IDs we've already processed. Prevents
+ *  double-processing when Stripe retries on receiver timeout. */
+export const processedStripeEvents = pgTable("processed_stripe_events", {
+  /** The Stripe event ID (e.g., "evt_..."). Primary key for natural dedup. */
+  eventId: text("event_id").primaryKey(),
+  eventType: text("event_type").notNull(),
+  processedAt: timestamp("processed_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 /** Practice or supervision session events that feed the rule engine. */
 export const sessionEvents = pgTable("session_events", {
   id: uuid("id").defaultRandom().primaryKey(),

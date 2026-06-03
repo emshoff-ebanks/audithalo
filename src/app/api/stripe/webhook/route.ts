@@ -49,6 +49,27 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // Idempotency: skip if we've already processed this event ID.
+  // Stripe retries on receiver timeout — without this, duplicate deliveries
+  // could double-process side effects.
+  try {
+    await db.insert(schema.processedStripeEvents).values({
+      eventId: event.id,
+      eventType: event.type,
+    });
+  } catch (err) {
+    // PK violation = we already processed this event. Return 200 so Stripe stops retrying.
+    // neon-http surfaces Postgres unique-violation (SQLSTATE 23505) as a generic
+    // Error whose message contains "duplicate" — substring check is the most
+    // portable signal we have.
+    if (err instanceof Error && err.message.includes("duplicate")) {
+      return new Response("ok (duplicate)", { status: 200 });
+    }
+    // Unknown DB error: log + bubble up so Stripe retries
+    console.error("[stripe-webhook] dedup insert failed:", err);
+    return new Response("dedup check failed", { status: 500 });
+  }
+
   switch (event.type) {
     case "customer.subscription.created":
     case "customer.subscription.updated":

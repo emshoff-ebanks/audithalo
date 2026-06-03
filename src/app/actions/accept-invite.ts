@@ -6,6 +6,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { AuthError } from "next-auth";
 import { syncPracticeSeatQuantity } from "@/lib/billing/seats";
 import { db, schema } from "@/lib/db";
+import { sendInviteAcceptedEmail } from "@/lib/email";
 import { hashToken } from "@/lib/invitations";
 import { signIn } from "@/auth";
 
@@ -87,6 +88,26 @@ export async function acceptInviteAction(
   } catch (err) {
     // Don't block the user accept on a Stripe sync failure — we'll reconcile later.
     console.error(`[accept-invite] seat sync failed for org ${invite.orgId}:`, err);
+  }
+
+  // Notify the supervisor who originally sent the invite. Email failure must
+  // NEVER block the action — wrapped in try/catch.
+  try {
+    const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
+    const inviter = await db.query.users.findFirst({
+      where: eq(schema.users.id, invite.invitedById),
+    });
+    if (inviter?.email) {
+      await sendInviteAcceptedEmail({
+        to: inviter.email,
+        supervisorName: inviter.name ?? inviter.email,
+        superviseeName: user.name ?? user.email,
+        superviseeEmail: user.email,
+        rosterUrl: `${APP_URL}/dashboard/roster/${user.id}`,
+      });
+    }
+  } catch (err) {
+    console.error("[email] invite-accepted notification failed:", err);
   }
 
   try {

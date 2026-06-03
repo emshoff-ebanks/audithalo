@@ -6,8 +6,28 @@ import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
-import { listRuleIds } from "@/lib/rules";
-import { sendSupervisionLoggedEmail } from "@/lib/email";
+import { getRule, listRuleIds } from "@/lib/rules";
+import {
+  sendRuleChangedEmail,
+  sendSupervisionLoggedEmail,
+} from "@/lib/email";
+
+/**
+ * Resolves a stored rule ID (e.g. "nc-lcmhca-v1") into a human-friendly label
+ * suitable for email subjects ("NC LCMHCA v1"). Returns null if the ID doesn't
+ * parse or no matching rule is in the registry — caller should fall back to
+ * the raw ID rather than blocking the email.
+ */
+function ruleLabel(ruleId: string): string | null {
+  const [, jur, lic, vRaw] = ruleId.match(/^(.+?)-(.+?)-v(\d+)$/) ?? [];
+  if (!jur || !lic || !vRaw) return null;
+  try {
+    const rule = getRule(jur.toUpperCase(), lic.toUpperCase(), parseInt(vRaw, 10));
+    return `${rule.jurisdiction} ${rule.license_code} v${rule.version}`;
+  } catch {
+    return null;
+  }
+}
 
 async function requireOrgAccess(superviseeId: string) {
   const session = await auth();
@@ -70,7 +90,15 @@ export async function assignRuleAction(
   }
   const { orgId } = access;
 
-  // Upsert pattern: delete prior assignment for this supervisee+org+rule (rare in v1), insert fresh
+  // Upsert pattern: delete prior assignment for this supervisee+org+rule (rare in v1), insert fresh.
+  // Fetch the prior assignment FIRST so we know whether to send a "rule changed" email.
+  const priorAssignment = await db.query.superviseeRuleAssignments.findFirst({
+    where: and(
+      eq(schema.superviseeRuleAssignments.superviseeId, parsed.data.superviseeId),
+      eq(schema.superviseeRuleAssignments.orgId, orgId)
+    ),
+  });
+
   await db
     .delete(schema.superviseeRuleAssignments)
     .where(
@@ -88,6 +116,43 @@ export async function assignRuleAction(
       ? new Date(parsed.data.supervisionContractFiledAt)
       : null,
   });
+
+  // Notify the supervisee that their rule changed, but ONLY when:
+  //   (a) there was a prior assignment (first-time assignment uses a different flow)
+  //   (b) the rule ID actually changed (no-op reassignment shouldn't email)
+  // Email failure must NEVER block the action — wrapped in try/catch.
+  if (
+    priorAssignment &&
+    priorAssignment.ruleId !== parsed.data.ruleId
+  ) {
+    try {
+      const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
+      const [supervisee, supervisor] = await Promise.all([
+        db.query.users.findFirst({
+          where: eq(schema.users.id, parsed.data.superviseeId),
+        }),
+        db.query.users.findFirst({
+          where: eq(schema.users.id, access.session.user.id),
+        }),
+      ]);
+      if (supervisee?.email && supervisor) {
+        const oldLabel =
+          ruleLabel(priorAssignment.ruleId) ?? priorAssignment.ruleId;
+        const newLabel =
+          ruleLabel(parsed.data.ruleId) ?? parsed.data.ruleId;
+        await sendRuleChangedEmail({
+          to: supervisee.email,
+          superviseeName: supervisee.name ?? supervisee.email,
+          supervisorName: supervisor.name ?? supervisor.email,
+          oldRuleLabel: oldLabel,
+          newRuleLabel: newLabel,
+          dashboardUrl: `${APP_URL}/dashboard`,
+        });
+      }
+    } catch (err) {
+      console.error("[email] rule-changed notification failed:", err);
+    }
+  }
 
   revalidatePath(`/dashboard/roster/${parsed.data.superviseeId}`);
   return { ok: true };
