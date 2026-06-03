@@ -78,6 +78,13 @@
       "when": 1780900000000,
       "tag": "0010_audit_log_entries",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1781000000000,
+      "tag": "0011_users_sessions_valid_from",
+      "breakpoints": true
     }
   ]
 }

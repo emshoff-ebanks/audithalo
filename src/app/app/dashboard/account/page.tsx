@@ -10,6 +10,7 @@ import { PasswordForm } from "./password-form";
 import { EmailVerificationStatus } from "./email-verification-status";
 import { EmailChangeForm } from "./email-change-form";
 import { SupervisorTrainingForm } from "./supervisor-training-form";
+import { SignOutEverywhereButton } from "./sign-out-everywhere-button";
 
 export const metadata = { title: "Account — AuditHalo" };
 
@@ -83,6 +84,18 @@ export default async function AccountPage() {
         </CardHeader>
         <CardContent>
           <PasswordForm />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6">
+          <p className="label-overline mb-1">Sessions</p>
+          <p className="text-sm text-foreground/60 mb-4">
+            Signed in on a public computer? Lost a device? Sign out of every
+            device where this account is currently signed in. You&apos;ll need
+            to sign in again on each device you want to keep using.
+          </p>
+          <SignOutEverywhereButton />
         </CardContent>
       </Card>
 

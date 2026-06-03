@@ -63,6 +63,10 @@ export const users = pgTable("users", {
   licenseType: text("license_type"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
+  /** Sessions issued (JWT iat) before this timestamp are invalidated. Set on
+   *  "sign out everywhere", password change, and password reset. Null means no
+   *  revocation has ever occurred — all valid tokens are accepted. */
+  sessionsValidFrom: timestamp("sessions_valid_from", { withTimezone: true }),
   /** Self-reported supervisor training hours (e.g., CA 16 CCR §1822 requires 15).
    *  Snapshotted onto each supervision session at log time. */
   supervisorTrainingHours: integer("supervisor_training_hours"),

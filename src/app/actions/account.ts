@@ -150,7 +150,12 @@ export async function resetPasswordAction(
 
   await db
     .update(schema.users)
-    .set({ passwordHash })
+    .set({
+      passwordHash,
+      // A password reset is a security event — invalidate every prior
+      // session on every device. Any attacker session is now dead.
+      sessionsValidFrom: new Date(),
+    })
     .where(eq(schema.users.id, row.userId));
 
   await db
@@ -484,10 +489,41 @@ export async function updatePasswordAction(
   const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
   await db
     .update(schema.users)
-    .set({ passwordHash })
+    .set({
+      passwordHash,
+      // A password change is a security event — invalidate every prior
+      // session (including this device). The user will need to sign in
+      // again with their new password. Accept the friction.
+      sessionsValidFrom: new Date(),
+    })
     .where(eq(schema.users.id, user.id));
 
   return { ok: true, message: "Password updated." };
+}
+
+// ----------------------------------------------------------------------------
+// Session revocation — "Sign out everywhere"
+// ----------------------------------------------------------------------------
+
+/**
+ * Bumps the user's `sessionsValidFrom` to now, invalidating every JWT
+ * issued before this moment — including the JWT of the device that ran
+ * this action. On the very next request the JWT callback will see iat
+ * < sessionsValidFrom and return null, forcing a redirect to /login.
+ */
+export async function signOutEverywhereAction(
+  _prev: AccountActionResult | undefined,
+  _formData: FormData
+): Promise<AccountActionResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  await db
+    .update(schema.users)
+    .set({ sessionsValidFrom: new Date() })
+    .where(eq(schema.users.id, session.user.id));
+
+  return { ok: true, message: "Signed out of all sessions." };
 }
 
 // ----------------------------------------------------------------------------

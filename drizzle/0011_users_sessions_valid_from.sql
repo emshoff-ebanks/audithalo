@@ -1,0 +1,11 @@
+-- Session revocation support. When set, any JWT whose `iat` (issued-at) claim
+-- predates this timestamp is rejected by the auth.ts jwt callback — forcing
+-- the user to sign in again on every device.
+--
+-- Triggered by:
+--   1. User clicking "Sign out everywhere" on /dashboard/account
+--   2. Successful password change via updatePasswordAction
+--   3. Successful password reset via resetPasswordAction (e.g., post-email-link)
+--
+-- Null = no revocation has ever occurred — treat all tokens as valid.
+ALTER TABLE "users" ADD COLUMN "sessions_valid_from" timestamp with time zone;

@@ -34,3 +34,27 @@ export function isEmailChangeToken(
 ): boolean {
   return tokenEmail.toLowerCase() !== currentUserEmail.toLowerCase();
 }
+
+/**
+ * Pure: was a JWT issued BEFORE the user's `sessionsValidFrom` cutoff?
+ * Used by the NextAuth jwt callback to enforce "sign out everywhere" and
+ * post-password-change/reset revocation.
+ *
+ *   - null sessionsValidFrom → never revoked (default for users who have
+ *     never triggered a revocation event)
+ *   - missing iat → treat as valid (can't determine — fail-open is correct
+ *     here because Auth.js always sets iat on issuance and we'd rather not
+ *     log out users on weird token shapes we can't reason about)
+ *   - iat < sessionsValidFrom → revoked (token was issued before the cutoff)
+ *   - iat >= sessionsValidFrom → not revoked (boundary edge: equal is valid)
+ *
+ * iat is seconds-since-epoch per RFC 7519; sessionsValidFrom is a Date.
+ */
+export function isTokenRevoked(
+  tokenIatSeconds: number | undefined,
+  sessionsValidFrom: Date | null
+): boolean {
+  if (!sessionsValidFrom) return false;
+  if (typeof tokenIatSeconds !== "number") return false;
+  return tokenIatSeconds * 1000 < sessionsValidFrom.getTime();
+}

@@ -5,6 +5,7 @@ import {
   passwordResetExpiresAt,
   emailVerificationExpiresAt,
   isEmailChangeToken,
+  isTokenRevoked,
   PASSWORD_RESET_TTL_MS,
   EMAIL_VERIFICATION_TTL_MS,
 } from "@/lib/auth-tokens";
@@ -70,5 +71,37 @@ describe("auth-tokens", () => {
 
   it("isEmailChangeToken treats case differences as the same email", () => {
     expect(isEmailChangeToken("User@Example.com", "user@example.COM")).toBe(false);
+  });
+
+  // -------------------------------------------------------------------------
+  // isTokenRevoked — JWT revocation check
+  // -------------------------------------------------------------------------
+
+  it("isTokenRevoked: null sessionsValidFrom means never revoked", () => {
+    // iat at epoch — still valid because no cutoff has been set
+    expect(isTokenRevoked(0, null)).toBe(false);
+    // iat in the future — still valid
+    expect(isTokenRevoked(Date.now() / 1000 + 3600, null)).toBe(false);
+  });
+
+  it("isTokenRevoked: iat AFTER cutoff is not revoked", () => {
+    const cutoff = new Date("2026-01-01T00:00:00.000Z");
+    // Token issued 1 second after cutoff
+    const iatSeconds = cutoff.getTime() / 1000 + 1;
+    expect(isTokenRevoked(iatSeconds, cutoff)).toBe(false);
+  });
+
+  it("isTokenRevoked: iat BEFORE cutoff is revoked", () => {
+    const cutoff = new Date("2026-01-01T00:00:00.000Z");
+    // Token issued 1 second before cutoff
+    const iatSeconds = cutoff.getTime() / 1000 - 1;
+    expect(isTokenRevoked(iatSeconds, cutoff)).toBe(true);
+  });
+
+  it("isTokenRevoked: iat exactly EQUAL to cutoff is not revoked (boundary)", () => {
+    // Cutoff at a whole second to avoid floating-point cliffs from ms division
+    const cutoff = new Date("2026-01-01T00:00:00.000Z");
+    const iatSeconds = cutoff.getTime() / 1000;
+    expect(isTokenRevoked(iatSeconds, cutoff)).toBe(false);
   });
 });

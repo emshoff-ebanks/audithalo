@@ -4,6 +4,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import { isTokenRevoked } from "@/lib/auth-tokens";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -46,10 +47,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
+      // Initial sign-in: populate the token from the authenticated user.
+      // No need to re-check revocation — we just issued this token.
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? "supervisee";
+        return token;
       }
+
+      // Subsequent requests: re-validate the token against the user's
+      // sessionsValidFrom cutoff. Returning null invalidates the session.
+      if (token.id && typeof token.iat === "number") {
+        try {
+          const dbUser = await db.query.users.findFirst({
+            where: eq(schema.users.id, token.id as string),
+          });
+          // User was deleted — invalidate any lingering tokens.
+          if (!dbUser) return null;
+          if (isTokenRevoked(token.iat, dbUser.sessionsValidFrom ?? null)) {
+            return null;
+          }
+        } catch (err) {
+          // DB hiccup: prefer keeping the user signed in rather than
+          // logging them out on every transient DB error. Auth.js will
+          // re-check on the next request.
+          console.error("[auth] jwt revocation check failed:", err);
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
