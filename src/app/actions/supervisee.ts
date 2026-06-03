@@ -163,6 +163,7 @@ const logSessionSchema = z.object({
   kind: z.enum(["practice", "supervision"]),
   date: z.string(),
   durationHours: z.coerce.number().positive(),
+  directContactHours: z.coerce.number().nonnegative().optional(),
   sessionType: z.enum(["individual", "triadic", "group"]).optional(),
   supervisorCredentials: z.string().optional(),
   groupAttendees: z.coerce.number().int().positive().optional(),
@@ -177,6 +178,7 @@ export async function logSessionAction(
     kind: formData.get("kind"),
     date: formData.get("date"),
     durationHours: formData.get("durationHours"),
+    directContactHours: formData.get("directContactHours") || undefined,
     sessionType: formData.get("sessionType") || undefined,
     supervisorCredentials: formData.get("supervisorCredentials") || undefined,
     groupAttendees: formData.get("groupAttendees") || undefined,
@@ -213,6 +215,21 @@ export async function logSessionAction(
         .filter(Boolean)
     : null;
 
+  // Snapshot the supervisor's verified training hours at the moment of logging.
+  // Only meaningful for supervision sessions logged by a supervisor — for
+  // practice sessions or supervisee-self-logged events, stays null.
+  let supervisorTrainingHoursSnapshot: number | null = null;
+  if (
+    parsed.data.kind === "supervision" &&
+    canSupervise(access.viewerRole)
+  ) {
+    const supervisor = await db.query.users.findFirst({
+      where: eq(schema.users.id, session.user.id),
+    });
+    supervisorTrainingHoursSnapshot =
+      supervisor?.supervisorTrainingHours ?? null;
+  }
+
   const [inserted] = await db
     .insert(schema.sessionEvents)
     .values({
@@ -221,8 +238,10 @@ export async function logSessionAction(
       kind: parsed.data.kind,
       date: new Date(parsed.data.date),
       durationHours: parsed.data.durationHours,
+      directContactHours: parsed.data.directContactHours ?? null,
       sessionType: parsed.data.sessionType ?? null,
       supervisorCredentials: credentials,
+      supervisorTrainingHours: supervisorTrainingHoursSnapshot,
       groupAttendees: parsed.data.groupAttendees ?? null,
       loggedById: session.user.id,
     })

@@ -192,4 +192,81 @@ describe("CA APCC rule", () => {
     expect(r.progress.practiceProgressPct).toBe(100);
     expect(r.progress.supervisionProgressPct).toBe(100);
   });
+
+  it("flags direct contact below 1750-hour minimum", () => {
+    // 1000 hours of practice (all counted as direct via fallback) → still below 1750
+    const ctx = buildLog({
+      startedAt: "2026-01-01T00:00:00Z",
+      contractFiledAt: "2025-12-15T00:00:00Z",
+      practiceDays: Array.from({ length: 125 }, (_, i) => i), // 125 × 8 = 1000 hours
+      individualSupDays: [],
+      supervisorCredentials: ACCEPTED_CREDS,
+      asOf: "2026-12-01T00:00:00Z",
+    });
+    const r = evaluate(ctx, CA);
+    expect(
+      r.gaps.find((g) => g.code === "direct_client_contact_minimum")
+    ).toBeTruthy();
+  });
+
+  it("blocks supervision sessions logged by a supervisor without 15 training hours", () => {
+    // Inject a supervision event with supervisorTrainingHours: 0
+    const ctx: EvaluationContext = {
+      superviseeId: "x",
+      startedAt: "2026-01-01T00:00:00Z",
+      supervisionContractFiledAt: "2025-12-15T00:00:00Z",
+      asOf: "2026-02-01T00:00:00Z",
+      sessions: [
+        {
+          kind: "practice",
+          id: "p0",
+          date: "2026-01-02T00:00:00Z",
+          durationHours: 8,
+        },
+        {
+          kind: "supervision",
+          id: "s0",
+          date: "2026-01-05T00:00:00Z",
+          durationHours: 1,
+          sessionType: "individual",
+          supervisorCredentials: ["LPCC"],
+          supervisorTrainingHours: 0, // explicitly below 15
+        },
+      ],
+    };
+    const r = evaluate(ctx, CA);
+    expect(
+      r.gaps.find((g) => g.code === "supervisor_training_course_required")
+    ).toBeTruthy();
+  });
+
+  it("does NOT block a supervision session when supervisor has 15+ training hours", () => {
+    const ctx: EvaluationContext = {
+      superviseeId: "x",
+      startedAt: "2026-01-01T00:00:00Z",
+      supervisionContractFiledAt: "2025-12-15T00:00:00Z",
+      asOf: "2026-02-01T00:00:00Z",
+      sessions: [
+        {
+          kind: "practice",
+          id: "p0",
+          date: "2026-01-02T00:00:00Z",
+          durationHours: 8,
+        },
+        {
+          kind: "supervision",
+          id: "s0",
+          date: "2026-01-05T00:00:00Z",
+          durationHours: 1,
+          sessionType: "individual",
+          supervisorCredentials: ["LPCC"],
+          supervisorTrainingHours: 15,
+        },
+      ],
+    };
+    const r = evaluate(ctx, CA);
+    expect(
+      r.gaps.find((g) => g.code === "supervisor_training_course_required")
+    ).toBeFalsy();
+  });
 });

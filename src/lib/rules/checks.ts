@@ -425,6 +425,49 @@ const permitExpirationWindow: CheckFn = (ctx, _rule, check) => {
   return [];
 };
 
+/** Info: cumulative direct client contact hours toward direct_hours_required.
+ *  Uses session.directContactHours when set, otherwise falls back to
+ *  session.durationHours for backward compat (events logged before the
+ *  directContactHours column existed treat the whole session as direct). */
+const directClientContactMinimum: CheckFn = (ctx, _rule, check) => {
+  const required = check.params.required as number;
+  const total = ctx.sessions
+    .filter(isPractice)
+    .reduce((acc, s) => acc + (s.directContactHours ?? s.durationHours), 0);
+  if (total >= required) return [];
+  return [
+    {
+      code: check.id,
+      severity: check.severity,
+      message: `${total.toFixed(1)} of ${required} direct client contact hours logged (${((total / required) * 100).toFixed(0)}%).`,
+      detail: { logged: total, required },
+    },
+  ];
+};
+
+/** Blocker: every supervision session's supervisor must have completed the
+ *  required training hours (snapshotted at the time the session was logged).
+ *  Sessions missing the snapshot (e.g., legacy events) fail closed — they
+ *  cannot prove the supervisor had training, which is the correct behavior. */
+const supervisorTrainingCourseRequired: CheckFn = (ctx, _rule, check) => {
+  const minHours = check.params.min_training_hours as number;
+  const offenders = ctx.sessions.filter(
+    (s): s is Extract<SessionEvent, { kind: "supervision" }> =>
+      isSupervision(s) &&
+      (s.supervisorTrainingHours === undefined ||
+        s.supervisorTrainingHours < minHours)
+  );
+  if (offenders.length === 0) return [];
+  return [
+    {
+      code: check.id,
+      severity: check.severity,
+      message: `${offenders.length} supervision session(s) have a supervisor without ${minHours}+ verified training hours.`,
+      detail: { offendingSessionIds: offenders.map((s) => s.id) },
+    },
+  ];
+};
+
 // ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
@@ -441,6 +484,8 @@ export const CHECK_REGISTRY: Record<string, CheckFn> = {
   total_supervision_hours: totalSupervisionHours,
   duration_window: durationWindow,
   permit_expiration_window: permitExpirationWindow,
+  direct_client_contact_minimum: directClientContactMinimum,
+  supervisor_training_course_required: supervisorTrainingCourseRequired,
 };
 
 export function runCheck(

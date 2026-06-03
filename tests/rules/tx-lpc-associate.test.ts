@@ -168,4 +168,20 @@ describe("TX LPC-Associate rule", () => {
     expect(r.progress.practiceProgressPct).toBe(100);
     expect(r.progress.supervisionProgressPct).toBe(100);
   });
+
+  it("flags direct contact below the TX 1,500-hour minimum", () => {
+    // 1000 hours of practice (all counted as direct via fallback) → still below 1500
+    const ctx = buildLog({
+      contractFiledAt: "2025-12-15T00:00:00Z",
+      startedAt: "2026-01-01T00:00:00Z",
+      practiceDays: Array.from({ length: 125 }, (_, i) => i + 1), // 125 × 8 = 1000 hours
+      individualSupDays: [],
+      supervisorCredentials: ACCEPTED_CREDS,
+      asOf: "2026-12-01T00:00:00Z",
+    });
+    const r = evaluate(ctx, TX);
+    expect(
+      r.gaps.find((g) => g.code === "direct_client_contact_minimum")
+    ).toBeTruthy();
+  });
 });

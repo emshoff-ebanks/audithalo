@@ -73,6 +73,28 @@ export function LogSessionForm({
         </div>
       </div>
 
+      {kind === "practice" && (
+        <div>
+          <Label htmlFor="directContactHours">
+            Direct client contact hours (optional)
+          </Label>
+          <Input
+            id="directContactHours"
+            name="directContactHours"
+            type="number"
+            step="0.5"
+            min="0"
+            placeholder="Leave blank to count all hours"
+            className="mt-1.5"
+          />
+          <p className="mt-1 text-xs text-foreground/60">
+            Optional — if all your practice was direct client contact, leave
+            blank. The rule engine will count duration as direct contact by
+            default.
+          </p>
+        </div>
+      )}
+
       {kind === "supervision" && (
         <>
           <div>

@@ -85,6 +85,18 @@ checks:
       min_months: 24
       max_months: 72
 
+  - id: direct_client_contact_minimum
+    severity: info
+    description: At least 1,750 of the 3,000 supervised hours must be direct client contact (BPC §4999.46)
+    params:
+      required: 1750
+
+  - id: supervisor_training_course_required
+    severity: blocker
+    description: Supervisors must complete 15 hours of supervisor training per 16 CCR §1822 before counting supervised hours
+    params:
+      min_training_hours: 15
+
 evidence_requirements:
   form_template_key: CA_LPCC_SUPERVISION_AGREEMENT_V1
   required_signers:
@@ -143,7 +155,6 @@ page_content:
 notes:
   - "PRELIMINARY rule — DO NOT use for production user assignment until a CA-licensed Qualified Supervisor reviews. Multiple numeric values are LIKELY, not VERIFIED."
   - "CA caps countable supervision at 5 hours per week. Not yet enforced in the check library."
-  - "CA requires the supervisor to have completed 15 hours of supervisor training (16 CCR §1822 or current). Not yet enforced — flagged for v2."
   - "CA's '90-day post-degree' filing window for APCC application affects which hours count back to degree-conferral. Not yet enforced — flagged for v2."
   - "Counseling Compact: CA had NOT joined as of training cutoff (Jan 2026). Verify current status."
   - "If supervisee plans to treat couples/families post-licensure, an additional 150 hours of dedicated training is needed (scope-of-practice gate). Not yet enforced."

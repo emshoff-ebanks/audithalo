@@ -1,12 +1,14 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { canSupervise, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NameForm } from "./name-form";
 import { PasswordForm } from "./password-form";
 import { EmailVerificationStatus } from "./email-verification-status";
+import { SupervisorTrainingForm } from "./supervisor-training-form";
 
 export const metadata = { title: "Account — AuditHalo" };
 
@@ -20,6 +22,8 @@ export default async function AccountPage() {
   if (!user) redirect("/login");
 
   const verified = !!user.emailVerifiedAt;
+  const membership = await getCurrentMembership(session.user.id);
+  const userCanSupervise = !!membership && canSupervise(membership.role);
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-12 space-y-8">
@@ -69,6 +73,25 @@ export default async function AccountPage() {
           <PasswordForm />
         </CardContent>
       </Card>
+
+      {userCanSupervise && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Supervisor training</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-foreground/70 mb-4">
+              Some states require supervisors to complete a training course
+              before supervising. CA requires 15 hours under 16 CCR §1822.
+              Record your verified training hours here — they snapshot onto
+              every supervision session you log.
+            </p>
+            <SupervisorTrainingForm
+              initialHours={user.supervisorTrainingHours}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

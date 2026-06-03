@@ -47,6 +47,7 @@ export function resolveEvaluation(
             id: e.id,
             date: e.date.toISOString(),
             durationHours: e.durationHours,
+            directContactHours: e.directContactHours ?? undefined,
           }
         : {
             kind: "supervision" as const,
@@ -59,6 +60,8 @@ export function resolveEvaluation(
             supervisorCredentials:
               (e.supervisorCredentials as string[]) ?? [],
             groupAttendees: e.groupAttendees ?? undefined,
+            supervisorTrainingHours:
+              e.supervisorTrainingHours ?? undefined,
           }
     ),
     asOf: asOf.toISOString(),

@@ -107,6 +107,8 @@ export const sessionEventSchema = z.discriminatedUnion("kind", [
     id: z.string(),
     date: z.string(),
     durationHours: z.number().positive(),
+    /** Direct client contact hours; defaults to durationHours when not specified. */
+    directContactHours: z.number().nonnegative().optional(),
   }),
   z.object({
     kind: z.literal("supervision"),
@@ -116,6 +118,8 @@ export const sessionEventSchema = z.discriminatedUnion("kind", [
     sessionType: z.enum(["individual", "triadic", "group"]),
     supervisorCredentials: z.array(z.string()).default([]),
     groupAttendees: z.number().int().positive().optional(),
+    /** Supervisor's verified training hours at the time this session was logged. */
+    supervisorTrainingHours: z.number().int().nonnegative().optional(),
   }),
 ]);
 export type SessionEvent = z.infer<typeof sessionEventSchema>;

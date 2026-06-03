@@ -64,6 +64,13 @@
       "when": 1780700000000,
       "tag": "0008_session_events_ai_note",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1780800000000,
+      "tag": "0009_supervisor_training_and_direct_contact",
+      "breakpoints": true
     }
   ]
 }

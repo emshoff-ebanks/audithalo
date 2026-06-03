@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { and, eq, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
+import { canSupervise, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import {
   emailVerificationExpiresAt,
@@ -361,4 +362,43 @@ export async function updatePasswordAction(
     .where(eq(schema.users.id, user.id));
 
   return { ok: true, message: "Password updated." };
+}
+
+// ----------------------------------------------------------------------------
+// Supervisor training hours (CA 16 CCR §1822 requires 15)
+// ----------------------------------------------------------------------------
+
+const trainingHoursSchema = z.object({
+  hours: z.coerce.number().int().nonnegative().max(10000),
+});
+
+export async function updateSupervisorTrainingHoursAction(
+  _prev: AccountActionResult | undefined,
+  formData: FormData
+): Promise<AccountActionResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const membership = await getCurrentMembership(session.user.id);
+  if (!membership || !canSupervise(membership.role)) {
+    return { ok: false, error: "Only supervisors can record training hours." };
+  }
+
+  const parsed = trainingHoursSchema.safeParse({
+    hours: formData.get("hours"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+
+  await db
+    .update(schema.users)
+    .set({ supervisorTrainingHours: parsed.data.hours })
+    .where(eq(schema.users.id, session.user.id));
+
+  revalidatePath("/dashboard/account");
+  return { ok: true, message: "Training hours updated." };
 }

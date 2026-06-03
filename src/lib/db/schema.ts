@@ -63,6 +63,9 @@ export const users = pgTable("users", {
   licenseType: text("license_type"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
+  /** Self-reported supervisor training hours (e.g., CA 16 CCR §1822 requires 15).
+   *  Snapshotted onto each supervision session at log time. */
+  supervisorTrainingHours: integer("supervisor_training_hours"),
 });
 
 // ===========================================================================
@@ -297,8 +300,15 @@ export const sessionEvents = pgTable("session_events", {
   kind: text("kind").notNull(),
   date: timestamp("date", { withTimezone: true }).notNull(),
   durationHours: doublePrecision("duration_hours").notNull(),
+  /** Practice events only: direct client contact subset of durationHours.
+   *  NULL means "treat as equal to durationHours" (backward compat for older events). */
+  directContactHours: doublePrecision("direct_contact_hours"),
   sessionType: text("session_type"),
   supervisorCredentials: jsonb("supervisor_credentials").$type<string[]>(),
+  /** Supervision events only: snapshot of the supervisor's verified training hours
+   *  at the moment this session was logged. Preserves "what was true when the
+   *  session happened." NULL for legacy events or non-supervision events. */
+  supervisorTrainingHours: integer("supervisor_training_hours"),
   groupAttendees: integer("group_attendees"),
   loggedById: uuid("logged_by_id")
     .notNull()

@@ -81,6 +81,12 @@ checks:
       min_months: 18
       max_months: 60
 
+  - id: direct_client_contact_minimum
+    severity: info
+    description: At least 1,500 of the 3,000 supervised hours must be direct client contact (22 TAC §681.31)
+    params:
+      required: 1500
+
 evidence_requirements:
   form_template_key: TX_LPC_SUPERVISORY_AGREEMENT_V1
   required_signers:
@@ -140,7 +146,7 @@ page_content:
 notes:
   - "PRELIMINARY rule — DO NOT use for production user assignment until a Texas LPC-Supervisor reviews. Several numeric values are LIKELY, not VERIFIED."
   - "TX uses a MONTHLY cadence (4 hrs/month total, ≥1 individual), NOT a per-practice-hour ratio. Our `individual_supervision_cadence` check with max_gap_days=30 approximates this; a future v2 check will properly model 'at least 4 supervision hours per calendar month with at least 1 individual'."
-  - "TX requires at least 1,500 hours to be direct client contact within the 3,000 total. Not yet enforced — flagged for a new `direct_client_contact_minimum` check in v2."
+  - "TX requires at least 1,500 hours to be direct client contact within the 3,000 total. Enforced via the `direct_client_contact_minimum` check."
   - "TX requires the title 'LPC Associate' on all professional materials. Not yet enforced — flagged for a new `title_use_required` check in v2."
   - "Counseling Compact (HB 4533, 2023): Texas joined. Privilege-to-practice is for fully-licensed LPCs only. Whether Compact-privilege LPCs can act as TX supervisors is unclear and out of scope for v1."
   - "Group size cap (12 vs 6) is the highest-risk LIKELY value in this rule. Verify before production."
