@@ -133,9 +133,9 @@ describe("NY LMHC-LP rule", () => {
   });
 
   it("warns when NY permit is within 90 days of its expiration window", () => {
-    // Started 58 months ago — ~61 days remaining against the 60-month cap,
-    // inside the 90-day warning window for permit_expiration_window.
-    const monthsAgo = 58;
+    // Started 34 months ago — ~60 days remaining against the 36-month cap
+    // (2yr initial + 1yr renewal), inside the 90-day warning window.
+    const monthsAgo = 34;
     const ctx: EvaluationContext = {
       superviseeId: "x",
       startedAt: new Date(Date.now() - monthsAgo * 30.44 * 24 * 60 * 60 * 1000).toISOString(),

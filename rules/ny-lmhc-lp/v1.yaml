@@ -85,9 +85,9 @@ checks:
 
   - id: permit_expiration_window
     severity: warning
-    description: NY limited permits expire and require renewal — supervised hours must be completed within the permit validity window
+    description: NY limited permit is valid 2 years initially with one 1-year renewal — hours must be completed within 36 months
     params:
-      max_months: 60
+      max_months: 36
       warning_window_days: 90
 
 evidence_requirements:
