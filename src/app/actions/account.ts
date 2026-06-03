@@ -3,7 +3,7 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
@@ -11,6 +11,7 @@ import {
   emailVerificationExpiresAt,
   generateAuthToken,
   hashAuthToken,
+  isEmailChangeToken,
   passwordResetExpiresAt,
 } from "@/lib/auth-tokens";
 import {
@@ -222,9 +223,13 @@ const verifyEmailSchema = z.object({
 });
 
 /**
- * Consume an email verification token. Marks the user.emailVerifiedAt timestamp
- * only when the token's stored email still matches the user's current email —
- * a defensive check against email changes mid-flight.
+ * Consume an email verification token. Marks user.emailVerifiedAt = now() and
+ * sets user.email to the token's stored email — covering two cases:
+ *   1. Initial-verification / verify-current-email: token.email === user.email, so
+ *      the email write is a no-op and only emailVerifiedAt changes.
+ *   2. Email-change flow: token.email !== user.email; this swaps the address
+ *      atomically with marking it verified. Before swapping we re-check that
+ *      no other user has grabbed the new email since the change was requested.
  */
 export async function verifyEmailAction(
   rawToken: string
@@ -265,17 +270,33 @@ export async function verifyEmailAction(
   if (!user) {
     return { ok: false, error: "Account not found." };
   }
-  if (user.email !== row.email) {
-    return {
-      ok: false,
-      error:
-        "Your email address has changed since this link was sent. Please request a new verification email.",
-    };
+
+  const newEmailLower = row.email.toLowerCase();
+
+  // Email-change path: someone might have signed up with the new address
+  // between request and verify. Re-check before swapping.
+  if (isEmailChangeToken(row.email, user.email)) {
+    const conflict = await db.query.users.findFirst({
+      where: and(
+        eq(schema.users.email, newEmailLower),
+        ne(schema.users.id, user.id)
+      ),
+    });
+    if (conflict) {
+      return {
+        ok: false,
+        error:
+          "Another account has been created with this email since you requested the change. Try again with a different email.",
+      };
+    }
   }
 
   await db
     .update(schema.users)
-    .set({ emailVerifiedAt: new Date() })
+    .set({
+      email: newEmailLower,
+      emailVerifiedAt: new Date(),
+    })
     .where(eq(schema.users.id, user.id));
 
   await db
@@ -284,6 +305,111 @@ export async function verifyEmailAction(
     .where(eq(schema.authTokens.id, row.id));
 
   revalidatePath("/dashboard/account");
+  return { ok: true };
+}
+
+// ----------------------------------------------------------------------------
+// Email change — request side. Verification side is verifyEmailAction above.
+// ----------------------------------------------------------------------------
+
+const requestEmailChangeSchema = z.object({
+  currentPassword: z.string().min(1, "Enter your current password."),
+  newEmail: z.string().email("Enter a valid email address."),
+});
+
+/**
+ * Begin an email-change. Requires the user's current password (defence against
+ * session hijack). The new email is NOT applied until the user clicks the
+ * verification link sent to the new address — until then, the current email
+ * stays active.
+ */
+export async function requestEmailChangeAction(
+  _prev: AccountActionResult | undefined,
+  formData: FormData
+): Promise<AccountActionResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const parsed = requestEmailChangeSchema.safeParse({
+    currentPassword: formData.get("currentPassword"),
+    newEmail: formData.get("newEmail"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+
+  const newEmailLower = parsed.data.newEmail.toLowerCase();
+
+  const user = await db.query.users.findFirst({
+    where: eq(schema.users.id, session.user.id),
+  });
+  if (!user || !user.passwordHash) {
+    return { ok: false, error: "Account not found." };
+  }
+
+  const passwordOk = await bcrypt.compare(
+    parsed.data.currentPassword,
+    user.passwordHash
+  );
+  if (!passwordOk) {
+    return { ok: false, error: "Current password is incorrect." };
+  }
+
+  if (newEmailLower === user.email.toLowerCase()) {
+    return { ok: false, error: "That is already your email." };
+  }
+
+  const conflict = await db.query.users.findFirst({
+    where: eq(schema.users.email, newEmailLower),
+  });
+  if (conflict) {
+    return {
+      ok: false,
+      error: "An account with that email already exists.",
+    };
+  }
+
+  // Invalidate any prior unused email_verification tokens for this user — so
+  // a previously issued "verify current email" link can't be replayed to grant
+  // verified status to the new email.
+  await db
+    .update(schema.authTokens)
+    .set({ usedAt: new Date() })
+    .where(
+      and(
+        eq(schema.authTokens.userId, user.id),
+        eq(schema.authTokens.kind, "email_verification"),
+        isNull(schema.authTokens.usedAt)
+      )
+    );
+
+  const raw = generateAuthToken();
+  await db.insert(schema.authTokens).values({
+    userId: user.id,
+    kind: "email_verification",
+    tokenHash: hashAuthToken(raw),
+    email: newEmailLower,
+    expiresAt: emailVerificationExpiresAt(),
+  });
+
+  try {
+    await sendEmailVerificationEmail({
+      to: newEmailLower,
+      name: user.name,
+      verifyUrl: `${APP_URL}/verify-email/${raw}`,
+    });
+  } catch (err) {
+    // Token already exists in the DB; user can request another change if the
+    // send fails. Don't roll back — surface success and log.
+    console.error(
+      "[account] email-change verification email failed:",
+      err
+    );
+  }
+
   return { ok: true };
 }
 

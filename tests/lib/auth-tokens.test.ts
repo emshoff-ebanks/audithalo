@@ -4,6 +4,7 @@ import {
   hashAuthToken,
   passwordResetExpiresAt,
   emailVerificationExpiresAt,
+  isEmailChangeToken,
   PASSWORD_RESET_TTL_MS,
   EMAIL_VERIFICATION_TTL_MS,
 } from "@/lib/auth-tokens";
@@ -57,5 +58,17 @@ describe("auth-tokens", () => {
     const delta = expiry - now;
     expect(delta).toBeGreaterThanOrEqual(EMAIL_VERIFICATION_TTL_MS - 1000);
     expect(delta).toBeLessThanOrEqual(EMAIL_VERIFICATION_TTL_MS + 1000);
+  });
+
+  it("isEmailChangeToken returns false when the token email matches", () => {
+    expect(isEmailChangeToken("user@example.com", "user@example.com")).toBe(false);
+  });
+
+  it("isEmailChangeToken returns true when the token email differs", () => {
+    expect(isEmailChangeToken("new@example.com", "old@example.com")).toBe(true);
+  });
+
+  it("isEmailChangeToken treats case differences as the same email", () => {
+    expect(isEmailChangeToken("User@Example.com", "user@example.COM")).toBe(false);
   });
 });

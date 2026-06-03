@@ -22,3 +22,15 @@ export function passwordResetExpiresAt(): Date {
 export function emailVerificationExpiresAt(): Date {
   return new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS);
 }
+
+/**
+ * Pure: is this token's email different from the user's current email?
+ * Identifies email-change vs initial verification. Case-insensitive — we
+ * normalise stored emails to lowercase but compare defensively here too.
+ */
+export function isEmailChangeToken(
+  tokenEmail: string,
+  currentUserEmail: string
+): boolean {
+  return tokenEmail.toLowerCase() !== currentUserEmail.toLowerCase();
+}

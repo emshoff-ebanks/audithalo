@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NameForm } from "./name-form";
 import { PasswordForm } from "./password-form";
 import { EmailVerificationStatus } from "./email-verification-status";
+import { EmailChangeForm } from "./email-change-form";
 import { SupervisorTrainingForm } from "./supervisor-training-form";
 
 export const metadata = { title: "Account — AuditHalo" };
@@ -53,6 +54,17 @@ export default async function AccountPage() {
             Signed in as <span className="font-medium text-foreground">{user.email}</span>.
           </p>
           <EmailVerificationStatus verified={verified} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6">
+          <p className="label-overline mb-1">Change email</p>
+          <p className="text-sm text-foreground/60 mb-4">
+            Move your account to a different email address. The new address
+            must be verified before the change takes effect.
+          </p>
+          <EmailChangeForm currentEmail={user.email} />
         </CardContent>
       </Card>
 
