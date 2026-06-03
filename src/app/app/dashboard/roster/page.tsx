@@ -83,7 +83,8 @@ export default async function RosterPage() {
       <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardContent className="p-0">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[640px]">
               <thead className="bg-accent">
                 <tr className="text-left">
                   <th className="px-5 py-3 font-semibold">Name</th>
@@ -195,6 +196,7 @@ export default async function RosterPage() {
                   ))}
               </tbody>
             </table>
+            </div>
           </CardContent>
         </Card>
 

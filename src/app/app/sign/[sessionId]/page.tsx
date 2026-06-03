@@ -48,7 +48,7 @@ export default async function SignSessionPage({
   const fullySigned = !!sessionEvent.signedAt;
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-12">
+    <div className="mx-auto max-w-2xl px-6 py-8 sm:py-12">
       <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
         <Link href={`/dashboard/roster/${sessionEvent.superviseeId}`}>
           <ArrowLeft />
@@ -111,11 +111,11 @@ export default async function SignSessionPage({
                 {signatures.map((s, i) => (
                   <li
                     key={i}
-                    className="flex items-center justify-between gap-3 px-3 py-2 rounded-sm bg-[color:var(--color-evidence-bg)]"
+                    className="flex items-start justify-between gap-3 px-3 py-2 rounded-sm bg-[color:var(--color-evidence-bg)]"
                   >
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="font-medium text-foreground">{s.signerName}</p>
-                      <p className="text-xs text-foreground/60 capitalize">
+                      <p className="text-xs text-foreground/60 capitalize break-words">
                         {s.signerRole} ·{" "}
                         <span className="font-mono">
                           {new Date(s.signedAt).toISOString().slice(0, 16).replace("T", " ")}Z
@@ -123,7 +123,7 @@ export default async function SignSessionPage({
                         · IP {s.ipAddress}
                       </p>
                     </div>
-                    <FileSignature className="h-4 w-4 text-[color:var(--color-gold)]" />
+                    <FileSignature className="h-4 w-4 mt-0.5 text-[color:var(--color-gold)] shrink-0" />
                   </li>
                 ))}
               </ul>

@@ -52,7 +52,7 @@ export default function MarketingHome() {
   return (
     <>
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 py-24 lg:py-32">
+      <section className="mx-auto max-w-6xl px-6 py-16 sm:py-24 lg:py-32">
         <Badge variant="outline" className="mb-6">
           Clinical supervision compliance software
         </Badge>

@@ -43,9 +43,9 @@ export async function SupervisorDashboard({ userId, userName, userEmail }: Props
   ];
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
+    <div className="mx-auto max-w-6xl px-6 py-8 sm:py-12">
       <Badge variant="outline" className="mb-4">Dashboard</Badge>
-      <h1 className="font-display text-4xl font-semibold text-foreground">
+      <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground break-words">
         {userName ?? userEmail}
       </h1>
       <p className="mt-2 text-foreground/70">
@@ -60,7 +60,7 @@ export async function SupervisorDashboard({ userId, userName, userEmail }: Props
           subscriptionStatus={org?.subscriptionStatus ?? null}
           roster={roster}
         />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {summaryCards.map((card) => {
             const color = card.warn
               ? "text-[color:var(--color-warning)]"

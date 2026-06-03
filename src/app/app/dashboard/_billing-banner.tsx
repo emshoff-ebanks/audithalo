@@ -16,7 +16,7 @@ export function BillingBanner({ org }: { org: Org | null | undefined }) {
   return (
     <div
       role="status"
-      className={`flex items-start justify-between gap-4 p-4 rounded-sm border-l-[3px] ${
+      className={`flex flex-wrap items-start justify-between gap-3 p-4 rounded-sm border-l-[3px] ${
         isPastDue
           ? "border-l-[color:var(--color-risk)] bg-[color:var(--color-risk)]/5"
           : "border-l-[color:var(--color-warning)] bg-[color:var(--color-warning)]/5"
