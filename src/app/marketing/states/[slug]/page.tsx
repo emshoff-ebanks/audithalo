@@ -34,12 +34,29 @@ export async function generateMetadata({ params }: { params: Params }) {
   const rule = getLatestRuleByJurLic(parsed.jurisdiction, parsed.licenseCode);
   if (!rule) return { title: "Not found — AuditHalo" };
   const pc = rule.page_content;
-  const desc = pc?.intro
+  const description = pc?.intro
     ? pc.intro.replace(/\s+/g, " ").trim().slice(0, 160)
     : rule.summary.replace(/\s+/g, " ").trim().slice(0, 160);
+  const title = `${rule.jurisdiction} ${rule.license_code} Supervision Hours & Requirements — AuditHalo`;
+  const url = `https://audithalo.com/states/${slug}`;
+
   return {
-    title: `${rule.jurisdiction} ${rule.license_code} Supervision Hours & Requirements — AuditHalo`,
-    description: desc,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "AuditHalo",
+      type: "article",
+      // og:image intentionally omitted — no asset exists yet; add when one is designed
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
@@ -57,8 +74,58 @@ export default async function StateRulePage({ params }: { params: Params }) {
   const isPreliminary = rule.verification.last_verified_by.includes("preliminary");
   const pc = rule.page_content;
 
+  // Build structured data for SEO rich snippets
+  const jsonLd: object[] = [];
+
+  // BreadcrumbList — always
+  jsonLd.push({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://audithalo.com",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "States",
+        item: "https://audithalo.com/states",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: `${rule.jurisdiction} ${rule.license_code}`,
+        item: `https://audithalo.com/states/${slug}`,
+      },
+    ],
+  });
+
+  // FAQPage — only if page_content has faq entries
+  if (pc?.faq && pc.faq.length > 0) {
+    jsonLd.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: pc.faq.map((item) => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: item.a,
+        },
+      })),
+    });
+  }
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Header */}
       <section className="mx-auto max-w-6xl px-6 pt-12 pb-8">
         <Button asChild variant="ghost" size="sm" className="-ml-3 mb-4">
