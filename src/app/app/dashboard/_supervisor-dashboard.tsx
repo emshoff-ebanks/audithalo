@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OnboardingChecklist } from "./_onboarding-checklist";
+import { BillingBanner } from "./_billing-banner";
 
 type Props = {
   userId: string;
@@ -54,6 +55,7 @@ export async function SupervisorDashboard({ userId, userName, userEmail }: Props
       </p>
 
       <div className="mt-8 space-y-8">
+        <BillingBanner org={org} />
         <OnboardingChecklist
           subscriptionStatus={org?.subscriptionStatus ?? null}
           roster={roster}
