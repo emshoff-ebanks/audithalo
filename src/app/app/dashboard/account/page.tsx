@@ -1,0 +1,74 @@
+import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { db, schema } from "@/lib/db";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { NameForm } from "./name-form";
+import { PasswordForm } from "./password-form";
+import { EmailVerificationStatus } from "./email-verification-status";
+
+export const metadata = { title: "Account — AuditHalo" };
+
+export default async function AccountPage() {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const user = await db.query.users.findFirst({
+    where: eq(schema.users.id, session.user.id),
+  });
+  if (!user) redirect("/login");
+
+  const verified = !!user.emailVerifiedAt;
+
+  return (
+    <div className="mx-auto max-w-2xl px-6 py-12 space-y-8">
+      <div>
+        <p className="label-overline mb-4">Account settings</p>
+        <h1 className="font-display text-3xl font-semibold text-foreground">
+          Your account
+        </h1>
+        <p className="mt-3 text-foreground/70">
+          Manage your name, password, and email verification.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between gap-3">
+            <span>Email</span>
+            {verified ? (
+              <Badge variant="success">Verified</Badge>
+            ) : (
+              <Badge variant="outline-warn">Not verified</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-foreground/70">
+            Signed in as <span className="font-medium text-foreground">{user.email}</span>.
+          </p>
+          <EmailVerificationStatus verified={verified} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Display name</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <NameForm currentName={user.name} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Password</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PasswordForm />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

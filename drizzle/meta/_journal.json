@@ -43,6 +43,13 @@
       "when": 1780380000000,
       "tag": "0005_orgs_stripe_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780500000000,
+      "tag": "0006_password_reset_and_email_verification",
+      "breakpoints": true
     }
   ]
 }

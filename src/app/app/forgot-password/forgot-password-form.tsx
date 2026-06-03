@@ -1,17 +1,19 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { loginAction, type AuthActionResult } from "@/app/actions/auth";
+import {
+  requestPasswordResetAction,
+  type AccountActionResult,
+} from "@/app/actions/account";
 
-export function LoginForm() {
+export function ForgotPasswordForm() {
   const [state, formAction, pending] = useActionState<
-    AuthActionResult | undefined,
+    AccountActionResult | undefined,
     FormData
-  >(loginAction, undefined);
+  >(requestPasswordResetAction, undefined);
 
   return (
     <form action={formAction} className="mt-8 space-y-4">
@@ -27,27 +29,15 @@ export function LoginForm() {
           className="mt-2"
         />
       </div>
-      <div>
-        <div className="flex items-baseline justify-between">
-          <Label htmlFor="password">Password</Label>
-          <Link
-            href="/forgot-password"
-            className="text-xs text-secondary font-medium hover:underline"
-          >
-            Forgot password?
-          </Link>
-        </div>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          placeholder="••••••••"
-          className="mt-2"
-        />
-      </div>
 
+      {state && state.ok === true && state.message && (
+        <p
+          role="status"
+          className="text-sm text-foreground bg-secondary/8 px-3 py-2 rounded-sm"
+        >
+          {state.message}
+        </p>
+      )}
       {state && state.ok === false && (
         <p
           role="alert"
@@ -58,7 +48,7 @@ export function LoginForm() {
       )}
 
       <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Signing in…" : "Sign in"}
+        {pending ? "Sending…" : "Send reset link"}
       </Button>
     </form>
   );

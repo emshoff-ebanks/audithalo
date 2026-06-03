@@ -6,6 +6,14 @@ import { eq } from "drizzle-orm";
 import { AuthError } from "next-auth";
 import { db, schema } from "@/lib/db";
 import { signIn, signOut } from "@/auth";
+import {
+  emailVerificationExpiresAt,
+  generateAuthToken,
+  hashAuthToken,
+} from "@/lib/auth-tokens";
+import { sendEmailVerificationEmail } from "@/lib/email";
+
+const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -66,6 +74,25 @@ export async function signupAction(
     userId: user.id,
     role: "supervisor",
   });
+
+  // Fire off the verification email — don't block signup if the send fails.
+  try {
+    const raw = generateAuthToken();
+    await db.insert(schema.authTokens).values({
+      userId: user.id,
+      kind: "email_verification",
+      tokenHash: hashAuthToken(raw),
+      email: user.email,
+      expiresAt: emailVerificationExpiresAt(),
+    });
+    await sendEmailVerificationEmail({
+      to: user.email,
+      name: user.name,
+      verifyUrl: `${APP_URL}/verify-email/${raw}`,
+    });
+  } catch (err) {
+    console.error("[auth] signup verification email failed:", err);
+  }
 
   try {
     await signIn("credentials", {

@@ -128,3 +128,75 @@ export async function sendCountersignatureNeededEmail(opts: {
     text: `${opts.otherSignerName} (${opts.otherSignerRole}) signed a ${opts.sessionType} supervision session on ${opts.sessionDate} for ${opts.durationHours.toFixed(1)} hours. Review and countersign: ${opts.signUrl}`,
   });
 }
+
+/**
+ * Sends a password reset link to a user who asked to reset their password.
+ * The link contains a single-use token that expires in 1 hour.
+ */
+export async function sendPasswordResetEmail(opts: {
+  to: string;
+  name: string;
+  resetUrl: string;
+}): Promise<void> {
+  await sendEmail({
+    to: opts.to,
+    subject: "Reset your AuditHalo password",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#0A1428; max-width: 560px;">
+        <h2 style="font-size: 22px; margin: 0 0 16px;">Reset your password.</h2>
+        <p style="font-size: 16px; line-height: 1.6;">
+          Hi ${opts.name}, someone (hopefully you) requested a password reset for
+          your AuditHalo account. Click the button below to choose a new password.
+          The link expires in 1 hour.
+        </p>
+        <p style="margin: 28px 0;">
+          <a href="${opts.resetUrl}" style="display: inline-block; padding: 12px 24px; background:#0F1F4C; color:#FAFAF7; text-decoration:none; font-weight:600; border-radius: 4px;">
+            Set a new password
+          </a>
+        </p>
+        <p style="font-size: 12px; color: #5f6470;">
+          Or copy this link: ${opts.resetUrl}
+        </p>
+        <p style="font-size: 12px; color: #5f6470; margin-top: 24px;">
+          If you didn't request this, you can safely ignore this email — your
+          password won't change.
+        </p>
+      </div>
+    `,
+    text: `Hi ${opts.name}, reset your AuditHalo password: ${opts.resetUrl}\n\nThe link expires in 1 hour. If you didn't request this, ignore this email.`,
+  });
+}
+
+/**
+ * Sends an email verification link to confirm the user owns the address on file.
+ * The link contains a single-use token that expires in 7 days.
+ */
+export async function sendEmailVerificationEmail(opts: {
+  to: string;
+  name: string;
+  verifyUrl: string;
+}): Promise<void> {
+  await sendEmail({
+    to: opts.to,
+    subject: "Verify your AuditHalo email",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#0A1428; max-width: 560px;">
+        <h2 style="font-size: 22px; margin: 0 0 16px;">Confirm your email.</h2>
+        <p style="font-size: 16px; line-height: 1.6;">
+          Hi ${opts.name}, please confirm this is your email so AuditHalo can send
+          you supervision notifications, evidence packages, and account alerts.
+          The link expires in 7 days.
+        </p>
+        <p style="margin: 28px 0;">
+          <a href="${opts.verifyUrl}" style="display: inline-block; padding: 12px 24px; background:#0F1F4C; color:#FAFAF7; text-decoration:none; font-weight:600; border-radius: 4px;">
+            Verify email
+          </a>
+        </p>
+        <p style="font-size: 12px; color: #5f6470;">
+          Or copy this link: ${opts.verifyUrl}
+        </p>
+      </div>
+    `,
+    text: `Hi ${opts.name}, verify your AuditHalo email: ${opts.verifyUrl}\n\nThe link expires in 7 days.`,
+  });
+}

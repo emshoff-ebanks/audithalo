@@ -48,6 +48,11 @@ export const obligationStatus = pgEnum("obligation_status", [
   "overdue",
 ]);
 
+export const authTokenKind = pgEnum("auth_token_kind", [
+  "password_reset",
+  "email_verification",
+]);
+
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: text("email").notNull().unique(),
@@ -56,6 +61,27 @@ export const users = pgTable("users", {
   role: userRole("role").notNull().default("supervisee"),
   state: text("state"),
   licenseType: text("license_type"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
+});
+
+// ===========================================================================
+// Auth tokens — single-use, hashed tokens for password reset + email verification.
+// Mirrors the invitations table pattern: raw token never lives in the DB.
+// ===========================================================================
+
+export const authTokens = pgTable("auth_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  kind: authTokenKind("kind").notNull(),
+  /** SHA-256 of the raw token, hex-encoded. The raw token never lives in the DB. */
+  tokenHash: text("token_hash").notNull().unique(),
+  /** For email_verification: the email being verified (may differ from users.email if changing email later). For password_reset: same as users.email at the time of request. */
+  email: text("email").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
