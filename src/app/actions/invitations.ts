@@ -21,9 +21,15 @@ const inviteSchema = z.object({
   name: z.string().optional(),
 });
 
+const invitationIdSchema = z.object({
+  invitationId: z.string().uuid(),
+});
+
 export type InviteResult =
   | { ok: true; sentTo: string }
   | { ok: false; error: string };
+
+export type InvitationActionResult = { ok: true } | { ok: false; error: string };
 
 export async function inviteSuperviseeAction(
   _prev: InviteResult | undefined,
@@ -174,4 +180,108 @@ async function sendInviteEmail(opts: {
     `,
     text: `${greeting} ${opts.supervisorName} has added you to their AuditHalo roster. Accept the invite and create your free supervisee account: ${link}\n\nThis invitation expires in 7 days.`,
   });
+}
+
+/** Cancel a pending invitation. Hard-deletes the row. */
+export async function cancelInvitationAction(
+  _prev: InvitationActionResult | undefined,
+  formData: FormData
+): Promise<InvitationActionResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const parsed = invitationIdSchema.safeParse({
+    invitationId: formData.get("invitationId"),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: "Invalid invitation." };
+  }
+
+  const membership = await getCurrentMembership(session.user.id);
+  if (!membership) {
+    return { ok: false, error: "No organization." };
+  }
+  if (!canSupervise(membership.role)) {
+    return { ok: false, error: "Only supervisors can cancel invitations." };
+  }
+
+  const invite = await db.query.invitations.findFirst({
+    where: eq(schema.invitations.id, parsed.data.invitationId),
+  });
+  if (!invite) {
+    return { ok: false, error: "Invitation not found." };
+  }
+  if (invite.orgId !== membership.orgId) {
+    return { ok: false, error: "Invitation belongs to another organization." };
+  }
+  if (invite.acceptedAt) {
+    return {
+      ok: false,
+      error: "This invitation has already been accepted — remove the supervisee from the roster instead.",
+    };
+  }
+
+  await db
+    .delete(schema.invitations)
+    .where(eq(schema.invitations.id, parsed.data.invitationId));
+
+  revalidatePath("/dashboard/roster");
+  return { ok: true };
+}
+
+/** Resend a pending invitation: regenerate token + re-send email. */
+export async function resendInvitationAction(
+  _prev: InvitationActionResult | undefined,
+  formData: FormData
+): Promise<InvitationActionResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const parsed = invitationIdSchema.safeParse({
+    invitationId: formData.get("invitationId"),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: "Invalid invitation." };
+  }
+
+  const membership = await getCurrentMembership(session.user.id);
+  if (!membership) {
+    return { ok: false, error: "No organization." };
+  }
+  if (!canSupervise(membership.role)) {
+    return { ok: false, error: "Only supervisors can resend invitations." };
+  }
+
+  const invite = await db.query.invitations.findFirst({
+    where: eq(schema.invitations.id, parsed.data.invitationId),
+  });
+  if (!invite) {
+    return { ok: false, error: "Invitation not found." };
+  }
+  if (invite.orgId !== membership.orgId) {
+    return { ok: false, error: "Invitation belongs to another organization." };
+  }
+  if (invite.acceptedAt) {
+    return { ok: false, error: "This invitation has already been accepted." };
+  }
+
+  const fresh = generateInvitationToken();
+  await db
+    .update(schema.invitations)
+    .set({
+      tokenHash: hashToken(fresh),
+      expiresAt: invitationExpiresAt(),
+      invitedById: session.user.id,
+    })
+    .where(eq(schema.invitations.id, invite.id));
+
+  await sendInviteEmail({
+    to: invite.email,
+    name: invite.name,
+    token: fresh,
+    supervisorName: session.user.name ?? session.user.email,
+  });
+
+  revalidatePath("/dashboard/roster");
+  return { ok: true };
 }

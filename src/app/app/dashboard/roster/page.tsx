@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Circle, AlertTriangle, AlertOctagon } from "lucide-react";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { getCurrentMembership, isManagerRole } from "@/lib/authz";
+import { canSupervise, getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { riskBadgeVariant, riskBadgeLabel } from "@/lib/rules";
 import { getOrgRosterWithCompliance } from "@/lib/db/roster-queries";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InviteForm } from "./invite-form";
+import { PendingInviteActions } from "./pending-invite-actions";
 
 export const metadata = {
   title: "Roster — AuditHalo",
@@ -23,6 +24,8 @@ export default async function RosterPage() {
   if (!isManagerRole(session.user.role)) {
     redirect(`/dashboard/roster/${session.user.id}`);
   }
+
+  const viewerCanSupervise = canSupervise(session.user.role);
 
   const membership = await getCurrentMembership(session.user.id);
   if (!membership) {
@@ -182,7 +185,7 @@ export default async function RosterPage() {
                       <td className="px-5 py-3 font-medium">
                         {i.name ?? <span className="text-foreground/50 italic">unnamed</span>}
                       </td>
-                      <td className="px-5 py-3 text-foreground/70">{i.email}</td>
+                      <td className="px-5 py-3 text-foreground/70 break-all">{i.email}</td>
                       <td className="px-5 py-3">
                         <span className="text-foreground/40 italic text-xs">—</span>
                       </td>
@@ -190,7 +193,11 @@ export default async function RosterPage() {
                         <Badge variant="warning">Pending invite</Badge>
                       </td>
                       <td className="px-5 py-3">
-                        <span className="text-foreground/40">—</span>
+                        {viewerCanSupervise ? (
+                          <PendingInviteActions invitationId={i.id} email={i.email} />
+                        ) : (
+                          <span className="text-foreground/40">—</span>
+                        )}
                       </td>
                     </tr>
                   ))}
