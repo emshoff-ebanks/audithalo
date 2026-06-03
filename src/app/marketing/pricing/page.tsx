@@ -58,7 +58,7 @@ const tiers: Tier[] = [
   {
     name: "Practice",
     price: "$25",
-    period: "per supervisee / month",
+    period: "per supervisee per month",
     description: "For 4–20 supervisees with HR oversight.",
     cta: { label: "Start 14-day trial", href: "https://app.audithalo.com/register?plan=practice" },
     features: [

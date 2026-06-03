@@ -9,7 +9,6 @@ const STATIC_PATHS = [
   "/pricing",
   "/for-supervisors",
   "/for-group-practices",
-  "/for-practices",
   "/security",
   "/states",
   "/contact",

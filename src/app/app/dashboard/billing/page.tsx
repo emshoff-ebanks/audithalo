@@ -178,7 +178,7 @@ export default async function BillingPage({
                 <span className="font-display text-4xl font-bold text-foreground">
                   $25
                 </span>
-                <span className="ml-2 text-sm text-foreground/60">per supervisee / month</span>
+                <span className="ml-2 text-sm text-foreground/60">per supervisee per month</span>
               </div>
               <div className="text-sm text-foreground/60">
                 + <span className="font-medium">$49/month base</span>
