@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SignForm } from "./sign-form";
+import { SessionNoteForm } from "./session-note-form";
+import { SessionNoteDisplay } from "./session-note-display";
 
 export const metadata = {
   title: "Sign session — AuditHalo",
@@ -127,6 +129,27 @@ export default async function SignSessionPage({
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {/* AI session note — supervisor-only, supervision-only, before sealing */}
+          {sessionEvent.kind === "supervision" &&
+            isManagerRole(membership.role) && (
+            <div className="pt-4 border-t border-border">
+              {sessionEvent.aiNote ? (
+                <SessionNoteDisplay note={sessionEvent.aiNote as never} />
+              ) : !fullySigned ? (
+                <>
+                  <p className="label-overline mb-3">AI session note</p>
+                  <p className="text-sm text-foreground/70 mb-4">
+                    Paste a transcript of this supervision session to generate a
+                    structured note with topics, competencies, feedback, and next steps.
+                    The transcript is sent to OpenAI but never stored — only the resulting
+                    note is saved with this session.
+                  </p>
+                  <SessionNoteForm sessionEventId={sessionEvent.id} />
+                </>
+              ) : null}
             </div>
           )}
 
