@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { listRuleIds } from "@/lib/rules";
+import { sendSupervisionLoggedEmail } from "@/lib/email";
 
 async function requireOrgAccess(superviseeId: string) {
   const session = await auth();
@@ -147,17 +148,49 @@ export async function logSessionAction(
         .filter(Boolean)
     : null;
 
-  await db.insert(schema.sessionEvents).values({
-    superviseeId: parsed.data.superviseeId,
-    orgId,
-    kind: parsed.data.kind,
-    date: new Date(parsed.data.date),
-    durationHours: parsed.data.durationHours,
-    sessionType: parsed.data.sessionType ?? null,
-    supervisorCredentials: credentials,
-    groupAttendees: parsed.data.groupAttendees ?? null,
-    loggedById: session.user.id,
-  });
+  const [inserted] = await db
+    .insert(schema.sessionEvents)
+    .values({
+      superviseeId: parsed.data.superviseeId,
+      orgId,
+      kind: parsed.data.kind,
+      date: new Date(parsed.data.date),
+      durationHours: parsed.data.durationHours,
+      sessionType: parsed.data.sessionType ?? null,
+      supervisorCredentials: credentials,
+      groupAttendees: parsed.data.groupAttendees ?? null,
+      loggedById: session.user.id,
+    })
+    .returning({ id: schema.sessionEvents.id });
+  const insertedId = inserted.id;
+
+  // Notify supervisee if this is a supervision event (practice events don't need signatures).
+  // Email failure must NEVER block the underlying action — wrapped in try/catch.
+  if (parsed.data.kind === "supervision") {
+    try {
+      const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
+      const [supervisee, supervisor] = await Promise.all([
+        db.query.users.findFirst({
+          where: eq(schema.users.id, parsed.data.superviseeId),
+        }),
+        db.query.users.findFirst({
+          where: eq(schema.users.id, session.user.id),
+        }),
+      ]);
+      if (supervisee?.email && supervisor) {
+        await sendSupervisionLoggedEmail({
+          to: supervisee.email,
+          supervisorName: supervisor.name ?? supervisor.email,
+          sessionDate: parsed.data.date,
+          sessionType: parsed.data.sessionType ?? "individual",
+          durationHours: parsed.data.durationHours,
+          signUrl: `${APP_URL}/sign/${insertedId}`,
+        });
+      }
+    } catch (err) {
+      console.error("[email] supervision-logged notification failed:", err);
+    }
+  }
 
   revalidatePath(`/dashboard/roster/${parsed.data.superviseeId}`);
   return { ok: true };

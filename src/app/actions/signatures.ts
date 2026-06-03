@@ -3,13 +3,14 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import type { SessionSignature } from "@/lib/db/schema";
 import { decideNextSignature } from "@/lib/signatures";
 import { generateEvidencePackage } from "@/lib/evidence";
+import { sendCountersignatureNeededEmail } from "@/lib/email";
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -90,12 +91,19 @@ export async function signSessionAction(
         SELECT 1 FROM jsonb_array_elements(signatures) AS s
         WHERE s->>'signerId' = ${candidate.signerId}
       )
-    RETURNING signed_at
+    RETURNING signed_at, signatures
   `);
 
   // rowCount semantics vary by driver — neon-http returns rows array.
   // If zero rows updated, the NOT EXISTS guard triggered (duplicate signer).
-  const rows = (result as unknown as { rows: { signed_at: string | null }[] }).rows;
+  const rows = (
+    result as unknown as {
+      rows: {
+        signed_at: string | null;
+        signatures: SessionSignature[];
+      }[];
+    }
+  ).rows;
   if (rows.length === 0) {
     return { ok: false, error: "You already signed this session." };
   }
@@ -103,6 +111,58 @@ export async function signSessionAction(
   const fullySigned = rows[0].signed_at !== null;
   if (fullySigned) {
     await generateEvidencePackage(sessionEvent.id);
+  }
+
+  // If this was the FIRST signer (post-update signatures length === 1) and the
+  // session is not yet fully signed, notify the OTHER required signer that
+  // their countersignature is needed. Email failure must NEVER block the action.
+  if (!fullySigned && rows[0].signatures.length === 1) {
+    try {
+      const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
+      const thisSig = rows[0].signatures[0];
+      const otherRole: "supervisee" | "supervisor" =
+        thisSig.signerRole === "supervisee" ? "supervisor" : "supervisee";
+      let recipientEmail: string | undefined;
+      if (otherRole === "supervisee") {
+        const supervisee = await db.query.users.findFirst({
+          where: eq(schema.users.id, sessionEvent.superviseeId),
+        });
+        recipientEmail = supervisee?.email;
+      } else {
+        // Find any supervisor (role="supervisor") member of this org.
+        // Known v1 limitation: in Practice orgs with multiple supervisors,
+        // we email only the first one found — we don't yet have a
+        // "primary supervisor" assignment concept per supervisee.
+        const supervisorMembership = await db.query.orgMemberships.findFirst({
+          where: and(
+            eq(schema.orgMemberships.orgId, sessionEvent.orgId),
+            eq(schema.orgMemberships.role, "supervisor")
+          ),
+        });
+        if (supervisorMembership) {
+          const supervisor = await db.query.users.findFirst({
+            where: eq(schema.users.id, supervisorMembership.userId),
+          });
+          recipientEmail = supervisor?.email;
+        }
+      }
+      if (recipientEmail) {
+        await sendCountersignatureNeededEmail({
+          to: recipientEmail,
+          otherSignerName: thisSig.signerName,
+          otherSignerRole: thisSig.signerRole as "supervisee" | "supervisor",
+          sessionDate: sessionEvent.date.toISOString().slice(0, 10),
+          sessionType: sessionEvent.sessionType ?? "individual",
+          durationHours: sessionEvent.durationHours,
+          signUrl: `${APP_URL}/sign/${sessionEvent.id}`,
+        });
+      }
+    } catch (err) {
+      console.error(
+        "[email] countersignature-needed notification failed:",
+        err
+      );
+    }
   }
 
   revalidatePath(`/dashboard/roster/${sessionEvent.superviseeId}`);
