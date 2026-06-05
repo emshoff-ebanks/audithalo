@@ -12,6 +12,14 @@ const STATIC_PATHS = [
   "/security",
   "/states",
   "/evidence-packages",
+  // SEO Layer 1 — category pages
+  "/clinical-supervision-software",
+  "/mental-health-supervision-software",
+  // SEO Layer 3 — pain pages
+  "/supervision-log-template",
+  "/counseling-supervision-audit-checklist",
+  "/lcmhca-supervision-requirements",
+  "/apcc-supervision-requirements",
   "/contact",
   "/legal/terms",
   "/legal/privacy",

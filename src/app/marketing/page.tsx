@@ -10,6 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  jsonLdScript,
+  softwareApplicationJsonLd,
+} from "@/lib/seo";
 
 export const metadata = {
   title: "AuditHalo — State-board compliance software for mental health supervisors",
@@ -51,6 +55,10 @@ const states = [
 export default function MarketingHome() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(softwareApplicationJsonLd())}
+      />
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 py-16 sm:py-24 lg:py-32">
         <Badge variant="outline" className="mb-6">

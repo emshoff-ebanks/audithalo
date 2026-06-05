@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Check, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { jsonLdScript, pricingProductJsonLd } from "@/lib/seo";
 
 export const metadata = {
   title: "Pricing — AuditHalo mental health supervision software",
@@ -94,6 +95,10 @@ const tiers: Tier[] = [
 export default function PricingPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(pricingProductJsonLd())}
+      />
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 py-16 lg:py-24">
         <Badge variant="outline" className="mb-4">
