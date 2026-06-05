@@ -11,13 +11,13 @@ const styles = StyleSheet.create({
     padding: 56,
     fontSize: 10,
     fontFamily: "Helvetica",
-    color: "#0A1428",
+    color: "#08111F",
   },
   haloMark: {
     width: 22,
     height: 22,
     borderWidth: 2.5,
-    borderColor: "#B8860B",
+    borderColor: "#C28A12",
     borderRadius: 11,
     marginRight: 10,
   },
@@ -44,18 +44,18 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica-Bold",
     marginBottom: 4,
     marginTop: 22,
-    color: "#0A1428",
+    color: "#08111F",
   },
   h2: {
     fontSize: 13,
     fontFamily: "Helvetica-Bold",
     marginTop: 20,
     marginBottom: 6,
-    color: "#0F1F4C",
+    color: "#071A3D",
   },
   intro: {
     fontSize: 11,
-    color: "#0A1428",
+    color: "#08111F",
     lineHeight: 1.5,
     marginBottom: 4,
   },
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   valueCol: {
     flex: 1,
     fontSize: 10,
-    color: "#0A1428",
+    color: "#08111F",
   },
   sigBlock: {
     borderWidth: 0.5,
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   hash: {
     fontFamily: "Courier-Bold",
     fontSize: 8,
-    color: "#0A1428",
+    color: "#08111F",
     lineHeight: 1.4,
   },
   fineprint: {

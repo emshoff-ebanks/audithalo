@@ -30,7 +30,7 @@ export default async function StateOgImage({
         style={{
           width: "100%",
           height: "100%",
-          background: "#FAFAF7",
+          background: "#FBFAF6",
           display: "flex",
           flexDirection: "column",
           padding: "72px",
@@ -44,7 +44,7 @@ export default async function StateOgImage({
             style={{
               fontSize: 32,
               fontWeight: 700,
-              color: "#0A1428",
+              color: "#08111F",
               letterSpacing: "-0.01em",
             }}
           >
@@ -65,7 +65,7 @@ export default async function StateOgImage({
             style={{
               fontSize: 28,
               fontWeight: 600,
-              color: "#1D4ED8",
+              color: "#2457FF",
               textTransform: "uppercase",
               letterSpacing: "0.2em",
               marginBottom: "16px",
@@ -77,7 +77,7 @@ export default async function StateOgImage({
             style={{
               fontSize: 96,
               fontWeight: 700,
-              color: "#0A1428",
+              color: "#08111F",
               lineHeight: 1.05,
               letterSpacing: "-0.03em",
               margin: 0,
@@ -88,7 +88,7 @@ export default async function StateOgImage({
           <p
             style={{
               fontSize: 36,
-              color: "#0A1428",
+              color: "#08111F",
               opacity: 0.7,
               marginTop: "20px",
               maxWidth: "950px",
@@ -112,7 +112,7 @@ export default async function StateOgImage({
           <span
             style={{
               fontSize: 22,
-              color: "#0A1428",
+              color: "#08111F",
               opacity: 0.7,
               fontFamily: "monospace",
             }}
@@ -154,11 +154,11 @@ function BrandMark({ size }: { size: number }) {
         cy="50"
         r="42"
         fill="none"
-        stroke="#0F1F4C"
+        stroke="#071A3D"
         strokeWidth="14"
       />
-      <circle cx="65.7" cy="11.1" r="8" fill="#FAFAF7" />
-      <circle cx="65.7" cy="11.1" r="6" fill="#B8860B" />
+      <circle cx="65.7" cy="11.1" r="8" fill="#FBFAF6" />
+      <circle cx="65.7" cy="11.1" r="6" fill="#C28A12" />
     </svg>
   );
 }

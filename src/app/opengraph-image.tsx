@@ -13,7 +13,7 @@ export default async function GlobalOgImage() {
         style={{
           width: "100%",
           height: "100%",
-          background: "#FAFAF7",
+          background: "#FBFAF6",
           display: "flex",
           flexDirection: "column",
           padding: "72px",
@@ -28,7 +28,7 @@ export default async function GlobalOgImage() {
             style={{
               fontSize: 56,
               fontWeight: 700,
-              color: "#0A1428",
+              color: "#08111F",
               letterSpacing: "-0.02em",
             }}
           >
@@ -50,7 +50,7 @@ export default async function GlobalOgImage() {
             style={{
               fontSize: 64,
               fontWeight: 600,
-              color: "#0A1428",
+              color: "#08111F",
               lineHeight: 1.15,
               maxWidth: "900px",
               letterSpacing: "-0.025em",
@@ -62,7 +62,7 @@ export default async function GlobalOgImage() {
           <p
             style={{
               fontSize: 28,
-              color: "#0A1428",
+              color: "#08111F",
               opacity: 0.65,
               marginTop: "32px",
               maxWidth: "850px",
@@ -87,7 +87,7 @@ export default async function GlobalOgImage() {
           <span
             style={{
               fontSize: 22,
-              color: "#0A1428",
+              color: "#08111F",
               opacity: 0.7,
               fontFamily: "monospace",
             }}
@@ -136,11 +136,11 @@ function BrandMark({ size }: { size: number }) {
         cy="50"
         r="42"
         fill="none"
-        stroke="#0F1F4C"
+        stroke="#071A3D"
         strokeWidth="14"
       />
-      <circle cx="65.7" cy="11.1" r="8" fill="#FAFAF7" />
-      <circle cx="65.7" cy="11.1" r="6" fill="#B8860B" />
+      <circle cx="65.7" cy="11.1" r="8" fill="#FBFAF6" />
+      <circle cx="65.7" cy="11.1" r="6" fill="#C28A12" />
     </svg>
   );
 }

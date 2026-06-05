@@ -194,7 +194,7 @@ async function sendInviteEmail(opts: {
     to: opts.to,
     subject: `${opts.supervisorName} invited you to AuditHalo`,
     html: `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#0A1428; max-width: 560px;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#08111F; max-width: 560px;">
         <h2 style="font-size: 24px; margin: 0 0 16px;">You're on a supervision roster.</h2>
         <p style="font-size: 16px; line-height: 1.6;">
           ${greeting} <strong>${opts.supervisorName}</strong> has added you to their AuditHalo roster.
@@ -203,7 +203,7 @@ async function sendInviteEmail(opts: {
           evidence packages audit-ready.
         </p>
         <p style="margin: 32px 0;">
-          <a href="${link}" style="display: inline-block; padding: 12px 24px; background:#0F1F4C; color:#FAFAF7; text-decoration:none; font-weight:600; border-radius: 4px;">
+          <a href="${link}" style="display: inline-block; padding: 12px 24px; background:#071A3D; color:#FBFAF6; text-decoration:none; font-weight:600; border-radius: 4px;">
             Accept invite and create account
           </a>
         </p>

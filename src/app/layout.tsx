@@ -41,7 +41,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <PostHogProvider>
           <NextTopLoader
-            color="#166534"
+            color="#147A4A"
             height={2}
             showSpinner={false}
             shadow={false}

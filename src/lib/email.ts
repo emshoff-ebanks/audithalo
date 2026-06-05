@@ -69,22 +69,22 @@ export async function sendSupervisionLoggedEmail(opts: {
     to: opts.to,
     subject: `${opts.supervisorName} logged a supervision session — your signature is needed`,
     html: `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#0A1428; max-width: 560px;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#08111F; max-width: 560px;">
         <h2 style="font-size: 22px; margin: 0 0 16px;">A supervision session is awaiting your signature.</h2>
         <p style="font-size: 16px; line-height: 1.6;">
           <strong>${opts.supervisorName}</strong> logged a ${opts.sessionType} supervision session.
         </p>
         <table style="font-size: 14px; color: #5f6470; border-collapse: collapse; margin: 16px 0;">
-          <tr><td style="padding: 4px 16px 4px 0;">Date</td><td style="color:#0A1428; font-family: monospace;">${opts.sessionDate}</td></tr>
-          <tr><td style="padding: 4px 16px 4px 0;">Duration</td><td style="color:#0A1428; font-family: monospace;">${opts.durationHours.toFixed(1)} hours</td></tr>
-          <tr><td style="padding: 4px 16px 4px 0;">Type</td><td style="color:#0A1428; text-transform: capitalize;">${opts.sessionType}</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Date</td><td style="color:#08111F; font-family: monospace;">${opts.sessionDate}</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Duration</td><td style="color:#08111F; font-family: monospace;">${opts.durationHours.toFixed(1)} hours</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Type</td><td style="color:#08111F; text-transform: capitalize;">${opts.sessionType}</td></tr>
         </table>
         <p style="font-size: 15px; line-height: 1.6;">
           Your signature seals the session and contributes to your evidence package.
           Both your signature and your supervisor's are required before the session is audit-ready.
         </p>
         <p style="margin: 28px 0;">
-          <a href="${opts.signUrl}" style="display: inline-block; padding: 12px 24px; background:#0F1F4C; color:#FAFAF7; text-decoration:none; font-weight:600; border-radius: 4px;">
+          <a href="${opts.signUrl}" style="display: inline-block; padding: 12px 24px; background:#071A3D; color:#FBFAF6; text-decoration:none; font-weight:600; border-radius: 4px;">
             Review and sign
           </a>
         </p>
@@ -115,19 +115,19 @@ export async function sendCountersignatureNeededEmail(opts: {
     to: opts.to,
     subject,
     html: `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#0A1428; max-width: 560px;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#08111F; max-width: 560px;">
         <h2 style="font-size: 22px; margin: 0 0 16px;">A supervision session is half-signed.</h2>
         <p style="font-size: 16px; line-height: 1.6;">
           <strong>${opts.otherSignerName}</strong> (${opts.otherSignerRole}) signed the session below.
           It will be sealed and added to the evidence package once you countersign.
         </p>
         <table style="font-size: 14px; color: #5f6470; border-collapse: collapse; margin: 16px 0;">
-          <tr><td style="padding: 4px 16px 4px 0;">Date</td><td style="color:#0A1428; font-family: monospace;">${opts.sessionDate}</td></tr>
-          <tr><td style="padding: 4px 16px 4px 0;">Duration</td><td style="color:#0A1428; font-family: monospace;">${opts.durationHours.toFixed(1)} hours</td></tr>
-          <tr><td style="padding: 4px 16px 4px 0;">Type</td><td style="color:#0A1428; text-transform: capitalize;">${opts.sessionType}</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Date</td><td style="color:#08111F; font-family: monospace;">${opts.sessionDate}</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Duration</td><td style="color:#08111F; font-family: monospace;">${opts.durationHours.toFixed(1)} hours</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Type</td><td style="color:#08111F; text-transform: capitalize;">${opts.sessionType}</td></tr>
         </table>
         <p style="margin: 28px 0;">
-          <a href="${opts.signUrl}" style="display: inline-block; padding: 12px 24px; background:#0F1F4C; color:#FAFAF7; text-decoration:none; font-weight:600; border-radius: 4px;">
+          <a href="${opts.signUrl}" style="display: inline-block; padding: 12px 24px; background:#071A3D; color:#FBFAF6; text-decoration:none; font-weight:600; border-radius: 4px;">
             Review and countersign
           </a>
         </p>
@@ -153,7 +153,7 @@ export async function sendPasswordResetEmail(opts: {
     to: opts.to,
     subject: "Reset your AuditHalo password",
     html: `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#0A1428; max-width: 560px;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#08111F; max-width: 560px;">
         <h2 style="font-size: 22px; margin: 0 0 16px;">Reset your password.</h2>
         <p style="font-size: 16px; line-height: 1.6;">
           Hi ${opts.name}, someone (hopefully you) requested a password reset for
@@ -161,7 +161,7 @@ export async function sendPasswordResetEmail(opts: {
           The link expires in 1 hour.
         </p>
         <p style="margin: 28px 0;">
-          <a href="${opts.resetUrl}" style="display: inline-block; padding: 12px 24px; background:#0F1F4C; color:#FAFAF7; text-decoration:none; font-weight:600; border-radius: 4px;">
+          <a href="${opts.resetUrl}" style="display: inline-block; padding: 12px 24px; background:#071A3D; color:#FBFAF6; text-decoration:none; font-weight:600; border-radius: 4px;">
             Set a new password
           </a>
         </p>
@@ -191,7 +191,7 @@ export async function sendEmailVerificationEmail(opts: {
     to: opts.to,
     subject: "Verify your AuditHalo email",
     html: `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#0A1428; max-width: 560px;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#08111F; max-width: 560px;">
         <h2 style="font-size: 22px; margin: 0 0 16px;">Confirm your email.</h2>
         <p style="font-size: 16px; line-height: 1.6;">
           Hi ${opts.name}, please confirm this is your email so AuditHalo can send
@@ -199,7 +199,7 @@ export async function sendEmailVerificationEmail(opts: {
           The link expires in 7 days.
         </p>
         <p style="margin: 28px 0;">
-          <a href="${opts.verifyUrl}" style="display: inline-block; padding: 12px 24px; background:#0F1F4C; color:#FAFAF7; text-decoration:none; font-weight:600; border-radius: 4px;">
+          <a href="${opts.verifyUrl}" style="display: inline-block; padding: 12px 24px; background:#071A3D; color:#FBFAF6; text-decoration:none; font-weight:600; border-radius: 4px;">
             Verify email
           </a>
         </p>
@@ -229,15 +229,15 @@ export async function sendRuleChangedEmail(opts: {
     to: opts.to,
     subject: `Your supervision rule was changed — now tracking ${opts.newRuleLabel}`,
     html: `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#0A1428; max-width: 560px;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#08111F; max-width: 560px;">
         <h2 style="font-size: 22px; margin: 0 0 16px;">Your supervision rule was changed.</h2>
         <p style="font-size: 16px; line-height: 1.6;">
           Hi ${opts.superviseeName}, <strong>${opts.supervisorName}</strong> updated
           the state rule on your AuditHalo profile.
         </p>
         <table style="font-size: 14px; color: #5f6470; border-collapse: collapse; margin: 16px 0;">
-          <tr><td style="padding: 4px 16px 4px 0;">Previously</td><td style="color:#0A1428; font-family: monospace;">${opts.oldRuleLabel}</td></tr>
-          <tr><td style="padding: 4px 16px 4px 0;">Now tracking</td><td style="color:#0A1428; font-family: monospace;">${opts.newRuleLabel}</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Previously</td><td style="color:#08111F; font-family: monospace;">${opts.oldRuleLabel}</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Now tracking</td><td style="color:#08111F; font-family: monospace;">${opts.newRuleLabel}</td></tr>
         </table>
         <p style="font-size: 15px; line-height: 1.6;">
           Your existing session events are now evaluated against the new rule's
@@ -246,7 +246,7 @@ export async function sendRuleChangedEmail(opts: {
           may shift as a result.
         </p>
         <p style="margin: 28px 0;">
-          <a href="${opts.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background:#0F1F4C; color:#FAFAF7; text-decoration:none; font-weight:600; border-radius: 4px;">
+          <a href="${opts.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background:#071A3D; color:#FBFAF6; text-decoration:none; font-weight:600; border-radius: 4px;">
             View your compliance
           </a>
         </p>
@@ -278,15 +278,15 @@ export async function sendInviteAcceptedEmail(opts: {
     to: opts.to,
     subject: `${opts.superviseeName} accepted your AuditHalo invite`,
     html: `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#0A1428; max-width: 560px;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#08111F; max-width: 560px;">
         <h2 style="font-size: 22px; margin: 0 0 16px;">${opts.superviseeName} joined your roster.</h2>
         <p style="font-size: 16px; line-height: 1.6;">
           Hi ${opts.supervisorName}, <strong>${opts.superviseeName}</strong> accepted
           your AuditHalo invitation and is now part of your supervised roster.
         </p>
         <table style="font-size: 14px; color: #5f6470; border-collapse: collapse; margin: 16px 0;">
-          <tr><td style="padding: 4px 16px 4px 0;">Name</td><td style="color:#0A1428;">${opts.superviseeName}</td></tr>
-          <tr><td style="padding: 4px 16px 4px 0;">Email</td><td style="color:#0A1428; font-family: monospace;">${opts.superviseeEmail}</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Name</td><td style="color:#08111F;">${opts.superviseeName}</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Email</td><td style="color:#08111F; font-family: monospace;">${opts.superviseeEmail}</td></tr>
         </table>
         <p style="font-size: 15px; line-height: 1.6;">
           The next step is to assign their state rule so AuditHalo knows which
@@ -294,7 +294,7 @@ export async function sendInviteAcceptedEmail(opts: {
           board-specific evidence rules.
         </p>
         <p style="margin: 28px 0;">
-          <a href="${opts.rosterUrl}" style="display: inline-block; padding: 12px 24px; background:#0F1F4C; color:#FAFAF7; text-decoration:none; font-weight:600; border-radius: 4px;">
+          <a href="${opts.rosterUrl}" style="display: inline-block; padding: 12px 24px; background:#071A3D; color:#FBFAF6; text-decoration:none; font-weight:600; border-radius: 4px;">
             Open supervisee
           </a>
         </p>
@@ -328,7 +328,7 @@ export async function sendEvidenceSealedEmail(opts: {
     to: opts.to,
     subject: "Supervision session sealed — evidence package ready",
     html: `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#0A1428; max-width: 560px;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#08111F; max-width: 560px;">
         <h2 style="font-size: 22px; margin: 0 0 16px;">The session is sealed.</h2>
         <p style="font-size: 16px; line-height: 1.6;">
           Hi ${opts.recipientName}, the supervision session below is now fully
@@ -336,14 +336,14 @@ export async function sendEvidenceSealedEmail(opts: {
           ready for download.
         </p>
         <table style="font-size: 14px; color: #5f6470; border-collapse: collapse; margin: 16px 0;">
-          <tr><td style="padding: 4px 16px 4px 0;">Supervisee</td><td style="color:#0A1428;">${opts.superviseeName}</td></tr>
-          <tr><td style="padding: 4px 16px 4px 0;">Date</td><td style="color:#0A1428; font-family: monospace;">${opts.sessionDate}</td></tr>
-          <tr><td style="padding: 4px 16px 4px 0;">Duration</td><td style="color:#0A1428; font-family: monospace;">${opts.durationHours.toFixed(1)} hours</td></tr>
-          <tr><td style="padding: 4px 16px 4px 0;">Type</td><td style="color:#0A1428; text-transform: capitalize;">${opts.sessionType}</td></tr>
-          <tr><td style="padding: 4px 16px 4px 0;">Package ID</td><td style="color:#0A1428; font-family: monospace;">${opts.packageId}</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Supervisee</td><td style="color:#08111F;">${opts.superviseeName}</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Date</td><td style="color:#08111F; font-family: monospace;">${opts.sessionDate}</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Duration</td><td style="color:#08111F; font-family: monospace;">${opts.durationHours.toFixed(1)} hours</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Type</td><td style="color:#08111F; text-transform: capitalize;">${opts.sessionType}</td></tr>
+          <tr><td style="padding: 4px 16px 4px 0;">Package ID</td><td style="color:#08111F; font-family: monospace;">${opts.packageId}</td></tr>
         </table>
         <p style="margin: 28px 0;">
-          <a href="${downloadUrl}" style="display: inline-block; padding: 12px 24px; background:#0F1F4C; color:#FAFAF7; text-decoration:none; font-weight:600; border-radius: 4px;">
+          <a href="${downloadUrl}" style="display: inline-block; padding: 12px 24px; background:#071A3D; color:#FBFAF6; text-decoration:none; font-weight:600; border-radius: 4px;">
             Download PDF
           </a>
         </p>
@@ -354,7 +354,7 @@ export async function sendEvidenceSealedEmail(opts: {
           To forward to a state board or third party, share this public verify
           URL — it confirms the document hash without requiring sign-in:
         </p>
-        <p style="font-size: 13px; color:#0A1428; font-family: monospace; word-break: break-all; background: #FAFAF7; padding: 12px; border-radius: 4px;">
+        <p style="font-size: 13px; color:#08111F; font-family: monospace; word-break: break-all; background: #FBFAF6; padding: 12px; border-radius: 4px;">
           ${verifyUrl}
         </p>
         <p style="font-size: 12px; color: #5f6470; margin-top: 24px;">

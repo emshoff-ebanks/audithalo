@@ -4,14 +4,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* AuditHalo brand tokens — synthesized from brand book v0.1 research.
+/* AuditHalo brand tokens — Phase 5.0 refresh (navy-authority + sharp-digital-blue + gold-as-proof).
    Palette: warm clinical + compliance-authoritative hybrid.
-   - Deeper navy primary (#0F1F4C) for authority
-   - Warmer off-white background (#FAFAF7) to soften clinical-cold
-   - Sage (#7BA098) for humanity, surfaces/illustration only (fails AA at body sizes)
-   - Signet gold (#B8860B) reserved for sealed/verified/evidence states only
+   - Deeper navy primary (#071A3D) for authority on dark-mode bands
+   - Warmer off-white background (#FBFAF6) — slightly warmer cream
+   - Sage (#5F8F86) — darker, supports better as accent
+   - Signet gold (#C28A12) — slightly more luminous; reserved for sealed/verified/evidence states only
+   - Sharp digital blue secondary (#2457FF) — brighter, more confident SaaS-action feel
    - Electric violet dropped (was AI-cliché)
-   - Semantic colors slightly desaturated for legal-grade restraint */
+   - Semantic colors deepened for legal-grade restraint */
 
 @theme inline {
   /* shadcn semantic tokens — driven by CSS variables below */
@@ -37,12 +38,12 @@
 
   /* AuditHalo brand accents */
   --color-evidence-bg: var(--evidence-bg);
-  --color-halo-blue: #1d4ed8; /* sharper, more gravitas than #2563EB */
-  --color-sage: #7ba098;       /* humanity counterweight; surfaces only, not body */
-  --color-gold: #b8860b;       /* signet gold — reserved for sealed/verified states */
-  --color-success: #166534;
-  --color-warning: #b45309;
-  --color-risk: #b91c1c;
+  --color-halo-blue: #2457ff; /* sharp digital blue — confident SaaS action */
+  --color-sage: #5f8f86;       /* humanity counterweight; surfaces only, not body */
+  --color-gold: #c28a12;       /* signet gold — reserved for sealed/verified states */
+  --color-success: #147a4a;
+  --color-warning: #c77800;
+  --color-risk: #b42318;
 
   /* Typography */
   --font-display: "Cabinet Grotesk", ui-sans-serif, system-ui, sans-serif;
@@ -59,50 +60,50 @@
 :root {
   /* OK / Compliant */
   --color-ok-50: #F0F4EE;
-  --color-ok-700: #166534;
+  --color-ok-700: #147A4A;
 
   /* Warning */
   --color-warn-50: #FEF3E2;
   --color-warn-500: #D97706;
-  --color-warn-700: #B45309;
+  --color-warn-700: #C77800;
 
   /* Critical / Risk */
   --color-risk-50: #FEE2E2;
   --color-risk-600: #DC2626;
-  --color-risk-700: #B91C1C;
+  --color-risk-700: #B42318;
   --color-risk-900: #7F1D1D;
 
-  --background: #fafaf7;       /* warmer off-white than #F8FAFC */
-  --foreground: #0a1428;       /* deeper navy-tinged near-black */
+  --background: #fbfaf6;       /* slightly warmer cream */
+  --foreground: #08111f;       /* deeper navy-tinged near-black */
 
-  --evidence-bg: #f5f1e8;      /* warm oat for evidence packages, success surfaces */
+  --evidence-bg: #f3ebdd;      /* warm oat for evidence packages, success surfaces */
 
   --card: #ffffff;             /* pure white reserved for "official document" surfaces */
-  --card-foreground: #0a1428;
+  --card-foreground: #08111f;
 
   --popover: #ffffff;
-  --popover-foreground: #0a1428;
+  --popover-foreground: #08111f;
 
   /* Primary is deep authoritative navy — used for top nav, primary CTAs */
-  --primary: #0f1f4c;
-  --primary-foreground: #fafaf7;
+  --primary: #071a3d;
+  --primary-foreground: #fbfaf6;
 
-  /* Secondary is sharpened Halo Blue — used for links, secondary CTAs */
-  --secondary: #1d4ed8;
+  /* Secondary is sharp digital blue — used for links, secondary CTAs */
+  --secondary: #2457ff;
   --secondary-foreground: #ffffff;
 
   --muted: #e7e5dc;            /* warm-toned muted */
   --muted-foreground: #5f6470;
 
-  --accent: #f5f1e8;           /* matches evidence surface */
-  --accent-foreground: #0a1428;
+  --accent: #f3ebdd;           /* matches evidence surface */
+  --accent-foreground: #08111f;
 
-  --destructive: #b91c1c;
+  --destructive: #b42318;
   --destructive-foreground: #ffffff;
 
   --border: #e3e0d4;           /* warm-toned border */
   --input: #e3e0d4;
-  --ring: #0f1f4c;
+  --ring: #071a3d;
 }
 
 html,

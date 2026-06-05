@@ -86,27 +86,34 @@ Final palette synthesizes the warmer/humane direction (b) with the authoritative
 
 | Role | Token | Hex | Notes |
 | --- | --- | --- | --- |
-| Foreground (near-black) | `--foreground` | `#0A1428` | Deeper, more navy-tinged than the previous `#0B1020`. Reads authoritative-tech without going gothic. |
-| Background | `--background` | `#FAFAF7` | **Warmer** off-white than `#F8FAFC`. Reduces clinical-cold feel for the supervisor persona without losing crispness. |
-| Evidence surface | `--evidence-bg` | `#F5F1E8` | Warm oat. Used for the calmest, most human surfaces: evidence package previews, success states, supervisee progress views. |
+| Foreground (near-black) | `--foreground` | `#08111F` | Deeper than `#0A1428` — sharper text contrast on the warmer background. |
+| Background | `--background` | `#FBFAF6` | **Warmer** off-white than `#F8FAFC`. Reduces clinical-cold feel for the supervisor persona without losing crispness. |
+| Evidence surface | `--evidence-bg` | `#F3EBDD` | Warm oat, slightly less saturated — better proof-card feel. Used for the calmest, most human surfaces: evidence package previews, success states, supervisee progress views. |
 | Card / surface | `--card` | `#FFFFFF` | Pure white. Used sparingly — for the most "official document" surfaces. |
 
 ### Brand accents
 
 | Role | Token | Hex | Use |
 | --- | --- | --- | --- |
-| Primary navy | `--primary` | `#0F1F4C` | Deep authoritative navy. Used for top nav, headers, primary buttons. Replaces the near-black `#0B1020` in primary CTA role. |
-| Halo Blue | `--secondary` | `#1D4ED8` | Sharper, more gravitas than the previous `#2563EB`. Used for links, secondary CTAs, focused interactive state. |
-| Sage (humanity counterweight) | `--sage` | `#7BA098` | **Surfaces and illustration only — never body text** (fails AA contrast). Used for success-adjacent moments, supervisee-care surfaces, illustration tinting. |
-| Signet gold | `--gold` | `#B8860B` | **The halo color.** Reserved exclusively for "audit-ready / sealed / verified / evidence" states. Never decoration. This is the differentiator no competitor owns. |
+| Primary navy | `--primary` | `#071A3D` | Deep authoritative navy. Used for top nav, headers, primary buttons. More authority on dark-mode bands. |
+| Sharp digital blue | `--secondary` | `#2457FF` | Brighter, more confident SaaS-action feel. Used for links, secondary CTAs, focused interactive state. |
+| Sage (humanity counterweight) | `--sage` | `#5F8F86` | **Surfaces and illustration only — never body text** (fails AA contrast). Used for success-adjacent moments, supervisee-care surfaces, illustration tinting. |
+| Signet gold | `--gold` | `#C28A12` | **The halo color.** Reserved exclusively for "audit-ready / sealed / verified / evidence" states. Gold appears only on evidence-package seals, signed-session badges, and proof-moment notification icons. Never on CTAs, hovers, or decorative chrome. |
 
-### Semantic (slightly desaturated for legal-grade restraint)
+### Semantic (deepened for legal-grade restraint)
 
 | Role | Token | Hex |
 | --- | --- | --- |
-| Success | `--success` | `#166534` (forest, not emerald) |
-| Warning | `--warning` | `#B45309` |
-| Risk | `--risk` | `#B91C1C` (deeper than #DC2626) |
+| Success | `--success` | `#147A4A` (deeper forest) |
+| Warning | `--warning` | `#C77800` (deeper amber) |
+| Risk | `--risk` | `#B42318` (deeper red) |
+
+### What NOT to use these colors for
+
+- **No sage backgrounds for primary CTAs.** Sage stays on surfaces, illustrations, and supervisee-care moments. Primary CTAs use navy or sharp digital blue.
+- **No cream as default page background outside the marketing hero.** App-side pages can use cream as section background but the default canvas is `--background` (warm off-white).
+- **No gold on dashboard chrome.** Gold is reserved for proof moments — evidence-package seals, signed-session badges, sealed-event notifications. It never appears on buttons, hovers, dividers, or decorative borders.
+- **No bright digital blue on text bodies.** The new `--secondary` (#2457FF) is saturated and is meant for interactive accents and small surfaces, not paragraph copy.
 
 ### Dropped from the previous palette
 
@@ -261,7 +268,7 @@ Almost every page should work without a single photograph. Restraint signals con
 | # | Decision | Resolution |
 | --- | --- | --- |
 | B1 | Primary logo direction | ✅ **Hybrid: Solid wavy halo (audire waveform as continuous outer edge) + sun-dog at 22° clockwise from 12 o'clock, on the ring with a background-colored knockout gap.** Fuses both metaphors (audire ring + 22° atmospheric sun-dog) into a single inseparable mark — the medipyxis-style double-layer. **Final spec**: `hybrid-solid-a-subtle.svg` — solid filled annulus, inner radius 35, outer base 42, waveform amplitude 2 (harmonics 5 and 11), 360 samples on the outer edge, dot r=10, knockout pad 5px. Source generator in `docs/brand/logos/generate.mjs`. (Locked 2026-06-01) |
-| B2 | Palette refresh (warmer off-white, deeper navy, sage surfaces, signet gold, drop violet) | ✅ **Locked** — applied in `src/app/globals.css`. See §4 for tokens. (2026-06-01) |
+| B2 | Palette refresh (warmer off-white, deeper navy, sage surfaces, signet gold, drop violet) | ✅ **Locked** — applied in `src/app/globals.css`. See §4 for tokens. (2026-06-01) Updated 2026-06-04 (Phase 5.0) to deeper navy `#071A3D`, sharp digital blue `#2457FF`, slightly warmer cream `#FBFAF6`, less-saturated oat `#F3EBDD`, deeper sage `#5F8F86`, more-luminous gold `#C28A12`, deeper semantic colors. |
 | B3 | Display font | ✅ **Keep Cabinet Grotesk for v1**, plan Söhne migration after first paid customer + designer engagement. (2026-06-01) |
 | B5 | Imagery: no photography in v1 | ✅ **Locked.** Restraint signals confidence; revisit when customer testimonials exist. (2026-06-01) |
 | B4 | Logo execution path | ✅ **Internal SVG iteration** through this brand-book process. Logo is now production-ready. Consider commissioning a designer polish pass before paid-launch announcement, but the mark is shippable as-is. (2026-06-01) |
@@ -281,8 +288,8 @@ Almost every page should work without a single photograph. Restraint signals con
 - Generator (for future iterations): `docs/brand/logos/generate.mjs` (run with `node docs/brand/logos/generate.mjs`)
 
 **Color discipline**:
-- The mark is always signet gold (`#B8860B`) on warm off-white (`#FAFAF7`) or any light surface
-- On dark surfaces (dark navy headers if/when they exist), swap mark color to off-white `#FAFAF7`
+- The mark is always signet gold (`#C28A12`) on warm off-white (`#FBFAF6`) or any light surface
+- On dark surfaces (deep navy headers if/when they exist), swap mark color to off-white `#FBFAF6`
 - The knockout color must always match the surface the mark sits on (the React component accepts a `bg` prop defaulting to `var(--color-background)`)
 
 **Clear space**: at least 1× the mark height of empty padding on all sides
