@@ -12,13 +12,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InviteForm } from "./invite-form";
 import { PendingInviteActions } from "./pending-invite-actions";
-import { FilterPill, parseRosterFilter } from "./_filter-pill";
+import { FilterBar, parseRosterFilter } from "./_filter-bar";
 
 export const metadata = {
   title: "Roster — AuditHalo",
 };
 
-type SearchParams = Promise<{ filter?: string }>;
+type SearchParams = Promise<{ filter?: string; q?: string }>;
 
 export default async function RosterPage({
   searchParams,
@@ -55,8 +55,16 @@ export default async function RosterPage({
     where: eq(schema.invitations.orgId, membership.orgId),
   });
 
-  const filter = parseRosterFilter((await searchParams).filter);
+  const params = await searchParams;
+  const filter = parseRosterFilter(params.filter);
+  const searchQuery = (params.q ?? "").trim();
+  const searchLower = searchQuery.toLowerCase();
   const rosterRows = allRosterRows.filter((r) => {
+    const matchesSearch =
+      searchLower === "" ||
+      r.name.toLowerCase().includes(searchLower) ||
+      r.email.toLowerCase().includes(searchLower);
+    if (!matchesSearch) return false;
     if (filter === "all") return true;
     if (filter === "at-risk") {
       return (
@@ -93,11 +101,12 @@ export default async function RosterPage({
         moment they accept the invitation, and you'll see their hour progress here.
       </p>
 
-      {filter !== "all" && (
-        <div className="mt-4">
-          <FilterPill filter={filter} count={rosterRows.length} />
-        </div>
-      )}
+      <FilterBar
+        activeFilter={filter}
+        filteredCount={rosterRows.length}
+        totalCount={allRosterRows.length}
+        searchQuery={searchQuery}
+      />
 
       {atRiskCount > 0 && (
         <div className="mt-6 flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">

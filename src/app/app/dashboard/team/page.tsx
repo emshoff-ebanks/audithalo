@@ -3,12 +3,11 @@ import Link from "next/link";
 import { ArrowLeft, Shield } from "lucide-react";
 import { eq, inArray } from "drizzle-orm";
 import { auth } from "@/auth";
-import { getCurrentMembership, isOrgOwner } from "@/lib/authz";
+import { getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RoleSelector } from "./role-selector";
 
 export const metadata = { title: "Team — AuditHalo" };
 
@@ -36,10 +35,7 @@ export default async function TeamPage() {
       })
     : [];
 
-  const viewerIsOwner = isOrgOwner(session.user.id, org);
-  const owner = memberUsers.find((u) => u.id === org.createdById);
-
-  // Sort: managers first, then supervisees; within each, alphabetical by name
+  // Sort: supervisors first, then supervisees; within each, alphabetical by name
   const sorted = allMemberships
     .map((m) => ({
       membership: m,
@@ -47,8 +43,8 @@ export default async function TeamPage() {
     }))
     .filter((e) => e.user !== undefined)
     .sort((a, b) => {
-      const aIsManager = a.membership.role !== "supervisee";
-      const bIsManager = b.membership.role !== "supervisee";
+      const aIsManager = a.membership.role === "supervisor";
+      const bIsManager = b.membership.role === "supervisor";
       if (aIsManager !== bIsManager) return aIsManager ? -1 : 1;
       return (a.user!.name ?? "").localeCompare(b.user!.name ?? "");
     });
@@ -64,40 +60,12 @@ export default async function TeamPage() {
 
       <Badge variant="outline" className="mb-3">Team</Badge>
       <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
-        Manage roles
+        Team members
       </h1>
-
-      {viewerIsOwner ? (
-        <p className="mt-3 text-foreground/70">
-          Promote supervisors to HR or Executive roles. HR sees a compliance heatmap;
-          Executive sees a practice-wide risk rollup. Supervisee roles are managed by
-          invitation, not by promotion.
-        </p>
-      ) : (
-        <Card className="mt-6">
-          <CardContent className="p-6">
-            <Badge variant="warning" className="mb-3">Read-only</Badge>
-            <p className="text-foreground/80">
-              Only the practice owner can manage team roles. Contact{" "}
-              {owner ? (
-                <>
-                  <span className="font-medium">{owner.name}</span> (
-                  <a
-                    href={`mailto:${owner.email}`}
-                    className="text-secondary hover:underline"
-                  >
-                    {owner.email}
-                  </a>
-                  )
-                </>
-              ) : (
-                "the practice owner"
-              )}{" "}
-              to request a role change.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      <p className="mt-3 text-foreground/70 max-w-2xl">
+        Every member of your practice org. Supervisor roles are assigned at
+        account creation; supervisee roles are assigned by invitation.
+      </p>
 
       <Card className="mt-8">
         <CardContent className="p-0">
@@ -115,13 +83,15 @@ export default async function TeamPage() {
                   if (!u) return null;
                   const isSelf = u.id === session.user.id;
                   const isOwnerRow = u.id === org.createdById;
-                  const isSupervisee = m.role === "supervisee";
                   return (
                     <tr key={u.id} className="border-t border-border">
                       <td className="px-5 py-3 font-medium">
                         <div className="flex items-center gap-2">
                           {isOwnerRow && (
-                            <Shield className="h-4 w-4 text-[color:var(--color-gold)]" strokeWidth={1.75} />
+                            <Shield
+                              className="h-4 w-4 text-[color:var(--color-gold)]"
+                              strokeWidth={1.75}
+                            />
                           )}
                           <span>{u.name}</span>
                           {isSelf && (
@@ -133,14 +103,9 @@ export default async function TeamPage() {
                         {u.email}
                       </td>
                       <td className="px-5 py-3">
-                        {!viewerIsOwner || isSelf || isSupervisee ? (
-                          <RoleBadge role={m.role} />
-                        ) : (
-                          <RoleSelector
-                            targetUserId={u.id}
-                            currentRole={m.role as "supervisor" | "hr_admin" | "executive"}
-                          />
-                        )}
+                        <Badge variant="outline">
+                          {m.role === "supervisor" ? "Supervisor" : "Supervisee"}
+                        </Badge>
                       </td>
                     </tr>
                   );
@@ -159,14 +124,4 @@ export default async function TeamPage() {
       </Card>
     </div>
   );
-}
-
-function RoleBadge({ role }: { role: string }) {
-  const label =
-    role === "supervisor" ? "Supervisor" :
-    role === "hr_admin" ? "HR Admin" :
-    role === "executive" ? "Executive" :
-    role === "supervisee" ? "Supervisee" :
-    role;
-  return <Badge variant="outline">{label}</Badge>;
 }

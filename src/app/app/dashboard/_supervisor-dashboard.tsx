@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { OnboardingChecklist } from "./_onboarding-checklist";
 import { BillingBanner } from "./_billing-banner";
 import { EvidenceExplainer } from "./_evidence-explainer";
+import { PracticePanels, PRACTICE_THRESHOLD } from "./_practice-panel";
 
 type Props = {
   userId: string;
@@ -143,6 +144,8 @@ export async function SupervisorDashboard({
           <Link href="/dashboard/audit-log">Audit log</Link>
         </Button>
       </div>
+
+      {roster.length >= PRACTICE_THRESHOLD && <PracticePanels roster={roster} />}
 
       {atRiskCount > 0 && (
         <div className="mt-10">

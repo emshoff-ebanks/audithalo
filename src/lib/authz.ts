@@ -3,15 +3,16 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db, schema } from "@/lib/db";
 
-const MANAGER_ROLES = new Set(["supervisor", "hr_admin", "executive"]);
+const MANAGER_ROLES = new Set(["supervisor"]);
 
-/** Roles that can READ management surfaces (roster, supervisee details, dashboards). */
+/** Roles that can READ management surfaces (roster, supervisee details, dashboards).
+ *  As of Phase 5.4 collapse, supervisor is the only manager role. */
 export function isManagerRole(role: string | undefined | null): boolean {
   return !!role && MANAGER_ROLES.has(role);
 }
 
 /** Roles that can PERFORM supervisor actions: invite, assign rules, log supervision sessions,
- *  sign as supervisor. HR + Executive can READ everything but can't act as a supervisor. */
+ *  sign as supervisor. */
 export function canSupervise(role: string | undefined | null): boolean {
   return role === "supervisor";
 }

@@ -11,14 +11,14 @@ describe("isManagerRole", () => {
   it("returns true for supervisor", () => {
     expect(isManagerRole("supervisor")).toBe(true);
   });
-  it("returns true for hr_admin", () => {
-    expect(isManagerRole("hr_admin")).toBe(true);
-  });
-  it("returns true for executive", () => {
-    expect(isManagerRole("executive")).toBe(true);
-  });
   it("returns false for supervisee", () => {
     expect(isManagerRole("supervisee")).toBe(false);
+  });
+  it("returns false for the removed hr_admin role", () => {
+    expect(isManagerRole("hr_admin")).toBe(false);
+  });
+  it("returns false for the removed executive role", () => {
+    expect(isManagerRole("executive")).toBe(false);
   });
   it("returns false for null/undefined", () => {
     expect(isManagerRole(null)).toBe(false);
@@ -33,10 +33,10 @@ describe("canSupervise", () => {
   it("returns true ONLY for supervisor", () => {
     expect(canSupervise("supervisor")).toBe(true);
   });
-  it("returns false for hr_admin (read-only management role)", () => {
+  it("returns false for the removed hr_admin role", () => {
     expect(canSupervise("hr_admin")).toBe(false);
   });
-  it("returns false for executive (read-only management role)", () => {
+  it("returns false for the removed executive role", () => {
     expect(canSupervise("executive")).toBe(false);
   });
   it("returns false for supervisee", () => {
