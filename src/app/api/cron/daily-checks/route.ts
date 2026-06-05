@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, eq, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 
@@ -39,9 +39,9 @@ export async function GET(request: Request) {
   const sevenDaysAgo = new Date(now.getTime() - SEVEN_DAYS_MS);
 
   // Pass 1: supervisor_rule_not_set
-  //   Find every supervisee membership older than 24h whose org has no
-  //   rule_assignment row. Notify the inviter (mapped via the original
-  //   invitation row) — once per 7 days per (supervisor, supervisee).
+  //
+  // Query 1: find every supervisee membership > 24h old with no rule
+  // assignment yet. Single left-join; null ruleId after join = no assignment.
   const candidates = await db
     .select({
       orgId: schema.orgMemberships.orgId,
@@ -76,32 +76,80 @@ export async function GET(request: Request) {
     );
 
   const ruleNotSet = candidates.filter((c) => c.ruleId === null);
-  let notSetEmitted = 0;
-
-  for (const c of ruleNotSet) {
-    // Find the inviting supervisor via the accepted invitation row.
-    const invite = await db.query.invitations.findFirst({
-      where: and(
-        eq(schema.invitations.orgId, c.orgId),
-        eq(schema.invitations.email, c.superviseeEmail),
-        eq(schema.invitations.role, "supervisee")
-      ),
+  if (ruleNotSet.length === 0) {
+    return NextResponse.json({
+      ok: true,
+      runAt: now.toISOString(),
+      pass1_supervisor_rule_not_set: { candidatesChecked: 0, emitted: 0 },
     });
-    const inviterId = invite?.invitedById;
-    if (!inviterId) continue;
+  }
 
-    // De-dup: skip if we've notified this supervisor about this supervisee
-    // within the last 7 days.
-    const dupCheck = await db.execute(sql`
-      SELECT 1
-      FROM notifications
-      WHERE user_id = ${inviterId}
-        AND kind = 'supervisor_rule_not_set'
-        AND created_at >= ${sevenDaysAgo.toISOString()}
-        AND payload->>'superviseeId' = ${c.superviseeId}
-      LIMIT 1
-    `);
-    if ((dupCheck as unknown as { rows: unknown[] }).rows.length > 0) continue;
+  // Query 2: batch-look up the most-recent ACCEPTED invitation per
+  // (orgId, email) so we know which supervisor to notify. Picking the
+  // latest accepted invite avoids duplicates from a re-invite cycle.
+  const orgIds = Array.from(new Set(ruleNotSet.map((c) => c.orgId)));
+  const emails = Array.from(new Set(ruleNotSet.map((c) => c.superviseeEmail)));
+  const acceptedInvites = await db
+    .select({
+      orgId: schema.invitations.orgId,
+      email: schema.invitations.email,
+      invitedById: schema.invitations.invitedById,
+      acceptedAt: schema.invitations.acceptedAt,
+    })
+    .from(schema.invitations)
+    .where(
+      and(
+        inArray(schema.invitations.orgId, orgIds),
+        inArray(schema.invitations.email, emails),
+        eq(schema.invitations.role, "supervisee")
+      )
+    )
+    .orderBy(desc(schema.invitations.acceptedAt));
+
+  // Pick the latest accepted invite per (orgId, email).
+  const inviterByKey = new Map<string, string>();
+  for (const inv of acceptedInvites) {
+    if (inv.acceptedAt === null) continue;
+    const key = `${inv.orgId}|${inv.email}`;
+    if (!inviterByKey.has(key)) {
+      inviterByKey.set(key, inv.invitedById);
+    }
+  }
+
+  // Query 3: batch-look up recent supervisor_rule_not_set notifications for
+  // dedup. Filter to the union of inviter user IDs we're about to notify.
+  const inviterIds = Array.from(new Set(inviterByKey.values()));
+  const recentNotifs =
+    inviterIds.length === 0
+      ? []
+      : await db
+          .select({
+            userId: schema.notifications.userId,
+            payload: schema.notifications.payload,
+          })
+          .from(schema.notifications)
+          .where(
+            and(
+              inArray(schema.notifications.userId, inviterIds),
+              eq(schema.notifications.kind, "supervisor_rule_not_set"),
+              gte(schema.notifications.createdAt, sevenDaysAgo)
+            )
+          );
+
+  // Build dedup index: `${inviterId}|${superviseeId}`.
+  const recentlyNotified = new Set<string>();
+  for (const n of recentNotifs) {
+    const payload = n.payload as { superviseeId?: string };
+    if (payload?.superviseeId) {
+      recentlyNotified.add(`${n.userId}|${payload.superviseeId}`);
+    }
+  }
+
+  let notSetEmitted = 0;
+  for (const c of ruleNotSet) {
+    const inviterId = inviterByKey.get(`${c.orgId}|${c.superviseeEmail}`);
+    if (!inviterId) continue;
+    if (recentlyNotified.has(`${inviterId}|${c.superviseeId}`)) continue;
 
     try {
       await createNotification({
@@ -113,6 +161,9 @@ export async function GET(request: Request) {
           superviseeEmail: c.superviseeEmail,
         },
       });
+      // Stamp local index too so a duplicate candidate row in the same run
+      // doesn't double-fire (defensive — shouldn't happen but cheap).
+      recentlyNotified.add(`${inviterId}|${c.superviseeId}`);
       notSetEmitted += 1;
     } catch (err) {
       console.error("[cron] supervisor_rule_not_set createNotification:", err);

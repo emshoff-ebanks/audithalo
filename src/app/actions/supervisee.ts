@@ -8,10 +8,7 @@ import { canSupervise, getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { isValidStateCode } from "@/lib/us-states";
 import { getRule, listRuleIds } from "@/lib/rules";
-import {
-  sendRuleChangedEmail,
-  sendSupervisionLoggedEmail,
-} from "@/lib/email";
+import { sendRuleChangedEmail } from "@/lib/email";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { createNotification } from "@/lib/notifications";
 
@@ -298,8 +295,10 @@ export async function logSessionAction(
     console.error("[audit-log] failed to record session.logged:", err);
   }
 
-  // Notify supervisee if this is a supervision event (practice events don't need signatures).
-  // Email failure must NEVER block the underlying action — wrapped in try/catch.
+  // Notify supervisee if this is a supervision event (practice events don't
+  // need signatures). createNotification writes the bell row and (when the
+  // supervisee opts in for signature_needed — default true) sends the email.
+  // Failure must never block the action — wrapped in try/catch.
   if (parsed.data.kind === "supervision") {
     try {
       await createNotification({
@@ -314,29 +313,6 @@ export async function logSessionAction(
       });
     } catch (err) {
       console.error("[notifications] signature_needed failed:", err);
-    }
-    try {
-      const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
-      const [supervisee, supervisor] = await Promise.all([
-        db.query.users.findFirst({
-          where: eq(schema.users.id, parsed.data.superviseeId),
-        }),
-        db.query.users.findFirst({
-          where: eq(schema.users.id, session.user.id),
-        }),
-      ]);
-      if (supervisee?.email && supervisor) {
-        await sendSupervisionLoggedEmail({
-          to: supervisee.email,
-          supervisorName: supervisor.name ?? supervisor.email,
-          sessionDate: parsed.data.date,
-          sessionType: parsed.data.sessionType ?? "individual",
-          durationHours: parsed.data.durationHours,
-          signUrl: `${APP_URL}/sign/${insertedId}`,
-        });
-      }
-    } catch (err) {
-      console.error("[email] supervision-logged notification failed:", err);
     }
   }
 

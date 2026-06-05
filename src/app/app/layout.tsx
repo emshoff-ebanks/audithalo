@@ -4,7 +4,7 @@ import { AuditHaloWordmark } from "@/components/brand/AuditHaloMark";
 import { PostHogIdentify } from "@/components/observability/posthog-identify";
 import { listUnreadNotifications } from "@/lib/notifications";
 import { UserMenu } from "./user-menu";
-import { NotificationsBell } from "./_notifications-bell";
+import { NotificationsBell, type NotificationRow } from "./_notifications-bell";
 
 export default async function AppLayout({
   children,
@@ -13,14 +13,23 @@ export default async function AppLayout({
 }) {
   const session = await auth();
 
-  const initialNotifications = session?.user?.id
-    ? (await listUnreadNotifications(session.user.id)).map((n) => ({
+  // The bell is "best effort" — a DB hiccup on the notifications table must
+  // never take down the whole app-side layout (which would 500 every route,
+  // including /login). Swallow the error, log it, and render an empty bell.
+  let initialNotifications: NotificationRow[] = [];
+  if (session?.user?.id) {
+    try {
+      const rows = await listUnreadNotifications(session.user.id);
+      initialNotifications = rows.map((n) => ({
         id: n.id,
         kind: n.kind,
         payload: n.payload as Record<string, unknown>,
         createdAt: n.createdAt.toISOString(),
-      }))
-    : [];
+      }));
+    } catch (err) {
+      console.error("[layout] listUnreadNotifications failed:", err);
+    }
+  }
 
   return (
     <div className="flex flex-col flex-1 min-h-screen bg-background">

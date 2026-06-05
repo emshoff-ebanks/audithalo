@@ -7,7 +7,6 @@ import { revalidatePath } from "next/cache";
 import { AuthError } from "next-auth";
 import { syncPracticeSeatQuantity } from "@/lib/billing/seats";
 import { db, schema } from "@/lib/db";
-import { sendInviteAcceptedEmail } from "@/lib/email";
 import { hashToken } from "@/lib/invitations";
 import { signIn } from "@/auth";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
@@ -111,9 +110,10 @@ export async function acceptInviteAction(
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/roster");
 
-  // Notify the supervisor who originally sent the invite. The notification
-  // helper writes the row and (if the inviter opted in) sends an email.
-  // Email failure must NEVER block the action — wrapped in try/catch.
+  // Notify the supervisor who originally sent the invite. createNotification
+  // writes the bell row and (when the inviter opts in for invite_accepted —
+  // default true) sends the email side-effect. Failure must never block the
+  // action — wrapped in try/catch.
   try {
     await createNotification({
       userId: invite.invitedById,
@@ -126,26 +126,6 @@ export async function acceptInviteAction(
     });
   } catch (err) {
     console.error("[notifications] invite_accepted failed:", err);
-  }
-  // Keep the legacy direct-send too — invite_accepted is on by default, but
-  // the templates differ (legacy email shows a richer "supervisee details"
-  // table). Once we're confident in the new path, this can drop.
-  try {
-    const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
-    const inviter = await db.query.users.findFirst({
-      where: eq(schema.users.id, invite.invitedById),
-    });
-    if (inviter?.email) {
-      await sendInviteAcceptedEmail({
-        to: inviter.email,
-        supervisorName: inviter.name ?? inviter.email,
-        superviseeName: user.name ?? user.email,
-        superviseeEmail: user.email,
-        rosterUrl: `${APP_URL}/dashboard/roster/${user.id}`,
-      });
-    }
-  } catch (err) {
-    console.error("[email] invite-accepted notification failed:", err);
   }
 
   try {

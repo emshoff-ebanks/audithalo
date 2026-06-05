@@ -11,16 +11,12 @@ import {
   Clock,
   TrendingUp,
   ArrowRight,
-  Undo2,
 } from "lucide-react";
 import type { Gap, RuleSeverity } from "@/lib/rules/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  attestAction,
-  undoAttestationAction,
-} from "@/app/actions/attestations";
+import { attestAction } from "@/app/actions/attestations";
 
 type GapRendererProps = {
   gap: Gap;
@@ -202,10 +198,10 @@ function RecurringBehaviorGap({
   return (
     <GapShell gap={gap}>
       <Button asChild size="sm" variant="outline">
-        <a href={`/dashboard/roster/${superviseeId}#log-session`}>
+        <Link href={`/dashboard/roster/${superviseeId}#log-session`}>
           {action.actionLabel}
           <ArrowRight className="h-3.5 w-3.5" />
-        </a>
+        </Link>
       </Button>
     </GapShell>
   );
@@ -218,9 +214,11 @@ function DataCorrectionGap({
   if (gap.action.kind !== "data_correction") return null;
   const action = gap.action;
   const idsParam = action.targetSessionIds.join(",");
-  const linkHref = `/dashboard/roster/${superviseeId}#session-log${
-    idsParam ? `?flagged=${encodeURIComponent(idsParam)}` : ""
-  }`;
+  // URL convention: query before fragment. The destination page reads
+  // ?flagged from searchParams; the fragment scrolls to the session log.
+  const linkHref = idsParam
+    ? `/dashboard/roster/${superviseeId}?flagged=${encodeURIComponent(idsParam)}#session-log`
+    : `/dashboard/roster/${superviseeId}#session-log`;
   return (
     <GapShell gap={gap}>
       <div className="flex flex-col items-stretch gap-1.5">
@@ -279,45 +277,5 @@ function TimeWarningGap({ gap }: GapRendererProps) {
           : `${daysRemaining} days remaining`}
       </div>
     </GapShell>
-  );
-}
-
-/**
- * Supervisor-only "undo attestation" button — surfaced as a small caret next
- * to each typed-attestation field elsewhere on the page. Kept here so the
- * server action and form pattern stay co-located with the renderer.
- */
-export function UndoAttestationButton({
-  assignmentId,
-  checkId,
-  superviseeId,
-}: {
-  assignmentId: string;
-  checkId: string;
-  superviseeId: string;
-}) {
-  const [pending, startTransition] = useTransition();
-  void superviseeId;
-  return (
-    <Button
-      type="button"
-      size="sm"
-      variant="ghost"
-      disabled={pending}
-      onClick={() =>
-        startTransition(async () => {
-          await undoAttestationAction({ assignmentId, checkId });
-        })
-      }
-    >
-      {pending ? (
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-      ) : (
-        <>
-          <Undo2 className="h-3.5 w-3.5" />
-          Undo
-        </>
-      )}
-    </Button>
   );
 }

@@ -383,12 +383,14 @@ const supervisionRatioPerPracticeBlock: CheckFn = (ctx, _rule, check) => {
         severity: check.severity,
         message: `${uncoveredBlocks} block(s) of ${block} practice hours lack the required ${indReq} hr individual OR ${grpReq} hr group supervision.`,
         detail: { uncoveredBlocks },
-        action: dataAccumulationAction({
-          logged: 0,
-          required: uncoveredBlocks,
-          unit: "uncovered blocks",
-          helpText:
-            "Each block needs the required supervision hours. Continue logging supervision; the ratio recovers as you catch up.",
+        // Action is "log more supervision" — there's no offending session to
+        // point at and no progress-toward-N to show, so recurring_behavior is
+        // the natural fit. The previous data_accumulation with logged:0
+        // rendered an inverted progress bar.
+        action: recurringBehaviorAction({
+          actionLabel: "Log supervision",
+          targetSessionType: "any_supervision",
+          helpText: `${uncoveredBlocks} block${uncoveredBlocks !== 1 ? "s" : ""} of ${block} practice hours need ${indReq} hr individual OR ${grpReq} hr group supervision each. The ratio recovers as you catch up.`,
         }),
       },
     ];

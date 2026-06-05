@@ -28,11 +28,7 @@ export function EvidenceExplainer() {
           </div>
         </div>
         <Button asChild variant="outline" size="sm" className="sm:shrink-0">
-          <Link
-            href="https://audithalo.com/evidence-packages"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <Link href="https://audithalo.com/evidence-packages">
             Learn more <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </Button>

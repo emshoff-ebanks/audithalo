@@ -83,15 +83,19 @@ export function NotificationsBell({ initialNotifications }: Props) {
 
   function handleMarkAll() {
     startTransition(async () => {
-      await markAllReadAction();
-      setItems([]);
+      const result = await markAllReadAction();
+      // Only flush local state when the server confirms — otherwise the bell
+      // shows "all caught up" while the DB still has unread rows.
+      if (result.ok) setItems([]);
     });
   }
 
   function handleClick(id: string) {
     startTransition(async () => {
-      await markNotificationReadAction({ id });
-      setItems((prev) => prev.filter((n) => n.id !== id));
+      const result = await markNotificationReadAction({ id });
+      if (result.ok) {
+        setItems((prev) => prev.filter((n) => n.id !== id));
+      }
     });
   }
 

@@ -10,10 +10,7 @@ import { db, schema } from "@/lib/db";
 import type { SessionSignature } from "@/lib/db/schema";
 import { decideNextSignature } from "@/lib/signatures";
 import { generateEvidencePackage } from "@/lib/evidence";
-import {
-  sendCountersignatureNeededEmail,
-  sendEvidenceSealedEmail,
-} from "@/lib/email";
+import { sendCountersignatureNeededEmail } from "@/lib/email";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { createNotification } from "@/lib/notifications";
 
@@ -142,9 +139,8 @@ export async function signSessionAction(
   }
 
   // If the session is now fully sealed, notify both signers with a closing
-  // confirmation that includes the evidence-package download URL and a public
-  // verify URL suitable for forwarding to state boards. Email failure must
-  // NEVER block the action — wrapped in try/catch.
+  // confirmation including the evidence-package download URL. Notification
+  // failure must NEVER block the action — wrapped in try/catch.
   if (fullySigned) {
     try {
       const pkg = await db.query.evidencePackages.findFirst({
@@ -155,7 +151,6 @@ export async function signSessionAction(
       });
       const superviseeName = supervisee?.name ?? supervisee?.email ?? "supervisee";
       if (pkg) {
-        // Bell notification for every signer.
         for (const sig of rows[0].signatures) {
           try {
             await createNotification({
@@ -172,28 +167,9 @@ export async function signSessionAction(
             console.error("[notifications] evidence_sealed failed:", err);
           }
         }
-        // Legacy direct-email path keeps the richer template until we've
-        // proven the new notification email side-effect at parity.
-        for (const sig of rows[0].signatures) {
-          const signerUser = await db.query.users.findFirst({
-            where: eq(schema.users.id, sig.signerId),
-          });
-          if (signerUser?.email) {
-            await sendEvidenceSealedEmail({
-              to: signerUser.email,
-              recipientName: signerUser.name ?? signerUser.email,
-              superviseeName,
-              sessionDate: sessionEvent.date.toISOString().slice(0, 10),
-              sessionType: sessionEvent.sessionType ?? "individual",
-              durationHours: sessionEvent.durationHours,
-              packageId: pkg.id,
-              documentHash: pkg.documentHash,
-            });
-          }
-        }
       }
     } catch (err) {
-      console.error("[email] evidence-sealed notification failed:", err);
+      console.error("[notifications] evidence-sealed lookup failed:", err);
     }
   }
 

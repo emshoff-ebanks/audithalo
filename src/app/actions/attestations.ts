@@ -8,16 +8,6 @@ import { canSupervise, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 
-/**
- * Known attestable checks map to typed columns on supervisee_rule_assignments.
- * Everything else lands in the `attestations` jsonb bag.
- */
-const KNOWN_SIGNAL_COLUMNS = new Set([
-  "supervisionContractFiledAt",
-  "supervisorTrainingCompletedAt",
-  "permitExpirationWindow",
-]);
-
 const attestSchema = z.object({
   assignmentId: z.string().uuid(),
   checkId: z.string().min(1),
@@ -218,8 +208,8 @@ export async function undoAttestationAction(input: {
       { attestedAt: string; attestedBy: string; value: Record<string, unknown> }
     >;
     if (bag[parsed.data.checkId]) {
-      void bag[parsed.data.checkId];
       const { [parsed.data.checkId]: _removed, ...rest } = bag;
+      void _removed;
       const finalBag = Object.keys(rest).length === 0 ? null : rest;
       await db
         .update(schema.superviseeRuleAssignments)
@@ -246,7 +236,3 @@ export async function undoAttestationAction(input: {
   revalidatePath("/dashboard");
   return { ok: true };
 }
-
-// known-check signals are surfaced for the UI in case it needs to render
-// per-shape help; keep exported so the renderer can guard on them.
-export const KNOWN_ATTESTATION_CHECKS = KNOWN_SIGNAL_COLUMNS;
