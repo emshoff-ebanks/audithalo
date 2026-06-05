@@ -77,6 +77,10 @@ export const users = pgTable("users", {
   totpBackupCodes: jsonb("totp_backup_codes").$type<string[]>(),
   /** Per-kind notification preferences. NULL means fall back to NOTIFICATION_DEFAULTS. */
   notificationPrefs: jsonb("notification_prefs").$type<NotificationPrefs>(),
+  /** When true, the daily cron auto-bumps any of this supervisor's assignments
+   *  whose ruleId is older than the latest available version (and still sends
+   *  a rule_changed notification as a heads-up). Default false. */
+  autoApplyRuleUpdates: boolean("auto_apply_rule_updates").notNull().default(false),
 });
 
 /** Discriminated set of notification kinds — keep in sync with notifications kinds in src/lib/notifications.ts */
@@ -312,6 +316,12 @@ export const superviseeRuleAssignments = pgTable(
     ),
     /** Future-extensible per-check attestation bag. NULL = empty. */
     attestations: jsonb("attestations").$type<Record<string, AttestationEntry>>(),
+    /** Set when the supervisor dismisses a rule-update prompt for this
+     *  assignment. Cron skips rule_changed notifications for 30 days
+     *  afterward to avoid badgering. */
+    ruleChangeSnoozedAt: timestamp("rule_change_snoozed_at", {
+      withTimezone: true,
+    }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
