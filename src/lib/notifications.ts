@@ -120,6 +120,22 @@ export async function countUnread(userId: string): Promise<number> {
 
 type EmailTemplate = { subject: string; html: string; text: string };
 
+/**
+ * Escape HTML special characters in user-supplied strings before interpolating
+ * them into an email body. Defensive: payload values come from the actor's
+ * account name / email / typed values, which are trusted-ish but not
+ * adversarial-proof. Belt-and-suspenders for cases where a name like
+ * "<script>alert(1)</script>" makes it through somewhere upstream.
+ */
+function esc(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function shell(opts: { heading: string; body: string; ctaHref?: string; ctaLabel?: string; kind: NotificationKind }) {
   const cta = opts.ctaHref && opts.ctaLabel
     ? `<p style="margin: 32px 0;">
@@ -143,7 +159,11 @@ function renderEmail(
   payload: Record<string, unknown>,
   recipientName: string | null
 ): EmailTemplate {
-  const greeting = recipientName ? `Hi ${recipientName},` : "Hi,";
+  // recipientName comes from the users table and is interpolated raw into
+  // the greeting both in HTML (escaped) and plaintext (unchanged).
+  const safeRecipient = recipientName ? esc(recipientName) : null;
+  const greetingHtml = safeRecipient ? `Hi ${safeRecipient},` : "Hi,";
+  const greetingText = recipientName ? `Hi ${recipientName},` : "Hi,";
   switch (kind) {
     case "invite_accepted": {
       const supervisee = String(payload.superviseeName ?? "your supervisee");
@@ -151,13 +171,13 @@ function renderEmail(
       return {
         subject: `${supervisee} accepted your AuditHalo invite`,
         html: shell({
-          heading: `${supervisee} is on your roster.`,
-          body: `<p>${greeting} ${supervisee} accepted your invitation. They now show up on your roster — assign their state rule so hour tracking begins.</p>`,
+          heading: `${esc(supervisee)} is on your roster.`,
+          body: `<p>${greetingHtml} ${esc(supervisee)} accepted your invitation. They now show up on your roster — assign their state rule so hour tracking begins.</p>`,
           ctaHref: url,
           ctaLabel: "Open roster",
           kind,
         }),
-        text: `${greeting} ${supervisee} accepted your AuditHalo invitation. Open your roster: ${url}`,
+        text: `${greetingText} ${supervisee} accepted your AuditHalo invitation. Open your roster: ${url}`,
       };
     }
     case "signature_needed": {
@@ -167,12 +187,12 @@ function renderEmail(
         subject: "A supervision session needs your signature",
         html: shell({
           heading: "Signature needed",
-          body: `<p>${greeting} a supervision session is awaiting your signature.</p>`,
+          body: `<p>${greetingHtml} a supervision session is awaiting your signature.</p>`,
           ctaHref: url,
           ctaLabel: "Open session",
           kind,
         }),
-        text: `${greeting} a supervision session needs your signature. ${url}`,
+        text: `${greetingText} a supervision session needs your signature. ${url}`,
       };
     }
     case "rule_changed": {
@@ -183,12 +203,12 @@ function renderEmail(
         subject: `Your supervision rule version changed to ${newRule}`,
         html: shell({
           heading: "Your state rule version changed",
-          body: `<p>${greeting} your supervision is now tracked against <strong>${newRule}</strong> (previously ${oldRule}). Your evidence packages remain valid.</p>`,
+          body: `<p>${greetingHtml} your supervision is now tracked against <strong>${esc(newRule)}</strong> (previously ${esc(oldRule)}). Your evidence packages remain valid.</p>`,
           ctaHref: url,
           ctaLabel: "Open dashboard",
           kind,
         }),
-        text: `${greeting} your supervision rule changed from ${oldRule} to ${newRule}. ${url}`,
+        text: `${greetingText} your supervision rule changed from ${oldRule} to ${newRule}. ${url}`,
       };
     }
     case "evidence_sealed": {
@@ -198,12 +218,12 @@ function renderEmail(
         subject: "Evidence package sealed",
         html: shell({
           heading: "Evidence package sealed.",
-          body: `<p>${greeting} a supervision session has been sealed into an audit-ready evidence package. The PDF is now downloadable.</p>`,
+          body: `<p>${greetingHtml} a supervision session has been sealed into an audit-ready evidence package. The PDF is now downloadable.</p>`,
           ctaHref: url,
           ctaLabel: "Download PDF",
           kind,
         }),
-        text: `${greeting} an evidence package was sealed. Download: ${url}`,
+        text: `${greetingText} an evidence package was sealed. Download: ${url}`,
       };
     }
     case "supervisor_rule_not_set": {
@@ -213,12 +233,12 @@ function renderEmail(
         subject: `${supervisee} is missing a state rule`,
         html: shell({
           heading: "A supervisee is missing a state rule.",
-          body: `<p>${greeting} ${supervisee} accepted your invite, but their state rule hasn't been assigned yet. Hour tracking and at-risk flags only start once a rule is assigned.</p>`,
+          body: `<p>${greetingHtml} ${esc(supervisee)} accepted your invite, but their state rule hasn't been assigned yet. Hour tracking and at-risk flags only start once a rule is assigned.</p>`,
           ctaHref: url,
           ctaLabel: "Assign rule",
           kind,
         }),
-        text: `${greeting} ${supervisee} needs a state rule assigned. ${url}`,
+        text: `${greetingText} ${supervisee} needs a state rule assigned. ${url}`,
       };
     }
     case "attestation_overdue": {
@@ -229,12 +249,12 @@ function renderEmail(
         subject: "Overdue compliance attestation",
         html: shell({
           heading: "A blocker-severity gap is over 7 days old.",
-          body: `<p>${greeting} ${supervisee} has had the <strong>${checkId}</strong> blocker open for more than a week. Resolve it before the next evaluation.</p>`,
+          body: `<p>${greetingHtml} ${esc(supervisee)} has had the <strong>${esc(checkId)}</strong> blocker open for more than a week. Resolve it before the next evaluation.</p>`,
           ctaHref: url,
           ctaLabel: "Open roster",
           kind,
         }),
-        text: `${greeting} ${supervisee} has an overdue ${checkId} gap. ${url}`,
+        text: `${greetingText} ${supervisee} has an overdue ${checkId} gap. ${url}`,
       };
     }
   }

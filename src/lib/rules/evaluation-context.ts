@@ -40,6 +40,7 @@ export function resolveEvaluation(
     startedAt: assignment.obligationStartedAt.toISOString(),
     supervisionContractFiledAt:
       assignment.supervisionContractFiledAt?.toISOString(),
+    permitExpiresAt: assignment.permitExpiresAt?.toISOString(),
     sessions: events.map((e) =>
       e.kind === "practice"
         ? {

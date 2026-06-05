@@ -132,6 +132,11 @@ export const evaluationContextSchema = z.object({
   startedAt: z.string(),
   /** When the supervision contract was filed with the board (NC requires before any hour counts). */
   supervisionContractFiledAt: z.string().optional(),
+  /** Attested permit expiry — when set, permit_expiration_window uses this
+   *  directly instead of inferring from startedAt + max_months. Useful for
+   *  CA APCC where the BBS issues a permit with an explicit expiry date that
+   *  may not align with the obligation-start + max-months math. */
+  permitExpiresAt: z.string().optional(),
   /** Hour log to date, oldest first. */
   sessions: z.array(sessionEventSchema),
   /** Evaluation moment ("now") — overridable for testing. Defaults to current time. */

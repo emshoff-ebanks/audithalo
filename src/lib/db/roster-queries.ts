@@ -53,6 +53,7 @@ export type RawEntry = {
   ruleId: string | null;
   obligationStartedAt: Date | null;
   supervisionContractFiledAt: Date | null;
+  permitExpiresAt: Date | null;
   rawEvents: SessionEventRecord[];
 };
 
@@ -65,6 +66,7 @@ export type RosterRow = {
   ruleId: string | null;
   obligationStartedAt: Date | null;
   supervisionContractFiledAt: Date | null;
+  permitExpiresAt: Date | null;
   evaluation: EvaluationResult | null;
   pendingSignatureCount: number;
 };
@@ -93,6 +95,7 @@ export function computeRosterCompliance(entries: RawEntry[]): RosterRow[] {
         ruleId: entry.ruleId,
         obligationStartedAt: entry.obligationStartedAt,
         supervisionContractFiledAt: entry.supervisionContractFiledAt,
+        permitExpiresAt: entry.permitExpiresAt,
         evaluation: null,
         pendingSignatureCount,
       };
@@ -110,6 +113,7 @@ export function computeRosterCompliance(entries: RawEntry[]): RosterRow[] {
         ruleId: entry.ruleId,
         obligationStartedAt: entry.obligationStartedAt,
         supervisionContractFiledAt: entry.supervisionContractFiledAt,
+        permitExpiresAt: entry.permitExpiresAt,
         evaluation: null,
         pendingSignatureCount,
       };
@@ -157,6 +161,7 @@ export function computeRosterCompliance(entries: RawEntry[]): RosterRow[] {
       startedAt: entry.obligationStartedAt.toISOString(),
       supervisionContractFiledAt:
         entry.supervisionContractFiledAt?.toISOString(),
+      permitExpiresAt: entry.permitExpiresAt?.toISOString(),
       sessions,
     };
 
@@ -171,6 +176,7 @@ export function computeRosterCompliance(entries: RawEntry[]): RosterRow[] {
       ruleId: entry.ruleId,
       obligationStartedAt: entry.obligationStartedAt,
       supervisionContractFiledAt: entry.supervisionContractFiledAt,
+      permitExpiresAt: entry.permitExpiresAt,
       evaluation,
       pendingSignatureCount,
     };
@@ -259,6 +265,7 @@ export async function getOrgRosterWithCompliance(
       obligationStartedAt: assignment?.obligationStartedAt ?? null,
       supervisionContractFiledAt:
         assignment?.supervisionContractFiledAt ?? null,
+      permitExpiresAt: assignment?.permitExpiresAt ?? null,
       rawEvents: (eventsByUser.get(row.userId) ?? []) as SessionEventRecord[],
     };
   });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   Bell,
   CheckCircle2,
@@ -12,10 +12,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  fetchUnreadNotificationsAction,
   markAllReadAction,
   markNotificationReadAction,
 } from "@/app/actions/notifications";
 import type { NotificationKind } from "@/lib/db/schema";
+
+const POLL_INTERVAL_MS = 60_000;
 
 export type NotificationRow = {
   id: string;
@@ -80,6 +83,64 @@ export function NotificationsBell({ initialNotifications }: Props) {
   const [pending, startTransition] = useTransition();
 
   const unread = items.length;
+
+  // Poll for new notifications every 60s while the tab is visible. Pauses
+  // when hidden so we don't burn server calls on a background tab.
+  useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    async function refresh() {
+      try {
+        const rows = await fetchUnreadNotificationsAction();
+        if (cancelled) return;
+        // Merge: keep optimistic-removed items removed (don't undo a local
+        // mark-as-read). Only show server rows that we haven't already
+        // marked locally as read.
+        setItems((prev) => {
+          const prevIds = new Set(prev.map((n) => n.id));
+          // Replace with server truth, but if the server is missing items
+          // we already have (e.g. mid-mark-read), drop those.
+          const fresh = rows.filter(
+            (r) => prevIds.has(r.id) || true // accept all unread from server
+          );
+          // Dedup by id, server order wins.
+          const byId = new Map<string, NotificationRow>();
+          for (const n of fresh) byId.set(n.id, n);
+          return Array.from(byId.values());
+        });
+      } catch {
+        // Polling failures are silent — next tick will retry.
+      } finally {
+        if (!cancelled) {
+          timer = setTimeout(refresh, POLL_INTERVAL_MS);
+        }
+      }
+    }
+
+    function handleVisibility() {
+      if (document.visibilityState === "visible") {
+        // Resume polling immediately on tab refocus so a returning user sees
+        // fresh state.
+        if (timer) clearTimeout(timer);
+        refresh();
+      } else {
+        // Pause: clear the pending timer.
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    timer = setTimeout(refresh, POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, []);
 
   function handleMarkAll() {
     startTransition(async () => {

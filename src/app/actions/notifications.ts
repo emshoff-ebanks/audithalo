@@ -9,11 +9,43 @@ import type {
   NotificationKind,
   NotificationPrefs,
 } from "@/lib/db/schema";
-import { NOTIFICATION_DEFAULTS } from "@/lib/notifications";
+import {
+  listUnreadNotifications,
+  NOTIFICATION_DEFAULTS,
+} from "@/lib/notifications";
 
 export type NotificationActionResult =
   | { ok: true }
   | { ok: false; error: string };
+
+/**
+ * Used by the bell's 60-second polling loop to refresh the unread list
+ * without reloading the page. Best-effort: returns an empty list when the
+ * user isn't authenticated or the query throws.
+ */
+export async function fetchUnreadNotificationsAction(): Promise<
+  Array<{
+    id: string;
+    kind: NotificationKind;
+    payload: Record<string, unknown>;
+    createdAt: string;
+  }>
+> {
+  const session = await auth();
+  if (!session?.user) return [];
+  try {
+    const rows = await listUnreadNotifications(session.user.id);
+    return rows.map((n) => ({
+      id: n.id,
+      kind: n.kind,
+      payload: n.payload as Record<string, unknown>,
+      createdAt: n.createdAt.toISOString(),
+    }));
+  } catch (err) {
+    console.error("[actions] fetchUnreadNotificationsAction:", err);
+    return [];
+  }
+}
 
 const KIND_VALUES = [
   "invite_accepted",

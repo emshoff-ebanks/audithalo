@@ -540,28 +540,55 @@ const durationWindow: CheckFn = (ctx, _rule, check) => {
   return gaps;
 };
 
-/** Permit/registration expiration check: blocker when past max_months,
- *  warning when within warning_window_days of expiry. The check overrides
- *  the YAML-declared severity dynamically based on state. */
+/** Permit/registration expiration check: blocker when past expiry, warning
+ *  when within warning_window_days of expiry. Severity is overridden
+ *  dynamically based on state.
+ *
+ *  Preference order for the expiry date:
+ *    1. ctx.permitExpiresAt — the attested expiry from the
+ *       supervisee_rule_assignments.permit_expires_at column. Used when the
+ *       supervisor has actually filed the permit dates (most accurate).
+ *    2. startedAt + max_months — fallback for unattested assignments. Less
+ *       accurate but at least flags long-running obligations.
+ */
 const permitExpirationWindow: CheckFn = (ctx, _rule, check) => {
   const maxMonths = check.params.max_months as number;
   const warningWindowDays =
     (check.params.warning_window_days as number) ?? 90;
 
-  const start = Date.parse(ctx.startedAt);
   const now = ctx.asOf ? Date.parse(ctx.asOf) : Date.now();
-  const monthsElapsed = (now - start) / (1000 * 60 * 60 * 24 * 30.44);
-  const monthsRemaining = maxMonths - monthsElapsed;
-  const daysRemaining = monthsRemaining * 30.44;
+  const start = Date.parse(ctx.startedAt);
 
-  if (monthsElapsed > maxMonths) {
-    const overdueDays = Math.round((monthsElapsed - maxMonths) * 30.44);
+  let expiresAt: number;
+  let detailExpiresFrom: "attested" | "inferred";
+  if (ctx.permitExpiresAt) {
+    expiresAt = Date.parse(ctx.permitExpiresAt);
+    detailExpiresFrom = "attested";
+  } else {
+    // 30.44 = average days per month; consistent with prior behavior.
+    expiresAt = start + maxMonths * 30.44 * 24 * 60 * 60 * 1000;
+    detailExpiresFrom = "inferred";
+  }
+
+  const msRemaining = expiresAt - now;
+  const daysRemaining = msRemaining / (1000 * 60 * 60 * 24);
+
+  if (msRemaining < 0) {
+    const overdueDays = Math.round(-daysRemaining);
     return [
       {
         code: check.id,
-        severity: "blocker", // override: past expiry is always blocker
-        message: `Permit / registration expired ${(monthsElapsed - maxMonths).toFixed(1)} months ago. Non-renewable permits cannot be extended — the supervisee must re-apply.`,
-        detail: { monthsElapsed, maxMonths },
+        severity: "blocker",
+        message:
+          detailExpiresFrom === "attested"
+            ? `Permit / registration expired ${overdueDays} days ago (attested expiry ${ctx.permitExpiresAt!.slice(0, 10)}). Non-renewable permits cannot be extended — the supervisee must re-apply.`
+            : `Permit / registration expired ~${Math.round(-daysRemaining / 30.44 * 10) / 10} months ago. Non-renewable permits cannot be extended — the supervisee must re-apply.`,
+        detail: {
+          overdueDays,
+          maxMonths,
+          expiresFrom: detailExpiresFrom,
+          expiresAt: new Date(expiresAt).toISOString(),
+        },
         action: timeWarningAction({
           daysRemaining: -overdueDays,
           isOverdue: true,
@@ -573,9 +600,17 @@ const permitExpirationWindow: CheckFn = (ctx, _rule, check) => {
     return [
       {
         code: check.id,
-        severity: "warning", // override: in window is always warning
-        message: `Permit / registration expires in ${Math.round(daysRemaining)} days. Plan the final supervision sessions accordingly.`,
-        detail: { daysRemaining: Math.round(daysRemaining), maxMonths },
+        severity: "warning",
+        message:
+          detailExpiresFrom === "attested"
+            ? `Permit / registration expires in ${Math.round(daysRemaining)} days (attested expiry ${ctx.permitExpiresAt!.slice(0, 10)}). Plan the final supervision sessions accordingly.`
+            : `Permit / registration expires in ${Math.round(daysRemaining)} days. Plan the final supervision sessions accordingly.`,
+        detail: {
+          daysRemaining: Math.round(daysRemaining),
+          maxMonths,
+          expiresFrom: detailExpiresFrom,
+          expiresAt: new Date(expiresAt).toISOString(),
+        },
         action: timeWarningAction({
           daysRemaining: Math.round(daysRemaining),
           isOverdue: false,
