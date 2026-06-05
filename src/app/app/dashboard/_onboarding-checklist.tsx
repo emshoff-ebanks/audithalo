@@ -5,16 +5,20 @@ import Link from "next/link";
 import { CheckCircle2, Circle, ArrowRight, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  computeOnboardingSteps,
-  type OnboardingInputs,
-} from "@/lib/onboarding";
 import { requestEmailVerificationAction } from "@/app/actions/account";
 
+/**
+ * Props are intentionally plain primitives — booleans the parent computed
+ * server-side. The earlier shape passed Date objects and the full RosterRow[]
+ * (with Gap unions and inner Date columns) across the server/client boundary,
+ * which inflated the RSC payload and risked subtle serialization edge cases
+ * during streaming on certain mobile browsers.
+ */
 type Props = {
-  emailVerifiedAt: Date | null;
-  subscriptionStatus: string | null;
-  roster: OnboardingInputs["roster"];
+  emailDone: boolean;
+  trialDone: boolean;
+  rosterDone: boolean;
+  rulesDone: boolean;
 };
 
 type LinkStep = {
@@ -65,17 +69,20 @@ const STEPS: [StepDef, StepDef, StepDef, StepDef] = [
 ];
 
 export function OnboardingChecklist({
-  emailVerifiedAt,
-  subscriptionStatus,
-  roster,
+  emailDone,
+  trialDone,
+  rosterDone,
+  rulesDone,
 }: Props) {
   const [pending, startTransition] = useTransition();
 
-  const { stepDone, allDone } = computeOnboardingSteps({
-    emailVerifiedAt,
-    subscriptionStatus,
-    roster,
-  });
+  const stepDone: [boolean, boolean, boolean, boolean] = [
+    emailDone,
+    trialDone,
+    rosterDone,
+    rulesDone,
+  ];
+  const allDone = stepDone.every(Boolean);
 
   if (allDone) return null;
 

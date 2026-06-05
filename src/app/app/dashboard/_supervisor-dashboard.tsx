@@ -8,6 +8,7 @@ import { db, schema } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { computeOnboardingSteps } from "@/lib/onboarding";
 import { OnboardingChecklist } from "./_onboarding-checklist";
 import { BillingBanner } from "./_billing-banner";
 import { EvidenceExplainer } from "./_evidence-explainer";
@@ -100,11 +101,24 @@ export async function SupervisorDashboard({
 
       <div className="mt-8 space-y-8">
         <BillingBanner org={org} />
-        <OnboardingChecklist
-          emailVerifiedAt={emailVerifiedAt}
-          subscriptionStatus={org?.subscriptionStatus ?? null}
-          roster={roster}
-        />
+        {(() => {
+          // Compute onboarding step booleans server-side so we don't have to
+          // ship the full roster (with Date columns and discriminated-union
+          // Gap arrays) across the server/client boundary.
+          const { stepDone } = computeOnboardingSteps({
+            emailVerifiedAt,
+            subscriptionStatus: org?.subscriptionStatus ?? null,
+            roster,
+          });
+          return (
+            <OnboardingChecklist
+              emailDone={stepDone[0]}
+              trialDone={stepDone[1]}
+              rosterDone={stepDone[2]}
+              rulesDone={stepDone[3]}
+            />
+          );
+        })()}
         {hasAnySignedFlow && <EvidenceExplainer />}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {summaryCards.map((card) => {
