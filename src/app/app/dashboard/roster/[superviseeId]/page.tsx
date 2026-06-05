@@ -25,6 +25,10 @@ import { RuleSummaryCard } from "./rule-summary-card";
 import { SessionLog } from "@/components/app/session-log";
 import { GapRenderer } from "./_gap-renderer";
 import { RuleVersionBanner } from "./_rule-version-banner";
+import {
+  CompletedAttestations,
+  type CompletedAttestation,
+} from "./_completed-attestations";
 
 export const metadata = {
   title: "Supervisee — AuditHalo",
@@ -46,6 +50,86 @@ function ProgressBar({ pct, label }: { pct: number; label: string }) {
       </div>
     </div>
   );
+}
+
+/**
+ * Server-side: derive the user-facing list of "completed compliance tasks"
+ * from the assignment row. The typed columns (supervisionContractFiledAt,
+ * supervisorTrainingCompletedAt + hours, permitIssuedAt + permitExpiresAt)
+ * each map to one row when populated. The jsonb attestations bag handles
+ * any future-extensible checks we haven't pinned typed columns for.
+ *
+ * Keep labels and descriptions here so they stay co-located with the
+ * mapping from checkId to typed-column shape in attestAction.
+ */
+type AssignmentRow = NonNullable<
+  Awaited<ReturnType<typeof db.query.superviseeRuleAssignments.findFirst>>
+>;
+function deriveCompletedAttestations(
+  assignment: AssignmentRow
+): CompletedAttestation[] {
+  const out: CompletedAttestation[] = [];
+
+  if (assignment.supervisionContractFiledAt) {
+    out.push({
+      checkId: "pre_registration_required",
+      label: "Supervision contract filed",
+      description:
+        "The supervisor + supervisee contract was filed with the state board on this date. Hours logged before this date do not count.",
+      date: assignment.supervisionContractFiledAt
+        .toISOString()
+        .slice(0, 10),
+    });
+  }
+
+  if (assignment.supervisorTrainingCompletedAt) {
+    out.push({
+      checkId: "supervisor_training_course_required",
+      label: "Supervisor training completed",
+      description:
+        "Date the assigned supervisor completed their state-required supervision training.",
+      date: assignment.supervisorTrainingCompletedAt
+        .toISOString()
+        .slice(0, 10),
+      ...(assignment.supervisorTrainingHoursAttested !== null
+        ? { hours: assignment.supervisorTrainingHoursAttested }
+        : {}),
+    });
+  }
+
+  if (assignment.permitExpiresAt) {
+    out.push({
+      checkId: "permit_expiration_window",
+      label: "Permit dates",
+      description:
+        "Issue and expiration of the supervisee's pre-licensure permit / registration.",
+      date: assignment.permitExpiresAt.toISOString().slice(0, 10),
+      ...(assignment.permitIssuedAt
+        ? {
+            permitIssuedAt: assignment.permitIssuedAt
+              .toISOString()
+              .slice(0, 10),
+          }
+        : { permitIssuedAt: "" }),
+    });
+  }
+
+  // Future-extensible jsonb bag entries.
+  const bag = assignment.attestations ?? {};
+  for (const [checkId, entry] of Object.entries(bag)) {
+    const value = entry.value as { date?: string; hours?: number };
+    if (!value?.date) continue;
+    out.push({
+      checkId,
+      label: checkId
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase()),
+      date: value.date,
+      ...(typeof value.hours === "number" ? { hours: value.hours } : {}),
+    });
+  }
+
+  return out;
 }
 
 export default async function SuperviseeDetailPage({
@@ -114,6 +198,12 @@ export default async function SuperviseeDetailPage({
     label: `${r.jurisdiction} ${r.license_code} v${r.version}`,
     summary: r.summary.split("\n")[0] ?? "",
   }));
+
+  // Read-out for the "Completed compliance tasks" section. Built from the
+  // typed columns on the assignment plus any future-extensible jsonb entries.
+  const completedAttestations: CompletedAttestation[] = assignment
+    ? deriveCompletedAttestations(assignment)
+    : [];
 
   // Phase 6.0 — surface a banner when the assignment is on an older version
   // than the latest available for its (state, license) pair.
@@ -282,6 +372,17 @@ export default async function SuperviseeDetailPage({
               />
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {assignment && (
+        <div className="mt-6">
+          <CompletedAttestations
+            assignmentId={assignment.id}
+            superviseeId={superviseeId}
+            items={completedAttestations}
+            viewerCanSupervise={viewerCanSupervise}
+          />
         </div>
       )}
 
