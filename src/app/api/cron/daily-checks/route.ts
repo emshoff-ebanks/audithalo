@@ -1,11 +1,30 @@
 import { NextResponse } from "next/server";
 import { and, desc, eq, gte, inArray, isNull, lt, or } from "drizzle-orm";
+import * as Sentry from "@sentry/nextjs";
 import { db, schema } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { latestVersionForState, parseRuleId } from "@/lib/rules";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/**
+ * Sentry Cron monitor slug for /api/cron/daily-checks. If this monitor stops
+ * checking in on its expected schedule, Sentry alerts us — catches the case
+ * where the route silently 500s every morning (e.g. CRON_SECRET unset, Neon
+ * outage, a runtime regression in an unrelated commit).
+ *
+ * Schedule mirrors vercel.json: "0 14 * * *" = 14:00 UTC daily (= 9am ET).
+ */
+const CRON_MONITOR_SLUG = "daily-checks";
+const CRON_MONITOR_CONFIG = {
+  schedule: { type: "crontab" as const, value: "0 14 * * *" },
+  // Tolerance windows in minutes. 15min late start = ok; 30 min runtime = ok.
+  // Vercel cron typically fires within ~60s of the scheduled time.
+  checkinMargin: 15,
+  maxRuntime: 30,
+  timezone: "UTC",
+};
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const SEVEN_DAYS_MS = 7 * ONE_DAY_MS;
@@ -30,7 +49,7 @@ const THIRTY_DAYS_MS = 30 * ONE_DAY_MS;
  *   Pass 3 — attestation_overdue: future hook for surfacing blocker-severity
  *            gaps that have been open >7 days. Skipped in v1.
  */
-export async function GET(request: Request) {
+async function handleDailyChecks(request: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret) {
     return NextResponse.json(
@@ -344,3 +363,15 @@ export async function GET(request: Request) {
 
   return NextResponse.json(result);
 }
+
+/**
+ * Public GET handler — wraps the real worker in Sentry.withMonitor so we
+ * get a green tick in the Sentry Crons UI on every successful run and an
+ * alert if a scheduled run is missed entirely or runs over budget.
+ */
+export const GET = (request: Request) =>
+  Sentry.withMonitor(
+    CRON_MONITOR_SLUG,
+    () => handleDailyChecks(request),
+    CRON_MONITOR_CONFIG
+  );

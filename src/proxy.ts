@@ -29,7 +29,9 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // Skip Next internals, static files, and API routes. Anything with a file extension
-  // (favicon.ico, images, fonts) and /api/* resolves directly without host-based routing.
-  matcher: ["/((?!_next/static|_next/image|api|favicon.ico|.*\\..*).*)"],
+  // Skip Next internals, static files, API routes, and the Sentry tunnel
+  // (/monitoring auto-created by withSentryConfig). Anything with a file
+  // extension (favicon.ico, images, fonts) and /api/* resolves directly
+  // without host-based routing.
+  matcher: ["/((?!_next/static|_next/image|api|monitoring|favicon.ico|.*\\..*).*)"],
 };

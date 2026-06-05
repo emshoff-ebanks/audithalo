@@ -22,6 +22,12 @@ export default withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG, // set in Vercel env when ready
   project: process.env.SENTRY_PROJECT, // set in Vercel env when ready
   authToken: process.env.SENTRY_AUTH_TOKEN, // needed for source map upload
+  // Wider client file upload — better stack-trace resolution for chunked builds.
+  widenClientFileUpload: true,
+  // Tunnel route — Sentry events get proxied through /monitoring so ad-blockers
+  // and corporate proxies that block sentry.io don't drop error reports.
+  // proxy.ts excludes this path from host-rewriting via the matcher below.
+  tunnelRoute: "/monitoring",
   // Delete source maps after upload so they're not served publicly
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
