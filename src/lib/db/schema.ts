@@ -17,8 +17,6 @@ import {
 export const userRole = pgEnum("user_role", [
   "supervisee",
   "supervisor",
-  "hr_admin",
-  "executive",
 ]);
 
 export const ruleShape = pgEnum("rule_shape", [
