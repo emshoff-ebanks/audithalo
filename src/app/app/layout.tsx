@@ -5,6 +5,7 @@ import { PostHogIdentify } from "@/components/observability/posthog-identify";
 import { listUnreadNotifications } from "@/lib/notifications";
 import { UserMenu } from "./user-menu";
 import { NotificationsBell, type NotificationRow } from "./_notifications-bell";
+import { SentryUserContext } from "./_sentry-user-context";
 
 export default async function AppLayout({
   children,
@@ -34,11 +35,18 @@ export default async function AppLayout({
   return (
     <div className="flex flex-col flex-1 min-h-screen bg-background">
       {session?.user?.id && session.user.email ? (
-        <PostHogIdentify
-          userId={session.user.id}
-          email={session.user.email}
-          role={session.user.role}
-        />
+        <>
+          <PostHogIdentify
+            userId={session.user.id}
+            email={session.user.email}
+            role={session.user.role}
+          />
+          <SentryUserContext
+            userId={session.user.id}
+            email={session.user.email}
+            role={session.user.role}
+          />
+        </>
       ) : null}
       <header className="border-b border-border bg-card">
         <nav className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between gap-4">
