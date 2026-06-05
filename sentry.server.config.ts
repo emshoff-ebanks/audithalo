@@ -1,6 +1,11 @@
 /**
- * Node.js server-runtime Sentry init. Loaded by instrumentation.ts when
- * NEXT_RUNTIME === "nodejs".
+ * Node.js server-runtime Sentry init. Loaded by src/instrumentation.ts
+ * when NEXT_RUNTIME === "nodejs".
+ *
+ * NOTE: src/instrumentation.ts is the canonical location when the src/
+ * directory layout is in use — Next.js 16 silently ignores
+ * instrumentation.ts at repo root in that case. Sentry.{server,edge}.config
+ * files stay at repo root because Sentry's build plugin expects them there.
  *
  * Following sentry-nextjs-sdk SKILL.md (Apache-2.0):
  *   https://github.com/getsentry/sentry-for-ai/blob/main/skills/sentry-nextjs-sdk/SKILL.md
@@ -8,15 +13,6 @@
 import * as Sentry from "@sentry/nextjs";
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
-
-// TEMPORARY diagnostic — confirms this file is being imported by
-// instrumentation.ts on cold-start. Remove once Sentry is verified.
-console.log(
-  "[sentry-server-config] module load — dsn set:",
-  !!dsn,
-  "node_env:",
-  process.env.NODE_ENV
-);
 
 if (dsn) {
   Sentry.init({
@@ -35,7 +31,5 @@ if (dsn) {
     enableLogs: true,
 
     enabled: process.env.NODE_ENV === "production",
-    debug: true, // TEMPORARY — surface SDK init/send activity in Vercel logs
   });
-  console.log("[sentry-server-config] Sentry.init() called");
 }
