@@ -11,6 +11,7 @@ import { sendInviteAcceptedEmail } from "@/lib/email";
 import { hashToken } from "@/lib/invitations";
 import { signIn } from "@/auth";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
+import { createNotification } from "@/lib/notifications";
 
 const acceptSchema = z.object({
   token: z.string().length(64, "Invalid invitation token."),
@@ -110,8 +111,25 @@ export async function acceptInviteAction(
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/roster");
 
-  // Notify the supervisor who originally sent the invite. Email failure must
-  // NEVER block the action — wrapped in try/catch.
+  // Notify the supervisor who originally sent the invite. The notification
+  // helper writes the row and (if the inviter opted in) sends an email.
+  // Email failure must NEVER block the action — wrapped in try/catch.
+  try {
+    await createNotification({
+      userId: invite.invitedById,
+      kind: "invite_accepted",
+      payload: {
+        superviseeId: user.id,
+        superviseeName: user.name ?? user.email,
+        superviseeEmail: user.email,
+      },
+    });
+  } catch (err) {
+    console.error("[notifications] invite_accepted failed:", err);
+  }
+  // Keep the legacy direct-send too — invite_accepted is on by default, but
+  // the templates differ (legacy email shows a richer "supervisee details"
+  // table). Once we're confident in the new path, this can drop.
   try {
     const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
     const inviter = await db.query.users.findFirst({

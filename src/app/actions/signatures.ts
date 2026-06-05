@@ -15,6 +15,7 @@ import {
   sendEvidenceSealedEmail,
 } from "@/lib/email";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
+import { createNotification } from "@/lib/notifications";
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -154,6 +155,25 @@ export async function signSessionAction(
       });
       const superviseeName = supervisee?.name ?? supervisee?.email ?? "supervisee";
       if (pkg) {
+        // Bell notification for every signer.
+        for (const sig of rows[0].signatures) {
+          try {
+            await createNotification({
+              userId: sig.signerId,
+              kind: "evidence_sealed",
+              payload: {
+                packageId: pkg.id,
+                superviseeName,
+                sessionDate: sessionEvent.date.toISOString().slice(0, 10),
+                sessionType: sessionEvent.sessionType ?? "individual",
+              },
+            });
+          } catch (err) {
+            console.error("[notifications] evidence_sealed failed:", err);
+          }
+        }
+        // Legacy direct-email path keeps the richer template until we've
+        // proven the new notification email side-effect at parity.
         for (const sig of rows[0].signatures) {
           const signerUser = await db.query.users.findFirst({
             where: eq(schema.users.id, sig.signerId),

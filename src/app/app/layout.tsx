@@ -2,7 +2,9 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { AuditHaloWordmark } from "@/components/brand/AuditHaloMark";
 import { PostHogIdentify } from "@/components/observability/posthog-identify";
+import { listUnreadNotifications } from "@/lib/notifications";
 import { UserMenu } from "./user-menu";
+import { NotificationsBell } from "./_notifications-bell";
 
 export default async function AppLayout({
   children,
@@ -10,6 +12,15 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+
+  const initialNotifications = session?.user?.id
+    ? (await listUnreadNotifications(session.user.id)).map((n) => ({
+        id: n.id,
+        kind: n.kind,
+        payload: n.payload as Record<string, unknown>,
+        createdAt: n.createdAt.toISOString(),
+      }))
+    : [];
 
   return (
     <div className="flex flex-col flex-1 min-h-screen bg-background">
@@ -26,10 +37,13 @@ export default async function AppLayout({
             <AuditHaloWordmark />
           </Link>
           {session?.user ? (
-            <UserMenu
-              name={session.user.name ?? session.user.email}
-              role={session.user.role}
-            />
+            <div className="flex items-center gap-2">
+              <NotificationsBell initialNotifications={initialNotifications} />
+              <UserMenu
+                name={session.user.name ?? session.user.email}
+                role={session.user.role}
+              />
+            </div>
           ) : (
             <p className="label-overline">Application</p>
           )}

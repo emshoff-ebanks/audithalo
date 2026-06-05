@@ -16,6 +16,7 @@ import { SupervisorTrainingForm } from "./supervisor-training-form";
 import { SignOutEverywhereButton } from "./sign-out-everywhere-button";
 import { TotpSetupWizard } from "./totp-setup";
 import { TotpDisableForm } from "./totp-disable-form";
+import { NotificationsPrefsForm } from "./notifications-prefs-form";
 
 export const metadata = { title: "Account — AuditHalo" };
 
@@ -128,6 +129,20 @@ export default async function AccountPage() {
           ) : (
             <TotpSetupWizard />
           )}
+        </CardContent>
+      </Card>
+
+      <Card id="notifications">
+        <CardHeader>
+          <CardTitle>Notifications</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-foreground/70 mb-4">
+            Pick which events ping your inbox. The bell icon in the top nav
+            always shows every notification — these toggles only control the
+            email side-effect.
+          </p>
+          <NotificationsPrefsForm initialPrefs={user.notificationPrefs ?? null} />
         </CardContent>
       </Card>
 

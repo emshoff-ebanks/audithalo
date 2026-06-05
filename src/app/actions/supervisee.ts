@@ -13,6 +13,7 @@ import {
   sendSupervisionLoggedEmail,
 } from "@/lib/email";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
+import { createNotification } from "@/lib/notifications";
 
 /**
  * Resolves a stored rule ID (e.g. "nc-lcmhca-v1") into a human-friendly label
@@ -300,6 +301,20 @@ export async function logSessionAction(
   // Notify supervisee if this is a supervision event (practice events don't need signatures).
   // Email failure must NEVER block the underlying action — wrapped in try/catch.
   if (parsed.data.kind === "supervision") {
+    try {
+      await createNotification({
+        userId: parsed.data.superviseeId,
+        kind: "signature_needed",
+        payload: {
+          sessionId: insertedId,
+          sessionDate: parsed.data.date,
+          sessionType: parsed.data.sessionType ?? "individual",
+          durationHours: parsed.data.durationHours,
+        },
+      });
+    } catch (err) {
+      console.error("[notifications] signature_needed failed:", err);
+    }
     try {
       const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
       const [supervisee, supervisor] = await Promise.all([
