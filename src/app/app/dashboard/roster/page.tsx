@@ -83,7 +83,7 @@ export default async function RosterPage({
   ).length;
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
       <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
         <Link href="/dashboard">
           <ArrowLeft />
@@ -94,7 +94,7 @@ export default async function RosterPage({
       <Badge variant="outline" className="mb-3">
         {org?.name ?? "Roster"}
       </Badge>
-      <h1 className="font-display text-4xl font-semibold text-foreground">
+      <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
         Your roster
       </h1>
       <p className="mt-3 text-foreground/70 max-w-2xl">
@@ -123,7 +123,112 @@ export default async function RosterPage({
       <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            {/* Mobile card-per-row (under md) */}
+            <ul className="md:hidden divide-y divide-border">
+              {rosterRows.map((row) => {
+                const pct = row.evaluation?.progress.practiceProgressPct ?? 0;
+                const practiced = row.evaluation?.totals.practiceHours ?? 0;
+                const accent = (() => {
+                  if (row.evaluation?.riskLevel === "red")
+                    return "border-l-[3px] border-l-[color:var(--color-risk-600)] bg-[color:var(--color-risk-50)]/30";
+                  if (row.evaluation?.riskLevel === "yellow")
+                    return "border-l-[3px] border-l-[color:var(--color-warn-500)] bg-[color:var(--color-warn-50)]/30";
+                  return "";
+                })();
+                return (
+                  <li key={row.userId} className={`px-4 py-3 ${accent}`}>
+                    <Link
+                      href={`/dashboard/roster/${row.userId}`}
+                      className="flex items-start justify-between gap-3"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {row.name}
+                        </p>
+                        <p className="mt-0.5 text-xs text-foreground/60 truncate">
+                          {row.state && row.licenseType
+                            ? `${row.state} · ${row.licenseType}`
+                            : row.state ?? row.licenseType ?? "—"}
+                        </p>
+                        {row.evaluation !== null && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[color:var(--color-gold)] transition-all"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="font-mono text-[10px] text-foreground/60 whitespace-nowrap">
+                              {practiced}h
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        {row.evaluation ? (
+                          <Badge variant={riskBadgeVariant(row.evaluation.riskLevel)}>
+                            {row.evaluation.riskLevel === "green" && <Circle className="h-2 w-2 fill-current" />}
+                            {row.evaluation.riskLevel === "yellow" && <AlertTriangle className="h-3 w-3" />}
+                            {row.evaluation.riskLevel === "red" && <AlertOctagon className="h-3 w-3" />}
+                            {riskBadgeLabel(row.evaluation.riskLevel)}
+                          </Badge>
+                        ) : (
+                          <span className="text-foreground/40 italic text-[10px]">
+                            No rule
+                          </span>
+                        )}
+                        {row.pendingSignatureCount > 0 && (
+                          <Badge variant="warning">
+                            {row.pendingSignatureCount} pending
+                          </Badge>
+                        )}
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+              {pendingInvites
+                .filter((i) => !i.acceptedAt)
+                .map((i) => (
+                  <li
+                    key={i.id}
+                    className="px-4 py-3 bg-[color:var(--color-evidence-bg)]/40"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {i.name ?? (
+                            <span className="text-foreground/50 italic">
+                              unnamed
+                            </span>
+                          )}
+                        </p>
+                        <p className="mt-0.5 text-xs text-foreground/60 break-all">
+                          {i.email}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <Badge variant="warning">Pending</Badge>
+                        {viewerCanSupervise && (
+                          <PendingInviteActions
+                            invitationId={i.id}
+                            email={i.email}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              {rosterRows.length === 0 &&
+                pendingInvites.filter((i) => !i.acceptedAt).length === 0 && (
+                  <li className="px-4 py-8 text-center text-foreground/50 text-sm">
+                    No supervisees yet. Use the form below to invite one.
+                  </li>
+                )}
+            </ul>
+
+            {/* Tablet+ table view */}
+            <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm min-w-[640px]">
               <thead className="bg-accent">
                 <tr className="text-left">

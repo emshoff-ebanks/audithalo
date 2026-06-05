@@ -105,19 +105,19 @@ export function NotificationsPrefsForm({
                 aria-checked={enabled}
                 disabled={pending}
                 onClick={() => handleToggle(kind, enabled)}
-                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors mt-1 ${
+                className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors mt-1 ${
                   enabled
                     ? "bg-[color:var(--color-secondary)]"
                     : "bg-muted"
                 } disabled:opacity-60`}
               >
                 <span
-                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                    enabled ? "translate-x-5" : "translate-x-1"
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm ${
+                    enabled ? "translate-x-6" : "translate-x-1"
                   }`}
                 />
                 {pending && (
-                  <Loader2 className="absolute inset-0 m-auto h-3 w-3 animate-spin text-white/80" />
+                  <Loader2 className="absolute inset-0 m-auto h-3.5 w-3.5 animate-spin text-white/80" />
                 )}
               </button>
             </li>

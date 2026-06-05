@@ -34,7 +34,7 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
 
   if (!assignment) {
     return (
-      <div className="mx-auto max-w-6xl px-6 py-12">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
         <Badge variant="outline" className="mb-3">Your account</Badge>
         <h1 className="font-display text-4xl font-semibold text-foreground">
           Welcome, {userName ?? userEmail}
@@ -80,7 +80,7 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
   const supervisionPct = evalResult?.progress.supervisionProgressPct ?? 0;
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
       <Badge variant="outline" className="mb-3">Your account</Badge>
       <h1 className="font-display text-4xl font-semibold text-foreground">
         Welcome, {userName ?? userEmail}

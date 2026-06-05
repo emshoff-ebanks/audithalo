@@ -40,7 +40,7 @@ export default async function AccountPage() {
     : null;
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-12 space-y-8">
+    <div className="mx-auto max-w-2xl px-4 sm:px-6 py-6 sm:py-12 space-y-6 sm:space-y-8">
       <div>
         <p className="label-overline mb-4">Account settings</p>
         <h1 className="font-display text-3xl font-semibold text-foreground">

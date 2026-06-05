@@ -184,7 +184,7 @@ export function NotificationsBell({ initialNotifications }: Props) {
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 top-full mt-2 w-80 z-50 rounded-sm border border-border bg-card shadow-lg"
+          className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] z-50 rounded-sm border border-border bg-card shadow-lg"
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <p className="font-semibold text-sm text-foreground">Notifications</p>

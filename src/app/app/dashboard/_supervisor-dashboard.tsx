@@ -88,7 +88,7 @@ export async function SupervisorDashboard({
   ];
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8 sm:py-12">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
       <Badge variant="outline" className="mb-4">Dashboard</Badge>
       <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground break-words">
         {userName ?? userEmail}
@@ -130,10 +130,10 @@ export async function SupervisorDashboard({
             return (
               <Link key={card.label} href={card.href}>
                 <Card className="hover:bg-accent/40 transition-colors cursor-pointer h-full">
-                  <CardContent className="p-6">
-                    <card.Icon className={`h-5 w-5 mb-3 ${color}`} strokeWidth={1.75} />
-                    <p className={`font-display text-3xl font-bold ${color}`}>{card.value}</p>
-                    <p className="mt-1 text-sm text-foreground/60">{card.label}</p>
+                  <CardContent className="p-4 sm:p-6">
+                    <card.Icon className={`h-5 w-5 mb-2 sm:mb-3 ${color}`} strokeWidth={1.75} />
+                    <p className={`font-display text-2xl sm:text-3xl font-bold ${color}`}>{card.value}</p>
+                    <p className="mt-1 text-xs sm:text-sm text-foreground/60">{card.label}</p>
                   </CardContent>
                 </Card>
               </Link>

@@ -221,7 +221,7 @@ export default async function SuperviseeDetailPage({
   })();
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
       {viewerIsManager && (
         <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
           <Link href="/dashboard/roster">
