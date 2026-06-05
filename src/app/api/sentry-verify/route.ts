@@ -22,6 +22,22 @@ export async function GET(request: Request) {
   if (url.searchParams.get("diag") === "1") {
     const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
     const client = Sentry.getClient();
+    // Try capturing and see what happens. captureException returns the
+    // event id if init ran (or '' / undefined if SDK is uninitialized).
+    let captureReturnedId: string | undefined;
+    try {
+      captureReturnedId = Sentry.captureException(
+        new Error("[sentry-verify] diag-only probe")
+      );
+    } catch (err) {
+      captureReturnedId = `THREW: ${(err as Error).message}`;
+    }
+    let flushed = false;
+    try {
+      flushed = await Sentry.flush(2000);
+    } catch {
+      flushed = false;
+    }
     return NextResponse.json({
       ok: true,
       dsnSet: !!dsn,
@@ -30,10 +46,14 @@ export async function GET(request: Request) {
       dsnHasWhitespace: dsn ? /\s/.test(dsn) : false,
       nodeEnv: process.env.NODE_ENV,
       vercelEnv: process.env.VERCEL_ENV ?? null,
+      nextRuntime: process.env.NEXT_RUNTIME ?? null,
       sentryClientInitialized: !!client,
       sentryClientDsn: client?.getDsn?.()?.host ?? null,
       sentryClientPath: client?.getDsn?.()?.path ?? null,
       sentryClientProjectId: client?.getDsn?.()?.projectId ?? null,
+      captureReturnedId: captureReturnedId ?? null,
+      captureNonEmpty: !!captureReturnedId && captureReturnedId.length > 0,
+      flushed,
     });
   }
 
