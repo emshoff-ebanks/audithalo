@@ -11,6 +11,7 @@ const STATIC_PATHS = [
   "/for-group-practices",
   "/security",
   "/states",
+  "/evidence-packages",
   "/contact",
   "/legal/terms",
   "/legal/privacy",

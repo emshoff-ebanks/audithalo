@@ -143,11 +143,62 @@ export type EvaluationContext = z.infer<typeof evaluationContextSchema>;
 // Evaluation result (what the evaluator returns)
 // ============================================================================
 
+/**
+ * What kind of next-action a gap surfaces to the UI.
+ *
+ *  - attestation        — a one-click "mark this fact as true" (with optional value)
+ *  - recurring_behavior — "log another session"; ongoing supervisor behavior
+ *  - data_correction    — existing data is wrong; point at the offending records
+ *  - data_accumulation  — supervisee just needs more hours; show progress, no CTA
+ *  - time_warning       — time-based; show countdown, no CTA
+ */
+export type GapActionKind =
+  | "attestation"
+  | "recurring_behavior"
+  | "data_correction"
+  | "data_accumulation"
+  | "time_warning";
+
+export type GapAction =
+  | {
+      kind: "attestation";
+      checkId: string;
+      /** Typed column on the assignment row (e.g. supervisionContractFiledAt). */
+      signalField: string;
+      actionLabel: string;
+      helpText?: string;
+      valueShape: "date" | "date_and_hours";
+    }
+  | {
+      kind: "recurring_behavior";
+      actionLabel: string;
+      helpText?: string;
+      targetSessionType: "individual" | "any_supervision";
+    }
+  | {
+      kind: "data_correction";
+      actionLabel: string;
+      helpText?: string;
+      targetSessionIds: string[];
+    }
+  | {
+      kind: "data_accumulation";
+      helpText?: string;
+      progressTowards: { logged: number; required: number; unit: string };
+    }
+  | {
+      kind: "time_warning";
+      helpText?: string;
+      daysRemaining: number;
+      isOverdue: boolean;
+    };
+
 export type Gap = {
   code: string;
   severity: RuleSeverity;
   message: string;
   detail?: Record<string, unknown>;
+  action: GapAction;
 };
 
 export type RiskLevel = "green" | "yellow" | "red";

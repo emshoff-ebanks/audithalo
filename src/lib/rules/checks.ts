@@ -2,10 +2,15 @@
 // evaluation context, the rule, and its own parameters, and returns any gaps
 // it finds. Adding a new state's rule typically reuses these checks with
 // different params; new behavior gets a new check id here.
+//
+// As of Phase 5.2 every gap carries an `action` describing what the UI
+// should let the supervisor do about it (one-click attest, log a session,
+// fix data, show progress, or warn about time). See Gap / GapAction in types.
 
 import type {
   EvaluationContext,
   Gap,
+  GapAction,
   Rule,
   RuleCheck,
   SessionEvent,
@@ -60,6 +65,84 @@ function isoWeekKey(isoDate: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Action factories — make GapAction values without repeating the literal shape
+// at every call site.
+// ---------------------------------------------------------------------------
+
+function attestationAction(input: {
+  checkId: string;
+  signalField: string;
+  actionLabel: string;
+  valueShape: "date" | "date_and_hours";
+  helpText?: string;
+}): GapAction {
+  return {
+    kind: "attestation",
+    checkId: input.checkId,
+    signalField: input.signalField,
+    actionLabel: input.actionLabel,
+    valueShape: input.valueShape,
+    ...(input.helpText !== undefined ? { helpText: input.helpText } : {}),
+  };
+}
+
+function recurringBehaviorAction(input: {
+  actionLabel: string;
+  targetSessionType: "individual" | "any_supervision";
+  helpText?: string;
+}): GapAction {
+  return {
+    kind: "recurring_behavior",
+    actionLabel: input.actionLabel,
+    targetSessionType: input.targetSessionType,
+    ...(input.helpText !== undefined ? { helpText: input.helpText } : {}),
+  };
+}
+
+function dataCorrectionAction(input: {
+  actionLabel: string;
+  targetSessionIds: string[];
+  helpText?: string;
+}): GapAction {
+  return {
+    kind: "data_correction",
+    actionLabel: input.actionLabel,
+    targetSessionIds: input.targetSessionIds,
+    ...(input.helpText !== undefined ? { helpText: input.helpText } : {}),
+  };
+}
+
+function dataAccumulationAction(input: {
+  logged: number;
+  required: number;
+  unit: string;
+  helpText?: string;
+}): GapAction {
+  return {
+    kind: "data_accumulation",
+    progressTowards: {
+      logged: input.logged,
+      required: input.required,
+      unit: input.unit,
+    },
+    ...(input.helpText !== undefined ? { helpText: input.helpText } : {}),
+  };
+}
+
+function timeWarningAction(input: {
+  daysRemaining: number;
+  isOverdue: boolean;
+  helpText?: string;
+}): GapAction {
+  return {
+    kind: "time_warning",
+    daysRemaining: input.daysRemaining,
+    isOverdue: input.isOverdue,
+    ...(input.helpText !== undefined ? { helpText: input.helpText } : {}),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Checks
 // ---------------------------------------------------------------------------
 
@@ -70,6 +153,13 @@ const preRegistrationRequired: CheckFn = (ctx, _rule, check) => {
     signal === "supervisionContractFiledAt"
       ? ctx.supervisionContractFiledAt
       : undefined;
+  const action = attestationAction({
+    checkId: check.id,
+    signalField: signal,
+    actionLabel: "Mark contract as filed",
+    valueShape: "date",
+    helpText: "Pick the date the supervision contract was filed with the board.",
+  });
   if (!filed) {
     return [
       {
@@ -77,6 +167,7 @@ const preRegistrationRequired: CheckFn = (ctx, _rule, check) => {
         severity: check.severity,
         message:
           "Supervision contract has not been filed with the state board. No hours can count until it is filed.",
+        action,
       },
     ];
   }
@@ -93,6 +184,7 @@ const preRegistrationRequired: CheckFn = (ctx, _rule, check) => {
           contractFiledAt: filed,
           firstSessionDate: firstSession.date,
         },
+        action,
       },
     ];
   }
@@ -114,6 +206,12 @@ const supervisorCredentialRequired: CheckFn = (ctx, _rule, check) => {
       severity: check.severity,
       message: `${offenders.length} supervision session(s) lack a supervisor with required credential (${accepted.join(", ")}).`,
       detail: { offendingSessionIds: offenders.map((s) => s.id) },
+      action: dataCorrectionAction({
+        actionLabel: "Review flagged sessions",
+        targetSessionIds: offenders.map((s) => s.id),
+        helpText:
+          "Re-attach the correct supervisor credential to each flagged session, or have the supervisor's credential verified.",
+      }),
     },
   ];
 };
@@ -136,6 +234,13 @@ const individualSupervisionCadence: CheckFn = (ctx, _rule, check) => {
   const gaps: Gap[] = [];
   const asOf = ctx.asOf ? Date.parse(ctx.asOf) : Date.now();
 
+  const action = recurringBehaviorAction({
+    actionLabel: "Log individual supervision",
+    targetSessionType: "individual",
+    helpText:
+      "Schedule and log the next individual supervision session to close this cadence gap.",
+  });
+
   let lastIndividualByDate = Date.parse(practiceStart.date);
   for (const sup of individualSups) {
     const supDate = Date.parse(sup.date);
@@ -149,6 +254,7 @@ const individualSupervisionCadence: CheckFn = (ctx, _rule, check) => {
         severity: check.severity,
         message: `Individual supervision gap of ${Math.round(gap)} days exceeds the ${maxGapDays}-day maximum.`,
         detail: { from: new Date(lastIndividualByDate).toISOString().slice(0, 10), to: sup.date },
+        action,
       });
     }
     lastIndividualByDate = supDate;
@@ -161,6 +267,7 @@ const individualSupervisionCadence: CheckFn = (ctx, _rule, check) => {
       severity: check.severity,
       message: `It has been ${Math.round(tailGap)} days since the last individual supervision; the maximum is ${maxGapDays}.`,
       detail: { lastIndividualAt: new Date(lastIndividualByDate).toISOString().slice(0, 10) },
+      action,
     });
   }
 
@@ -225,6 +332,12 @@ const weeklySupervisionCadence: CheckFn = (ctx, _rule, check) => {
       severity: check.severity,
       message: `${offendingWeeks.length} week(s) exceeded ${threshold} practice hours without ${minInd} hr individual/triadic supervision.`,
       detail: { offendingWeeks: offendingWeeks.slice(0, 10) },
+      action: recurringBehaviorAction({
+        actionLabel: "Log this week's session",
+        targetSessionType: "any_supervision",
+        helpText:
+          "Log the current week's individual or triadic supervision so cadence catches up.",
+      }),
     },
   ];
 };
@@ -270,6 +383,13 @@ const supervisionRatioPerPracticeBlock: CheckFn = (ctx, _rule, check) => {
         severity: check.severity,
         message: `${uncoveredBlocks} block(s) of ${block} practice hours lack the required ${indReq} hr individual OR ${grpReq} hr group supervision.`,
         detail: { uncoveredBlocks },
+        action: dataAccumulationAction({
+          logged: 0,
+          required: uncoveredBlocks,
+          unit: "uncovered blocks",
+          helpText:
+            "Each block needs the required supervision hours. Continue logging supervision; the ratio recovers as you catch up.",
+        }),
       },
     ];
   }
@@ -306,6 +426,13 @@ const individualSupervisionMinimumShare: CheckFn = (ctx, _rule, check) => {
           nonIndividualHours: nonInd,
           fraction: frac,
         },
+        action: dataAccumulationAction({
+          logged: Math.round(frac * 100),
+          required: Math.round(minFrac * 100),
+          unit: "% individual share",
+          helpText:
+            "Log additional individual (1:1) supervision so the share climbs above the minimum.",
+        }),
       },
     ];
   }
@@ -328,6 +455,12 @@ const groupSizeLimit: CheckFn = (ctx, _rule, check) => {
       severity: check.severity,
       message: `${offenders.length} group session(s) exceeded the ${maxAttendees}-attendee maximum.`,
       detail: { offendingSessionIds: offenders.map((s) => s.id) },
+      action: dataCorrectionAction({
+        actionLabel: "Split oversized group sessions",
+        targetSessionIds: offenders.map((s) => s.id),
+        helpText:
+          "Open each flagged session and split into smaller groups or re-log as separate sessions within the attendee cap.",
+      }),
     },
   ];
 };
@@ -345,6 +478,11 @@ const totalPracticeHours: CheckFn = (ctx, _rule, check) => {
       severity: check.severity,
       message: `${total.toFixed(1)} of ${required} required practice hours logged (${((total / required) * 100).toFixed(0)}%).`,
       detail: { logged: total, required },
+      action: dataAccumulationAction({
+        logged: total,
+        required,
+        unit: "practice hours",
+      }),
     },
   ];
 };
@@ -362,6 +500,11 @@ const totalSupervisionHours: CheckFn = (ctx, _rule, check) => {
       severity: check.severity,
       message: `${total.toFixed(1)} of ${required} required supervision hours logged (${((total / required) * 100).toFixed(0)}%).`,
       detail: { logged: total, required },
+      action: dataAccumulationAction({
+        logged: total,
+        required,
+        unit: "supervision hours",
+      }),
     },
   ];
 };
@@ -375,11 +518,18 @@ const durationWindow: CheckFn = (ctx, _rule, check) => {
   const months = (now - start) / (1000 * 60 * 60 * 24 * 30.44);
   const gaps: Gap[] = [];
   if (months > max) {
+    const overdueDays = Math.round((months - max) * 30.44);
     gaps.push({
       code: check.id,
       severity: check.severity,
       message: `Obligation has run ${months.toFixed(1)} months — past the ${max}-month maximum.`,
       detail: { months, max },
+      action: timeWarningAction({
+        daysRemaining: -overdueDays,
+        isOverdue: true,
+        helpText:
+          "The supervision window has closed. Confirm renewal or seal evidence before logging more hours.",
+      }),
     });
   }
   // We don't gap on `months < min` because that's expected during the obligation;
@@ -403,12 +553,17 @@ const permitExpirationWindow: CheckFn = (ctx, _rule, check) => {
   const daysRemaining = monthsRemaining * 30.44;
 
   if (monthsElapsed > maxMonths) {
+    const overdueDays = Math.round((monthsElapsed - maxMonths) * 30.44);
     return [
       {
         code: check.id,
         severity: "blocker", // override: past expiry is always blocker
         message: `Permit / registration expired ${(monthsElapsed - maxMonths).toFixed(1)} months ago. Non-renewable permits cannot be extended — the supervisee must re-apply.`,
         detail: { monthsElapsed, maxMonths },
+        action: timeWarningAction({
+          daysRemaining: -overdueDays,
+          isOverdue: true,
+        }),
       },
     ];
   }
@@ -419,6 +574,10 @@ const permitExpirationWindow: CheckFn = (ctx, _rule, check) => {
         severity: "warning", // override: in window is always warning
         message: `Permit / registration expires in ${Math.round(daysRemaining)} days. Plan the final supervision sessions accordingly.`,
         detail: { daysRemaining: Math.round(daysRemaining), maxMonths },
+        action: timeWarningAction({
+          daysRemaining: Math.round(daysRemaining),
+          isOverdue: false,
+        }),
       },
     ];
   }
@@ -441,6 +600,11 @@ const directClientContactMinimum: CheckFn = (ctx, _rule, check) => {
       severity: check.severity,
       message: `${total.toFixed(1)} of ${required} direct client contact hours logged (${((total / required) * 100).toFixed(0)}%).`,
       detail: { logged: total, required },
+      action: dataAccumulationAction({
+        logged: total,
+        required,
+        unit: "direct contact hours",
+      }),
     },
   ];
 };
@@ -464,6 +628,13 @@ const supervisorTrainingCourseRequired: CheckFn = (ctx, _rule, check) => {
       severity: check.severity,
       message: `${offenders.length} supervision session(s) have a supervisor without ${minHours}+ verified training hours.`,
       detail: { offendingSessionIds: offenders.map((s) => s.id) },
+      action: attestationAction({
+        checkId: check.id,
+        signalField: "supervisorTrainingCompletedAt",
+        actionLabel: "Attest supervisor training complete",
+        valueShape: "date_and_hours",
+        helpText: `Record the completion date and the supervisor's verified training hour count (minimum ${minHours}).`,
+      }),
     },
   ];
 };

@@ -3,7 +3,6 @@ import { redirect, notFound } from "next/navigation";
 import { and, eq, desc } from "drizzle-orm";
 import {
   ArrowLeft,
-  AlertTriangle,
   CheckCircle2,
   Download,
   FileSignature,
@@ -14,7 +13,6 @@ import { db, schema } from "@/lib/db";
 import {
   loadAllRules,
   resolveEvaluation,
-  severityStyles,
   toneClasses,
 } from "@/lib/rules";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +22,7 @@ import { AssignRuleForm } from "./assign-rule-form";
 import { LogSessionForm } from "./log-session-form";
 import { RuleSummaryCard } from "./rule-summary-card";
 import { SessionLog } from "@/components/app/session-log";
+import { GapRenderer } from "./_gap-renderer";
 
 export const metadata = {
   title: "Supervisee — AuditHalo",
@@ -216,22 +215,17 @@ export default async function SuperviseeDetailPage({
               {evalResult && evalResult.gaps.length > 0 && (
                 <div>
                   <p className="label-overline mb-2">Gaps and warnings</p>
-                  <ul className="space-y-2">
-                    {evalResult.gaps.map((g, i) => {
-                      const t = toneClasses(severityStyles(g.severity).tone);
-                      return (
-                        <li
-                          key={i}
-                          className={`flex gap-3 p-3 rounded-sm text-sm border ${t.border} ${t.bg}`}
-                        >
-                          <AlertTriangle
-                            className={`h-4 w-4 mt-0.5 shrink-0 ${t.text}`}
-                          />
-                          <span className="text-foreground/80">{g.message}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  <div className="space-y-2">
+                    {evalResult.gaps.map((g, i) => (
+                      <GapRenderer
+                        key={`${g.code}-${i}`}
+                        gap={g}
+                        assignmentId={assignment!.id}
+                        superviseeId={superviseeId}
+                        viewerCanSupervise={viewerCanSupervise}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
 

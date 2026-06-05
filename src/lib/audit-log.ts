@@ -54,4 +54,7 @@ export const AUDIT_ACTIONS = {
   SESSION_SEALED: "session.sealed",
   // Roles
   MEMBER_ROLE_CHANGED: "member.role_changed",
+  // Attestations (Phase 5.2)
+  ATTESTATION_CREATED: "attestation.created",
+  ATTESTATION_REVOKED: "attestation.revoked",
 } as const;
