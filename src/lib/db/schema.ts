@@ -264,6 +264,15 @@ export const invitations = pgTable("invitations", {
 
 /** Pins a supervisee to a specific rule version. Versioning is statutory — a supervisee
  *  who started under v1 stays under v1 even when v2 ships. */
+/** Per-assignment attestation bag (jsonb) keyed by checkId.
+ *  Reserved for future-extensible attestations whose shape we haven't pinned
+ *  down. Known-check attestations live in their own typed columns above. */
+export type AttestationEntry = {
+  attestedAt: string;
+  attestedBy: string;
+  value: Record<string, unknown>;
+};
+
 export const superviseeRuleAssignments = pgTable(
   "supervisee_rule_assignments",
   {
@@ -282,6 +291,25 @@ export const superviseeRuleAssignments = pgTable(
     supervisionContractFiledAt: timestamp("supervision_contract_filed_at", {
       withTimezone: true,
     }),
+    /** Permit issue date — feeds permit_expiration_window when present. */
+    permitIssuedAt: timestamp("permit_issued_at", {
+      withTimezone: true,
+    }),
+    /** Permit expiry — feeds permit_expiration_window when present. */
+    permitExpiresAt: timestamp("permit_expires_at", {
+      withTimezone: true,
+    }),
+    /** Supervisor training completion date attested by the supervisor. */
+    supervisorTrainingCompletedAt: timestamp(
+      "supervisor_training_completed_at",
+      { withTimezone: true }
+    ),
+    /** Supervisor training hours attested (e.g., CA 16 CCR §1822 = 15). */
+    supervisorTrainingHoursAttested: integer(
+      "supervisor_training_hours_attested"
+    ),
+    /** Future-extensible per-check attestation bag. NULL = empty. */
+    attestations: jsonb("attestations").$type<Record<string, AttestationEntry>>(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
