@@ -12,7 +12,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InviteForm } from "./invite-form";
 import { PendingInviteActions } from "./pending-invite-actions";
-import { FilterBar, parseRosterFilter } from "./_filter-bar";
+import { FilterBar } from "./_filter-bar";
+import { parseRosterFilter } from "./_roster-filter";
 
 export const metadata = {
   title: "Roster — AuditHalo",

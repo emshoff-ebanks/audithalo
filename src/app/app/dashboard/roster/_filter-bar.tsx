@@ -5,29 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
-export type RosterFilter =
-  | "all"
-  | "at-risk"
-  | "pending-signatures"
-  | "on-track";
+import type { RosterFilter } from "./_roster-filter";
 
 const PILLS: { value: Exclude<RosterFilter, "all">; label: string }[] = [
   { value: "at-risk", label: "Need attention" },
   { value: "pending-signatures", label: "Pending signatures" },
   { value: "on-track", label: "On track" },
 ];
-
-export function parseRosterFilter(value: string | undefined): RosterFilter {
-  if (
-    value === "at-risk" ||
-    value === "pending-signatures" ||
-    value === "on-track"
-  ) {
-    return value;
-  }
-  return "all";
-}
 
 export function FilterBar({
   activeFilter,
