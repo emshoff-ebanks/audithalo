@@ -11,6 +11,7 @@ import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import {
+  latestVersionForState,
   loadAllRules,
   resolveEvaluation,
   toneClasses,
@@ -23,6 +24,7 @@ import { LogSessionForm } from "./log-session-form";
 import { RuleSummaryCard } from "./rule-summary-card";
 import { SessionLog } from "@/components/app/session-log";
 import { GapRenderer } from "./_gap-renderer";
+import { RuleVersionBanner } from "./_rule-version-banner";
 
 export const metadata = {
   title: "Supervisee — AuditHalo",
@@ -113,6 +115,21 @@ export default async function SuperviseeDetailPage({
     summary: r.summary.split("\n")[0] ?? "",
   }));
 
+  // Phase 6.0 — surface a banner when the assignment is on an older version
+  // than the latest available for its (state, license) pair.
+  const ruleVersionDrift = (() => {
+    if (!rule || !assignment) return null;
+    const latest = latestVersionForState(rule.jurisdiction, rule.license_code);
+    if (latest === null || latest <= rule.version) return null;
+    const newRuleId =
+      `${rule.jurisdiction}-${rule.license_code}-v${latest}`.toLowerCase();
+    return {
+      currentLabel: `${rule.jurisdiction} ${rule.license_code} v${rule.version}`,
+      newLabel: `${rule.jurisdiction} ${rule.license_code} v${latest}`,
+      newRuleId,
+    };
+  })();
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
       {viewerIsManager && (
@@ -131,6 +148,16 @@ export default async function SuperviseeDetailPage({
         {supervisee.name}
       </h1>
       <p className="mt-2 text-foreground/70">{supervisee.email}</p>
+
+      {ruleVersionDrift && assignment && (
+        <RuleVersionBanner
+          assignmentId={assignment.id}
+          currentLabel={ruleVersionDrift.currentLabel}
+          newRuleId={ruleVersionDrift.newRuleId}
+          newLabel={ruleVersionDrift.newLabel}
+          viewerCanSupervise={viewerCanSupervise}
+        />
+      )}
 
       {!rule ? (
         <Card className="mt-10">

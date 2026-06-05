@@ -17,6 +17,7 @@ import { SignOutEverywhereButton } from "./sign-out-everywhere-button";
 import { TotpSetupWizard } from "./totp-setup";
 import { TotpDisableForm } from "./totp-disable-form";
 import { NotificationsPrefsForm } from "./notifications-prefs-form";
+import { CompliancePrefsForm } from "./compliance-prefs-form";
 
 export const metadata = { title: "Account — AuditHalo" };
 
@@ -196,6 +197,19 @@ export default async function AccountPage() {
                 Manage billing <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {userCanSupervise && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Compliance preferences</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CompliancePrefsForm
+              initialEnabled={user.autoApplyRuleUpdates}
+            />
           </CardContent>
         </Card>
       )}

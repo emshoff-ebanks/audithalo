@@ -7,6 +7,8 @@ export {
   parseSlug,
   getLatestRuleByJurLic,
   listLatestRules,
+  parseRuleId,
+  latestVersionForState,
 } from "./loader";
 export {
   severityStyles,

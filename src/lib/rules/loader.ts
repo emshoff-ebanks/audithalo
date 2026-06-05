@@ -95,6 +95,37 @@ export function getLatestRuleByJurLic(
   return matches.sort((a, b) => b.version - a.version)[0];
 }
 
+/**
+ * Parse a stored ruleId (e.g. "nc-lcmhca-v1") into its components. Returns
+ * null on shapes we don't recognize so callers can fail-safe.
+ *
+ * jurisdiction is the 2-letter state code; license_code allows hyphens
+ * (e.g. "lpc-associate") and the version is the trailing v{N}.
+ */
+export function parseRuleId(
+  ruleId: string
+): { jurisdiction: string; licenseCode: string; version: number } | null {
+  const match = /^([a-z]{2})-(.+)-v(\d+)$/i.exec(ruleId);
+  if (!match) return null;
+  return {
+    jurisdiction: match[1].toUpperCase(),
+    licenseCode: match[2].toUpperCase(),
+    version: parseInt(match[3], 10),
+  };
+}
+
+/**
+ * Returns the latest available rule version number for a (jurisdiction,
+ * license) pair, or null if no rules exist for that pair.
+ */
+export function latestVersionForState(
+  jurisdiction: string,
+  licenseCode: string
+): number | null {
+  const latest = getLatestRuleByJurLic(jurisdiction, licenseCode);
+  return latest?.version ?? null;
+}
+
 /** All distinct (jurisdiction, license_code) pairs currently encoded, each pointing at the latest version. */
 export function listLatestRules(): Rule[] {
   const byKey = new Map<string, Rule>();
