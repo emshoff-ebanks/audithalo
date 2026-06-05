@@ -12,12 +12,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InviteForm } from "./invite-form";
 import { PendingInviteActions } from "./pending-invite-actions";
+import { FilterPill, parseRosterFilter } from "./_filter-pill";
 
 export const metadata = {
   title: "Roster — AuditHalo",
 };
 
-export default async function RosterPage() {
+type SearchParams = Promise<{ filter?: string }>;
+
+export default async function RosterPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/login");
   // Roster + invitations are supervisor-only.
@@ -41,14 +48,28 @@ export default async function RosterPage() {
   });
 
   // Fetch all supervisees with compliance data (3 batch queries)
-  const rosterRows = await getOrgRosterWithCompliance(membership.orgId);
+  const allRosterRows = await getOrgRosterWithCompliance(membership.orgId);
 
   // Fetch pending invitations separately
   const pendingInvites = await db.query.invitations.findMany({
     where: eq(schema.invitations.orgId, membership.orgId),
   });
 
-  const atRiskCount = rosterRows.filter(
+  const filter = parseRosterFilter((await searchParams).filter);
+  const rosterRows = allRosterRows.filter((r) => {
+    if (filter === "all") return true;
+    if (filter === "at-risk") {
+      return (
+        r.evaluation?.riskLevel === "red" ||
+        r.evaluation?.riskLevel === "yellow"
+      );
+    }
+    if (filter === "pending-signatures") return r.pendingSignatureCount > 0;
+    if (filter === "on-track") return r.evaluation?.riskLevel === "green";
+    return true;
+  });
+
+  const atRiskCount = allRosterRows.filter(
     (r) => r.evaluation?.riskLevel === "red" || r.evaluation?.riskLevel === "yellow"
   ).length;
 
@@ -71,6 +92,12 @@ export default async function RosterPage() {
         Every supervisee you invite gets a free AuditHalo account. They join your roster the
         moment they accept the invitation, and you'll see their hour progress here.
       </p>
+
+      {filter !== "all" && (
+        <div className="mt-4">
+          <FilterPill filter={filter} count={rosterRows.length} />
+        </div>
+      )}
 
       {atRiskCount > 0 && (
         <div className="mt-6 flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,12 +48,17 @@ export function InviteForm() {
       </div>
 
       {state && state.ok === false && (
-        <p
+        <div
           role="alert"
-          className="text-sm text-[color:var(--color-risk)] bg-[color:var(--color-risk)]/8 px-3 py-2 rounded-sm"
+          className="text-sm text-[color:var(--color-risk)] bg-[color:var(--color-risk)]/8 px-3 py-2 rounded-sm space-y-2"
         >
-          {state.error}
-        </p>
+          <p>{state.error}</p>
+          {state.cta && (
+            <Button asChild size="sm" variant="outline">
+              <Link href={state.cta.href}>{state.cta.label}</Link>
+            </Button>
+          )}
+        </div>
       )}
 
       {state && state.ok === true && (

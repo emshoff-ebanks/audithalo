@@ -220,8 +220,8 @@ describe("seatCapBlockedReason", () => {
     ).toBeNull();
   });
 
-  it("returns the no-plan message when no subscription", () => {
-    const msg = seatCapBlockedReason(
+  it("returns a no-plan reason pointing at Pricing when no subscription", () => {
+    const reason = seatCapBlockedReason(
       {
         subscriptionStatus: null,
         subscriptionTier: null,
@@ -229,12 +229,14 @@ describe("seatCapBlockedReason", () => {
       },
       0
     );
-    expect(msg).toMatch(/active subscription/i);
-    expect(msg).toMatch(/Billing/);
+    expect(reason).not.toBeNull();
+    expect(reason!.message).toMatch(/active subscription/i);
+    expect(reason!.ctaLabel).toBe("See pricing");
+    expect(reason!.ctaHref).toBe("/pricing");
   });
 
-  it("returns the upgrade message when solo is at cap", () => {
-    const msg = seatCapBlockedReason(
+  it("returns the upgrade reason when solo is at cap", () => {
+    const reason = seatCapBlockedReason(
       {
         subscriptionStatus: "active",
         subscriptionTier: "solo",
@@ -242,12 +244,15 @@ describe("seatCapBlockedReason", () => {
       },
       3
     );
-    expect(msg).toMatch(/Solo plan covers 3 supervisees/);
-    expect(msg).toMatch(/Upgrade to Practice/);
+    expect(reason).not.toBeNull();
+    expect(reason!.message).toMatch(/Solo plan covers 3 supervisees/);
+    expect(reason!.message).toMatch(/Upgrade to Practice/);
+    expect(reason!.ctaLabel).toBe("Upgrade plan");
+    expect(reason!.ctaHref).toBe("/dashboard/billing");
   });
 
   it("blocks one over the cap (4 with solo)", () => {
-    const msg = seatCapBlockedReason(
+    const reason = seatCapBlockedReason(
       {
         subscriptionStatus: "active",
         subscriptionTier: "solo",
@@ -255,14 +260,14 @@ describe("seatCapBlockedReason", () => {
       },
       4
     );
-    expect(msg).not.toBeNull();
+    expect(reason).not.toBeNull();
   });
 
-  it("returns the past_due message when grace expired", () => {
+  it("returns the past_due reason pointing at Billing when grace expired", () => {
     const expiredPeriodEnd = new Date(
       Date.now() - 10 * 24 * 60 * 60 * 1000
     );
-    const msg = seatCapBlockedReason(
+    const reason = seatCapBlockedReason(
       {
         subscriptionStatus: "past_due",
         subscriptionTier: "solo",
@@ -270,8 +275,10 @@ describe("seatCapBlockedReason", () => {
       },
       0
     );
-    expect(msg).toMatch(/overdue/i);
-    expect(msg).toMatch(/Billing/);
+    expect(reason).not.toBeNull();
+    expect(reason!.message).toMatch(/overdue/i);
+    expect(reason!.ctaLabel).toBe("Update billing");
+    expect(reason!.ctaHref).toBe("/dashboard/billing");
   });
 });
 

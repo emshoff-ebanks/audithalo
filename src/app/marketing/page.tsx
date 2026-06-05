@@ -12,9 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = {
-  title: "AuditHalo — Clinical Supervision Tracking Software",
+  title: "AuditHalo — State-board compliance software for mental health supervisors",
   description:
-    "Supervision records your state board will never question. AuditHalo tracks supervised hours, captures e-signed session notes, and generates tamper-evident audit packages for LCMHCA, APCC, LPC-A, RMHCI, and LP-MHC supervisors.",
+    "Track pre-licensed mental health counselor hours, signatures, and state-board requirements — then generate audit-ready evidence packages when your board asks. Built for LCMHCA, APCC, LPC-A, RMHCI, and LP-MHC supervisors.",
 };
 
 const features = [
@@ -57,22 +57,18 @@ export default function MarketingHome() {
           Clinical supervision compliance software
         </Badge>
         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-3xl leading-[1.05]">
-          Supervision records your board will never question.
+          State-board compliance software for mental health supervisors.
         </h1>
         <p className="mt-6 text-lg text-foreground/70 max-w-2xl leading-relaxed">
-          AuditHalo tracks supervised hours against state board rules, captures
-          intent-confirmed e-signatures, and generates tamper-evident audit
-          packages — built for LCMHCA, APCC, LPC-A, RMHCI, and LP-MHC
-          supervisors.
+          Track pre-licensed counselor hours, signatures, and state-board
+          requirements — then generate audit-ready evidence packages when your
+          board asks.
         </p>
         <div className="mt-10 flex flex-wrap items-center gap-3">
           <Button asChild size="lg">
             <a href="https://app.audithalo.com/register">
               Start your supervisor account <ArrowRight />
             </a>
-          </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link href="/demo">Try the demo</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
             <Link href="/for-supervisors">See how it works</Link>

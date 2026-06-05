@@ -2,57 +2,89 @@ import { describe, it, expect } from "vitest";
 import { computeOnboardingSteps } from "@/lib/onboarding";
 
 describe("computeOnboardingSteps", () => {
-  it("returns all-false when no subscription and empty roster", () => {
+  it("returns all-false when nothing done", () => {
     const result = computeOnboardingSteps({
+      emailVerifiedAt: null,
       subscriptionStatus: null,
       roster: [],
     });
-    expect(result.stepDone).toEqual([false, false, false]);
+    expect(result.stepDone).toEqual([false, false, false, false]);
     expect(result.allDone).toBe(false);
   });
 
-  it("marks only step 1 done when trialing with empty roster", () => {
+  it("marks only step 1 (email verification) done", () => {
     const result = computeOnboardingSteps({
+      emailVerifiedAt: new Date(),
+      subscriptionStatus: null,
+      roster: [],
+    });
+    expect(result.stepDone).toEqual([true, false, false, false]);
+    expect(result.allDone).toBe(false);
+  });
+
+  it("marks steps 1+2 done when verified and trialing with empty roster", () => {
+    const result = computeOnboardingSteps({
+      emailVerifiedAt: new Date(),
       subscriptionStatus: "trialing",
       roster: [],
     });
-    expect(result.stepDone).toEqual([true, false, false]);
+    expect(result.stepDone).toEqual([true, true, false, false]);
     expect(result.allDone).toBe(false);
   });
 
-  it("marks steps 1+2 done when active with unassigned supervisee", () => {
+  it("marks steps 1+2+3 done when active with unassigned supervisee", () => {
     const result = computeOnboardingSteps({
+      emailVerifiedAt: new Date(),
       subscriptionStatus: "active",
       roster: [{ evaluation: null }],
     });
-    expect(result.stepDone).toEqual([true, true, false]);
+    expect(result.stepDone).toEqual([true, true, true, false]);
     expect(result.allDone).toBe(false);
   });
 
-  it("marks all three steps done when active with a fully evaluated roster", () => {
+  it("marks all four steps done when fully complete", () => {
     const result = computeOnboardingSteps({
+      emailVerifiedAt: new Date(),
       subscriptionStatus: "active",
-      roster: [{ evaluation: { riskLevel: "green" } }, { evaluation: { riskLevel: "yellow" } }],
+      roster: [
+        { evaluation: { riskLevel: "green" } },
+        { evaluation: { riskLevel: "yellow" } },
+      ],
     });
-    expect(result.stepDone).toEqual([true, true, true]);
+    expect(result.stepDone).toEqual([true, true, true, true]);
     expect(result.allDone).toBe(true);
   });
 
-  it("does not mark step 3 done if any supervisee has no rule assignment", () => {
+  it("does not mark step 4 done if any supervisee has no rule assignment", () => {
     const result = computeOnboardingSteps({
+      emailVerifiedAt: new Date(),
       subscriptionStatus: "past_due",
-      roster: [{ evaluation: { riskLevel: "green" } }, { evaluation: null }],
+      roster: [
+        { evaluation: { riskLevel: "green" } },
+        { evaluation: null },
+      ],
     });
-    expect(result.stepDone).toEqual([true, true, false]);
+    expect(result.stepDone).toEqual([true, true, true, false]);
     expect(result.allDone).toBe(false);
   });
 
-  it("does not count a canceled subscription as active (step 1 false)", () => {
+  it("does not count a canceled subscription as active (step 2 false)", () => {
     const result = computeOnboardingSteps({
+      emailVerifiedAt: new Date(),
       subscriptionStatus: "canceled",
       roster: [{ evaluation: { riskLevel: "green" } }],
     });
-    expect(result.stepDone).toEqual([false, true, true]);
+    expect(result.stepDone).toEqual([true, false, true, true]);
+    expect(result.allDone).toBe(false);
+  });
+
+  it("unverified email blocks step 1 even when everything else is done", () => {
+    const result = computeOnboardingSteps({
+      emailVerifiedAt: null,
+      subscriptionStatus: "active",
+      roster: [{ evaluation: { riskLevel: "green" } }],
+    });
+    expect(result.stepDone).toEqual([false, true, true, true]);
     expect(result.allDone).toBe(false);
   });
 });

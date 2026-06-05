@@ -28,7 +28,11 @@ const invitationIdSchema = z.object({
 
 export type InviteResult =
   | { ok: true; sentTo: string }
-  | { ok: false; error: string };
+  | {
+      ok: false;
+      error: string;
+      cta?: { label: string; href: string };
+    };
 
 export type InvitationActionResult = { ok: true } | { ok: false; error: string };
 
@@ -138,7 +142,11 @@ export async function inviteSuperviseeAction(
   const used = members.length + openInvites.length;
   const blocked = seatCapBlockedReason(org, used);
   if (blocked) {
-    return { ok: false, error: blocked };
+    return {
+      ok: false,
+      error: blocked.message,
+      cta: { label: blocked.ctaLabel, href: blocked.ctaHref },
+    };
   }
 
   const token = generateInvitationToken();

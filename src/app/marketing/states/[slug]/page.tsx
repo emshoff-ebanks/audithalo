@@ -34,10 +34,15 @@ export async function generateMetadata({ params }: { params: Params }) {
   const rule = getLatestRuleByJurLic(parsed.jurisdiction, parsed.licenseCode);
   if (!rule) return { title: "Not found — AuditHalo" };
   const pc = rule.page_content;
-  const description = pc?.intro
-    ? pc.intro.replace(/\s+/g, " ").trim().slice(0, 160)
-    : rule.summary.replace(/\s+/g, " ").trim().slice(0, 160);
-  const title = `${rule.jurisdiction} ${rule.license_code} Supervision Hours & Requirements — AuditHalo`;
+  const intro = pc?.intro
+    ? pc.intro.replace(/\s+/g, " ").trim()
+    : rule.summary.replace(/\s+/g, " ").trim();
+  const description =
+    `Mental health supervision requirements for ${rule.jurisdiction} ${rule.license_code}. ${intro}`.slice(
+      0,
+      160
+    );
+  const title = `${rule.jurisdiction} ${rule.license_code} mental health supervision hours & requirements — AuditHalo`;
   const url = `https://audithalo.com/states/${slug}`;
 
   return {

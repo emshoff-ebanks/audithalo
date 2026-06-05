@@ -1,9 +1,12 @@
+import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NameForm } from "./name-form";
 import { PasswordForm } from "./password-form";
@@ -28,6 +31,11 @@ export default async function AccountPage() {
   const verified = !!user.emailVerifiedAt;
   const membership = await getCurrentMembership(session.user.id);
   const userCanSupervise = !!membership && canSupervise(membership.role);
+  const org = userCanSupervise && membership
+    ? await db.query.organizations.findFirst({
+        where: eq(schema.organizations.id, membership.orgId),
+      })
+    : null;
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-12 space-y-8">
@@ -134,6 +142,48 @@ export default async function AccountPage() {
           <SignOutEverywhereButton />
         </CardContent>
       </Card>
+
+      {userCanSupervise && org && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between gap-3">
+              <span>Billing & subscription</span>
+              {org.subscriptionStatus === "active" ? (
+                <Badge variant="success">Active</Badge>
+              ) : org.subscriptionStatus === "trialing" ? (
+                <Badge variant="success">Trialing</Badge>
+              ) : org.subscriptionStatus === "past_due" ? (
+                <Badge variant="outline-warn">Past due</Badge>
+              ) : (
+                <Badge variant="outline">No plan</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <dl className="text-sm space-y-1.5">
+              <div className="flex justify-between gap-3">
+                <dt className="text-foreground/60">Plan</dt>
+                <dd className="font-medium text-foreground capitalize">
+                  {org.subscriptionTier ?? "—"}
+                </dd>
+              </div>
+              {org.subscriptionPeriodEnd && (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-foreground/60">Renews / ends</dt>
+                  <dd className="font-mono text-xs text-foreground">
+                    {org.subscriptionPeriodEnd.toISOString().slice(0, 10)}
+                  </dd>
+                </div>
+              )}
+            </dl>
+            <Button asChild variant="outline">
+              <Link href="/dashboard/billing">
+                Manage billing <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {userCanSupervise && (
         <Card>

@@ -153,7 +153,7 @@ describe("aiNoteQuotaBlockedReason", () => {
   });
 
   it("blocks trialing solo at exactly 10 used", () => {
-    const msg = aiNoteQuotaBlockedReason(
+    const reason = aiNoteQuotaBlockedReason(
       {
         subscriptionStatus: "trialing",
         subscriptionTier: "solo",
@@ -161,14 +161,16 @@ describe("aiNoteQuotaBlockedReason", () => {
       },
       10
     );
-    expect(msg).not.toBeNull();
-    expect(msg).toMatch(/10 of 10/);
-    expect(msg).toMatch(/Solo plan/);
-    expect(msg).toMatch(/Upgrade to Practice/);
+    expect(reason).not.toBeNull();
+    expect(reason!.message).toMatch(/10 of 10/);
+    expect(reason!.message).toMatch(/Solo plan/);
+    expect(reason!.message).toMatch(/Upgrade to Practice/);
+    expect(reason!.ctaLabel).toBe("Upgrade plan");
+    expect(reason!.ctaHref).toBe("/dashboard/billing");
   });
 
   it("blocks trialing solo at 11 used (over cap)", () => {
-    const msg = aiNoteQuotaBlockedReason(
+    const reason = aiNoteQuotaBlockedReason(
       {
         subscriptionStatus: "trialing",
         subscriptionTier: "solo",
@@ -176,8 +178,8 @@ describe("aiNoteQuotaBlockedReason", () => {
       },
       11
     );
-    expect(msg).not.toBeNull();
-    expect(msg).toMatch(/11 of 10/);
+    expect(reason).not.toBeNull();
+    expect(reason!.message).toMatch(/11 of 10/);
   });
 
   it("returns null for active practice at 0 used", () => {
@@ -219,8 +221,8 @@ describe("aiNoteQuotaBlockedReason", () => {
     ).toBeNull();
   });
 
-  it("blocks canceled subscription with no-plan message", () => {
-    const msg = aiNoteQuotaBlockedReason(
+  it("blocks canceled subscription with no-plan reason pointing at Pricing", () => {
+    const reason = aiNoteQuotaBlockedReason(
       {
         subscriptionStatus: "canceled",
         subscriptionTier: "solo",
@@ -228,13 +230,14 @@ describe("aiNoteQuotaBlockedReason", () => {
       },
       0
     );
-    expect(msg).not.toBeNull();
-    expect(msg).toMatch(/active subscription/i);
-    expect(msg).toMatch(/Billing/);
+    expect(reason).not.toBeNull();
+    expect(reason!.message).toMatch(/active subscription/i);
+    expect(reason!.ctaLabel).toBe("See pricing");
+    expect(reason!.ctaHref).toBe("/pricing");
   });
 
   it("blocks org with null tier", () => {
-    const msg = aiNoteQuotaBlockedReason(
+    const reason = aiNoteQuotaBlockedReason(
       {
         subscriptionStatus: "active",
         subscriptionTier: null,
@@ -242,12 +245,12 @@ describe("aiNoteQuotaBlockedReason", () => {
       },
       0
     );
-    expect(msg).not.toBeNull();
-    expect(msg).toMatch(/active subscription/i);
+    expect(reason).not.toBeNull();
+    expect(reason!.message).toMatch(/active subscription/i);
   });
 
-  it("blocks org with null status with no-plan message", () => {
-    const msg = aiNoteQuotaBlockedReason(
+  it("blocks org with null status with no-plan reason", () => {
+    const reason = aiNoteQuotaBlockedReason(
       {
         subscriptionStatus: null,
         subscriptionTier: null,
@@ -255,15 +258,15 @@ describe("aiNoteQuotaBlockedReason", () => {
       },
       0
     );
-    expect(msg).not.toBeNull();
-    expect(msg).toMatch(/active subscription/i);
+    expect(reason).not.toBeNull();
+    expect(reason!.message).toMatch(/active subscription/i);
   });
 
-  it("returns the past_due message when grace expired", () => {
+  it("returns the past_due reason pointing at Billing when grace expired", () => {
     const expiredPeriodEnd = new Date(
       Date.now() - 10 * 24 * 60 * 60 * 1000
     );
-    const msg = aiNoteQuotaBlockedReason(
+    const reason = aiNoteQuotaBlockedReason(
       {
         subscriptionStatus: "past_due",
         subscriptionTier: "solo",
@@ -271,8 +274,10 @@ describe("aiNoteQuotaBlockedReason", () => {
       },
       0
     );
-    expect(msg).toMatch(/overdue/i);
-    expect(msg).toMatch(/Billing/);
+    expect(reason).not.toBeNull();
+    expect(reason!.message).toMatch(/overdue/i);
+    expect(reason!.ctaLabel).toBe("Update billing");
+    expect(reason!.ctaHref).toBe("/dashboard/billing");
   });
 
   it("returns null for past_due solo within grace at 5 used", () => {

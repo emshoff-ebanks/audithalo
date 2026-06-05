@@ -17,9 +17,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = {
-  title: "For Licensed Supervisors — AuditHalo Clinical Supervision Software",
+  title: "For licensed supervisors — AuditHalo mental health supervision software",
   description:
-    "Track every supervised hour against your state board's requirements, capture intent-confirmed e-signatures, and generate board-ready audit packages. Built for LCMHCS, LPC-S, and qualified supervisors in NC, CA, TX, FL, and NY.",
+    "The supervision compliance system for mental health professionals. Track every supervised hour against your state board's requirements, capture intent-confirmed e-signatures, and generate board-ready audit packages. Built for LCMHCS, LPC-S, and qualified mental health supervisors in NC, CA, TX, FL, and NY.",
 };
 
 const steps = [
@@ -177,13 +177,14 @@ export default function ForSupervisorsPage() {
           <Badge variant="outline">LCMHCS · LPC-S · LCSW-S · Qualified Supervisor</Badge>
         </div>
         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-4xl leading-[1.05]">
-          Everything your board requires. Nothing your supervisees have to chase.
+          The supervision compliance system for mental health professionals.
         </h1>
         <p className="mt-6 text-lg text-foreground/70 max-w-2xl leading-relaxed">
-          AuditHalo is the supervision compliance platform for licensed clinical
-          supervisors in NC, CA, TX, FL, and NY. Track every supervised hour
-          against the live state rule, capture intent-confirmed e-signatures, and
-          generate tamper-evident audit packages — without a single spreadsheet.
+          AuditHalo is the supervision compliance platform for licensed
+          mental health supervisors in NC, CA, TX, FL, and NY. Track every
+          supervised hour against the live state rule, capture intent-confirmed
+          e-signatures, and generate tamper-evident audit packages — without a
+          single spreadsheet.
         </p>
         <div className="mt-10 flex flex-wrap items-center gap-3">
           <Button asChild size="lg">

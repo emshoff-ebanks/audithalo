@@ -15,9 +15,15 @@ type Props = {
   userId: string;
   userName: string | null;
   userEmail: string;
+  emailVerifiedAt: Date | null;
 };
 
-export async function SupervisorDashboard({ userId, userName, userEmail }: Props) {
+export async function SupervisorDashboard({
+  userId,
+  userName,
+  userEmail,
+  emailVerifiedAt,
+}: Props) {
   const membership = await getCurrentMembership(userId);
   if (!membership) redirect("/login");
 
@@ -36,10 +42,38 @@ export async function SupervisorDashboard({ userId, userName, userEmail }: Props
   const compliantCount = roster.filter((r) => r.evaluation?.riskLevel === "green").length;
 
   const summaryCards = [
-    { label: "Supervisees", value: totalSupervisees, Icon: Users, warn: false, good: false },
-    { label: "Need attention", value: atRiskCount, Icon: AlertTriangle, warn: atRiskCount > 0, good: atRiskCount === 0 },
-    { label: "Pending signatures", value: totalPendingSigs, Icon: FileSignature, warn: totalPendingSigs > 0, good: false },
-    { label: "On track", value: compliantCount, Icon: CheckCircle2, warn: false, good: true },
+    {
+      label: "Supervisees",
+      value: totalSupervisees,
+      Icon: Users,
+      warn: false,
+      good: false,
+      href: "/dashboard/roster",
+    },
+    {
+      label: "Need attention",
+      value: atRiskCount,
+      Icon: AlertTriangle,
+      warn: atRiskCount > 0,
+      good: atRiskCount === 0,
+      href: "/dashboard/roster?filter=at-risk",
+    },
+    {
+      label: "Pending signatures",
+      value: totalPendingSigs,
+      Icon: FileSignature,
+      warn: totalPendingSigs > 0,
+      good: false,
+      href: "/dashboard/roster?filter=pending-signatures",
+    },
+    {
+      label: "On track",
+      value: compliantCount,
+      Icon: CheckCircle2,
+      warn: false,
+      good: true,
+      href: "/dashboard/roster?filter=on-track",
+    },
   ];
 
   return (
@@ -57,6 +91,7 @@ export async function SupervisorDashboard({ userId, userName, userEmail }: Props
       <div className="mt-8 space-y-8">
         <BillingBanner org={org} />
         <OnboardingChecklist
+          emailVerifiedAt={emailVerifiedAt}
           subscriptionStatus={org?.subscriptionStatus ?? null}
           roster={roster}
         />
@@ -68,7 +103,7 @@ export async function SupervisorDashboard({ userId, userName, userEmail }: Props
               ? "text-[color:var(--color-success)]"
               : "text-foreground";
             return (
-              <Link key={card.label} href="/dashboard/roster">
+              <Link key={card.label} href={card.href}>
                 <Card className="hover:bg-accent/40 transition-colors cursor-pointer h-full">
                   <CardContent className="p-6">
                     <card.Icon className={`h-5 w-5 mb-3 ${color}`} strokeWidth={1.75} />
@@ -88,9 +123,6 @@ export async function SupervisorDashboard({ userId, userName, userEmail }: Props
             <Users className="h-4 w-4" />
             Manage roster <ArrowRight className="h-4 w-4" />
           </Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href="/dashboard/billing">Billing</Link>
         </Button>
         {org && org.createdById === userId && (
           <Button asChild variant="outline">

@@ -81,7 +81,7 @@ export async function generateSessionNoteAction(
 
   const blockedReason = aiNoteQuotaBlockedReason(org, usedThisMonth);
   if (blockedReason) {
-    return { ok: false, error: blockedReason };
+    return { ok: false, error: blockedReason.message };
   }
 
   let result;

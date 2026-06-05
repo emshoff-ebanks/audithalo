@@ -49,7 +49,14 @@ export function seatCap(
   return 0;
 }
 
-/** Returns a user-facing block message if the org cannot invite another supervisee, or null if allowed. */
+/** Structured block reason — message + a single follow-up CTA. null = allowed. */
+export type BlockedReason = {
+  message: string;
+  ctaLabel: string;
+  ctaHref: string;
+} | null;
+
+/** Returns a structured reason the org cannot invite another supervisee, or null if allowed. */
 export function seatCapBlockedReason(
   org: Pick<
     Org,
@@ -57,17 +64,32 @@ export function seatCapBlockedReason(
   >,
   used: number,
   now: Date = new Date()
-): string | null {
+): BlockedReason {
   const cap = seatCap(org, now);
   if (cap === null) return null;
   if (cap === 0) {
     if (isPastDueGracePeriodExpired(org, now)) {
-      return "Your payment is overdue. Update your payment method to restore access — visit Billing.";
+      return {
+        message:
+          "Your payment is overdue. Update your payment method to restore access.",
+        ctaLabel: "Update billing",
+        ctaHref: "/dashboard/billing",
+      };
     }
-    return "You need an active subscription to invite supervisees. Visit Billing to start your 14-day trial.";
+    // No subscription at all — point at public Pricing so the supervisor sees
+    // tiers before committing to the in-app billing flow.
+    return {
+      message: "You need an active subscription to invite supervisees.",
+      ctaLabel: "See pricing",
+      ctaHref: "/pricing",
+    };
   }
   if (used >= cap) {
-    return `Your Solo plan covers ${cap} supervisees. Upgrade to Practice for unlimited seats — visit Billing.`;
+    return {
+      message: `Your Solo plan covers ${cap} supervisees. Upgrade to Practice for unlimited seats.`,
+      ctaLabel: "Upgrade plan",
+      ctaHref: "/dashboard/billing",
+    };
   }
   return null;
 }
@@ -91,7 +113,7 @@ export function aiNoteQuotaPerMonth(
   return 0;
 }
 
-/** User-facing message when AI quota would be exceeded. null = allowed. */
+/** Structured reason AI quota would be exceeded. null = allowed. */
 export function aiNoteQuotaBlockedReason(
   org: Pick<
     Org,
@@ -99,17 +121,30 @@ export function aiNoteQuotaBlockedReason(
   >,
   usedThisMonth: number,
   now: Date = new Date()
-): string | null {
+): BlockedReason {
   const quota = aiNoteQuotaPerMonth(org, now);
   if (quota === null) return null; // unlimited
   if (quota === 0) {
     if (isPastDueGracePeriodExpired(org, now)) {
-      return "Your payment is overdue. Update your payment method to restore AI session notes — visit Billing.";
+      return {
+        message:
+          "Your payment is overdue. Update your payment method to restore AI session notes.",
+        ctaLabel: "Update billing",
+        ctaHref: "/dashboard/billing",
+      };
     }
-    return "AI session notes require an active subscription. Visit Billing to start your trial.";
+    return {
+      message: "AI session notes require an active subscription.",
+      ctaLabel: "See pricing",
+      ctaHref: "/pricing",
+    };
   }
   if (usedThisMonth >= quota) {
-    return `You've used ${usedThisMonth} of ${quota} AI session notes this month on the Solo plan. Upgrade to Practice for unlimited transcripts.`;
+    return {
+      message: `You've used ${usedThisMonth} of ${quota} AI session notes this month on the Solo plan. Upgrade to Practice for unlimited transcripts.`,
+      ctaLabel: "Upgrade plan",
+      ctaHref: "/dashboard/billing",
+    };
   }
   return null;
 }

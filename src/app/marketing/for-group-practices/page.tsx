@@ -15,9 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = {
-  title: "Supervision Tracking for Group Practices — AuditHalo",
+  title: "Mental health supervision tracking for group practices — AuditHalo",
   description:
-    "Manage supervision compliance across multiple supervisors and associates in one dashboard. AuditHalo gives group practice owners and HR directors a real-time compliance view — so no supervisee falls through the cracks.",
+    "Manage mental health supervision compliance across multiple supervisors and pre-licensed counselors in one dashboard. AuditHalo gives group practice owners and HR directors a real-time compliance view — so no supervisee falls through the cracks.",
 };
 
 const wins = [
@@ -77,8 +77,8 @@ export default function ForGroupPracticesPage() {
           <Badge variant="outline">Practice owners · HR directors · Clinical directors</Badge>
         </div>
         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-4xl leading-[1.05]">
-          Supervision compliance across your whole practice — not just the
-          supervisees who remembered to log their hours.
+          Mental health supervision compliance across your whole practice — not
+          just the supervisees who remembered to log their hours.
         </h1>
         <p className="mt-6 text-lg text-foreground/70 max-w-2xl leading-relaxed">
           Group practices don't have a supervision problem — they have a

@@ -3,6 +3,7 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { and, eq, isNull } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { AuthError } from "next-auth";
 import { syncPracticeSeatQuantity } from "@/lib/billing/seats";
 import { db, schema } from "@/lib/db";
@@ -103,6 +104,11 @@ export async function acceptInviteAction(
     // Don't block the user accept on a Stripe sync failure — we'll reconcile later.
     console.error(`[accept-invite] seat sync failed for org ${invite.orgId}:`, err);
   }
+
+  // Bust the inviting supervisor's cached dashboard + roster so the new
+  // supervisee appears on their next navigation (no stale 404 / empty row).
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/roster");
 
   // Notify the supervisor who originally sent the invite. Email failure must
   // NEVER block the action — wrapped in try/catch.

@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata = {
-  title: "Pricing — AuditHalo",
+  title: "Pricing — AuditHalo mental health supervision software",
   description:
-    "Per-supervisee pricing. Supervisor and HR admin seats included. 14-day free trial. No credit card required.",
+    "Per-supervisee pricing for mental health supervision compliance. Supervisor and admin seats included. 14-day free trial. No credit card required.",
 };
 
 type Tier = {

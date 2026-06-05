@@ -23,9 +23,9 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://audithalo.com"),
-  title: "AuditHalo — Clinical Supervision Compliance",
+  title: "AuditHalo — Mental health supervision compliance",
   description:
-    "Track supervision hours, generate AI-assisted session notes, capture e-signatures with intent, and publish tamper-evident audit packages for state licensing boards.",
+    "Track pre-licensed mental health counselor supervision hours, generate AI-assisted session notes, capture e-signatures with intent, and publish tamper-evident audit packages for state licensing boards.",
 };
 
 export default function RootLayout({
