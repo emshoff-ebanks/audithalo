@@ -1,19 +1,29 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * TEMPORARY — Sentry SDK verification endpoint. Throws on GET so we can
- * confirm the SDK captures server-side exceptions in production. Remove
- * after we've seen the event land in Sentry Issues.
+ * TEMPORARY — Sentry SDK verification endpoint. Two capture paths so we
+ * can pinpoint where the wire is broken if the event doesn't land:
+ *   (a) explicit Sentry.captureException + flush (independent of any hook)
+ *   (b) throw, which onRequestError should re-capture via the canonical
+ *       SKILL.md pattern in instrumentation.ts
  *
- * Returns its own message on POST so the route is harmless if anyone hits
- * it by mistake.
+ * Removed after we've seen the event land in Sentry Issues.
  */
 export async function GET() {
-  // Throw outside the Response so Next.js's onRequestError fires.
-  throw new Error("[sentry-verify] intentional verification throw — safe to ignore");
+  const err = new Error(
+    "[sentry-verify] intentional verification throw — safe to ignore"
+  );
+  // (a) Explicit capture: doesn't depend on onRequestError firing.
+  Sentry.captureException(err);
+  // Flush before the serverless function terminates. Up to 2s wait.
+  await Sentry.flush(2000);
+  // (b) Throw so onRequestError can also capture it (we'll see two events
+  // in Sentry if both paths work).
+  throw err;
 }
 
 export async function POST() {
