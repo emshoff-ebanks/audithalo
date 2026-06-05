@@ -77,7 +77,22 @@ export const users = pgTable("users", {
   /** Backup codes (hashed). Single-use codes for recovery if the user loses their device.
    *  Each entry is a SHA-256 hash of a single backup code. NULL if 2FA not enabled. */
   totpBackupCodes: jsonb("totp_backup_codes").$type<string[]>(),
+  /** Per-kind notification preferences. NULL means fall back to NOTIFICATION_DEFAULTS. */
+  notificationPrefs: jsonb("notification_prefs").$type<NotificationPrefs>(),
 });
+
+/** Discriminated set of notification kinds — keep in sync with notifications kinds in src/lib/notifications.ts */
+export type NotificationKind =
+  | "invite_accepted"
+  | "signature_needed"
+  | "rule_changed"
+  | "evidence_sealed"
+  | "supervisor_rule_not_set"
+  | "attestation_overdue";
+
+export type NotificationPrefs = {
+  email: Partial<Record<NotificationKind, boolean>>;
+};
 
 // ===========================================================================
 // Auth tokens — single-use, hashed tokens for password reset + email verification.
@@ -177,17 +192,6 @@ export const evidencePackages = pgTable("evidence_packages", {
   documentHash: text("document_hash").notNull(),
   /** The full canonical document — the audit artifact. */
   documentContent: jsonb("document_content").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
-
-export const notifications = pgTable("notifications", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  type: text("type").notNull(),
-  message: text("message").notNull(),
-  read: boolean("read").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -403,4 +407,29 @@ export const auditLogEntries = pgTable("audit_log_entries", {
   /** IP address of the actor at the time of the action. */
   ipAddress: text("ip_address"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ===========================================================================
+// Notifications (Phase 5.3): in-app bell + opt-in emails.
+// One row per pending or already-shown notification. Kind drives template
+// selection and bell icon; payload shape depends on kind.
+// ===========================================================================
+
+export const notifications = pgTable("notifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** Notification kind — discriminator that drives template + UI icon. */
+  kind: text("kind").$type<NotificationKind>().notNull(),
+  /** Kind-specific payload. Shape lives in notification-kinds.ts. */
+  payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  /** Set when the user reads it (clicks the bell or visits the link). */
+  readAt: timestamp("read_at", { withTimezone: true }),
+  /** Set when the email side-effect succeeded. Used so daily cron dedup
+   *  knows not to email a stale notification a second time. */
+  emailedAt: timestamp("emailed_at", { withTimezone: true }),
 });
