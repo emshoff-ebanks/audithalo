@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { computeOnboardingSteps } from "@/lib/onboarding";
+import { loadAllRules } from "@/lib/rules";
 import { OnboardingChecklist } from "./_onboarding-checklist";
 import { BillingBanner } from "./_billing-banner";
 import { EvidenceExplainer } from "./_evidence-explainer";
@@ -30,12 +31,31 @@ export async function SupervisorDashboard({
   const membership = await getCurrentMembership(userId);
   if (!membership) redirect("/login");
 
-  const [roster, org] = await Promise.all([
+  const [roster, org, viewer] = await Promise.all([
     getOrgRosterWithCompliance(membership.orgId),
     db.query.organizations.findFirst({
       where: eq(schema.organizations.id, membership.orgId),
     }),
+    db.query.users.findFirst({
+      where: eq(schema.users.id, userId),
+      columns: { supervisorTrainingHours: true },
+    }),
   ]);
+
+  // Determine whether any supervisee is on a rule that requires the
+  // supervisor to have a training course on file (e.g. CA APCC 16 CCR §1822).
+  // When true, the onboarding checklist adds a 5th step.
+  const ruleCatalog = loadAllRules();
+  const rosterHasTrainingRequiredRule = roster.some((r) => {
+    if (!r.ruleId) return false;
+    const rule = ruleCatalog.get(r.ruleId.toLowerCase());
+    return rule?.checks.some(
+      (c) => c.id === "supervisor_training_course_required"
+    ) ?? false;
+  });
+  const supervisorTrainingHours = viewer?.supervisorTrainingHours ?? null;
+  const trainingDone =
+    supervisorTrainingHours !== null && supervisorTrainingHours > 0;
 
   const totalSupervisees = roster.length;
   const atRiskCount = roster.filter(
@@ -109,6 +129,8 @@ export async function SupervisorDashboard({
             emailVerifiedAt,
             subscriptionStatus: org?.subscriptionStatus ?? null,
             roster,
+            supervisorTrainingHours,
+            rosterHasTrainingRequiredRule,
           });
           return (
             <OnboardingChecklist
@@ -116,6 +138,8 @@ export async function SupervisorDashboard({
               trialDone={stepDone[1]}
               rosterDone={stepDone[2]}
               rulesDone={stepDone[3]}
+              trainingRelevant={rosterHasTrainingRequiredRule}
+              trainingDone={trainingDone}
             />
           );
         })()}

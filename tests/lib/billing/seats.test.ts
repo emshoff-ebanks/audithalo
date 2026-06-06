@@ -232,7 +232,7 @@ describe("seatCapBlockedReason", () => {
     expect(reason).not.toBeNull();
     expect(reason!.message).toMatch(/active subscription/i);
     expect(reason!.ctaLabel).toBe("See pricing");
-    expect(reason!.ctaHref).toBe("/pricing");
+    expect(reason!.ctaHref).toBe("/dashboard/billing");
   });
 
   it("returns the upgrade reason when solo is at cap", () => {

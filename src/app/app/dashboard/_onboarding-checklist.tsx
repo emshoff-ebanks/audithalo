@@ -19,6 +19,12 @@ type Props = {
   trialDone: boolean;
   rosterDone: boolean;
   rulesDone: boolean;
+  /** Whether the supervisor-training step is relevant. When false the
+   *  fifth row is hidden. Set true by the parent when any supervisee in
+   *  the roster is on a rule that requires training (e.g. CA APCC). */
+  trainingRelevant: boolean;
+  /** Done state for the optional 5th step (training). */
+  trainingDone: boolean;
 };
 
 type LinkStep = {
@@ -37,7 +43,7 @@ type ActionStep = {
 
 type StepDef = LinkStep | ActionStep;
 
-const STEPS: [StepDef, StepDef, StepDef, StepDef] = [
+const BASE_STEPS: [StepDef, StepDef, StepDef, StepDef] = [
   {
     label: "Verify your email",
     subcopy:
@@ -68,25 +74,36 @@ const STEPS: [StepDef, StepDef, StepDef, StepDef] = [
   },
 ];
 
+const TRAINING_STEP: LinkStep = {
+  label: "Record your supervisor training",
+  subcopy:
+    "CA APCC requires 15+ hours of supervisor training (16 CCR §1822). The hours snapshot onto every supervision session you log.",
+  ctaLabel: "Record training",
+  ctaHref: "/dashboard/account#training",
+};
+
 export function OnboardingChecklist({
   emailDone,
   trialDone,
   rosterDone,
   rulesDone,
+  trainingRelevant,
+  trainingDone,
 }: Props) {
   const [pending, startTransition] = useTransition();
 
-  const stepDone: [boolean, boolean, boolean, boolean] = [
-    emailDone,
-    trialDone,
-    rosterDone,
-    rulesDone,
-  ];
+  const steps: StepDef[] = trainingRelevant
+    ? [...BASE_STEPS, TRAINING_STEP]
+    : BASE_STEPS;
+  const stepDone: boolean[] = trainingRelevant
+    ? [emailDone, trialDone, rosterDone, rulesDone, trainingDone]
+    : [emailDone, trialDone, rosterDone, rulesDone];
   const allDone = stepDone.every(Boolean);
 
   if (allDone) return null;
 
   const doneCount = stepDone.filter(Boolean).length;
+  const totalCount = steps.length;
 
   function handleResendVerification() {
     startTransition(async () => {
@@ -99,11 +116,11 @@ export function OnboardingChecklist({
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-lg font-semibold text-foreground">
-            Getting started — {doneCount} of 4 complete
+            Getting started — {doneCount} of {totalCount} complete
           </h2>
         </div>
         <ul className="space-y-4">
-          {STEPS.map((step, i) => {
+          {steps.map((step, i) => {
             const done = stepDone[i];
             const Icon = done ? CheckCircle2 : Circle;
             const iconColor = done

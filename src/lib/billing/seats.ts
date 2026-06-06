@@ -81,7 +81,7 @@ export function seatCapBlockedReason(
     return {
       message: "You need an active subscription to invite supervisees.",
       ctaLabel: "See pricing",
-      ctaHref: "/pricing",
+      ctaHref: "/dashboard/billing",
     };
   }
   if (used >= cap) {
@@ -136,7 +136,7 @@ export function aiNoteQuotaBlockedReason(
     return {
       message: "AI session notes require an active subscription.",
       ctaLabel: "See pricing",
-      ctaHref: "/pricing",
+      ctaHref: "/dashboard/billing",
     };
   }
   if (usedThisMonth >= quota) {

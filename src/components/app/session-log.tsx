@@ -223,7 +223,7 @@ export function SessionLog({
                             </td>
                             <td className="px-4 py-2">
                               {fullySigned ? (
-                                <Badge variant="sealed">
+                                <Badge variant="success">
                                   <FileSignature className="h-3 w-3" />
                                   Sealed
                                 </Badge>

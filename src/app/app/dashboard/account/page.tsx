@@ -21,6 +21,25 @@ import { CompliancePrefsForm } from "./compliance-prefs-form";
 
 export const metadata = { title: "Account — AuditHalo" };
 
+/**
+ * Anchor nav at the top so the user can jump to the section they care about
+ * without scrolling past everything. Ordered with the most-frequently-touched
+ * items first: Billing, Notifications, Training (the things a supervisor
+ * actually returns to).
+ */
+const NAV_ITEMS: { id: string; label: string; supervisorOnly?: boolean }[] = [
+  { id: "email", label: "Email" },
+  { id: "billing", label: "Billing", supervisorOnly: true },
+  { id: "notifications", label: "Notifications" },
+  { id: "compliance", label: "Compliance", supervisorOnly: true },
+  { id: "training", label: "Supervisor training", supervisorOnly: true },
+  { id: "profile", label: "Profile" },
+  { id: "password", label: "Password" },
+  { id: "2fa", label: "Two-factor" },
+  { id: "sessions", label: "Sessions" },
+  { id: "change-email", label: "Change email" },
+];
+
 export default async function AccountPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -39,6 +58,10 @@ export default async function AccountPage() {
       })
     : null;
 
+  const navItems = NAV_ITEMS.filter(
+    (n) => !n.supervisorOnly || userCanSupervise
+  );
+
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-6 py-6 sm:py-12 space-y-6 sm:space-y-8">
       <div>
@@ -47,11 +70,28 @@ export default async function AccountPage() {
           Your account
         </h1>
         <p className="mt-3 text-foreground/70">
-          Manage your name, password, and email verification.
+          Manage your billing, notifications, profile, and security settings.
         </p>
       </div>
 
-      <Card>
+      {/* Anchor nav */}
+      <nav
+        aria-label="Account sections"
+        className="-mt-2 flex flex-wrap gap-x-2 gap-y-1.5 text-xs"
+      >
+        {navItems.map((n) => (
+          <a
+            key={n.id}
+            href={`#${n.id}`}
+            className="inline-flex items-center rounded-full border border-border bg-card px-2.5 py-1 text-foreground/70 hover:bg-accent hover:text-foreground transition-colors"
+          >
+            {n.label}
+          </a>
+        ))}
+      </nav>
+
+      {/* 1. Email + verification */}
+      <Card id="email">
         <CardHeader>
           <CardTitle className="flex items-center justify-between gap-3">
             <span>Email</span>
@@ -70,97 +110,9 @@ export default async function AccountPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="p-6">
-          <p className="label-overline mb-1">Change email</p>
-          <p className="text-sm text-foreground/60 mb-4">
-            Move your account to a different email address. The new address
-            must be verified before the change takes effect.
-          </p>
-          <EmailChangeForm currentEmail={user.email} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Display name</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <NameForm currentName={user.name} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Password</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PasswordForm />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between gap-3">
-            <span>Two-factor authentication</span>
-            {user.totpEnabledAt ? (
-              <Badge variant="success">Active</Badge>
-            ) : (
-              <Badge variant="outline">Off</Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {user.totpEnabledAt ? (
-            <div className="space-y-4">
-              <p className="text-sm text-foreground/70">
-                Active since{" "}
-                <span className="font-medium text-foreground">
-                  {user.totpEnabledAt.toLocaleDateString(undefined, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </span>
-                . You&apos;ll be asked for a 6-digit code from your
-                authenticator app every time you sign in.
-              </p>
-              <TotpDisableForm />
-            </div>
-          ) : (
-            <TotpSetupWizard />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card id="notifications">
-        <CardHeader>
-          <CardTitle>Notifications</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-foreground/70 mb-4">
-            Pick which events ping your inbox. The bell icon in the top nav
-            always shows every notification — these toggles only control the
-            email side-effect.
-          </p>
-          <NotificationsPrefsForm initialPrefs={user.notificationPrefs ?? null} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-6">
-          <p className="label-overline mb-1">Sessions</p>
-          <p className="text-sm text-foreground/60 mb-4">
-            Signed in on a public computer? Lost a device? Sign out of every
-            device where this account is currently signed in. You&apos;ll need
-            to sign in again on each device you want to keep using.
-          </p>
-          <SignOutEverywhereButton />
-        </CardContent>
-      </Card>
-
+      {/* 2. Billing & subscription — supervisor only */}
       {userCanSupervise && org && (
-        <Card>
+        <Card id="billing">
           <CardHeader>
             <CardTitle className="flex items-center justify-between gap-3">
               <span>Billing & subscription</span>
@@ -201,8 +153,24 @@ export default async function AccountPage() {
         </Card>
       )}
 
+      {/* 3. Notifications */}
+      <Card id="notifications">
+        <CardHeader>
+          <CardTitle>Notifications</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-foreground/70 mb-4">
+            Pick which events ping your inbox. The bell icon in the top nav
+            always shows every notification — these toggles only control the
+            email side-effect.
+          </p>
+          <NotificationsPrefsForm initialPrefs={user.notificationPrefs ?? null} />
+        </CardContent>
+      </Card>
+
+      {/* 4. Compliance preferences — supervisor only */}
       {userCanSupervise && (
-        <Card>
+        <Card id="compliance">
           <CardHeader>
             <CardTitle>Compliance preferences</CardTitle>
           </CardHeader>
@@ -214,10 +182,24 @@ export default async function AccountPage() {
         </Card>
       )}
 
+      {/* 5. Supervisor training — supervisor only.
+            Moved up from the bottom because it's a real compliance gate
+            for CA APCC + a few other states. */}
       {userCanSupervise && (
-        <Card>
+        <Card id="training">
           <CardHeader>
-            <CardTitle>Supervisor training</CardTitle>
+            <CardTitle className="flex items-center justify-between gap-3">
+              <span>Supervisor training</span>
+              {user.supervisorTrainingHours !== null &&
+              user.supervisorTrainingHours > 0 ? (
+                <Badge variant="success">
+                  {user.supervisorTrainingHours}{" "}
+                  {user.supervisorTrainingHours === 1 ? "hour" : "hours"} on file
+                </Badge>
+              ) : (
+                <Badge variant="outline-warn">Not recorded</Badge>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-foreground/70 mb-4">
@@ -232,6 +214,86 @@ export default async function AccountPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* 6. Profile (display name) */}
+      <Card id="profile">
+        <CardHeader>
+          <CardTitle>Display name</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <NameForm currentName={user.name} />
+        </CardContent>
+      </Card>
+
+      {/* 7. Password */}
+      <Card id="password">
+        <CardHeader>
+          <CardTitle>Password</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PasswordForm />
+        </CardContent>
+      </Card>
+
+      {/* 8. 2FA */}
+      <Card id="2fa">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between gap-3">
+            <span>Two-factor authentication</span>
+            {user.totpEnabledAt ? (
+              <Badge variant="success">Active</Badge>
+            ) : (
+              <Badge variant="outline">Off</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {user.totpEnabledAt ? (
+            <div className="space-y-4">
+              <p className="text-sm text-foreground/70">
+                Active since{" "}
+                <span className="font-medium text-foreground">
+                  {user.totpEnabledAt.toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+                . You&apos;ll be asked for a 6-digit code from your
+                authenticator app every time you sign in.
+              </p>
+              <TotpDisableForm />
+            </div>
+          ) : (
+            <TotpSetupWizard />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 9. Sessions */}
+      <Card id="sessions">
+        <CardContent className="p-6">
+          <p className="label-overline mb-1">Sessions</p>
+          <p className="text-sm text-foreground/60 mb-4">
+            Signed in on a public computer? Lost a device? Sign out of every
+            device where this account is currently signed in. You&apos;ll need
+            to sign in again on each device you want to keep using.
+          </p>
+          <SignOutEverywhereButton />
+        </CardContent>
+      </Card>
+
+      {/* 10. Change email (last because rarely touched) */}
+      <Card id="change-email">
+        <CardContent className="p-6">
+          <p className="label-overline mb-1">Change email</p>
+          <p className="text-sm text-foreground/60 mb-4">
+            Move your account to a different email address. The new address
+            must be verified before the change takes effect.
+          </p>
+          <EmailChangeForm currentEmail={user.email} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

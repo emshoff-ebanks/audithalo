@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { riskBadgeLabel, riskBadgeVariant } from "@/lib/rules/presentation";
-import { AssignRuleForm } from "./assign-rule-form";
+import { AssignRuleForm, type RuleGuidance } from "./assign-rule-form";
+
+const SAVED_TOAST_MS = 4000;
 
 type Props = {
   superviseeId: string;
@@ -25,6 +27,8 @@ type Props = {
   currentContractFiledAt: string | null; // YYYY-MM-DD or null
   // Catalog for the dropdown
   availableRules: { id: string; label: string; summary: string }[];
+  /** Per-rule guidance threaded to the inner AssignRuleForm. */
+  guidance: RuleGuidance[];
 };
 
 export function RuleSummaryCard({
@@ -35,8 +39,24 @@ export function RuleSummaryCard({
   currentObligationStartedAt,
   currentContractFiledAt,
   availableRules,
+  guidance,
 }: Props) {
   const [editing, setEditing] = useState(false);
+  const [savedLabel, setSavedLabel] = useState<string | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
+
+  function handleSuccess(newRuleId: string) {
+    const target = availableRules.find((r) => r.id === newRuleId);
+    const label = target?.label ?? newRuleId.toUpperCase();
+    setEditing(false);
+    setSavedLabel(label);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setSavedLabel(null), SAVED_TOAST_MS);
+  }
 
   if (editing) {
     return (
@@ -63,50 +83,64 @@ export function RuleSummaryCard({
           defaultContractFiledAt={currentContractFiledAt ?? undefined}
           submitLabel="Update rule"
           onCancel={() => setEditing(false)}
+          onSuccess={handleSuccess}
+          guidance={guidance}
         />
       </div>
     );
   }
 
   return (
-    <div className="flex items-start justify-between gap-4">
-      <div>
-        <Badge
-          variant={riskBadgeVariant(currentRule.riskLevel)}
-          className="mb-2"
-        >
-          {riskBadgeLabel(currentRule.riskLevel)}
-        </Badge>
-        <h2 className="font-display text-xl font-semibold text-foreground">
-          {currentRule.jurisdiction} {currentRule.licenseCode} v
-          {currentRule.version}
-        </h2>
-        <p className="mt-1 text-sm font-mono text-foreground/60">
-          {currentRule.admincode}
-        </p>
-      </div>
-      <div className="flex flex-col items-end gap-2 shrink-0">
-        <a
-          href={currentRule.sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-secondary hover:underline"
-        >
-          View source ↗
-        </a>
-        {viewerCanSupervise && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setEditing(true)}
-            className="-mr-2 text-xs"
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <Badge
+            variant={riskBadgeVariant(currentRule.riskLevel)}
+            className="mb-2"
           >
-            <Pencil className="h-3 w-3" />
-            Change rule
-          </Button>
-        )}
+            {riskBadgeLabel(currentRule.riskLevel)}
+          </Badge>
+          <h2 className="font-display text-xl font-semibold text-foreground">
+            {currentRule.jurisdiction} {currentRule.licenseCode} v
+            {currentRule.version}
+          </h2>
+          <p className="mt-1 text-sm font-mono text-foreground/60">
+            {currentRule.admincode}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <a
+            href={currentRule.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-secondary hover:underline"
+          >
+            View source ↗
+          </a>
+          {viewerCanSupervise && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setEditing(true)}
+              className="-mr-2 text-xs"
+            >
+              <Pencil className="h-3 w-3" />
+              Change rule
+            </Button>
+          )}
+        </div>
       </div>
+      {savedLabel && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--color-success)]/10 px-3 py-1 text-xs font-medium text-[color:var(--color-success)]"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          State rule changed to {savedLabel}
+        </div>
+      )}
     </div>
   );
 }

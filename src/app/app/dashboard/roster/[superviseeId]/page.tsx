@@ -193,11 +193,30 @@ export default async function SuperviseeDetailPage({
   const rule = resolved?.rule ?? null;
   const evalResult = resolved?.evaluation ?? null;
 
-  const allRules = [...loadAllRules().values()].map((r) => ({
+  const allRuleObjects = [...loadAllRules().values()];
+  const allRules = allRuleObjects.map((r) => ({
     id: `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`,
     label: `${r.jurisdiction} ${r.license_code} v${r.version}`,
     summary: r.summary.split("\n")[0] ?? "",
   }));
+
+  // Per-rule guidance for the assignment form: key_warnings + window-close
+  // math from each rule's YAML. Surfaced inline so supervisors see the most
+  // common audit failures at the moment they're filling out the rule.
+  const ruleGuidance = allRuleObjects.map((r) => {
+    const id = `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`;
+    const keyWarnings = r.page_content?.key_warnings ?? [];
+    const permitWindow = r.checks.find(
+      (c) => c.id === "permit_expiration_window"
+    );
+    const permitWindowMonths =
+      (permitWindow?.params?.max_months as number | undefined) ?? null;
+    const preReg = r.checks.find((c) => c.id === "pre_registration_required");
+    const contractFieldHelp = preReg
+      ? `Required for ${r.jurisdiction} ${r.license_code} — hours before this date won't count.`
+      : null;
+    return { ruleId: id, keyWarnings, permitWindowMonths, contractFieldHelp };
+  });
 
   // Read-out for the "Completed compliance tasks" section. Built from the
   // typed columns on the assignment plus any future-extensible jsonb entries.
@@ -267,6 +286,7 @@ export default async function SuperviseeDetailPage({
                 <AssignRuleForm
                   superviseeId={superviseeId}
                   availableRules={allRules}
+                  guidance={ruleGuidance}
                 />
               </>
             ) : viewerIsManager ? (
@@ -318,6 +338,7 @@ export default async function SuperviseeDetailPage({
                     .slice(0, 10) ?? null
                 }
                 availableRules={allRules}
+                guidance={ruleGuidance}
               />
 
               <ProgressBar
@@ -412,12 +433,21 @@ export default async function SuperviseeDetailPage({
                     <div className="flex gap-3 items-start min-w-0">
                       <FileSignature className="h-4 w-4 mt-1 shrink-0 text-[color:var(--color-gold)]" />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground">
-                          {doc.session.kind === "supervision"
-                            ? `${doc.session.sessionType ?? "supervision"} session`
-                            : "Practice session"}{" "}
-                          · {doc.session.date.slice(0, 10)}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-medium text-foreground">
+                            {doc.session.kind === "supervision"
+                              ? `${doc.session.sessionType ?? "supervision"} session`
+                              : "Practice session"}{" "}
+                            · {doc.session.date.slice(0, 10)}
+                          </p>
+                          {/* Green "Sealed" badge so the gold icon reads as
+                              "official package" rather than "still pending".
+                              See feedback B3. */}
+                          <Badge variant="success">
+                            <CheckCircle2 className="h-2.5 w-2.5" />
+                            Sealed
+                          </Badge>
+                        </div>
                         <p className="font-mono text-xs text-foreground/50 truncate">
                           {p.documentHash}
                         </p>
