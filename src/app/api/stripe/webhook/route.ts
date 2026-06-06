@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
-import { requireStripe, tierFromPriceId } from "@/lib/stripe";
+import { PRICES, requireStripe, tierFromPriceId } from "@/lib/stripe";
 import { db, schema } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -18,6 +18,18 @@ async function syncSubscription(sub: Stripe.Subscription) {
     (firstItem as { current_period_end?: number } | undefined)
       ?.current_period_end ?? null;
 
+  // For Practice tier, the seat-line-item quantity is the source of truth for
+  // how many supervisees the org has purchased. Null for Solo / other tiers.
+  let seatCount: number | null = null;
+  if (tier === "practice" && PRICES.practice_seat) {
+    const seatItem = sub.items.data.find(
+      (i) => i.price.id === PRICES.practice_seat
+    );
+    if (seatItem && typeof seatItem.quantity === "number") {
+      seatCount = seatItem.quantity;
+    }
+  }
+
   await db
     .update(schema.organizations)
     .set({
@@ -25,6 +37,7 @@ async function syncSubscription(sub: Stripe.Subscription) {
       subscriptionStatus: sub.status,
       subscriptionTier: tier,
       subscriptionPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+      seatCount,
     })
     .where(eq(schema.organizations.id, orgId));
 }

@@ -1,7 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import type Stripe from "stripe";
 import { db, schema } from "@/lib/db";
-import { PRICES, stripe } from "@/lib/stripe";
 
 type Org = typeof schema.organizations.$inferSelect;
 
@@ -34,7 +33,10 @@ export function isPastDueGracePeriodExpired(
 export function seatCap(
   org: Pick<
     Org,
-    "subscriptionStatus" | "subscriptionTier" | "subscriptionPeriodEnd"
+    | "subscriptionStatus"
+    | "subscriptionTier"
+    | "subscriptionPeriodEnd"
+    | "seatCount"
   >,
   now: Date = new Date()
 ): number | null {
@@ -45,7 +47,12 @@ export function seatCap(
     return 0;
   }
   if (org.subscriptionTier === "solo") return 3;
-  if (org.subscriptionTier === "practice") return null;
+  if (org.subscriptionTier === "practice") {
+    // Pre-commit seats: seat_count is the purchased ceiling, set from the
+    // Stripe checkout line-item quantity. Legacy practice orgs (seat_count
+    // null) keep the prior uncapped behavior until they update their plan.
+    return org.seatCount ?? null;
+  }
   return 0;
 }
 
@@ -60,7 +67,10 @@ export type BlockedReason = {
 export function seatCapBlockedReason(
   org: Pick<
     Org,
-    "subscriptionStatus" | "subscriptionTier" | "subscriptionPeriodEnd"
+    | "subscriptionStatus"
+    | "subscriptionTier"
+    | "subscriptionPeriodEnd"
+    | "seatCount"
   >,
   used: number,
   now: Date = new Date()
@@ -85,8 +95,17 @@ export function seatCapBlockedReason(
     };
   }
   if (used >= cap) {
+    // Solo tier always upsells to Practice. Practice tier (cap is the
+    // purchased seat_count) asks the supervisor to bump their quantity.
+    if (org.subscriptionTier === "practice") {
+      return {
+        message: `You've used all ${cap} seats on your Practice plan. Add more in billing.`,
+        ctaLabel: "Manage billing",
+        ctaHref: "/dashboard/billing",
+      };
+    }
     return {
-      message: `Your Solo plan covers ${cap} supervisees. Upgrade to Practice for unlimited seats.`,
+      message: `Your Solo plan covers ${cap} supervisees. Upgrade to Practice for more seats.`,
       ctaLabel: "Upgrade plan",
       ctaHref: "/dashboard/billing",
     };
@@ -98,7 +117,9 @@ export function seatCapBlockedReason(
 export function aiNoteQuotaPerMonth(
   org: Pick<
     Org,
-    "subscriptionStatus" | "subscriptionTier" | "subscriptionPeriodEnd"
+    | "subscriptionStatus"
+    | "subscriptionTier"
+    | "subscriptionPeriodEnd"
   >,
   now: Date = new Date()
 ): number | null {
@@ -185,36 +206,3 @@ export async function countBillableSeats(orgId: string): Promise<number> {
   return members.length;
 }
 
-/**
- * If this org has a Practice subscription, update the seat-item quantity to match
- * the current member count. No-op for Solo, missing-subscription, or non-Practice orgs.
- * Safe to call from any path that adds or could add a supervisee.
- *
- * TODO: also call from a future "remove supervisee" action so seat count goes down.
- */
-export async function syncPracticeSeatQuantity(orgId: string): Promise<void> {
-  if (!stripe) return; // STRIPE_SECRET_KEY not set — local dev or misconfig
-  if (!PRICES.practice_seat) return; // practice not configured
-
-  const org = await db.query.organizations.findFirst({
-    where: eq(schema.organizations.id, orgId),
-  });
-  if (!org || !shouldSyncSeats(org)) return;
-
-  const sub = await stripe.subscriptions.retrieve(org.stripeSubscriptionId!);
-  const seatItem = findSeatItem(sub, PRICES.practice_seat);
-  if (!seatItem) {
-    console.error(
-      `[billing] sub ${sub.id} for org ${orgId} has no item matching seat price ${PRICES.practice_seat}`
-    );
-    return;
-  }
-
-  const targetQuantity = Math.max(1, await countBillableSeats(orgId));
-  if (seatItem.quantity === targetQuantity) return; // already in sync
-
-  await stripe.subscriptions.update(sub.id, {
-    items: [{ id: seatItem.id, quantity: targetQuantity }],
-    proration_behavior: "create_prorations",
-  });
-}

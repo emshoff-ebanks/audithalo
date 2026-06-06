@@ -3,9 +3,11 @@
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getCurrentMembership, isManagerRole } from "@/lib/authz";
-import { countBillableSeats } from "@/lib/billing/seats";
 import { db, schema } from "@/lib/db";
 import { PRICES, requireStripe, type PlanKey } from "@/lib/stripe";
+
+const MIN_PRACTICE_SEATS = 1;
+const MAX_PRACTICE_SEATS = 50;
 
 const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
 
@@ -72,15 +74,28 @@ export async function startCheckoutAction(formData: FormData): Promise<Result> {
     };
   }
 
-  // Build line items per plan
+  // Build line items per plan. Practice pre-commits seats at checkout: the
+  // supervisor picks how many supervisees they're buying for, and that
+  // quantity locks in on the subscription. Adding seats later requires
+  // editing the subscription in the Stripe Billing Portal.
   let lineItems: Array<{ price: string; quantity?: number }>;
   if (plan === "solo_monthly") {
     lineItems = [{ price: PRICES.solo_monthly, quantity: 1 }];
   } else if (plan === "solo_yearly") {
     lineItems = [{ price: PRICES.solo_yearly, quantity: 1 }];
   } else {
-    // Practice: $49 base flat fee + $25 per supervisee per month (per-unit licensed pricing)
-    const seatCount = Math.max(1, await countBillableSeats(org.id));
+    const rawSeatCount = Number(formData.get("seatCount"));
+    if (
+      !Number.isFinite(rawSeatCount) ||
+      rawSeatCount < MIN_PRACTICE_SEATS ||
+      rawSeatCount > MAX_PRACTICE_SEATS
+    ) {
+      return {
+        ok: false,
+        error: `Pick a seat count between ${MIN_PRACTICE_SEATS} and ${MAX_PRACTICE_SEATS}.`,
+      };
+    }
+    const seatCount = Math.floor(rawSeatCount);
     lineItems = [
       { price: PRICES.practice_base, quantity: 1 },
       { price: PRICES.practice_seat, quantity: seatCount },

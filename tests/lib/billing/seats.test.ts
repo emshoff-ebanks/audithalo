@@ -14,6 +14,7 @@ describe("seatCap", () => {
         subscriptionStatus: null,
         subscriptionTier: null,
         subscriptionPeriodEnd: null,
+        seatCount: null,
       })
     ).toBe(0);
   });
@@ -24,6 +25,7 @@ describe("seatCap", () => {
         subscriptionStatus: "canceled",
         subscriptionTier: "solo",
         subscriptionPeriodEnd: null,
+        seatCount: null,
       })
     ).toBe(0);
   });
@@ -34,6 +36,7 @@ describe("seatCap", () => {
         subscriptionStatus: "trialing",
         subscriptionTier: "solo",
         subscriptionPeriodEnd: null,
+        seatCount: null,
       })
     ).toBe(3);
   });
@@ -44,6 +47,7 @@ describe("seatCap", () => {
         subscriptionStatus: "active",
         subscriptionTier: "solo",
         subscriptionPeriodEnd: null,
+        seatCount: null,
       })
     ).toBe(3);
   });
@@ -54,18 +58,31 @@ describe("seatCap", () => {
         subscriptionStatus: "past_due",
         subscriptionTier: "solo",
         subscriptionPeriodEnd: null,
+        seatCount: null,
       })
     ).toBe(3);
   });
 
-  it("returns null (unlimited) for active practice", () => {
+  it("returns null (unlimited) for legacy practice with no seatCount", () => {
     expect(
       seatCap({
         subscriptionStatus: "active",
         subscriptionTier: "practice",
         subscriptionPeriodEnd: null,
+        seatCount: null,
       })
     ).toBeNull();
+  });
+
+  it("returns the purchased seatCount for active practice", () => {
+    expect(
+      seatCap({
+        subscriptionStatus: "active",
+        subscriptionTier: "practice",
+        subscriptionPeriodEnd: null,
+        seatCount: 5,
+      })
+    ).toBe(5);
   });
 
   it("returns 0 when active but tier is null (defensive)", () => {
@@ -74,6 +91,7 @@ describe("seatCap", () => {
         subscriptionStatus: "active",
         subscriptionTier: null,
         subscriptionPeriodEnd: null,
+        seatCount: null,
       })
     ).toBe(0);
   });
@@ -87,6 +105,7 @@ describe("seatCap", () => {
         subscriptionStatus: "past_due",
         subscriptionTier: "solo",
         subscriptionPeriodEnd: expiredPeriodEnd,
+        seatCount: null,
       })
     ).toBe(0);
   });
@@ -100,11 +119,12 @@ describe("seatCap", () => {
         subscriptionStatus: "past_due",
         subscriptionTier: "solo",
         subscriptionPeriodEnd: recentPeriodEnd,
+        seatCount: null,
       })
     ).toBe(3);
   });
 
-  it("still returns null (practice unlimited) when past_due within grace period", () => {
+  it("returns the seatCount for past_due practice within grace period", () => {
     const recentPeriodEnd = new Date(
       Date.now() - 3 * 24 * 60 * 60 * 1000
     );
@@ -113,8 +133,9 @@ describe("seatCap", () => {
         subscriptionStatus: "past_due",
         subscriptionTier: "practice",
         subscriptionPeriodEnd: recentPeriodEnd,
+        seatCount: 10,
       })
-    ).toBeNull();
+    ).toBe(10);
   });
 
   it("returns 0 for past_due practice when grace expired", () => {
@@ -126,6 +147,7 @@ describe("seatCap", () => {
         subscriptionStatus: "past_due",
         subscriptionTier: "practice",
         subscriptionPeriodEnd: expiredPeriodEnd,
+        seatCount: 10,
       })
     ).toBe(0);
   });
@@ -201,21 +223,53 @@ describe("seatCapBlockedReason", () => {
           subscriptionStatus: "trialing",
           subscriptionTier: "solo",
           subscriptionPeriodEnd: null,
+          seatCount: null,
         },
         2
       )
     ).toBeNull();
   });
 
-  it("returns null for practice regardless of used count", () => {
+  it("returns null for legacy practice (no seatCount) regardless of used count", () => {
     expect(
       seatCapBlockedReason(
         {
           subscriptionStatus: "active",
           subscriptionTier: "practice",
           subscriptionPeriodEnd: null,
+          seatCount: null,
         },
         9999
+      )
+    ).toBeNull();
+  });
+
+  it("blocks practice when used count equals purchased seatCount", () => {
+    const reason = seatCapBlockedReason(
+      {
+        subscriptionStatus: "active",
+        subscriptionTier: "practice",
+        subscriptionPeriodEnd: null,
+        seatCount: 5,
+      },
+      5
+    );
+    expect(reason).not.toBeNull();
+    expect(reason!.message).toMatch(/used all 5 seats/i);
+    expect(reason!.ctaLabel).toBe("Manage billing");
+    expect(reason!.ctaHref).toBe("/dashboard/billing");
+  });
+
+  it("allows practice when used count is below purchased seatCount", () => {
+    expect(
+      seatCapBlockedReason(
+        {
+          subscriptionStatus: "active",
+          subscriptionTier: "practice",
+          subscriptionPeriodEnd: null,
+          seatCount: 5,
+        },
+        4
       )
     ).toBeNull();
   });
@@ -226,6 +280,7 @@ describe("seatCapBlockedReason", () => {
         subscriptionStatus: null,
         subscriptionTier: null,
         subscriptionPeriodEnd: null,
+        seatCount: null,
       },
       0
     );
@@ -241,6 +296,7 @@ describe("seatCapBlockedReason", () => {
         subscriptionStatus: "active",
         subscriptionTier: "solo",
         subscriptionPeriodEnd: null,
+        seatCount: null,
       },
       3
     );
@@ -257,6 +313,7 @@ describe("seatCapBlockedReason", () => {
         subscriptionStatus: "active",
         subscriptionTier: "solo",
         subscriptionPeriodEnd: null,
+        seatCount: null,
       },
       4
     );
@@ -272,6 +329,7 @@ describe("seatCapBlockedReason", () => {
         subscriptionStatus: "past_due",
         subscriptionTier: "solo",
         subscriptionPeriodEnd: expiredPeriodEnd,
+        seatCount: null,
       },
       0
     );

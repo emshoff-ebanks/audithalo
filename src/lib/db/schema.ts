@@ -229,6 +229,12 @@ export const organizations = pgTable("organizations", {
   subscriptionStatus: text("subscription_status"),
   subscriptionTier: text("subscription_tier"),
   subscriptionPeriodEnd: timestamp("subscription_period_end", { withTimezone: true }),
+  // Practice tier only. Number of seats the supervisor purchased at checkout
+  // (or later modified via Stripe Billing Portal). Synced from the
+  // practice_seat line item's quantity in the webhook handler. Null means
+  // either Solo tier or a legacy Practice org from before pre-commit seats —
+  // seats.ts treats null as unlimited.
+  seatCount: integer("seat_count"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

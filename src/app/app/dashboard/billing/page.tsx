@@ -8,7 +8,11 @@ import { db, schema } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckoutButton, PortalButton } from "./billing-buttons";
+import {
+  CheckoutButton,
+  PortalButton,
+  PracticeCheckoutButton,
+} from "./billing-buttons";
 
 export const metadata = {
   title: "Billing — AuditHalo",
@@ -111,6 +115,12 @@ export default async function BillingPage({
                   </span>
                 </p>
               )}
+              {org.subscriptionTier === "practice" && org.seatCount !== null && (
+                <p className="mt-1 text-sm text-foreground/70">
+                  Seats purchased:{" "}
+                  <span className="font-mono">{org.seatCount}</span>
+                </p>
+              )}
               <div className="mt-5">
                 <PortalButton />
               </div>
@@ -171,7 +181,8 @@ export default async function BillingPage({
               Practice
             </h3>
             <p className="mt-2 text-sm text-foreground/60 min-h-10">
-              For 4–20 supervisees with HR oversight.
+              For 4–20 supervisees with HR oversight. Buy seats up-front; add
+              more in billing.
             </p>
             <div className="mt-6 space-y-2">
               <div>
@@ -185,7 +196,7 @@ export default async function BillingPage({
               </div>
             </div>
             <div className="mt-6">
-              <CheckoutButton plan="practice" label="Start 14-day trial" />
+              <PracticeCheckoutButton label="Start 14-day trial" />
             </div>
             <ul className="mt-8 space-y-3 text-sm">
               {PLAN_FEATURES.practice.map((f) => (

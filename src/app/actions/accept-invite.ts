@@ -5,7 +5,6 @@ import bcrypt from "bcryptjs";
 import { and, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { AuthError } from "next-auth";
-import { syncPracticeSeatQuantity } from "@/lib/billing/seats";
 import { db, schema } from "@/lib/db";
 import { hashToken } from "@/lib/invitations";
 import { auth, signIn } from "@/auth";
@@ -133,12 +132,6 @@ export async function acceptInviteAction(
     console.error("[audit-log] failed to record invitation.accepted:", err);
   }
 
-  try {
-    await syncPracticeSeatQuantity(invite.orgId);
-  } catch (err) {
-    // Don't block the user accept on a Stripe sync failure — we'll reconcile later.
-    console.error(`[accept-invite] seat sync failed for org ${invite.orgId}:`, err);
-  }
 
   // Bust the inviting supervisor's cached dashboard + roster so the new
   // supervisee appears on their next navigation (no stale 404 / empty row).
@@ -275,12 +268,6 @@ export async function acceptInviteAsExistingUserAction(
     });
   } catch (err) {
     console.error("[audit-log] failed to record invitation.accepted:", err);
-  }
-
-  try {
-    await syncPracticeSeatQuantity(invite.orgId);
-  } catch (err) {
-    console.error(`[accept-invite] seat sync failed for org ${invite.orgId}:`, err);
   }
 
   revalidatePath("/dashboard");
