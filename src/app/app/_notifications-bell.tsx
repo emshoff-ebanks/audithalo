@@ -9,6 +9,7 @@ import {
   Loader2,
   AlertOctagon,
   Mail,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +58,8 @@ function iconFor(kind: NotificationKind) {
       return <AlertTriangle className="h-4 w-4 text-[color:var(--color-warning)]" />;
     case "attestation_overdue":
       return <AlertOctagon className="h-4 w-4 text-[color:var(--color-risk)]" />;
+    case "trial_ending_soon":
+      return <CreditCard className="h-4 w-4 text-[color:var(--color-warning)]" />;
   }
 }
 
@@ -74,6 +77,8 @@ function messageFor(n: NotificationRow): string {
       return `${n.payload.superviseeName ?? "A supervisee"} is missing a state rule`;
     case "attestation_overdue":
       return `Overdue compliance gap on ${n.payload.superviseeName ?? "a supervisee"}`;
+    case "trial_ending_soon":
+      return `Your trial ends in ${n.payload.daysLeft ?? 3} days`;
   }
 }
 

@@ -734,3 +734,71 @@ export async function disableTotpAction(
   revalidatePath("/dashboard/account");
   return { ok: true, message: "Two-factor authentication disabled." };
 }
+
+// ----------------------------------------------------------------------------
+// Account deletion — soft-delete with a 30-day grace period.
+//
+// Sets users.deleted_at and bumps sessions_valid_from so existing sessions
+// reject on their next callback. The data sticks around until the daily cron
+// purges it 30 days later, giving the user time to email support if they
+// changed their mind.
+// ----------------------------------------------------------------------------
+
+const deleteAccountSchema = z.object({
+  password: z.string().min(1, "Enter your password to confirm."),
+  confirm: z.string(),
+});
+
+export async function deleteAccountAction(
+  _prev: AccountActionResult | undefined,
+  formData: FormData
+): Promise<AccountActionResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const parsed = deleteAccountSchema.safeParse({
+    password: formData.get("password"),
+    confirm: formData.get("confirm"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+  if (parsed.data.confirm !== "DELETE") {
+    return {
+      ok: false,
+      error: 'Type DELETE in the confirmation box to delete your account.',
+    };
+  }
+
+  const user = await db.query.users.findFirst({
+    where: eq(schema.users.id, session.user.id),
+    columns: { id: true, passwordHash: true, deletedAt: true },
+  });
+  if (!user || !user.passwordHash) {
+    return { ok: false, error: "Not authenticated." };
+  }
+  if (user.deletedAt) {
+    return { ok: false, error: "Account is already scheduled for deletion." };
+  }
+
+  const passwordOk = await bcrypt.compare(
+    parsed.data.password,
+    user.passwordHash
+  );
+  if (!passwordOk) return { ok: false, error: "Incorrect password." };
+
+  const now = new Date();
+  await db
+    .update(schema.users)
+    .set({ deletedAt: now, sessionsValidFrom: now })
+    .where(eq(schema.users.id, user.id));
+
+  return {
+    ok: true,
+    message:
+      "Account scheduled for deletion. You'll be signed out; data is permanently purged after 30 days.",
+  };
+}

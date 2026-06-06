@@ -77,6 +77,8 @@ async function handleDailyChecks(request: Request) {
       autoApplied: 0,
       notified: 0,
     },
+    pass3_trial_ending_soon: { orgsChecked: 0, notified: 0 },
+    pass4_account_purge: { purged: 0 },
   };
 
   // -------------------------------------------------------------------------
@@ -359,6 +361,98 @@ async function handleDailyChecks(request: Request) {
       }
     }
 
+  }
+
+  // -------------------------------------------------------------------------
+  // Pass 3 — trial_ending_soon
+  //
+  // Find orgs in trialing status whose subscription_period_end falls in the
+  // T-3-days window (between 2.5 and 3.5 days from now), notify the org
+  // owner once. Dedup: skip if a trial_ending_soon notification went out for
+  // this org within the last 6 days.
+  // -------------------------------------------------------------------------
+  const t3Lower = new Date(now.getTime() + 2.5 * ONE_DAY_MS);
+  const t3Upper = new Date(now.getTime() + 3.5 * ONE_DAY_MS);
+  const sixDaysAgo = new Date(now.getTime() - 6 * ONE_DAY_MS);
+
+  const trialingOrgs = await db
+    .select({
+      id: schema.organizations.id,
+      name: schema.organizations.name,
+      ownerId: schema.organizations.createdById,
+      periodEnd: schema.organizations.subscriptionPeriodEnd,
+    })
+    .from(schema.organizations)
+    .where(
+      and(
+        eq(schema.organizations.subscriptionStatus, "trialing"),
+        gte(schema.organizations.subscriptionPeriodEnd, t3Lower),
+        lt(schema.organizations.subscriptionPeriodEnd, t3Upper)
+      )
+    );
+  result.pass3_trial_ending_soon.orgsChecked = trialingOrgs.length;
+
+  if (trialingOrgs.length > 0) {
+    const ownerIds = Array.from(new Set(trialingOrgs.map((o) => o.ownerId)));
+    const recentTrialNotifs = await db
+      .select({
+        userId: schema.notifications.userId,
+        payload: schema.notifications.payload,
+      })
+      .from(schema.notifications)
+      .where(
+        and(
+          inArray(schema.notifications.userId, ownerIds),
+          eq(schema.notifications.kind, "trial_ending_soon"),
+          gte(schema.notifications.createdAt, sixDaysAgo)
+        )
+      );
+    const recentlyNotified = new Set<string>();
+    for (const n of recentTrialNotifs) {
+      const payload = n.payload as { orgId?: string };
+      if (payload?.orgId) {
+        recentlyNotified.add(`${n.userId}|${payload.orgId}`);
+      }
+    }
+
+    for (const org of trialingOrgs) {
+      if (recentlyNotified.has(`${org.ownerId}|${org.id}`)) continue;
+      if (!org.periodEnd) continue;
+      const msLeft = org.periodEnd.getTime() - now.getTime();
+      const daysLeft = Math.max(1, Math.round(msLeft / ONE_DAY_MS));
+      try {
+        await createNotification({
+          userId: org.ownerId,
+          kind: "trial_ending_soon",
+          payload: {
+            orgId: org.id,
+            orgName: org.name,
+            daysLeft,
+            trialEndsAt: org.periodEnd.toISOString().slice(0, 10),
+          },
+        });
+        result.pass3_trial_ending_soon.notified += 1;
+      } catch (err) {
+        console.error("[cron] trial_ending_soon notification failed:", err);
+      }
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Pass 4 — account purge
+  //
+  // Permanently delete users whose deleted_at is more than 30 days ago.
+  // The ON DELETE CASCADE foreign keys on org_memberships, session_events,
+  // notifications, etc. take care of the children.
+  // -------------------------------------------------------------------------
+  try {
+    const purged = await db
+      .delete(schema.users)
+      .where(lt(schema.users.deletedAt, thirtyDaysAgo))
+      .returning({ id: schema.users.id });
+    result.pass4_account_purge.purged = purged.length;
+  } catch (err) {
+    console.error("[cron] account purge failed:", err);
   }
 
   return NextResponse.json(result);

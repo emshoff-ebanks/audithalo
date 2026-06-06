@@ -4,16 +4,18 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "tsx scripts/validate-rules.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "validate:rules": "tsx scripts/validate-rules.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/lib/db/migrate.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "seed:demo": "tsx scripts/seed-demo.ts",
+    "seed:demo": "tsx scripts/seed-demo-cli.ts",
     "auth:secret": "npx auth secret"
   },
   "dependencies": {

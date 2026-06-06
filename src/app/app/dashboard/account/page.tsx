@@ -18,6 +18,7 @@ import { TotpSetupWizard } from "./totp-setup";
 import { TotpDisableForm } from "./totp-disable-form";
 import { NotificationsPrefsForm } from "./notifications-prefs-form";
 import { CompliancePrefsForm } from "./compliance-prefs-form";
+import { DeleteAccountForm } from "./delete-account-form";
 
 export const metadata = { title: "Account — AuditHalo" };
 
@@ -38,6 +39,7 @@ const NAV_ITEMS: { id: string; label: string; supervisorOnly?: boolean }[] = [
   { id: "2fa", label: "Two-factor" },
   { id: "sessions", label: "Sessions" },
   { id: "change-email", label: "Change email" },
+  { id: "delete", label: "Delete account" },
 ];
 
 export default async function AccountPage() {
@@ -283,7 +285,7 @@ export default async function AccountPage() {
         </CardContent>
       </Card>
 
-      {/* 10. Change email (last because rarely touched) */}
+      {/* 10. Change email (rarely touched) */}
       <Card id="change-email">
         <CardContent className="p-6">
           <p className="label-overline mb-1">Change email</p>
@@ -292,6 +294,30 @@ export default async function AccountPage() {
             must be verified before the change takes effect.
           </p>
           <EmailChangeForm currentEmail={user.email} />
+        </CardContent>
+      </Card>
+
+      {/* 11. Danger zone — account deletion */}
+      <Card
+        id="delete"
+        className="border-[color:var(--color-risk)]/30 bg-[color:var(--color-risk)]/5"
+      >
+        <CardContent className="p-6">
+          <p className="label-overline text-[color:var(--color-risk)] mb-1">
+            Delete account
+          </p>
+          <p className="text-sm text-foreground/70 mb-4">
+            Permanently delete your AuditHalo account. You'll be signed out
+            immediately and your data is purged after 30 days. Email{" "}
+            <a
+              href="mailto:info@audithalo.com"
+              className="underline hover:no-underline"
+            >
+              info@audithalo.com
+            </a>{" "}
+            inside that window if you change your mind.
+          </p>
+          <DeleteAccountForm />
         </CardContent>
       </Card>
     </div>

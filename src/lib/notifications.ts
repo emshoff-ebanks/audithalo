@@ -21,6 +21,7 @@ export const NOTIFICATION_DEFAULTS: Required<NotificationPrefs> = {
     evidence_sealed: true,
     supervisor_rule_not_set: false,
     attestation_overdue: true,
+    trial_ending_soon: true,
   },
 };
 
@@ -255,6 +256,23 @@ function renderEmail(
           kind,
         }),
         text: `${greetingText} ${supervisee} has an overdue ${checkId} gap. ${url}`,
+      };
+    }
+    case "trial_ending_soon": {
+      const daysLeft = Number(payload.daysLeft ?? 3);
+      const trialEndsAt = String(payload.trialEndsAt ?? "");
+      const url = `${APP_URL}/dashboard/billing`;
+      const dayWord = daysLeft === 1 ? "day" : "days";
+      return {
+        subject: `Your AuditHalo trial ends in ${daysLeft} ${dayWord}`,
+        html: shell({
+          heading: `Your trial ends in ${daysLeft} ${dayWord}.`,
+          body: `<p>${greetingHtml} your 14-day AuditHalo trial ends on <strong>${esc(trialEndsAt)}</strong>. Add a payment method to keep tracking supervised hours, signing sessions, and producing evidence packages. Your data stays in place either way.</p>`,
+          ctaHref: url,
+          ctaLabel: "Add payment method",
+          kind,
+        }),
+        text: `${greetingText} your AuditHalo trial ends ${trialEndsAt} (${daysLeft} ${dayWord} from now). Add a payment method: ${url}`,
       };
     }
   }

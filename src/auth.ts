@@ -38,6 +38,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: eq(schema.users.email, email.toLowerCase()),
         });
         if (!user || !user.passwordHash) return null;
+        // Reject login attempts for soft-deleted accounts. The user is in
+        // the 30-day grace window before purge; treat as if the account
+        // doesn't exist.
+        if (user.deletedAt) return null;
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
@@ -94,6 +98,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
           // User was deleted — invalidate any lingering tokens.
           if (!dbUser) return null;
+          // Soft-deleted: account is in the 30-day grace window. Sign them
+          // out everywhere; the deleteAccountAction also bumped
+          // sessionsValidFrom, but check deletedAt directly as belt-and-
+          // suspenders.
+          if (dbUser.deletedAt) return null;
           if (isTokenRevoked(token.iat, dbUser.sessionsValidFrom ?? null)) {
             return null;
           }

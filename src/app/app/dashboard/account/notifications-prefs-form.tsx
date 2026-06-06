@@ -12,6 +12,7 @@ const DEFAULTS: Record<NotificationKind, boolean> = {
   evidence_sealed: true,
   supervisor_rule_not_set: false,
   attestation_overdue: true,
+  trial_ending_soon: true,
 };
 
 const KIND_META: Record<
@@ -48,6 +49,11 @@ const KIND_META: Record<
     description:
       "A blocker-severity gap is over 7 days old and still unresolved.",
   },
+  trial_ending_soon: {
+    label: "Trial ending soon",
+    description:
+      "Heads-up 3 days before your free trial ends so you can add a payment method.",
+  },
 };
 
 const ORDER: NotificationKind[] = [
@@ -57,6 +63,7 @@ const ORDER: NotificationKind[] = [
   "evidence_sealed",
   "supervisor_rule_not_set",
   "attestation_overdue",
+  "trial_ending_soon",
 ];
 
 export function NotificationsPrefsForm({

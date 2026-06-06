@@ -81,6 +81,10 @@ export const users = pgTable("users", {
    *  whose ruleId is older than the latest available version (and still sends
    *  a rule_changed notification as a heads-up). Default false. */
   autoApplyRuleUpdates: boolean("auto_apply_rule_updates").notNull().default(false),
+  /** Soft-delete timestamp. Set by the "Delete my account" action. The user
+   *  is signed out immediately and existing sessions reject in auth.ts. A
+   *  daily cron pass purges rows 30 days after this date. NULL = active. */
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 /** Discriminated set of notification kinds — keep in sync with notifications kinds in src/lib/notifications.ts */
@@ -88,6 +92,7 @@ export type NotificationKind =
   | "invite_accepted"
   | "signature_needed"
   | "rule_changed"
+  | "trial_ending_soon"
   | "evidence_sealed"
   | "supervisor_rule_not_set"
   | "attestation_overdue";
@@ -455,4 +460,30 @@ export const notifications = pgTable("notifications", {
   /** Set when the email side-effect succeeded. Used so daily cron dedup
    *  knows not to email a stale notification a second time. */
   emailedAt: timestamp("emailed_at", { withTimezone: true }),
+});
+
+// ===========================================================================
+// Rule-drift monitoring: per-rule snapshot of the citation URL hash.
+// One row per ruleId. The weekly cron fetches the URL, hashes the body,
+// upserts here. /admin/rule-drift lists all snapshots so a human can verify
+// changes before deciding to ship a new rule version YAML.
+// ===========================================================================
+
+export const ruleSourceSnapshots = pgTable("rule_source_snapshots", {
+  /** Matches the rule loader's id, e.g. "nc-lcmhca-v1". */
+  ruleId: text("rule_id").primaryKey(),
+  /** The citation.url we fetched. */
+  url: text("url").notNull(),
+  /** SHA-256 hex of the response body. */
+  contentHash: text("content_hash").notNull(),
+  /** "ok" | "changed" | "error". "changed" sticks until a human acknowledges
+   *  by updating verification.last_verified_at + source_hash in the rule YAML
+   *  and the next cron pass sees the new hash matches. */
+  status: text("status").notNull(),
+  lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }).notNull(),
+  lastChangedAt: timestamp("last_changed_at", { withTimezone: true }).notNull(),
+  /** HTTP status from the last fetch (null on network error). */
+  httpStatus: integer("http_status"),
+  /** Last error message — populated when status="error". */
+  errorMessage: text("error_message"),
 });
