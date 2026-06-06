@@ -1,3 +1,21 @@
+/**
+ * Standard drizzle migration runner.
+ *
+ * IMPORTANT: drizzle/meta/_journal.json was historically only kept current
+ * through migration 0003. Subsequent migrations (0004+) were applied via
+ * out-of-band paths, leaving the journal out of sync with both the SQL files
+ * on disk and the __drizzle_migrations rows in the DB. As a result, this
+ * script may report "Done." while doing nothing for newly added SQL files.
+ *
+ * Workflow for adding a new migration:
+ *   1. Add the SQL file under /drizzle/NNNN_*.sql as usual.
+ *   2. Add an entry under REPAIR_TARGETS in scripts/repair-migrations.ts
+ *      with a sentinel SQL fragment that returns >0 rows once applied.
+ *   3. Run `npx tsx scripts/repair-migrations.ts` to apply it.
+ *
+ * The repair script is idempotent — it checks the sentinel before running
+ * the SQL — so it's safe to commit and re-run from any environment.
+ */
 import { config } from "dotenv";
 config({ path: ".env.local" });
 config({ path: ".env" });

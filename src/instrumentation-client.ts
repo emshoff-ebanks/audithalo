@@ -37,6 +37,45 @@ if (dsn) {
     // Structured logs via Sentry.logger.* — see SKILL.md "Logging".
     enableLogs: true,
 
+    // Browser extensions and content scripts (ad blockers, password managers)
+    // frequently intercept fetch / XHR and reject promises with non-Error
+    // values like { code, message }. These show up as "Object captured as
+    // promise rejection with keys: code, message" with no stack trace —
+    // un-actionable noise. Drop them server-side instead of paying for the
+    // events.
+    ignoreErrors: [
+      /Object captured as promise rejection with keys: code, message/,
+      // Common ResizeObserver chatter from charts / virtualized lists.
+      /ResizeObserver loop/,
+    ],
+
+    // When something IS captured as a non-Error promise rejection, default
+    // Sentry only records the key names. Surface the actual object so the
+    // next event of this shape is debuggable. Cheap — runs only on captured
+    // events, not every promise.
+    beforeSend(event, hint) {
+      const original = hint?.originalException;
+      if (
+        original &&
+        typeof original === "object" &&
+        !(original instanceof Error)
+      ) {
+        try {
+          const serialized = JSON.stringify(
+            original,
+            Object.getOwnPropertyNames(original as object)
+          ).slice(0, 500);
+          const exc = event.exception?.values?.[0];
+          if (exc) {
+            exc.value = `Non-Error rejection: ${serialized}`;
+          }
+        } catch {
+          // best-effort; original event passes through unchanged
+        }
+      }
+      return event;
+    },
+
     integrations: [
       Sentry.replayIntegration({
         // Mask all text — supervisee names, session notes, attestation values.

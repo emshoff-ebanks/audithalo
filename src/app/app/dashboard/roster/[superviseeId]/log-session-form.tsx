@@ -19,11 +19,23 @@ export function LogSessionForm({
     FormData
   >(logSessionAction, undefined);
   const [kind, setKind] = useState<"practice" | "supervision">("practice");
+  // Today's date computed on the client only — using `new Date()` in the
+  // initial render would mismatch hydration when the server's UTC "today"
+  // disagrees with the user's local-timezone "today" (e.g. user in PT after 4PM).
+  const [todayLocal, setTodayLocal] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state?.ok) formRef.current?.reset();
   }, [state]);
+
+  useEffect(() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    setTodayLocal(`${y}-${m}-${day}`);
+  }, []);
 
   return (
     <form ref={formRef} action={formAction} className="space-y-3">
@@ -55,7 +67,9 @@ export function LogSessionForm({
             name="date"
             type="date"
             required
-            defaultValue={new Date().toISOString().slice(0, 10)}
+            // Empty on first render (matches SSR), populated post-mount.
+            key={todayLocal || "empty"}
+            defaultValue={todayLocal}
             className="mt-1.5"
           />
         </div>
