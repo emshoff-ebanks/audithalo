@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
-import { riskBadgeVariant, riskBadgeLabel } from "@/lib/rules";
+import { loadAllRules, riskBadgeVariant, riskBadgeLabel } from "@/lib/rules";
 import { getOrgRosterWithCompliance } from "@/lib/db/roster-queries";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -352,7 +352,16 @@ export default async function RosterPage({
         <Card>
           <CardContent className="p-6">
             <p className="label-overline mb-3">Invite a supervisee</p>
-            <InviteForm />
+            <InviteForm
+              availableRules={[...loadAllRules().values()].map((r) => {
+                const id = `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`;
+                return {
+                  id,
+                  label: `${r.jurisdiction} ${r.license_code} v${r.version}`,
+                  summary: r.summary,
+                };
+              })}
+            />
           </CardContent>
         </Card>
       </div>

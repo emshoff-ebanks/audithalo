@@ -17,9 +17,22 @@ import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
 
+// Optional rule + dates the supervisor can pin at invite-time so the
+// supervisee's rule assignment is created atomically with their org membership
+// on accept. ruleId must be a known rule (validated in the action). Dates are
+// YYYY-MM-DD strings to match the assign-rule form.
 const inviteSchema = z.object({
   email: z.string().email("Enter a valid email address."),
   name: z.string().optional(),
+  ruleId: z.string().optional(),
+  obligationStartedAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD")
+    .optional(),
+  supervisionContractFiledAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD")
+    .optional(),
 });
 
 const invitationIdSchema = z.object({
@@ -46,6 +59,10 @@ export async function inviteSuperviseeAction(
   const parsed = inviteSchema.safeParse({
     email: formData.get("email"),
     name: formData.get("name") || undefined,
+    ruleId: formData.get("ruleId") || undefined,
+    obligationStartedAt: formData.get("obligationStartedAt") || undefined,
+    supervisionContractFiledAt:
+      formData.get("supervisionContractFiledAt") || undefined,
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
@@ -60,15 +77,46 @@ export async function inviteSuperviseeAction(
     return { ok: false, error: "Only supervisors can invite supervisees." };
   }
 
-  // If the email already corresponds to a registered user, surface a clear error.
+  // If a rule is pinned, validate the (rule, start-date) pair. Start date is
+  // required whenever a rule is picked — the assignment table won't accept null.
+  if (parsed.data.ruleId && !parsed.data.obligationStartedAt) {
+    return {
+      ok: false,
+      error: "Pick an obligation start date for the assigned rule.",
+    };
+  }
+  const pendingRuleId = parsed.data.ruleId
+    ? parsed.data.ruleId.toLowerCase()
+    : null;
+  const pendingObligationStartedAt = parsed.data.obligationStartedAt
+    ? new Date(`${parsed.data.obligationStartedAt}T00:00:00Z`)
+    : null;
+  const pendingContractFiledAt = parsed.data.supervisionContractFiledAt
+    ? new Date(`${parsed.data.supervisionContractFiledAt}T00:00:00Z`)
+    : null;
+
+  // If the email already corresponds to a registered user, the existing user
+  // can still join — they accept via the same /accept-invite/<token> link and
+  // the action recognizes they're already signed up (skips create-account).
+  // This is the "convert-on-accept" path: no friction-y error, but the
+  // supervisee still has to consent before they show up on the roster.
   const existing = await db.query.users.findFirst({
     where: eq(schema.users.email, inviteEmail),
   });
   if (existing) {
-    return {
-      ok: false,
-      error: "That email already has an AuditHalo account. Ask them to sign in.",
-    };
+    // Check they aren't already a member of this org with the same role.
+    const dupMembership = await db.query.orgMemberships.findFirst({
+      where: and(
+        eq(schema.orgMemberships.userId, existing.id),
+        eq(schema.orgMemberships.orgId, membership.orgId)
+      ),
+    });
+    if (dupMembership) {
+      return {
+        ok: false,
+        error: "That person is already on your roster.",
+      };
+    }
   }
 
   // Re-issue if a non-accepted invitation already exists for this email + org.
@@ -89,6 +137,9 @@ export async function inviteSuperviseeAction(
         expiresAt: invitationExpiresAt(),
         invitedById: session.user.id,
         name: parsed.data.name ?? openInvite.name,
+        pendingRuleId,
+        pendingObligationStartedAt,
+        pendingContractFiledAt,
       })
       .where(eq(schema.invitations.id, openInvite.id));
     await sendInviteEmail({
@@ -160,6 +211,9 @@ export async function inviteSuperviseeAction(
       tokenHash: hashToken(token),
       invitedById: session.user.id,
       expiresAt: invitationExpiresAt(),
+      pendingRuleId,
+      pendingObligationStartedAt,
+      pendingContractFiledAt,
     })
     .returning({ id: schema.invitations.id });
 

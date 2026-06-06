@@ -260,6 +260,15 @@ export const invitations = pgTable("invitations", {
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   acceptedAt: timestamp("accepted_at", { withTimezone: true }),
   acceptedById: uuid("accepted_by_id").references(() => users.id),
+  // Optional rule + dates pinned at invite-time. When set, accept-invite writes
+  // a superviseeRuleAssignments row in the same transaction as the membership.
+  pendingRuleId: text("pending_rule_id"),
+  pendingObligationStartedAt: timestamp("pending_obligation_started_at", {
+    withTimezone: true,
+  }),
+  pendingContractFiledAt: timestamp("pending_contract_filed_at", {
+    withTimezone: true,
+  }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
