@@ -67,14 +67,6 @@ export default function MarketingHome() {
         <Badge variant="outline" className="mb-6">
           Clinical supervision compliance software
         </Badge>
-        {/*
-         * Locked tagline (brand-voice.md). Renders as a small kicker above
-         * the SEO-locked H1 — visible on the brand, doesn't disrupt the H1
-         * that's earning rankings.
-         */}
-        <p className="mb-4 text-sm font-medium tracking-wide text-secondary uppercase">
-          Audit-ready supervision. Every hour, every state, every signature.
-        </p>
         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-3xl leading-[1.05]">
           State-board compliance software for mental health supervisors.
         </h1>
@@ -106,18 +98,6 @@ export default function MarketingHome() {
             <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
             Supervisee accounts always free
           </span>
-        </div>
-      </section>
-
-      {/* Wedge band — the comparison we win on. Sits between the hero and
-          the value pillars so it's read in the same scroll as the H1. */}
-      <section className="border-t border-border bg-foreground">
-        <div className="mx-auto max-w-4xl px-6 py-12 sm:py-16 text-center">
-          <p className="font-display text-2xl sm:text-3xl font-semibold text-background leading-snug">
-            Every EHR helps you do the work.
-            <br className="hidden sm:block" />
-            <span className="text-[color:var(--color-gold)]"> AuditHalo proves you did the work.</span>
-          </p>
         </div>
       </section>
 

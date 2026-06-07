@@ -3,17 +3,24 @@
 ## Tagline (locked)
 **"Audit-ready supervision. Every hour, every state, every signature."**
 
-Use as the kicker above the home H1 and as the recurring footer line sitewide. Don't relegate to a "tagline alternatives" list — this is the line.
+The recurring footer line sitewide and the headline voice for outreach,
+ads, and cold-email subject lines. Don't relegate to a "tagline alternatives"
+list — this is the line. Kept off the home hero for now so it doesn't
+compete with the SEO-locked H1.
 
 ## Campaign headline (solo supervisor)
 **"When the board asks, the answer's already in a folder."**
 
-Use as the hero subhead on `/for-supervisors`. Pairs with the tagline; never replaces the H1.
+Use as the hero subhead on `/for-supervisors`. Pairs with the tagline; never
+replaces the H1.
 
 ## Wedge sentence (the comparison we win on)
 **"Every EHR helps you do the work. AuditHalo proves you did the work."**
 
-Use as a comparison band on the home page between the hero and the value pillars. Treat it as the canonical answer when a prospect asks "why not just use my EHR?"
+Treat as the canonical answer when a prospect asks "why not just use my
+EHR?" — bake it into cold-email copy, ad headlines, and community-thread
+replies. Not on the home page in current build (visual treatment didn't
+land); revisit if a better treatment emerges.
 
 ## Positioning Statement
 AuditHalo is the clinical supervision *compliance* platform — distinct from EHRs (which document the work) and hour-trackers (which count what you've done). Our category is supervision-compliance documentation: tamper-evident, citation-linked, board-ready packages keyed to each state's exact admin code. Built for licensed supervisors in NC, CA, TX, FL, and NY.
