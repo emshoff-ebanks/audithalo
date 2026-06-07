@@ -24,16 +24,21 @@ const DEMO_EMAILS = [
   "demo-supervisee3@audithalo.com",
 ];
 
+// All date math is in UTC to match the start dates (which are written as
+// "2023-01-01T00:00:00Z"). Using local-tz setDate/setMonth would land
+// practice events a day or month earlier when the seed runs in any
+// timezone west of UTC — which was firing the "hours logged before the
+// supervision contract was filed" gap on every supervisee.
 function addMonths(date: Date, months: number): Date {
   const d = new Date(date);
-  d.setMonth(d.getMonth() + months);
+  d.setUTCMonth(d.getUTCMonth() + months);
   return d;
 }
 
 function dateInMonth(base: Date, monthOffset: number, dayOfMonth = 10): Date {
   const d = addMonths(base, monthOffset);
-  d.setDate(dayOfMonth);
-  d.setHours(9, 0, 0, 0);
+  d.setUTCDate(dayOfMonth);
+  d.setUTCHours(9, 0, 0, 0);
   return d;
 }
 
@@ -45,6 +50,7 @@ interface PracticeEventRow {
   durationHours: number;
   loggedById: string;
   signatures: schema.SessionSignature[];
+  signedAt: Date | null;
 }
 
 interface SupervisionEventRow {
@@ -57,6 +63,7 @@ interface SupervisionEventRow {
   supervisorCredentials: string[];
   loggedById: string;
   signatures: schema.SessionSignature[];
+  signedAt: Date | null;
 }
 
 type SessionEventRow = PracticeEventRow | SupervisionEventRow;
@@ -78,35 +85,126 @@ function buildPracticeEvents(
       durationHours: hoursPerMonth,
       loggedById: superviseeId,
       signatures: [],
+      signedAt: null,
     });
   }
   return events;
 }
 
-function buildSupervisionEvents(
+/**
+ * Bi-weekly supervision cadence with a week-1 intake ramp. Three sessions
+ * in the first 8 days (intake) plus bi-weekly thereafter from day 22.
+ *
+ * Why the intake ramp: the supervision_ratio_per_practice_block check
+ * walks the timeline chronologically and verifies that supervision hours
+ * accumulate fast enough to cover each 40-hour practice block. With our
+ * monthly 70-80hr practice events, the very first month dumps two blocks'
+ * worth of hours at once; without enough supervision banked beforehand the
+ * second block lands uncovered and shows up as a "1 block lacks the
+ * required supervision" gap on the detail page. Three intake sessions
+ * (3 × hoursPerSession ≥ 2 hrs) cover both blocks on the first practice
+ * event, and from there the rolling cadence keeps a positive buffer.
+ *
+ * NC LCMHCA's individual_supervision_cadence rule also caps the
+ * session-to-session gap at 14 days, so the bi-weekly schedule is tight.
+ */
+function buildSupervisionEventsBiweekly(
   superviseeId: string,
   orgId: string,
   supervisorId: string,
   startDate: Date,
-  monthCount: number,
-  intervalMonths: number,
+  durationMonths: number,
   hoursPerSession: number
 ): SupervisionEventRow[] {
   const events: SupervisionEventRow[] = [];
-  for (let m = 0; m < monthCount; m += intervalMonths) {
+  const endDate = addMonths(startDate, durationMonths);
+
+  function push(date: Date) {
     events.push({
       superviseeId,
       orgId,
       kind: "supervision",
-      date: dateInMonth(startDate, Math.floor(m), 15),
+      date,
       durationHours: hoursPerSession,
       sessionType: "individual",
       supervisorCredentials: ["LCMHCS"],
       loggedById: supervisorId,
       signatures: [],
+      signedAt: null,
     });
   }
+
+  // Intake ramp — 3 sessions in days 0, 4, 8.
+  for (const offset of [0, 4, 8]) {
+    const d = new Date(startDate);
+    d.setUTCDate(d.getUTCDate() + offset);
+    d.setUTCHours(10, 0, 0, 0);
+    if (d < endDate) push(d);
+  }
+  // Bi-weekly thereafter, starting at day 22 (14 days after the last intake).
+  const current = new Date(startDate);
+  current.setUTCDate(current.getUTCDate() + 22);
+  current.setUTCHours(10, 0, 0, 0);
+  while (current < endDate) {
+    push(new Date(current));
+    current.setUTCDate(current.getUTCDate() + 14);
+  }
   return events;
+}
+
+/**
+ * Apply (supervisor, supervisee) signatures to a supervision event. Signed
+ * 2 days after the session date — typical "I'll sign it in the next session
+ * window" cadence. Returns a new event with signatures + signedAt populated.
+ */
+function signSupervisionEvent(
+  event: SupervisionEventRow,
+  signers: {
+    supervisor: { id: string; name: string };
+    supervisee: { id: string; name: string };
+  }
+): SupervisionEventRow {
+  const signedDate = new Date(event.date.getTime() + 2 * 24 * 60 * 60 * 1000);
+  const signedAtIso = signedDate.toISOString();
+  return {
+    ...event,
+    signedAt: signedDate,
+    signatures: [
+      {
+        signerId: signers.supervisor.id,
+        signerName: signers.supervisor.name,
+        signerRole: "supervisor",
+        signedAt: signedAtIso,
+        ipAddress: "192.0.2.10",
+        intentConfirmed: true,
+      },
+      {
+        signerId: signers.supervisee.id,
+        signerName: signers.supervisee.name,
+        signerRole: "supervisee",
+        signedAt: signedAtIso,
+        ipAddress: "192.0.2.11",
+        intentConfirmed: true,
+      },
+    ],
+  };
+}
+
+/**
+ * Sign all but the last `unsignedTailCount` supervision events. The tail
+ * stays unsigned to simulate a realistic "I haven't gotten around to signing
+ * the recent ones yet" backlog. Set unsignedTailCount=0 for a fully-clean
+ * "on-track" supervisee.
+ */
+function applySignatures(
+  events: SupervisionEventRow[],
+  signers: Parameters<typeof signSupervisionEvent>[1],
+  unsignedTailCount: number
+): SupervisionEventRow[] {
+  const signedCount = Math.max(0, events.length - unsignedTailCount);
+  return events.map((e, i) =>
+    i < signedCount ? signSupervisionEvent(e, signers) : e
+  );
 }
 
 export async function runDemoSeed(): Promise<{ supervisorId: string }> {
@@ -195,9 +293,16 @@ export async function runDemoSeed(): Promise<{ supervisorId: string }> {
     { orgId: org.id, userId: riley.id, role: "supervisee" },
   ]);
 
-  const jamieStart = new Date("2024-06-01T00:00:00Z");
-  const morganStart = new Date("2025-01-01T00:00:00Z");
-  const rileyStart = new Date("2023-01-01T00:00:00Z");
+  // Anchor obligation start dates to NOW so the bi-weekly supervision
+  // cadence keeps a session within the trailing 14-day window — otherwise
+  // `individual_supervision_cadence` fires a yellow "X days since the last
+  // individual supervision" gap on every supervisee the morning after the
+  // seed runs.
+  const now = new Date();
+  const monthsAgo = (n: number) => addMonths(now, -n);
+  const jamieStart = monthsAgo(24);
+  const morganStart = monthsAgo(5);
+  const rileyStart = monthsAgo(36);
 
   await db.insert(schema.superviseeRuleAssignments).values([
     {
@@ -223,17 +328,47 @@ export async function runDemoSeed(): Promise<{ supervisorId: string }> {
     },
   ]);
 
+  const supervisorSigner = {
+    id: supervisor.id,
+    name: "Dr. Alex Rivera",
+  };
+
+  // Jamie: 24 months in, healthy bi-weekly cadence, but 3 most-recent
+  // supervision sessions still need her signature — the realistic backlog
+  // a supervisor would actually have to follow up on. Drives the "Needs
+  // attention" panel and the yellow risk badge on her roster row.
+  const jamieSupervision = applySignatures(
+    buildSupervisionEventsBiweekly(jamie.id, org.id, supervisor.id, jamieStart, 24, 1.25),
+    { supervisor: supervisorSigner, supervisee: { id: jamie.id, name: "Jamie Chen" } },
+    3
+  );
   const jamieEvents: SessionEventRow[] = [
     ...buildPracticeEvents(jamie.id, org.id, jamieStart, 24, 80),
-    ...buildSupervisionEvents(jamie.id, org.id, supervisor.id, jamieStart, 24, 1, 1),
+    ...jamieSupervision,
   ];
+
+  // Morgan: just starting (5 months in). Everything signed; her risk vector
+  // is hours-to-deadline, not paperwork hygiene. Green-on-track-early.
+  const morganSupervision = applySignatures(
+    buildSupervisionEventsBiweekly(morgan.id, org.id, supervisor.id, morganStart, 5, 1),
+    { supervisor: supervisorSigner, supervisee: { id: morgan.id, name: "Morgan Taylor" } },
+    0
+  );
   const morganEvents: SessionEventRow[] = [
     ...buildPracticeEvents(morgan.id, org.id, morganStart, 5, 70),
-    ...buildSupervisionEvents(morgan.id, org.id, supervisor.id, morganStart, 5, 1, 1),
+    ...morganSupervision,
   ];
+
+  // Riley: near-licensure (95%, 36 months). Fully signed, clean record —
+  // the "sealed evidence package" payoff narrative.
+  const rileySupervision = applySignatures(
+    buildSupervisionEventsBiweekly(riley.id, org.id, supervisor.id, rileyStart, 36, 1.3),
+    { supervisor: supervisorSigner, supervisee: { id: riley.id, name: "Riley Park" } },
+    0
+  );
   const rileyEvents: SessionEventRow[] = [
     ...buildPracticeEvents(riley.id, org.id, rileyStart, 36, 80),
-    ...buildSupervisionEvents(riley.id, org.id, supervisor.id, rileyStart, 36, 1, 2.56),
+    ...rileySupervision,
   ];
 
   const sampleAiNote = {
@@ -258,6 +393,11 @@ export async function runDemoSeed(): Promise<{ supervisorId: string }> {
   };
 
   const recentSupervisionDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+  // Sign the AI-note event so the "wow demo" supervision row appears
+  // fully sealed in the audit trail (rather than perpetually in the
+  // signature queue). Backdate the signature timestamp by 4 days so it's
+  // realistic relative to the session date.
+  const aiNoteSignedAt = new Date(recentSupervisionDate.getTime() + 24 * 60 * 60 * 1000);
   const aiNoteEvent = {
     superviseeId: jamie.id,
     orgId: org.id,
@@ -267,7 +407,25 @@ export async function runDemoSeed(): Promise<{ supervisorId: string }> {
     sessionType: "individual" as const,
     supervisorCredentials: ["LCMHCS"],
     loggedById: supervisor.id,
-    signatures: [] as schema.SessionSignature[],
+    signatures: [
+      {
+        signerId: supervisor.id,
+        signerName: "Dr. Alex Rivera",
+        signerRole: "supervisor",
+        signedAt: aiNoteSignedAt.toISOString(),
+        ipAddress: "192.0.2.10",
+        intentConfirmed: true,
+      },
+      {
+        signerId: jamie.id,
+        signerName: "Jamie Chen",
+        signerRole: "supervisee",
+        signedAt: aiNoteSignedAt.toISOString(),
+        ipAddress: "192.0.2.11",
+        intentConfirmed: true,
+      },
+    ] as schema.SessionSignature[],
+    signedAt: aiNoteSignedAt,
     aiNote: sampleAiNote,
   };
 
@@ -291,7 +449,8 @@ export async function runDemoSeed(): Promise<{ supervisorId: string }> {
             ? (e as SupervisionEventRow).supervisorCredentials
             : undefined,
         loggedById: e.loggedById,
-        signatures: [],
+        signatures: e.signatures,
+        signedAt: e.signedAt,
       }))
     );
   }

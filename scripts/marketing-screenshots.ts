@@ -142,20 +142,18 @@ async function captureSupervisor(
   const page = await ctx.newPage();
   await login(page, SUPERVISOR_EMAIL);
 
-  await shot(page, `${suffix}-supervisor-dashboard`, {
-    fullPage: suffix === "desktop",
-  });
+  await shot(page, `${suffix}-supervisor-dashboard`);
 
   const ids = await getRosterIds(page);
-  await shot(page, `${suffix}-supervisor-roster`, { fullPage: true });
+  await shot(page, `${suffix}-supervisor-roster`);
 
   for (const [name, id] of ids) {
     await page.goto(`${APP_URL}/dashboard/roster/${id}`);
-    await shot(page, `${suffix}-supervisee-detail-${name}`, { fullPage: true });
+    await shot(page, `${suffix}-supervisee-detail-${name}`);
   }
 
   await page.goto(`${APP_URL}/dashboard/account`);
-  await shot(page, `${suffix}-supervisor-account`, { fullPage: true });
+  await shot(page, `${suffix}-supervisor-account`);
 
   await page.goto(`${APP_URL}/dashboard/billing`);
   await shot(page, `${suffix}-supervisor-billing`);
@@ -177,7 +175,7 @@ async function captureSupervisee(
   const page = await ctx.newPage();
   await login(page, SUPERVISEE_EMAILS[who]);
 
-  await shot(page, `${suffix}-supervisee-${who}-dashboard`, { fullPage: true });
+  await shot(page, `${suffix}-supervisee-${who}-dashboard`);
 
   await ctx.close();
 }
