@@ -13,6 +13,7 @@ import { generateEvidencePackage } from "@/lib/evidence";
 import { sendCountersignatureNeededEmail } from "@/lib/email";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { createNotification } from "@/lib/notifications";
+import { capture } from "@/lib/observability/posthog-server";
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -113,6 +114,25 @@ export async function signSessionAction(
   const fullySigned = rows[0].signed_at !== null;
   if (fullySigned) {
     await generateEvidencePackage(sessionEvent.id);
+  }
+
+  capture("signature_completed", session.user.id, {
+    orgId: sessionEvent.orgId,
+    sessionEventId: sessionEvent.id,
+    superviseeId: sessionEvent.superviseeId,
+    signerRole,
+    fullySigned,
+  });
+
+  if (fullySigned) {
+    // North-star activation event — fires once both signers complete the
+    // session and the tamper-evident package has been generated.
+    capture("evidence_package_sealed", session.user.id, {
+      orgId: sessionEvent.orgId,
+      sessionEventId: sessionEvent.id,
+      superviseeId: sessionEvent.superviseeId,
+      sessionType: sessionEvent.sessionType ?? null,
+    });
   }
 
   try {

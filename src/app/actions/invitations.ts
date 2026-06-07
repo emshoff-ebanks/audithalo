@@ -14,6 +14,7 @@ import {
 import { sendEmail } from "@/lib/email";
 import { seatCapBlockedReason } from "@/lib/billing/seats";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
+import { capture } from "@/lib/observability/posthog-server";
 
 const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
 
@@ -239,6 +240,12 @@ export async function inviteSuperviseeAction(
   } catch (err) {
     console.error("[audit-log] failed to record invitation.sent:", err);
   }
+
+  capture("supervisee_added", session.user.id, {
+    orgId: membership.orgId,
+    invitationId: insertedInvitation.id,
+    pinnedRuleAtInvite: !!pendingRuleId,
+  });
 
   revalidatePath("/dashboard/roster");
   return { ok: true, sentTo: inviteEmail };

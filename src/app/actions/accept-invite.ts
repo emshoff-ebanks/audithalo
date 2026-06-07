@@ -10,6 +10,7 @@ import { hashToken } from "@/lib/invitations";
 import { auth, signIn } from "@/auth";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { createNotification } from "@/lib/notifications";
+import { capture } from "@/lib/observability/posthog-server";
 
 // Shared shape: the invitation token. Separate schemas for the new-account and
 // existing-user paths because the new-account path requires (name, password)
@@ -132,6 +133,12 @@ export async function acceptInviteAction(
     console.error("[audit-log] failed to record invitation.accepted:", err);
   }
 
+  capture("supervisee_signup_free", user.id, {
+    orgId: invite.orgId,
+    invitationId: invite.id,
+    invitedById: invite.invitedById,
+    pinnedRuleAtInvite: !!invite.pendingRuleId,
+  });
 
   // Bust the inviting supervisor's cached dashboard + roster so the new
   // supervisee appears on their next navigation (no stale 404 / empty row).

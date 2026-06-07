@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
 import { PRICES, requireStripe, tierFromPriceId } from "@/lib/stripe";
 import { db, schema } from "@/lib/db";
+import { capture } from "@/lib/observability/posthog-server";
 
 export const runtime = "nodejs";
 
@@ -30,6 +31,13 @@ async function syncSubscription(sub: Stripe.Subscription) {
     }
   }
 
+  // Detect the trial → paid transition before we overwrite the row, so we
+  // can fire the `trial_converted` event with the prior status as context.
+  const prior = await db.query.organizations.findFirst({
+    where: eq(schema.organizations.id, orgId),
+    columns: { createdById: true, subscriptionStatus: true },
+  });
+
   await db
     .update(schema.organizations)
     .set({
@@ -40,6 +48,20 @@ async function syncSubscription(sub: Stripe.Subscription) {
       seatCount,
     })
     .where(eq(schema.organizations.id, orgId));
+
+  // Fire `trial_converted` exactly on the trialing → active transition.
+  // Other status changes (active → past_due, etc.) don't qualify.
+  if (
+    prior?.subscriptionStatus === "trialing" &&
+    sub.status === "active" &&
+    prior.createdById
+  ) {
+    capture("trial_converted", prior.createdById, {
+      orgId,
+      tier: tier ?? null,
+      seatCount,
+    });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -95,6 +117,23 @@ export async function POST(req: NextRequest) {
       if (typeof sess.subscription === "string") {
         const sub = await stripe.subscriptions.retrieve(sess.subscription);
         await syncSubscription(sub);
+
+        // Fire `supervisor_trial_start` once per new subscription. The org
+        // owner (createdById) is the supervisor who clicked Subscribe.
+        const orgId = sub.metadata?.orgId;
+        if (orgId) {
+          const org = await db.query.organizations.findFirst({
+            where: eq(schema.organizations.id, orgId),
+            columns: { createdById: true, subscriptionTier: true },
+          });
+          if (org?.createdById) {
+            capture("supervisor_trial_start", org.createdById, {
+              orgId,
+              tier: org.subscriptionTier ?? null,
+              status: sub.status,
+            });
+          }
+        }
       }
       break;
     }

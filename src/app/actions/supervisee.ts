@@ -11,6 +11,7 @@ import { getRule, listRuleIds } from "@/lib/rules";
 import { sendRuleChangedEmail } from "@/lib/email";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { createNotification } from "@/lib/notifications";
+import { capture } from "@/lib/observability/posthog-server";
 
 /**
  * Resolves a stored rule ID (e.g. "nc-lcmhca-v1") into a human-friendly label
@@ -135,6 +136,14 @@ export async function assignRuleAction(
   } catch (err) {
     console.error("[audit-log] failed to record rule assignment:", err);
   }
+
+  capture("state_rule_selected", access.session.user.id, {
+    orgId,
+    superviseeId: parsed.data.superviseeId,
+    ruleId: parsed.data.ruleId,
+    priorRuleId: priorAssignment?.ruleId ?? null,
+    isReassignment: !!priorAssignment,
+  });
 
   // Notify the supervisee that their rule changed, but ONLY when:
   //   (a) there was a prior assignment (first-time assignment uses a different flow)
@@ -294,6 +303,15 @@ export async function logSessionAction(
   } catch (err) {
     console.error("[audit-log] failed to record session.logged:", err);
   }
+
+  capture("session_logged", session.user.id, {
+    orgId,
+    superviseeId: parsed.data.superviseeId,
+    sessionEventId: insertedId,
+    kind: parsed.data.kind,
+    durationHours: parsed.data.durationHours,
+    sessionType: parsed.data.sessionType ?? null,
+  });
 
   // Notify supervisee if this is a supervision event (practice events don't
   // need signatures). createNotification writes the bell row and (when the
