@@ -57,4 +57,7 @@ export const AUDIT_ACTIONS = {
   // Attestations (Phase 5.2)
   ATTESTATION_CREATED: "attestation.created",
   ATTESTATION_REVOKED: "attestation.revoked",
+  // Founding Supervisor program (NIM-4)
+  FOUNDING_SUPERVISOR_GRANTED: "user.founding_supervisor_granted",
+  FOUNDING_SUPERVISOR_REVOKED: "user.founding_supervisor_revoked",
 } as const;

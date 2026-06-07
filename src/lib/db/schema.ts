@@ -85,6 +85,12 @@ export const users = pgTable("users", {
    *  is signed out immediately and existing sessions reject in auth.ts. A
    *  daily cron pass purges rows 30 days after this date. NULL = active. */
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  /** Cycle 2 / NIM-4. Flag set by the admin action when a Founding
+   *  Supervisor application is approved. Renders a badge in the dashboard
+   *  header and reserves the user for future early-access feature branches. */
+  isFoundingSupervisor: boolean("is_founding_supervisor")
+    .notNull()
+    .default(false),
 });
 
 /** Discriminated set of notification kinds — keep in sync with notifications kinds in src/lib/notifications.ts */

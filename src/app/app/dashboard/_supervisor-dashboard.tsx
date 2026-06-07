@@ -38,7 +38,10 @@ export async function SupervisorDashboard({
     }),
     db.query.users.findFirst({
       where: eq(schema.users.id, userId),
-      columns: { supervisorTrainingHours: true },
+      columns: {
+        supervisorTrainingHours: true,
+        isFoundingSupervisor: true,
+      },
     }),
   ]);
 
@@ -109,7 +112,17 @@ export async function SupervisorDashboard({
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
-      <Badge variant="outline" className="mb-4">Dashboard</Badge>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Badge variant="outline">Dashboard</Badge>
+        {viewer?.isFoundingSupervisor && (
+          <Badge
+            variant="outline"
+            className="border-[color:var(--color-gold)] bg-[color:var(--color-gold)]/10 text-[color:var(--color-gold)]"
+          >
+            Founding Supervisor
+          </Badge>
+        )}
+      </div>
       <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground break-words">
         {userName ?? userEmail}
       </h1>
