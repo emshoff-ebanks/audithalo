@@ -12,19 +12,17 @@ const resend = process.env.RESEND_API_KEY
 const APP_URL = process.env.APP_URL ?? "https://audithalo.com";
 
 /**
- * Known lead magnet slugs. Each maps to a downloadable PDF in
- * /public/lead-magnets/. Adding a new magnet means adding a slug here +
- * dropping the PDF in the public folder + mounting the capture component
- * on the magnet's page.
+ * Known lead magnet slugs. Each maps to a dynamic PDF route served from
+ * /lead-magnets/<slug> (see src/app/lead-magnets/[slug]/route.tsx).
+ * Adding a new magnet means adding a slug here + a renderer in the route
+ * handler + mounting the capture component on the magnet's page.
  */
 const MAGNETS = {
   "nc-supervision-audit-checklist": {
     label: "NC Supervision Audit Checklist",
-    filename: "nc-supervision-audit-checklist.pdf",
   },
   "nc-supervision-log-template": {
     label: "NC Supervision Log Template",
-    filename: "nc-supervision-log-template.pdf",
   },
 } as const;
 
@@ -70,7 +68,7 @@ export async function captureLeadMagnetAction(
   }
   const data = parsed.data;
   const magnet = MAGNETS[data.slug as MagnetSlug];
-  const downloadUrl = `${APP_URL}/lead-magnets/${magnet.filename}`;
+  const downloadUrl = `${APP_URL}/lead-magnets/${data.slug}`;
 
   // 1. Resend audience writeback. RESEND_LEAD_MAGNETS_AUDIENCE_ID is a
   // dedicated audience separate from contact + Founding so we can segment
