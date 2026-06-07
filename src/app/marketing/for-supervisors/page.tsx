@@ -144,26 +144,29 @@ const objections = [
   },
 ];
 
+// FAQ — first four answer the most common objections from the marketing
+// playbook (tracker / EHR co-sign / HIPAA / state not listed). The fifth
+// is the practical "how long" question prospects ask once they're sold.
 const faqItems = [
   {
-    q: "Does my supervisee need to pay anything?",
-    a: "No. Supervisee accounts are free, always. You pay for the supervision compliance stack — they get a free dashboard to track their own progress.",
+    q: "My supervisees already use a tracker (Time2Track, etc.). Why switch?",
+    a: "A tracker is a log; AuditHalo is the audit record. Logs count hours. They don't version-lock when a board updates a rule, don't produce a tamper-evident hash-stamped package, and don't capture the intent-confirmed signature a state reviewer wants to see. AuditHalo is what holds up when the board actually asks for proof — not what you use to count.",
   },
   {
-    q: "What happens if my state's requirements change mid-licensure?",
-    a: "We version every rule. When a state board updates requirements, we encode the new rule with an effective date. Your supervisees' in-progress hours stay grandfathered under the rule version they started under — the same protection a licensed attorney would tell them to document.",
+    q: "My EHR has a supervisor co-signature. Isn't that enough?",
+    a: "Co-signature on a clinical note documents the client encounter, not the supervisory relationship. State boards review supervision audits against their admin code — total hours, individual-vs-group ratios, cadence, supervisor credentials at the time of signing — none of which an EHR is built to produce. AuditHalo complements SimplePractice / TherapyNotes / ICANotes; it doesn't replace them.",
   },
   {
-    q: "What does the evidence package actually contain?",
-    a: "A sealed JSON record with: supervisor credentials, supervisee info, session log (date, duration, type), structured session note, all signatures with timestamps and intent confirmations, the rule version in effect, and a SHA-256 hash. It's independently verifiable — hand it to the board and they can confirm it hasn't been altered.",
+    q: "Is my data safe? Is this HIPAA?",
+    a: "Supervision notes in AuditHalo document the supervisory relationship — competencies addressed, supervisor feedback, hour totals — not client treatment records. Data is encrypted in transit and at rest. Evidence packages are independently verifiable by hash. For group practices that need a signed BAA, we're building toward HIPAA-covered enterprise — get in touch via the contact form to discuss specifics.",
   },
   {
-    q: "Can I supervise across multiple states?",
-    a: "Yes. Assign each supervisee the correct state rule, and AuditHalo evaluates their hours against that state's requirements. You can manage a roster spanning multiple states from one dashboard.",
+    q: "What if my state isn't listed?",
+    a: "We launched with NC, CA, TX, FL, and NY because that's where the volume is. Tell us your state — we prioritize encoding new rules by demand. Enterprise customers can request custom state additions on a faster timeline.",
   },
   {
     q: "How long does setup take?",
-    a: "Under 15 minutes to create your account, set up your org, and invite your first supervisee. The supervisee gets an email, creates a free account, and you're tracking.",
+    a: "Under 15 minutes to create your account, set up your org, and invite your first supervisee. The supervisee gets an email, creates a free account, and you're tracking against the live state rule from the next logged session.",
   },
 ];
 
@@ -179,7 +182,15 @@ export default function ForSupervisorsPage() {
         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-4xl leading-[1.05]">
           The supervision compliance system for mental health professionals.
         </h1>
-        <p className="mt-6 text-lg text-foreground/70 max-w-2xl leading-relaxed">
+        {/*
+         * Locked campaign headline (brand-voice.md). Lives as the hero
+         * subhead so it's the first thing a prospect reads after the H1 —
+         * the line that names the outcome they actually want.
+         */}
+        <p className="mt-6 font-display text-xl sm:text-2xl font-medium text-foreground/85 max-w-3xl leading-snug">
+          When the board asks, the answer&apos;s already in a folder.
+        </p>
+        <p className="mt-4 text-lg text-foreground/70 max-w-2xl leading-relaxed">
           AuditHalo is the supervision compliance platform for licensed
           mental health supervisors in NC, CA, TX, FL, and NY. Track every
           supervised hour against the live state rule, capture intent-confirmed

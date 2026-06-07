@@ -1,9 +1,9 @@
 import Link from "next/link";
 import {
   ShieldCheck,
-  FileSignature,
-  Sparkles,
-  BarChart3,
+  Scale,
+  LayoutDashboard,
+  Users,
   CheckCircle2,
   ArrowRight,
 } from "lucide-react";
@@ -21,26 +21,29 @@ export const metadata = {
     "Track pre-licensed mental health counselor hours, signatures, and state-board requirements — then generate audit-ready evidence packages when your board asks. Built for LCMHCA, APCC, LPC-A, RMHCI, and LP-MHC supervisors.",
 };
 
-const features = [
+// The four locked value pillars from the brand voice doc — these are the
+// spine of every marketing page. Same four titles + bodies appear on
+// /features and /for-supervisors so the messaging compounds.
+const valuePillars = [
   {
     icon: ShieldCheck,
-    title: "Multi-state rules engine",
-    body: "Every hour evaluated against your state board's exact requirements. NC LCMHCA, CA APCC, TX LPC-A, FL RMHCI, NY LP-MHC — citation-linked and re-verified quarterly.",
+    title: "Audit-defensible by default.",
+    body: "Every signed session seals into a tamper-evident, SHA-256-hashed evidence package — contemporaneous, citation-linked, independently verifiable. The opposite of a reconstructed log.",
   },
   {
-    icon: Sparkles,
-    title: "AI-assisted session notes",
-    body: "Paste a supervision transcript and get a structured session note — topics covered, competencies addressed, supervisor feedback, next steps. Ready to sign in minutes.",
+    icon: Scale,
+    title: "The rules engine, kept current.",
+    body: "Every hour evaluated against your state's exact admin code — 21 NCAC 53, 22 TAC 681, CCR Title 16, F.A.C. 64B4, NY permit rules. Citation-linked. Versioned. Grandfathered when boards update requirements.",
   },
   {
-    icon: FileSignature,
-    title: "Tamper-evident e-signatures",
-    body: "Supervisor and supervisee sign with intent confirmation. Each evidence package is SHA-256 hashed and immutable — independently verifiable if your board asks.",
+    icon: LayoutDashboard,
+    title: "One dashboard for the whole roster.",
+    body: "At-risk flags 60 days before a deadline, not two weeks after. Signature queue, progress at a glance, every supervisee in one view. Built for how supervision actually works.",
   },
   {
-    icon: BarChart3,
-    title: "Role-based dashboards",
-    body: "Supervisees see hour progress at a glance. Supervisors manage rosters. HR sees compliance heatmaps. Executives see risk across the practice.",
+    icon: Users,
+    title: "Free for supervisees, always.",
+    body: "They carry the audit. They shouldn't carry the cost. Each supervisee gets a polished free account that tracks their own progress and shows them exactly where they stand.",
   },
 ];
 
@@ -64,6 +67,14 @@ export default function MarketingHome() {
         <Badge variant="outline" className="mb-6">
           Clinical supervision compliance software
         </Badge>
+        {/*
+         * Locked tagline (brand-voice.md). Renders as a small kicker above
+         * the SEO-locked H1 — visible on the brand, doesn't disrupt the H1
+         * that's earning rankings.
+         */}
+        <p className="mb-4 text-sm font-medium tracking-wide text-secondary uppercase">
+          Audit-ready supervision. Every hour, every state, every signature.
+        </p>
         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-3xl leading-[1.05]">
           State-board compliance software for mental health supervisors.
         </h1>
@@ -98,7 +109,20 @@ export default function MarketingHome() {
         </div>
       </section>
 
-      {/* Features grid */}
+      {/* Wedge band — the comparison we win on. Sits between the hero and
+          the value pillars so it's read in the same scroll as the H1. */}
+      <section className="border-t border-border bg-foreground">
+        <div className="mx-auto max-w-4xl px-6 py-12 sm:py-16 text-center">
+          <p className="font-display text-2xl sm:text-3xl font-semibold text-background leading-snug">
+            Every EHR helps you do the work.
+            <br className="hidden sm:block" />
+            <span className="text-[color:var(--color-gold)]"> AuditHalo proves you did the work.</span>
+          </p>
+        </div>
+      </section>
+
+      {/* Value pillars — the spine of the marketing site. Same four pillars
+          appear on /features and /for-supervisors. */}
       <section id="features" className="border-t border-border bg-card">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
@@ -108,13 +132,13 @@ export default function MarketingHome() {
             Everything a state board audit requires. Nothing it doesn't.
           </h2>
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-px bg-border">
-            {features.map((f) => (
-              <div key={f.title} className="bg-card p-8">
-                <f.icon className="h-6 w-6 text-secondary" strokeWidth={1.75} />
+            {valuePillars.map((p) => (
+              <div key={p.title} className="bg-card p-8">
+                <p.icon className="h-6 w-6 text-secondary" strokeWidth={1.75} />
                 <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
-                  {f.title}
+                  {p.title}
                 </h3>
-                <p className="mt-2 text-foreground/70 leading-relaxed">{f.body}</p>
+                <p className="mt-2 text-foreground/70 leading-relaxed">{p.body}</p>
               </div>
             ))}
           </div>

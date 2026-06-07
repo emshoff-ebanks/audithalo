@@ -54,9 +54,11 @@ export default function MarketingLayout({
         <div className="mx-auto max-w-6xl px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 md:col-span-1">
             <AuditHaloWordmark />
-            <p className="mt-2 text-sm text-foreground/60 max-w-xs">
-              Audit-ready supervision compliance for licensed counselors and
-              their supervisors.
+            {/* Locked tagline (brand-voice.md). Recurring footer line on
+                every marketing page so the brand promise is in peripheral
+                vision sitewide. */}
+            <p className="mt-3 text-sm font-medium text-foreground/80 max-w-xs leading-snug">
+              Audit-ready supervision. Every hour, every state, every signature.
             </p>
           </div>
           <div>

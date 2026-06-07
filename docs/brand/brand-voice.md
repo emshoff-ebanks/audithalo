@@ -1,20 +1,29 @@
 # AuditHalo Brand Voice & Messaging
 
-## Tagline
-**"Supervision compliance, handled."**
+## Tagline (locked)
+**"Audit-ready supervision. Every hour, every state, every signature."**
 
-Alternatives:
-- "Every hour. Every signature. Every audit."
-- "Built for the board. Trusted by supervisors."
+Use as the kicker above the home H1 and as the recurring footer line sitewide. Don't relegate to a "tagline alternatives" list — this is the line.
+
+## Campaign headline (solo supervisor)
+**"When the board asks, the answer's already in a folder."**
+
+Use as the hero subhead on `/for-supervisors`. Pairs with the tagline; never replaces the H1.
+
+## Wedge sentence (the comparison we win on)
+**"Every EHR helps you do the work. AuditHalo proves you did the work."**
+
+Use as a comparison band on the home page between the hero and the value pillars. Treat it as the canonical answer when a prospect asks "why not just use my EHR?"
 
 ## Positioning Statement
-AuditHalo is the clinical supervision compliance platform that gives licensed supervisors in NC, CA, TX, FL, and NY tamper-evident, board-ready documentation of every supervised hour — so that when the board calls, the answer is ready.
+AuditHalo is the clinical supervision *compliance* platform — distinct from EHRs (which document the work) and hour-trackers (which count what you've done). Our category is supervision-compliance documentation: tamper-evident, citation-linked, board-ready packages keyed to each state's exact admin code. Built for licensed supervisors in NC, CA, TX, FL, and NY.
 
-## Home Page Hero
-**Primary (recommended):**
-> Supervision records your board will never question.
+## Four value pillars (the spine of every page)
 
-Subhead: AuditHalo tracks supervised hours, captures e-signed session notes, and generates tamper-evident audit packages — built for LCMHCA, APCC, LPC-A, RMHCI, and LP-MHC supervisors.
+1. **Audit-defensible by default.** Tamper-evident, SHA-256-sealed evidence packages a board would accept on appeal. Contemporaneous, signed, timestamped — the opposite of a reconstructed log.
+2. **The rules engine, kept current.** Every hour evaluated against your state's exact admin code (21 NCAC 53, 22 TAC 681, CCR Title 16, F.A.C. 64B4, NY permit rules). Citation-linked, versioned, grandfathered when rules change.
+3. **One dashboard for the whole roster.** At-risk flags 60 days before a deadline. Signature queue. Progress at a glance. Built for how supervision actually works, not how a spreadsheet thinks about it.
+4. **Free for supervisees, always.** They carry the audit. They shouldn't carry the cost. And it's how the supervisor's whole roster comes aboard.
 
 ## Voice Principles
 
@@ -44,3 +53,16 @@ Clinical professionals distrust over-marketed products. Plain declarative senten
 - DON'T: "Wow, audits are SO easy now! 🎉"
 
 ## Sentence case in all headlines. Em-dashes for asides. No exclamation points.
+
+## Banned words
+Words that don't survive a clinician's first read — they sound like a marketing department, not a peer. Don't ship copy that uses any of these:
+
+- **crush** (as in "crush your audit") — performative, frat-energy
+- **journey** (as in "your supervision journey") — vague, condescending
+- **holistic** — overused to the point of meaningless
+- **seamless** — never seamless; describe what actually happens instead
+- **AI-powered** — describe what the AI *does*; don't lean on the buzz
+- **unlock** (as in "unlock compliance") — implies the user is locked out of something they own
+- **frictionless** — friction is real; pretending it isn't reads as glib
+
+When tempted to use one, write the literal action instead. Example: *"Sign a session in two clicks"* beats *"Sign sessions seamlessly."*
