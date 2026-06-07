@@ -37,6 +37,28 @@ async function getOrCreateCustomer(
   return customer.id;
 }
 
+/**
+ * Resolve a human-readable promotion code (e.g. "MARIA-BETA") to the
+ * underlying Stripe promotion_code ID via the API. Returns null if no
+ * active code matches — checkout proceeds without a discount in that case
+ * (graceful degradation; never blocks a paying customer because the URL
+ * carried a typo).
+ */
+async function resolvePromotionCodeId(code: string): Promise<string | null> {
+  const stripe = requireStripe();
+  try {
+    const result = await stripe.promotionCodes.list({
+      code: code.trim(),
+      active: true,
+      limit: 1,
+    });
+    return result.data[0]?.id ?? null;
+  } catch (err) {
+    console.error("[billing] promotion code lookup failed:", err);
+    return null;
+  }
+}
+
 export async function startCheckoutAction(formData: FormData): Promise<Result> {
   const session = await auth();
   if (!session?.user) return { ok: false, error: "Not authenticated." };
@@ -102,6 +124,21 @@ export async function startCheckoutAction(formData: FormData): Promise<Result> {
     ];
   }
 
+  // Pre-fill a promotion code if the caller passed one. Used by the
+  // Founding Supervisor flow: each cohort member gets a unique code (e.g.
+  // "MARIA-BETA") tied to the founding_supervisor_lifetime coupon. Hitting
+  // /dashboard/billing?promo=MARIA-BETA drops them at a $0 Stripe Checkout
+  // with the code already applied — no input box to fumble.
+  //
+  // If the code doesn't resolve (typo, expired, etc.), we fall back to
+  // `allow_promotion_codes: true` so the user can still type one manually
+  // rather than getting silently blocked.
+  const promoCodeRaw = (formData.get("promoCode") as string | null)?.trim();
+  let promoCodeId: string | null = null;
+  if (promoCodeRaw) {
+    promoCodeId = await resolvePromotionCodeId(promoCodeRaw);
+  }
+
   const stripe = requireStripe();
   try {
     const checkout = await stripe.checkout.sessions.create({
@@ -114,7 +151,17 @@ export async function startCheckoutAction(formData: FormData): Promise<Result> {
         metadata: { orgId: org.id, plan },
         trial_period_days: 14,
       },
-      allow_promotion_codes: true,
+      // When the caller passed a resolvable promo code, lock it in via
+      // `discounts` so the checkout opens with the code pre-applied
+      // (Stripe doesn't allow `allow_promotion_codes` and `discounts`
+      // simultaneously). Otherwise leave the manual entry box open.
+      ...(promoCodeId
+        ? { discounts: [{ promotion_code: promoCodeId }] }
+        : { allow_promotion_codes: true }),
+      // When the discount brings the total to $0 (e.g. Founding 100%-off
+      // lifetime), skip the card-collection step entirely. Stripe only
+      // honors this when payment_method_collection: "if_required" is set.
+      payment_method_collection: "if_required",
       billing_address_collection: "auto",
     });
     if (!checkout.url) {

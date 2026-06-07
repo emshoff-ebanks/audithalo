@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,17 @@ import { startCheckoutAction, startPortalAction } from "@/app/actions/billing";
 
 const PRACTICE_BASE_PRICE = 49;
 const PRACTICE_PER_SEAT_PRICE = 25;
+
+/**
+ * Read a promo code off the current URL (`?promo=MARIA-BETA`). Returns
+ * the trimmed code or null. Used by both CheckoutButton variants so the
+ * Founding URL pattern works on any plan.
+ */
+function usePromoFromUrl(): string | null {
+  const params = useSearchParams();
+  const value = params.get("promo")?.trim();
+  return value && value.length > 0 ? value : null;
+}
 
 type CheckoutProps = {
   plan: "solo_monthly" | "solo_yearly" | "practice";
@@ -18,12 +30,14 @@ type CheckoutProps = {
 export function CheckoutButton({ plan, label, variant = "default" }: CheckoutProps) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const promo = usePromoFromUrl();
 
   function go() {
     startTransition(async () => {
       setError(null);
       const fd = new FormData();
       fd.set("plan", plan);
+      if (promo) fd.set("promoCode", promo);
       const r = await startCheckoutAction(fd);
       if (r.ok) {
         window.location.href = r.url;
@@ -60,6 +74,7 @@ export function PracticeCheckoutButton({ label }: { label: string }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [seatCount, setSeatCount] = useState(3);
+  const promo = usePromoFromUrl();
 
   const monthlyTotal =
     PRACTICE_BASE_PRICE + PRACTICE_PER_SEAT_PRICE * seatCount;
@@ -70,6 +85,7 @@ export function PracticeCheckoutButton({ label }: { label: string }) {
       const fd = new FormData();
       fd.set("plan", "practice");
       fd.set("seatCount", String(seatCount));
+      if (promo) fd.set("promoCode", promo);
       const r = await startCheckoutAction(fd);
       if (r.ok) {
         window.location.href = r.url;
