@@ -43,3 +43,7 @@ next-env.d.ts
 # local tool artifacts (superpowers plugin scratch)
 .superpowers/
 docs/superpowers/
+
+# Marketing screenshots — captured locally via `npm run screenshots`; not
+# committed because they're regenerated on demand from the demo seed.
+/screenshots/
