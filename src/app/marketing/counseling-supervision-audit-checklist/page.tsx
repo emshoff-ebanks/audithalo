@@ -61,6 +61,13 @@ export default function CounselingSupervisionAuditChecklistPage() {
         },
       ]}
       ctaHeading="Run your own audit checklist in an afternoon."
+      leadMagnet={{
+        slug: "nc-supervision-audit-checklist",
+        label: "NC Supervision Audit Checklist",
+        heading: "Get the printable NC supervision audit checklist.",
+        description:
+          "The 12 fields a NC LCMHCA audit reviews, the 3 that fail the most, and a one-page session log you can fill in by hand. Drafted from 21 NCAC 53; reviewed against NCBLCMHC guidance.",
+      }}
     />
   );
 }

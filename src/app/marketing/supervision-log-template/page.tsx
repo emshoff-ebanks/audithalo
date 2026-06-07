@@ -61,6 +61,13 @@ export default function SupervisionLogTemplatePage() {
         },
       ]}
       ctaHeading="Stop maintaining a supervision log. Start sealing evidence."
+      leadMagnet={{
+        slug: "nc-supervision-log-template",
+        label: "NC Supervision Log Template",
+        heading: "Get the printable NC supervision log template.",
+        description:
+          "A one-page board-defensible log template you can print and fill in by hand — every column a NC audit reviews, plus the disclaimer that explains what's missing without a digital seal.",
+      }}
     />
   );
 }

@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FaqSection, type FaqItem } from "@/components/marketing/faq-section";
 import { articleJsonLd, faqPageJsonLd, jsonLdScript } from "@/lib/seo";
+import { LeadMagnetCapture } from "@/components/marketing/lead-magnet-capture";
 
 export type PainPageProps = {
   url: string;
@@ -17,6 +18,16 @@ export type PainPageProps = {
   ctaHeading: string;
   datePublished?: string;
   metaDescription: string;
+  /** When set, renders an email-capture form between the body and the
+   *  FAQ. Used on lead-magnet pages (NC audit checklist, log template). */
+  leadMagnet?: {
+    slug: string;
+    label: string;
+    /** Heading rendered above the capture form. */
+    heading: string;
+    /** Sub-copy under the heading. */
+    description: string;
+  };
 };
 
 export function PainPage(props: PainPageProps) {
@@ -91,6 +102,35 @@ export function PainPage(props: PainPageProps) {
           )}
         </div>
       </section>
+
+      {props.leadMagnet && (
+        <section className="border-t border-border">
+          <div className="mx-auto max-w-2xl px-6 py-16 lg:py-20">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <Badge variant="outline">
+                <Download className="h-3.5 w-3.5" />
+                Free download
+              </Badge>
+            </div>
+            <h2 className="font-display text-3xl font-semibold text-foreground">
+              {props.leadMagnet.heading}
+            </h2>
+            <p className="mt-3 text-foreground/70 leading-relaxed">
+              {props.leadMagnet.description}
+            </p>
+            <div className="mt-8">
+              <Card>
+                <CardContent className="p-6 sm:p-8">
+                  <LeadMagnetCapture
+                    slug={props.leadMagnet.slug}
+                    magnetLabel={props.leadMagnet.label}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+      )}
 
       <FaqSection items={props.faq} />
 
