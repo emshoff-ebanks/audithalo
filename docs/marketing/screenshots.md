@@ -41,6 +41,10 @@ needs to happen once per machine.
 
 PNGs land in `./screenshots/` (gitignored). Total run: ~30 seconds.
 
+The script hits `http://app.localhost:3000` (not plain `localhost`) because
+`src/proxy.ts` routes the app namespace by hostname — `app.*` → `/app/*`.
+Windows and macOS resolve `app.localhost` to 127.0.0.1 automatically.
+
 ## What gets captured
 
 | File | Page | Notes |

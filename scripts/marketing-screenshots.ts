@@ -33,7 +33,11 @@ async function loadPlaywright(): Promise<PlaywrightModule> {
   }
 }
 
-const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
+// proxy.ts routes by hostname: `app.localhost` (or any `app.*`) → /app/*.
+// Hitting plain `localhost` would 404 on /login because the marketing
+// namespace doesn't include it. Both Mac and Windows resolve app.localhost
+// to 127.0.0.1 out of the box.
+const APP_URL = process.env.APP_URL ?? "http://app.localhost:3000";
 const OUT_DIR = join(process.cwd(), "screenshots");
 const DEMO_PASSWORD = "Demo1234!";
 
@@ -56,10 +60,22 @@ type BrowserContext = Awaited<
 type Browser = Awaited<ReturnType<PlaywrightModule["chromium"]["launch"]>>;
 
 async function preflight() {
-  const res = await fetch(APP_URL).catch(() => null);
+  // Probe the bare host on the same port — Node's undici-based fetch doesn't
+  // resolve the `.localhost` TLD the way curl/browser DNS does on some
+  // Windows configs. Hitting "http://localhost:3000" is enough to confirm
+  // the dev server is up; the actual playwright session uses APP_URL via
+  // Chromium which DOES resolve app.localhost.
+  let probeUrl: string;
+  try {
+    const u = new URL(APP_URL);
+    probeUrl = `${u.protocol}//127.0.0.1:${u.port || (u.protocol === "https:" ? 443 : 80)}`;
+  } catch {
+    probeUrl = APP_URL;
+  }
+  const res = await fetch(probeUrl).catch(() => null);
   if (!res) {
     console.error(
-      `[screenshots] cannot reach ${APP_URL}. Is \`npm run dev\` running in another terminal?`
+      `[screenshots] cannot reach ${probeUrl}. Is \`npm run dev\` running in another terminal?`
     );
     process.exit(1);
   }

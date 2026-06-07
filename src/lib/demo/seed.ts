@@ -141,158 +141,161 @@ export async function runDemoSeed(): Promise<{ supervisorId: string }> {
     { email: "demo-supervisee3@audithalo.com", name: "Riley Park", label: "95%" },
   ];
 
-  let supervisorId = "";
-  await db.transaction(async (tx) => {
-    const [supervisor] = await tx
-      .insert(schema.users)
-      .values({
-        email: "demo-supervisor@audithalo.com",
+  // No transaction wrapper: the shared @/lib/db handle uses the Neon HTTP
+  // driver (drizzle-orm/neon-http) which doesn't implement transactions —
+  // it throws "No transactions support in neon-http driver" if you try.
+  // The seed is idempotent — the reset step at the top of this function
+  // wipes any partial prior run before re-inserting, so atomicity isn't
+  // strictly required.
+  const [supervisor] = await db
+    .insert(schema.users)
+    .values({
+      email: "demo-supervisor@audithalo.com",
+      passwordHash,
+      name: "Dr. Alex Rivera",
+      role: "supervisor",
+      state: "NC",
+      licenseType: "LCMHCS",
+      emailVerifiedAt: verifiedAt,
+      sessionsValidFrom: null,
+    })
+    .returning({ id: schema.users.id });
+  const supervisorId = supervisor.id;
+
+  const [org] = await db
+    .insert(schema.organizations)
+    .values({
+      name: "NC Counseling Demo Practice",
+      createdById: supervisor.id,
+    })
+    .returning({ id: schema.organizations.id });
+
+  const supervisees = await db
+    .insert(schema.users)
+    .values(
+      superviseeData.map((s) => ({
+        email: s.email,
         passwordHash,
-        name: "Dr. Alex Rivera",
-        role: "supervisor",
+        name: s.name,
+        role: "supervisee" as const,
         state: "NC",
-        licenseType: "LCMHCS",
+        licenseType: "LCMHCA",
         emailVerifiedAt: verifiedAt,
         sessionsValidFrom: null,
-      })
-      .returning({ id: schema.users.id });
-    supervisorId = supervisor.id;
+      }))
+    )
+    .returning({ id: schema.users.id, email: schema.users.email });
 
-    const [org] = await tx
-      .insert(schema.organizations)
-      .values({
-        name: "NC Counseling Demo Practice",
-        createdById: supervisor.id,
-      })
-      .returning({ id: schema.organizations.id });
+  const [jamie, morgan, riley] = supervisees;
 
-    const supervisees = await tx
-      .insert(schema.users)
-      .values(
-        superviseeData.map((s) => ({
-          email: s.email,
-          passwordHash,
-          name: s.name,
-          role: "supervisee" as const,
-          state: "NC",
-          licenseType: "LCMHCA",
-          emailVerifiedAt: verifiedAt,
-          sessionsValidFrom: null,
-        }))
-      )
-      .returning({ id: schema.users.id, email: schema.users.email });
+  await db.insert(schema.orgMemberships).values([
+    { orgId: org.id, userId: supervisor.id, role: "supervisor" },
+    { orgId: org.id, userId: jamie.id, role: "supervisee" },
+    { orgId: org.id, userId: morgan.id, role: "supervisee" },
+    { orgId: org.id, userId: riley.id, role: "supervisee" },
+  ]);
 
-    const [jamie, morgan, riley] = supervisees;
+  const jamieStart = new Date("2024-06-01T00:00:00Z");
+  const morganStart = new Date("2025-01-01T00:00:00Z");
+  const rileyStart = new Date("2023-01-01T00:00:00Z");
 
-    await tx.insert(schema.orgMemberships).values([
-      { orgId: org.id, userId: supervisor.id, role: "supervisor" },
-      { orgId: org.id, userId: jamie.id, role: "supervisee" },
-      { orgId: org.id, userId: morgan.id, role: "supervisee" },
-      { orgId: org.id, userId: riley.id, role: "supervisee" },
-    ]);
-
-    const jamieStart = new Date("2024-06-01T00:00:00Z");
-    const morganStart = new Date("2025-01-01T00:00:00Z");
-    const rileyStart = new Date("2023-01-01T00:00:00Z");
-
-    await tx.insert(schema.superviseeRuleAssignments).values([
-      {
-        superviseeId: jamie.id,
-        orgId: org.id,
-        ruleId: RULE_ID,
-        obligationStartedAt: jamieStart,
-        supervisionContractFiledAt: jamieStart,
-      },
-      {
-        superviseeId: morgan.id,
-        orgId: org.id,
-        ruleId: RULE_ID,
-        obligationStartedAt: morganStart,
-        supervisionContractFiledAt: morganStart,
-      },
-      {
-        superviseeId: riley.id,
-        orgId: org.id,
-        ruleId: RULE_ID,
-        obligationStartedAt: rileyStart,
-        supervisionContractFiledAt: rileyStart,
-      },
-    ]);
-
-    const jamieEvents: SessionEventRow[] = [
-      ...buildPracticeEvents(jamie.id, org.id, jamieStart, 24, 80),
-      ...buildSupervisionEvents(jamie.id, org.id, supervisor.id, jamieStart, 24, 1, 1),
-    ];
-    const morganEvents: SessionEventRow[] = [
-      ...buildPracticeEvents(morgan.id, org.id, morganStart, 5, 70),
-      ...buildSupervisionEvents(morgan.id, org.id, supervisor.id, morganStart, 5, 1, 1),
-    ];
-    const rileyEvents: SessionEventRow[] = [
-      ...buildPracticeEvents(riley.id, org.id, rileyStart, 36, 80),
-      ...buildSupervisionEvents(riley.id, org.id, supervisor.id, rileyStart, 36, 1, 2.56),
-    ];
-
-    const sampleAiNote = {
-      topics: ["transference dynamics", "termination ethics", "cultural humility"],
-      competencies: [
-        "case conceptualization",
-        "self-of-the-therapist awareness",
-        "ethical decision-making",
-      ],
-      supervisorFeedback:
-        "The supervisee demonstrated strong engagement with the complex termination case. They showed growing insight into how their own reactions shape the therapeutic relationship and identified specific countertransference patterns to monitor. Continue to support their development of cultural humility through case-specific reflection.",
-      nextSteps: [
-        "review the readings on relational trauma",
-        "bring 3 case examples to next session",
-        "practice the open-ended termination dialogue",
-      ],
-      generatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      generatedByUserId: supervisor.id,
-      model: "gpt-4o-2024-08-06",
-      transcriptHash: "demo-transcript-hash-not-real",
-      transcriptWordCount: 1247,
-    };
-
-    const recentSupervisionDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
-    const aiNoteEvent = {
+  await db.insert(schema.superviseeRuleAssignments).values([
+    {
       superviseeId: jamie.id,
       orgId: org.id,
-      kind: "supervision" as const,
-      date: recentSupervisionDate,
-      durationHours: 1,
-      sessionType: "individual" as const,
-      supervisorCredentials: ["LCMHCS"],
-      loggedById: supervisor.id,
-      signatures: [] as schema.SessionSignature[],
-      aiNote: sampleAiNote,
-    };
+      ruleId: RULE_ID,
+      obligationStartedAt: jamieStart,
+      supervisionContractFiledAt: jamieStart,
+    },
+    {
+      superviseeId: morgan.id,
+      orgId: org.id,
+      ruleId: RULE_ID,
+      obligationStartedAt: morganStart,
+      supervisionContractFiledAt: morganStart,
+    },
+    {
+      superviseeId: riley.id,
+      orgId: org.id,
+      ruleId: RULE_ID,
+      obligationStartedAt: rileyStart,
+      supervisionContractFiledAt: rileyStart,
+    },
+  ]);
 
-    const allEvents = [...jamieEvents, ...morganEvents, ...rileyEvents];
-    const BATCH_SIZE = 50;
-    for (let i = 0; i < allEvents.length; i += BATCH_SIZE) {
-      const batch = allEvents.slice(i, i + BATCH_SIZE);
-      await tx.insert(schema.sessionEvents).values(
-        batch.map((e) => ({
-          superviseeId: e.superviseeId,
-          orgId: e.orgId,
-          kind: e.kind,
-          date: e.date,
-          durationHours: e.durationHours,
-          sessionType:
-            e.kind === "supervision"
-              ? (e as SupervisionEventRow).sessionType
-              : undefined,
-          supervisorCredentials:
-            e.kind === "supervision"
-              ? (e as SupervisionEventRow).supervisorCredentials
-              : undefined,
-          loggedById: e.loggedById,
-          signatures: [],
-        }))
-      );
-    }
-    await tx.insert(schema.sessionEvents).values(aiNoteEvent);
-  });
+  const jamieEvents: SessionEventRow[] = [
+    ...buildPracticeEvents(jamie.id, org.id, jamieStart, 24, 80),
+    ...buildSupervisionEvents(jamie.id, org.id, supervisor.id, jamieStart, 24, 1, 1),
+  ];
+  const morganEvents: SessionEventRow[] = [
+    ...buildPracticeEvents(morgan.id, org.id, morganStart, 5, 70),
+    ...buildSupervisionEvents(morgan.id, org.id, supervisor.id, morganStart, 5, 1, 1),
+  ];
+  const rileyEvents: SessionEventRow[] = [
+    ...buildPracticeEvents(riley.id, org.id, rileyStart, 36, 80),
+    ...buildSupervisionEvents(riley.id, org.id, supervisor.id, rileyStart, 36, 1, 2.56),
+  ];
+
+  const sampleAiNote = {
+    topics: ["transference dynamics", "termination ethics", "cultural humility"],
+    competencies: [
+      "case conceptualization",
+      "self-of-the-therapist awareness",
+      "ethical decision-making",
+    ],
+    supervisorFeedback:
+      "The supervisee demonstrated strong engagement with the complex termination case. They showed growing insight into how their own reactions shape the therapeutic relationship and identified specific countertransference patterns to monitor. Continue to support their development of cultural humility through case-specific reflection.",
+    nextSteps: [
+      "review the readings on relational trauma",
+      "bring 3 case examples to next session",
+      "practice the open-ended termination dialogue",
+    ],
+    generatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    generatedByUserId: supervisor.id,
+    model: "gpt-4o-2024-08-06",
+    transcriptHash: "demo-transcript-hash-not-real",
+    transcriptWordCount: 1247,
+  };
+
+  const recentSupervisionDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+  const aiNoteEvent = {
+    superviseeId: jamie.id,
+    orgId: org.id,
+    kind: "supervision" as const,
+    date: recentSupervisionDate,
+    durationHours: 1,
+    sessionType: "individual" as const,
+    supervisorCredentials: ["LCMHCS"],
+    loggedById: supervisor.id,
+    signatures: [] as schema.SessionSignature[],
+    aiNote: sampleAiNote,
+  };
+
+  const allEvents = [...jamieEvents, ...morganEvents, ...rileyEvents];
+  const BATCH_SIZE = 50;
+  for (let i = 0; i < allEvents.length; i += BATCH_SIZE) {
+    const batch = allEvents.slice(i, i + BATCH_SIZE);
+    await db.insert(schema.sessionEvents).values(
+      batch.map((e) => ({
+        superviseeId: e.superviseeId,
+        orgId: e.orgId,
+        kind: e.kind,
+        date: e.date,
+        durationHours: e.durationHours,
+        sessionType:
+          e.kind === "supervision"
+            ? (e as SupervisionEventRow).sessionType
+            : undefined,
+        supervisorCredentials:
+          e.kind === "supervision"
+            ? (e as SupervisionEventRow).supervisorCredentials
+            : undefined,
+        loggedById: e.loggedById,
+        signatures: [],
+      }))
+    );
+  }
+  await db.insert(schema.sessionEvents).values(aiNoteEvent);
 
   return { supervisorId };
 }
