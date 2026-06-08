@@ -8,8 +8,18 @@ on:
   workflow_dispatch:
 
 jobs:
+  forbidden-patterns:
+    name: Forbidden-pattern grep gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run grep gate
+        run: bash ci/forbidden-patterns.sh
+
   e2e:
     name: Run Playwright tests
+    needs: forbidden-patterns
     timeout-minutes: 15
     runs-on: ubuntu-latest
     env:

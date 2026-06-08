@@ -176,6 +176,101 @@ export async function startCheckoutAction(formData: FormData): Promise<Result> {
   }
 }
 
+/**
+ * Switch an existing Solo subscription to Practice in place.
+ *
+ * Solo customers will outgrow their plan and need more seats. Without this
+ * the only path was: cancel Solo, manually buy Practice — which loses the
+ * prorated credit for unused Solo time. This swaps the subscription's line
+ * items via `stripe.subscriptions.update` and lets Stripe handle proration
+ * (Solo time credit + Practice charge from now).
+ *
+ * Only valid Solo → Practice. Practice → Enterprise stays sales-mediated
+ * (see /admin/orgs) per the Enterprise spec.
+ */
+export async function upgradeToPracticeAction(
+  formData: FormData
+): Promise<Result> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const membership = await getCurrentMembership(session.user.id);
+  if (!membership) return { ok: false, error: "No organization." };
+  if (!isManagerRole(membership.role)) {
+    return { ok: false, error: "Only the supervisor can change billing." };
+  }
+
+  const rawSeatCount = Number(formData.get("seatCount"));
+  if (
+    !Number.isFinite(rawSeatCount) ||
+    rawSeatCount < MIN_PRACTICE_SEATS ||
+    rawSeatCount > MAX_PRACTICE_SEATS
+  ) {
+    return {
+      ok: false,
+      error: `Pick a seat count between ${MIN_PRACTICE_SEATS} and ${MAX_PRACTICE_SEATS}.`,
+    };
+  }
+  const seatCount = Math.floor(rawSeatCount);
+
+  const org = await db.query.organizations.findFirst({
+    where: eq(schema.organizations.id, membership.orgId),
+  });
+  if (!org) return { ok: false, error: "Organization not found." };
+  if (org.subscriptionTier !== "solo") {
+    return {
+      ok: false,
+      error:
+        "This upgrade is only for Solo plans. Contact sales for Enterprise.",
+    };
+  }
+  if (!org.stripeSubscriptionId) {
+    return {
+      ok: false,
+      error: "No active subscription on file. Start one from the pricing tiers.",
+    };
+  }
+
+  const stripe = requireStripe();
+  try {
+    const subscription = await stripe.subscriptions.retrieve(
+      org.stripeSubscriptionId
+    );
+
+    // Build update payload: mark each existing item deleted, append new
+    // Practice items. Stripe accepts add+delete in the same call so the
+    // subscription never lives in a no-items intermediate state.
+    const itemsToDelete = subscription.items.data.map((item) => ({
+      id: item.id,
+      deleted: true as const,
+    }));
+
+    await stripe.subscriptions.update(org.stripeSubscriptionId, {
+      items: [
+        ...itemsToDelete,
+        { price: PRICES.practice_base, quantity: 1 },
+        { price: PRICES.practice_seat, quantity: seatCount },
+      ],
+      proration_behavior: "create_prorations",
+      metadata: { ...subscription.metadata, plan: "practice" },
+    });
+
+    // Best-effort local mirror so the page reflects the new tier on next
+    // load even if the customer.subscription.updated webhook is delayed.
+    await db
+      .update(schema.organizations)
+      .set({ subscriptionTier: "practice", seatCount })
+      .where(eq(schema.organizations.id, org.id));
+
+    return { ok: true, url: `${APP_URL}/dashboard/billing?status=success` };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Stripe error.",
+    };
+  }
+}
+
 export async function startPortalAction(): Promise<Result> {
   const session = await auth();
   if (!session?.user) return { ok: false, error: "Not authenticated." };

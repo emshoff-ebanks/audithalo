@@ -13,6 +13,7 @@ import {
   PortalButton,
   PracticeCheckoutButton,
 } from "./billing-buttons";
+import { UpgradeToPracticeForm } from "./_upgrade-to-practice-form";
 
 export const metadata = {
   title: "Billing — AuditHalo",
@@ -146,16 +147,27 @@ export default async function BillingPage({
                 </div>
               )}
             </>
-          ) : (
-            <>
-              <p className="text-foreground/70">
-                No active plan. You're in a free read-only state — pick a plan
-                below to start your 14-day trial.
-              </p>
-            </>
-          )}
+          ) : null}
         </CardContent>
       </Card>
+
+      {/* Solo customers see an in-app upgrade path to Practice. Enterprise
+          upgrades stay sales-mediated via /admin/orgs (per spec). */}
+      {hasActive && org.subscriptionTier === "solo" && (
+        <UpgradeToPracticeForm currentSeatCount={org.seatCount} />
+      )}
+
+      {!hasActive && (
+        <Card className="mt-8">
+          <CardContent className="p-6">
+            <p className="label-overline mb-2">Current plan</p>
+            <p className="text-foreground/70">
+              No active plan. You're in a free read-only state — pick a plan
+              below to start your 14-day trial.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Pricing tiers */}
       {!hasActive && (
