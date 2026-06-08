@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import {
   FileSignature,
@@ -39,6 +40,7 @@ export function SessionLog({
   superviseeId,
   superviseeState,
 }: Props) {
+  const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -197,10 +199,24 @@ export function SessionLog({
                         return (
                           <tr
                             key={e.id}
-                            className="border-t border-border first:border-t-0"
+                            className="border-t border-border first:border-t-0 cursor-pointer hover:bg-accent/40 transition-colors"
+                            onClick={(ev) => {
+                              // Only navigate on row clicks that didn't hit a
+                              // nested interactive element (the action Link
+                              // handles its own click). Lets keyboard focus +
+                              // middle-click on the date Link still work.
+                              const target = ev.target as HTMLElement;
+                              if (target.closest("a, button")) return;
+                              router.push(`/sign/${e.id}`);
+                            }}
                           >
                             <td className="px-4 py-2 font-mono text-xs">
-                              {format(d, "MMM d")}
+                              <Link
+                                href={`/sign/${e.id}`}
+                                className="hover:underline"
+                              >
+                                {format(d, "MMM d")}
+                              </Link>
                             </td>
                             <td className="px-4 py-2 capitalize">
                               {e.kind}

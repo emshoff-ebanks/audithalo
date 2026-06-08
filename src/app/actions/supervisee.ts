@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership, isManagerRole } from "@/lib/authz";
@@ -335,5 +336,15 @@ export async function logSessionAction(
   }
 
   revalidatePath(`/dashboard/roster/${parsed.data.superviseeId}`);
+
+  // Supervision sessions need both parties to sign before they seal. Send
+  // the logger straight to /sign/[id] so they can sign immediately instead
+  // of scrolling back through the session log. Practice events don't need
+  // signing — leave the supervisor on the supervisee page to keep batch-
+  // logging fast.
+  if (parsed.data.kind === "supervision") {
+    redirect(`/sign/${insertedId}`);
+  }
+
   return { ok: true };
 }
