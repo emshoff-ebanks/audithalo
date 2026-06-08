@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, isNull } from "drizzle-orm";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -8,8 +8,9 @@ import {
   FileSignature,
 } from "lucide-react";
 import { auth } from "@/auth";
-import { canSupervise, getCurrentMembership, isManagerRole } from "@/lib/authz";
+import { canSupervise, getCurrentMembership, isHrAdmin, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
+import { ReassignSupervisorDropdown } from "@/app/app/dashboard/team/_invite-forms";
 import {
   latestVersionForState,
   loadAllRules,
@@ -166,6 +167,42 @@ export default async function SuperviseeDetailPage({
   });
   if (!supervisee) notFound();
 
+  // HR Admin only: fetch current supervisor + active supervisor options for
+  // the in-page reassignment dropdown (per spec §7).
+  const viewerIsHrAdmin = isHrAdmin(session.user.role);
+  let currentSupervisorId: string | null = null;
+  let activeSupervisorOptions: { id: string; name: string }[] = [];
+  if (viewerIsHrAdmin) {
+    const activeAssignment = await db.query.supervisorAssignments.findFirst({
+      where: and(
+        eq(schema.supervisorAssignments.superviseeId, superviseeId),
+        eq(schema.supervisorAssignments.orgId, myMembership.orgId),
+        isNull(schema.supervisorAssignments.endedAt)
+      ),
+    });
+    currentSupervisorId = activeAssignment?.supervisorId ?? null;
+
+    const supervisorRows = await db
+      .select({
+        id: schema.users.id,
+        name: schema.users.name,
+        email: schema.users.email,
+      })
+      .from(schema.orgMemberships)
+      .innerJoin(schema.users, eq(schema.orgMemberships.userId, schema.users.id))
+      .where(
+        and(
+          eq(schema.orgMemberships.orgId, myMembership.orgId),
+          eq(schema.orgMemberships.role, "supervisor"),
+          isNull(schema.orgMemberships.deactivatedAt)
+        )
+      );
+    activeSupervisorOptions = supervisorRows.map((s) => ({
+      id: s.id,
+      name: s.name ?? s.email,
+    }));
+  }
+
   const assignment = await db.query.superviseeRuleAssignments.findFirst({
     where: and(
       eq(schema.superviseeRuleAssignments.superviseeId, superviseeId),
@@ -257,6 +294,32 @@ export default async function SuperviseeDetailPage({
         {supervisee.name}
       </h1>
       <p className="mt-2 text-foreground/70">{supervisee.email}</p>
+
+      {viewerIsHrAdmin && (
+        <Card className="mt-6 bg-accent/40">
+          <CardContent className="p-4">
+            <p className="label-overline mb-2">Primary supervisor</p>
+            {activeSupervisorOptions.length > 0 ? (
+              <ReassignSupervisorDropdown
+                superviseeId={superviseeId}
+                currentSupervisorId={currentSupervisorId}
+                supervisors={activeSupervisorOptions}
+              />
+            ) : (
+              <p className="text-sm text-foreground/70">
+                No active supervisors in this org yet.{" "}
+                <Link
+                  href="/dashboard/team"
+                  className="underline text-foreground"
+                >
+                  Invite a supervisor
+                </Link>{" "}
+                before assigning.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {ruleVersionDrift && assignment && (
         <RuleVersionBanner

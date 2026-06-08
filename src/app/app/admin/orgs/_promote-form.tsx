@@ -49,6 +49,12 @@ export function PromoteToEnterpriseForm({
         ({ownerEmail}) flips to HR Admin if currently Supervisor. Welcome email
         sent.
       </p>
+      <p className="text-xs text-[color:var(--color-warning)] border-l-2 border-[color:var(--color-warning)] pl-2">
+        <strong>Heads up:</strong> if the owner has active supervisees, those
+        become unassigned after this flip. They&apos;ll need to invite another
+        supervisor (or use Solo-era account) and reassign each supervisee
+        before clinical signing resumes.
+      </p>
       {state && state.ok === false && (
         <p
           role="alert"

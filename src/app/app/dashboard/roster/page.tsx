@@ -45,6 +45,7 @@ export default async function RosterPage({
   }
 
   const viewerCanSupervise = canSupervise(session.user.role);
+  const viewerIsHrAdmin = session.user.role === "hr_admin";
 
   const membership = await getCurrentMembership(session.user.id);
   if (!membership) {
@@ -106,11 +107,12 @@ export default async function RosterPage({
         {org?.name ?? "Roster"}
       </Badge>
       <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
-        Your roster
+        {viewerIsHrAdmin ? "Org roster" : "Your roster"}
       </h1>
       <p className="mt-3 text-foreground/70 max-w-2xl">
-        Every supervisee you invite gets a free AuditHalo account. They join your roster the
-        moment they accept the invitation, and you'll see their hour progress here.
+        {viewerIsHrAdmin
+          ? "Every supervisee across this organization. Click into a row to reassign their supervisor or review their compliance."
+          : "Every supervisee you invite gets a free AuditHalo account. They join your roster the moment they accept the invitation, and you'll see their hour progress here."}
       </p>
 
       <FilterBar
