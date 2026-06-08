@@ -1,0 +1,125 @@
+# E2E testing — Playwright suite
+
+_Drafted 2026-06-08. Companion to `04-enterprise-rbac.md` (the 6 RBAC smoke flows that motivated this). This doc codifies the discipline for browser-driven tests so future agents don't silently compromise it (e.g., downgrading to API-only when auth automation breaks, leaking the DB key into browser context, polluting prod with test data)._
+
+## Why E2E exists in this project
+
+Vitest already covers the rule engine, billing math, audit-log helpers, HRIS parser, and authz helpers (267 passing as of `release/enterprise` merge). That's 100% of the pure-function surface that benefits from unit tests. What it doesn't prove:
+
+1. **UI wiring** — does the "Reassign" button actually call `reassignSupervisorAction`? Does the Insurance tab pass the right financial class? Does the right server action fire with the right payload?
+2. **Role guards** — does the Executive role actually get redirected at the route level, not just hidden in the nav?
+3. **End-to-end state transitions** — when HR Admin clicks "Promote to Enterprise", does the org tier flip + the role flip + the welcome email fire + the audit log entry land?
+
+Playwright is for proving the things that only a real browser hitting the real app can prove.
+
+## Principles (carry forward from the charge-master playbook)
+
+1. **Test the layer Vitest can't.** No re-testing of pure functions. Tests must exercise the UI → server action → DB → response loop.
+2. **Network assertions on every mutation.** Intercept the server action call; assert the payload shape; assert forbidden patterns never appear.
+3. **DB verifier alongside UI tests.** After a UI action, query the DB to prove the right rows changed. Verifier is **Node-side only** — never imported into browser specs.
+4. **Auth setup once, not per test.** `e2e/auth.setup.ts` logs in as each role and saves storage state. Each spec loads the right state instead of re-logging in.
+5. **Real demo accounts via env vars, never created in tests.** Test users live in a staging DB. Their credentials live in CI secrets. Tests fail loudly if `E2E_HR_ADMIN_EMAIL` is missing.
+6. **Fail loudly, never silently downgrade.** If auth automation breaks, halt the suite with "missing selector X, env var Y." Don't fall back to API-only to make CI green.
+7. **Forbidden-pattern grep gate.** A shell script greps the codebase for patterns that must never appear (e.g., `medipyxis` in commits, direct `client.query` in `src/app/app/`, hardcoded prod URLs in code). Exact-match regexes only.
+8. **Stop conditions written into the plan.** "Halt if auth automation can't complete." "Halt if selectors require destructive UI refactoring." "Halt if `DATABASE_URL` would need to enter browser code."
+
+## Required test users
+
+Four accounts, one per role, all on the same staging org once Phase 6 lands. Until then, on prod (with careful cleanup).
+
+| Role | Suggested email (Gmail+alias) | Password env var |
+|---|---|---|
+| HR Admin | `audihalosupervisor+hr@gmail.com` | `E2E_HR_ADMIN_PASSWORD` |
+| Supervisor | `audihalosupervisor+sup@gmail.com` | `E2E_SUPERVISOR_PASSWORD` |
+| Supervisee | `audihalosupervisor+sve@gmail.com` | `E2E_SUPERVISEE_PASSWORD` |
+| Executive | `audihalosupervisor+exec@gmail.com` | `E2E_EXECUTIVE_PASSWORD` |
+
+Setup steps (one-time):
+1. Register each account at `app.audithalo.com/register` (supervisor role, fresh org per account)
+2. From Damon's admin account, use `/admin/orgs` to promote the HR Admin's org to Enterprise (their role flips automatically)
+3. From the HR Admin account, invite the Supervisor, Supervisee, and Executive into the HR Admin's org
+4. Each accepts the invite. Now all four roles exist in one org.
+5. Set the env vars on Vercel (Production + Preview):
+   - `E2E_BASE_URL=https://app.audithalo.com`
+   - `E2E_HR_ADMIN_EMAIL` / `E2E_HR_ADMIN_PASSWORD`
+   - `E2E_SUPERVISOR_EMAIL` / `E2E_SUPERVISOR_PASSWORD`
+   - `E2E_SUPERVISEE_EMAIL` / `E2E_SUPERVISEE_PASSWORD`
+   - `E2E_EXECUTIVE_EMAIL` / `E2E_EXECUTIVE_PASSWORD`
+   - `E2E_ORG_ID` (UUID of the shared HR Admin org, for DB verifier scoping)
+6. Mirror the same env vars in `.env.local` for local runs.
+
+## Required env vars (CI secrets)
+
+- `E2E_BASE_URL`
+- `E2E_{HR_ADMIN,SUPERVISOR,SUPERVISEE,EXECUTIVE}_EMAIL`
+- `E2E_{HR_ADMIN,SUPERVISOR,SUPERVISEE,EXECUTIVE}_PASSWORD`
+- `E2E_ORG_ID`
+- `DATABASE_URL` (already set; reused by the Node-side verifier — never enters browser context)
+
+## Phase plan
+
+### Phase 1 — Auth foundation (DONE: scaffold; AWAITING: test users)
+- `e2e/auth.setup.ts` — logs in as each role, saves storage state to `playwright/.auth/<role>.json`
+- `e2e/helpers/auth.ts` — load storage state per test
+- Wired in `playwright.config.ts` as a project with `setup` dependency
+- **Activation gate:** auth project only runs when `E2E_HR_ADMIN_EMAIL` is set. Healthcheck spec continues to run without it.
+
+### Phase 2 — DB verifier helper
+- `e2e/helpers/db.ts` — Node-side `pg` queries. Functions: `getMembershipRole(userId, orgId)`, `getActiveSupervisorAssignment(superviseeId, orgId)`, `getOrgTier(orgId)`, `findAuditLogEntry({ orgId, action, afterTs })`, `cleanupSmokeRows({ prefix })`
+- **Critical:** this file MUST NOT be imported from any `*.spec.ts` that runs in the browser. Specs import it via a Node-only helper that runs in `test.beforeAll` / `test.afterAll` hooks (which run in the test worker, not the browser).
+
+### Phase 3 — 6 RBAC smoke tests (one spec per gate item)
+- `e2e/rbac/executive-routing.spec.ts` — login as exec; assert `/dashboard` 302s → `/dashboard/executive`; same for `/dashboard/roster`
+- `e2e/rbac/hr-admin-team.spec.ts` — invite supervisor, invite executive (with seat-cap check), deactivate; DB verifier confirms the rows + audit log
+- `e2e/rbac/supervisor-reassignment.spec.ts` — reassign; DB verifier confirms old row has `ended_at` + `transferred_from_supervisor_id`, new row exists; existing signed sessions remain attributed to original signer
+- `e2e/rbac/practice-to-enterprise.spec.ts` — admin promote a test Practice org; verify org tier flip + owner role flip + welcome email
+- `e2e/rbac/hris-csv-import.spec.ts` — upload CSV, intentionally bad row, fix, commit; verify invitation rows created in DB
+- `e2e/rbac/audit-log-export.spec.ts` — login as HR Admin with TOTP enrolled → export succeeds; without TOTP → blocked
+
+### Phase 4 — Network assertions (within each spec)
+- For each mutation test, set up `page.waitForRequest()` or `page.on('request', ...)` to inspect the outgoing server action
+- Assert correct action name and payload shape
+- Assert forbidden patterns never appear (e.g., a "Change Supervisor" click should never call a `deleteAssignment` action)
+
+### Phase 5 — Forbidden-pattern grep gate
+- `ci/forbidden-patterns.sh` — runs in CI before Playwright. Greps for:
+  - `medipyxis` anywhere in `src/` (commit hygiene)
+  - Direct `db\.` or `client\.query` calls inside `src/app/app/**/page.tsx` or `*-form.tsx` (client components must use server actions)
+  - Hardcoded `https://app.audithalo.com` in `src/` outside config/email templates (should use `process.env.APP_URL`)
+- Fails CI on any hit. Exact-match regex per the lesson from the chat session: never use substring matches that false-positive.
+
+### Phase 6 — Staging environment (unlock for safe mutation tests)
+- Set up Neon branching so each Vercel preview deploy gets its own branch DB
+- Vercel-Neon integration injects per-preview `DATABASE_URL`
+- Update `E2E_BASE_URL` in the workflow to hit the preview URL of the current PR
+- Now mutation tests can run safely — no prod pollution
+- ~1 day of work
+
+### Phase 7 — CI workflow refinement (current scaffold is bare)
+- Update `.github/workflows/playwright.yml` to:
+  - Run only auth project when `E2E_HR_ADMIN_EMAIL` is set; healthcheck always runs
+  - Add `concurrency: e2e-${{ github.ref }}` so two runs on same branch don't collide
+  - Upload trace + video on retry, not just on failure
+  - Surface forbidden-pattern grep results as a separate job that runs first (fail fast)
+
+## Stop conditions (halt the suite, don't paper over)
+
+- Login automation can't complete (login form selectors changed, MFA prompt added, etc.) → halt with exact selector failure
+- Required env vars missing in CI → halt with the missing var name
+- `DATABASE_URL` would need to enter browser context to make a test work → halt; rethink the test
+- A UI path is observed calling an old/deprecated server action → halt; surface the regression
+- DB verifier can't safely identify test rows (no unique prefix on smoke data) → halt
+- Cleanup fails to remove test rows → leave them clearly tagged, surface in test output
+
+## What we are NOT testing with Playwright
+
+- Pure rule engine math (vitest covers this)
+- Billing seat-cap arithmetic (vitest)
+- HRIS CSV parsing (vitest)
+- Authz helper functions (vitest)
+- Email body rendering (would need a separate visual-regression tool)
+- PDF rendering (`@react-pdf/renderer` is deterministic; verify hash in vitest if needed)
+
+## Reusable bits / inspiration
+
+The principles in this doc are distilled from a charge-master Playwright design used on a separate healthcare-RCM project (see chat-2026-06-08). Same shape, different domain.
