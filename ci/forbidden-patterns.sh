@@ -50,6 +50,24 @@ if [ -n "$matches" ]; then
   EXIT=1
 fi
 
+# ─── 4. Direct DB import in client components ────────────────────────────
+# Client components (files with the "use client" directive) must not query
+# the DB directly — they should call server actions. Catches the
+# architecture violation that would ship PHI to the browser bundle.
+client_files=$(grep -rlE '^"use client"' --include="*.tsx" src/ 2>/dev/null || true)
+matches=""
+for f in $client_files; do
+  # `import type` is erased at compile time and is safe in client code.
+  # Only value imports from @/lib/db ship runtime code to the browser.
+  if grep '@/lib/db' "$f" 2>/dev/null | grep -v '^import type' | grep -q '.'; then
+    matches="${matches}${f}"$'\n'
+  fi
+done
+if [ -n "$matches" ]; then
+  print_violation "@/lib/db imported by a 'use client' component" "$matches"
+  EXIT=1
+fi
+
 if [ $EXIT -eq 0 ]; then
   echo "✓ ci/forbidden-patterns.sh: no violations found."
 fi

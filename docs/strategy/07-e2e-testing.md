@@ -78,6 +78,16 @@ Required vars (set in both places):
 - `e2e/helpers/db.ts` — Node-side `pg` queries. Functions: `getMembershipRole(userId, orgId)`, `getActiveSupervisorAssignment(superviseeId, orgId)`, `getOrgTier(orgId)`, `findAuditLogEntry({ orgId, action, afterTs })`, `cleanupSmokeRows({ prefix })`
 - **Critical:** this file MUST NOT be imported from any `*.spec.ts` that runs in the browser. Specs import it via a Node-only helper that runs in `test.beforeAll` / `test.afterAll` hooks (which run in the test worker, not the browser).
 
+### Test inventory (2026-06-08, comprehensive)
+
+| Layer | Spec count | Coverage |
+|---|---|---|
+| Healthcheck (unauthed) | 1 file / 3 tests | login + register page render, marketing home |
+| Auth setup | 1 file / 4 logins | HR Admin, Supervisor, Supervisee, Executive storage states |
+| RBAC (authed read-only) | 8 files / ~25 tests | executive routing, role-aware headers, team access + DB invariant, dashboard by role, account page (4 roles), audit-log render gating, settings render gating, billing render gating |
+| Marketing (unauthed) | 2 files / 15 tests | 10 marketing pages + 5 state landing pages |
+| Mutations (with cleanup) | 1 file | invite supervisor → DB verify → delete invitation |
+
 ### Phase 3 — RBAC smoke tests (partial; 3/6 shipped 2026-06-08, verified 14/14 in 58.8s)
 
 Shipped specs:

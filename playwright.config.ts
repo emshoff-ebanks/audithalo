@@ -42,6 +42,12 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
       testMatch: /healthcheck\.spec\.ts/,
     },
+    // Marketing tests are unauthed and safe in any env.
+    {
+      name: "marketing",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /marketing\/.*\.spec\.ts/,
+    },
     // Below projects only activate when E2E_* creds are configured.
     ...(hasE2ECreds
       ? [
@@ -56,6 +62,17 @@ export default defineConfig({
               storageState: STORAGE_HR_ADMIN,
             },
             testMatch: /rbac\/.*\.spec\.ts/,
+            dependencies: ["auth-setup"],
+          },
+          // Mutation tests share auth setup; default to HR Admin storage.
+          // Each spec is responsible for cleanup (smokeTag prefix + helpers).
+          {
+            name: "mutations",
+            use: {
+              ...devices["Desktop Chrome"],
+              storageState: STORAGE_HR_ADMIN,
+            },
+            testMatch: /mutations\/.*\.spec\.ts/,
             dependencies: ["auth-setup"],
           },
         ]

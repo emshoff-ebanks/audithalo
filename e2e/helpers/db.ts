@@ -118,6 +118,30 @@ export async function findAuditLogEntry(opts: {
   return r.rows[0] ?? null;
 }
 
+// ─── Invitation queries ───────────────────────────────────────────────────
+
+export async function findInvitationByEmail(
+  orgId: string,
+  email: string
+): Promise<{ id: string; role: string; createdAt: Date } | null> {
+  const r = await pool().query(
+    `SELECT id, role::text AS role, created_at AS "createdAt"
+     FROM invitations
+     WHERE org_id = $1 AND lower(email) = lower($2)
+     ORDER BY created_at DESC LIMIT 1`,
+    [orgId, email]
+  );
+  return r.rows[0] ?? null;
+}
+
+export async function deleteInvitationsByEmail(email: string): Promise<number> {
+  const r = await pool().query(
+    `DELETE FROM invitations WHERE lower(email) = lower($1)`,
+    [email]
+  );
+  return r.rowCount ?? 0;
+}
+
 // ─── Smoke-row cleanup ────────────────────────────────────────────────────
 
 /**
