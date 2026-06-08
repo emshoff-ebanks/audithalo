@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Circle, AlertTriangle, AlertOctagon } from "lucide-react";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import {
   canSupervise,
@@ -63,9 +63,16 @@ export default async function RosterPage({
   // Fetch all supervisees with compliance data (3 batch queries)
   const allRosterRows = await getOrgRosterWithCompliance(membership.orgId);
 
-  // Fetch pending invitations separately
+  // Fetch pending invitations for THIS roster page — supervisee invites only.
+  // Supervisor/HR Admin/Executive invitations live on /dashboard/team and
+  // were mixing into this table without a role indicator, confusing HR Admins
+  // who couldn't tell who they were about to add. Filtering by role keeps
+  // the roster page strictly about supervisees.
   const pendingInvites = await db.query.invitations.findMany({
-    where: eq(schema.invitations.orgId, membership.orgId),
+    where: and(
+      eq(schema.invitations.orgId, membership.orgId),
+      eq(schema.invitations.role, "supervisee")
+    ),
   });
 
   const params = await searchParams;

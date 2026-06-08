@@ -20,6 +20,7 @@ import {
   DeactivateMemberButton,
   ReassignSupervisorDropdown,
 } from "./_invite-forms";
+import { PendingInviteActions } from "../roster/pending-invite-actions";
 
 export const metadata = { title: "Team — AuditHalo" };
 export const dynamic = "force-dynamic";
@@ -58,23 +59,38 @@ export default async function TeamPage() {
   const isHr = isHrAdmin(viewerMembership.role);
   const canManage = canManageOrg(viewerMembership.role);
 
-  const [org, allMemberships, supervisorAssignments] = await Promise.all([
-    db.query.organizations.findFirst({
-      where: eq(schema.organizations.id, viewerMembership.orgId),
-    }),
-    db.query.orgMemberships.findMany({
-      where: eq(schema.orgMemberships.orgId, viewerMembership.orgId),
-      orderBy: desc(schema.orgMemberships.createdAt),
-    }),
-    db.query.supervisorAssignments.findMany({
-      where: and(
-        eq(schema.supervisorAssignments.orgId, viewerMembership.orgId),
-        eq(schema.supervisorAssignments.isPrimary, true),
-        isNull(schema.supervisorAssignments.endedAt)
-      ),
-    }),
-  ]);
+  const [org, allMemberships, supervisorAssignments, allInvitations] =
+    await Promise.all([
+      db.query.organizations.findFirst({
+        where: eq(schema.organizations.id, viewerMembership.orgId),
+      }),
+      db.query.orgMemberships.findMany({
+        where: eq(schema.orgMemberships.orgId, viewerMembership.orgId),
+        orderBy: desc(schema.orgMemberships.createdAt),
+      }),
+      db.query.supervisorAssignments.findMany({
+        where: and(
+          eq(schema.supervisorAssignments.orgId, viewerMembership.orgId),
+          eq(schema.supervisorAssignments.isPrimary, true),
+          isNull(schema.supervisorAssignments.endedAt)
+        ),
+      }),
+      db.query.invitations.findMany({
+        where: eq(schema.invitations.orgId, viewerMembership.orgId),
+        orderBy: desc(schema.invitations.createdAt),
+      }),
+    ]);
   if (!org) redirect("/dashboard");
+
+  // Group pending (not-yet-accepted) invites by role so each section can
+  // render its own outstanding invitations alongside accepted members.
+  const pendingByRole = new Map<string, typeof allInvitations>();
+  for (const inv of allInvitations) {
+    if (inv.acceptedAt) continue;
+    const list = pendingByRole.get(inv.role) ?? [];
+    list.push(inv);
+    pendingByRole.set(inv.role, list);
+  }
 
   const memberIds = allMemberships.map((m) => m.userId);
   const memberUsers = memberIds.length
@@ -161,6 +177,10 @@ export default async function TeamPage() {
           viewerId={session.user.id}
           showDeactivate={canManage}
         />
+        <PendingInvitesList
+          invites={pendingByRole.get("hr_admin") ?? []}
+          showActions={canManage}
+        />
         {canManage && (
           <Card className="mt-4">
             <CardContent className="p-6">
@@ -180,6 +200,10 @@ export default async function TeamPage() {
           rows={supervisors}
           viewerId={session.user.id}
           showDeactivate={canManage}
+        />
+        <PendingInvitesList
+          invites={pendingByRole.get("supervisor") ?? []}
+          showActions={canManage}
         />
         {canManage && (
           <Card className="mt-4">
@@ -201,6 +225,10 @@ export default async function TeamPage() {
           viewerId={session.user.id}
           showDeactivate={canManage}
         />
+        <PendingInvitesList
+          invites={pendingByRole.get("executive") ?? []}
+          showActions={canManage}
+        />
         {canManage && (
           <Card className="mt-4">
             <CardContent className="p-6">
@@ -216,6 +244,10 @@ export default async function TeamPage() {
         title="Supervisees"
         subtitle="Pre-licensed associates. Inviting happens at /dashboard/roster."
       >
+        <PendingInvitesList
+          invites={pendingByRole.get("supervisee") ?? []}
+          showActions={canManage}
+        />
         {supervisees.length === 0 ? (
           <p className="text-sm text-foreground/50 py-8 text-center bg-card border border-border rounded-sm">
             No supervisees yet.
@@ -309,6 +341,51 @@ export default async function TeamPage() {
 // ───────────────────────────────────────────────────────────────────────────
 // Section wrapper + reusable members table
 // ───────────────────────────────────────────────────────────────────────────
+
+function PendingInvitesList({
+  invites,
+  showActions,
+}: {
+  invites: (typeof schema.invitations.$inferSelect)[];
+  showActions: boolean;
+}) {
+  if (invites.length === 0) return null;
+  return (
+    <Card className="mt-3 bg-[color:var(--color-evidence-bg)]/30">
+      <CardContent className="p-4">
+        <p className="label-overline mb-2">
+          Pending invitations ({invites.length})
+        </p>
+        <ul className="space-y-2">
+          {invites.map((inv) => (
+            <li
+              key={inv.id}
+              className="flex flex-wrap items-center justify-between gap-3 text-sm"
+            >
+              <div className="min-w-0 flex-1">
+                <span className="font-medium">
+                  {inv.name ?? <span className="text-foreground/50 italic">unnamed</span>}
+                </span>
+                <span className="ml-2 text-foreground/60 break-all">
+                  {inv.email}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="warning">Pending</Badge>
+                {showActions && (
+                  <PendingInviteActions
+                    invitationId={inv.id}
+                    email={inv.email}
+                  />
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
 
 function Section({
   title,
