@@ -141,6 +141,16 @@ export default async function TeamPage() {
           : "Your practice's team. Invitations and reassignments are HR Admin actions."}
       </p>
 
+      {canManage && (
+        <div className="mt-5">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard/team/import">
+              Bulk import from HRIS (CSV)
+            </Link>
+          </Button>
+        </div>
+      )}
+
       {/* HR Admins section */}
       <Section
         title="HR Admins"
