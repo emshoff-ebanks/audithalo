@@ -3,7 +3,12 @@ import Link from "next/link";
 import { ArrowLeft, Circle, AlertTriangle, AlertOctagon } from "lucide-react";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { canSupervise, getCurrentMembership, isManagerRole } from "@/lib/authz";
+import {
+  canSupervise,
+  getCurrentMembership,
+  isExecutive,
+  isManagerRole,
+} from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { loadAllRules, riskBadgeVariant, riskBadgeLabel } from "@/lib/rules";
 import { getOrgRosterWithCompliance } from "@/lib/db/roster-queries";
@@ -28,7 +33,13 @@ export default async function RosterPage({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  // Roster + invitations are supervisor-only.
+  // Executive is read-only oversight — they don't get the roster view. Push
+  // them to /dashboard/executive instead. Must run BEFORE the manager check
+  // since isManagerRole returns true for executive too.
+  if (isExecutive(session.user.role)) {
+    redirect("/dashboard/executive");
+  }
+  // Roster + invitations are supervisor / hr_admin only.
   if (!isManagerRole(session.user.role)) {
     redirect(`/dashboard/roster/${session.user.id}`);
   }

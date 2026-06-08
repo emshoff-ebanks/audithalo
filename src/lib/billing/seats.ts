@@ -40,6 +40,10 @@ export function seatCap(
   >,
   now: Date = new Date()
 ): number | null {
+  // Enterprise is contract-managed (no Stripe). Bypass status checks — being
+  // on subscription_tier='enterprise' is by itself proof of an active
+  // contract (Damon sets it manually via /admin/orgs).
+  if (org.subscriptionTier === "enterprise") return null;
   if (!org.subscriptionStatus || !ACTIVE_STATUSES.has(org.subscriptionStatus)) {
     return 0;
   }
@@ -123,6 +127,8 @@ export function aiNoteQuotaPerMonth(
   >,
   now: Date = new Date()
 ): number | null {
+  // Enterprise: contract-managed unlimited AI. See seatCap() for rationale.
+  if (org.subscriptionTier === "enterprise") return null;
   if (!org.subscriptionStatus || !ACTIVE_STATUSES.has(org.subscriptionStatus)) {
     return 0;
   }

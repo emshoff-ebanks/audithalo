@@ -3,11 +3,17 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { eq, desc, inArray, and } from "drizzle-orm";
 import { auth } from "@/auth";
-import { getCurrentMembership, isManagerRole } from "@/lib/authz";
+import {
+  canExportAuditLog,
+  getCurrentMembership,
+  isHrAdmin,
+  isManagerRole,
+} from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AuditLogExportForm } from "./_export-form";
 
 export const metadata = { title: "Audit log — AuditHalo" };
 
@@ -35,6 +41,16 @@ export default async function AuditLogPage({
 
   const membership = await getCurrentMembership(session.user.id);
   if (!membership) redirect("/dashboard");
+
+  const showExport = canExportAuditLog(membership.role);
+  const exportRequiresTotp = isHrAdmin(membership.role);
+
+  // Org-level audit-log retention (org_settings.audit_log_retention_years).
+  // Surfaced in the page header so the user knows how far back records go.
+  const settings = await db.query.orgSettings.findFirst({
+    where: eq(schema.orgSettings.orgId, membership.orgId),
+  });
+  const retentionYears = settings?.auditLogRetentionYears ?? 7;
 
   const { action: actionFilter } = await searchParams;
 
@@ -81,9 +97,24 @@ export default async function AuditLogPage({
         Audit log
       </h1>
       <p className="mt-3 text-foreground/70 max-w-2xl">
-        Every state-changing action in your practice is recorded here, with who did
-        it, when, and what changed. Retained for 7 years.
+        Every state-changing action in your practice is recorded here, with who
+        did it, when, and what changed. Retained for {retentionYears}{" "}
+        year{retentionYears === 1 ? "" : "s"}.
       </p>
+
+      {showExport && (
+        <Card className="mt-6">
+          <CardContent className="p-6">
+            <p className="label-overline mb-1">Export audit log</p>
+            <p className="text-sm text-foreground/60 mb-4">
+              {exportRequiresTotp
+                ? "Streams up to 10,000 rows. Confirm with 2FA to download."
+                : "Streams up to 10,000 rows. Read-only oversight export."}
+            </p>
+            <AuditLogExportForm requireTotp={exportRequiresTotp} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Action filter — simple <form> with GET method so filter is in the URL */}
       <form className="mt-6 flex flex-wrap items-end gap-3">

@@ -18,6 +18,10 @@ type Tier = {
   cta: { label: string; href: string };
   highlighted?: boolean;
   features: { label: string; included: boolean }[];
+  /** Optional pre-purchase warning block rendered under the features list.
+   *  Currently used on Enterprise to flag the auto-promote-to-HR-Admin
+   *  effect of upgrading. */
+  notice?: string;
 };
 
 const tiers: Tier[] = [
@@ -81,6 +85,9 @@ const tiers: Tier[] = [
     cta: { label: "Talk to sales", href: "/contact?topic=enterprise" },
     features: [
       { label: "Everything in Practice", included: true },
+      { label: "Multi-supervisor org + HR Admin role", included: true },
+      { label: "Executive read-only dashboard", included: true },
+      { label: "Audit log retention up to 20 years + export", included: true },
       { label: "SOC 2 report access", included: true },
       { label: "Signed BAA", included: true },
       { label: "Custom DPA", included: true },
@@ -88,7 +95,14 @@ const tiers: Tier[] = [
       { label: "Teams Enterprise integration", included: true },
       { label: "Custom state-rule additions", included: true },
       { label: "API access", included: true },
+      { label: "HRIS integration (Merge.dev / CSV)", included: true },
     ],
+    // Pre-purchase warning surfaced inline on the Enterprise tier card so
+    // the supervisor understands the role flip happens automatically when
+    // they buy. See docs/strategy/04-enterprise-rbac.md "Provisioning
+    // workflows → Practice → Enterprise upgrade" for the full rationale.
+    notice:
+      "Upgrading promotes your current account to HR Admin. HR Admin manages billing, team, and org settings — but doesn't sign supervision sessions. If you also supervise clinically, create a second Supervisor account with a different email and invite it into the org after upgrading.",
   },
 ];
 
@@ -180,6 +194,11 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
+                {"notice" in tier && tier.notice && (
+                  <div className="mt-6 p-3 rounded-sm border-l-[3px] border-[color:var(--color-warning)] bg-[color:var(--color-warning)]/5 text-xs text-foreground/80 leading-relaxed">
+                    <strong>Heads up:</strong> {tier.notice}
+                  </div>
+                )}
               </div>
             ))}
           </div>

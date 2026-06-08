@@ -56,6 +56,11 @@ const REPAIR_TARGETS: Array<{
     sentinel: `SELECT 1 FROM information_schema.columns
                WHERE table_name='users' AND column_name='is_founding_supervisor'`,
   },
+  {
+    file: "0023_enterprise_rbac_foundation.sql",
+    sentinel: `SELECT 1 FROM information_schema.tables
+               WHERE table_name='supervisor_assignments'`,
+  },
 ];
 
 function sha256(s: string): string {

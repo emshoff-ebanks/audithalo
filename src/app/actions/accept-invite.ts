@@ -237,6 +237,23 @@ export async function acceptInviteAsExistingUserAction(
     });
   }
 
+  // Mirror the membership role to users.role so JWT-based guards
+  // (requireHrAdmin, etc.) see the new role on next sign-in. The new-account
+  // flow above already gets this right at user creation; the existing-user
+  // path needs the explicit sync since users.role wasn't touched at
+  // insert-time. Bump sessionsValidFrom so the next request re-issues the
+  // JWT instead of carrying the stale role.
+  const currentUser = await db.query.users.findFirst({
+    where: eq(schema.users.id, userId),
+    columns: { role: true },
+  });
+  if (currentUser && currentUser.role !== invite.role) {
+    await db
+      .update(schema.users)
+      .set({ role: invite.role, sessionsValidFrom: new Date() })
+      .where(eq(schema.users.id, userId));
+  }
+
   // Apply the pending rule if pinned. The same try/catch protects the
   // membership write from a downstream insert failure.
   if (invite.pendingRuleId && invite.pendingObligationStartedAt) {

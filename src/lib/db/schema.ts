@@ -17,6 +17,12 @@ import {
 export const userRole = pgEnum("user_role", [
   "supervisee",
   "supervisor",
+  // Enterprise tier (migration 0023). HR Admin = the practice's compliance
+  // owner / org admin (the Enterprise buyer). Executive = read-only
+  // oversight role (board members, external auditors, partner clinics).
+  // See docs/strategy/04-enterprise-rbac.md for the role matrix.
+  "hr_admin",
+  "executive",
 ]);
 
 export const ruleShape = pgEnum("rule_shape", [
@@ -258,7 +264,71 @@ export const orgMemberships = pgTable("org_memberships", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   role: userRole("role").notNull(),
+  // Soft-deactivation (migration 0023). When set, the user cannot log in or
+  // be assigned new work for this org, but their historical signed sessions
+  // and audit-log entries stay intact (the audit trail is sacred).
+  deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
+  deactivatedByUserId: uuid("deactivated_by_user_id").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
+ * Explicit M:N supervisor↔supervisee assignments (migration 0023).
+ *
+ * Replaces the implicit "every supervisor sees every supervisee in the org"
+ * model that worked for Solo/Practice. Enterprise orgs have multiple
+ * supervisors and a supervisee might have a primary + secondary supervisor.
+ * Exactly one row per supervisee should have `isPrimary = true` and
+ * `endedAt IS NULL` — the cadence rules and signature requirements run
+ * against the primary supervisor.
+ *
+ * On reassignment: the old row gets `endedAt` + `transferredFromSupervisorId`
+ * pointing back to the prior assignment's supervisor, and a fresh row is
+ * inserted for the new supervisor. Existing signed sessions stay attributed
+ * to whichever supervisor actually signed them.
+ */
+export const supervisorAssignments = pgTable("supervisor_assignments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orgId: uuid("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  supervisorId: uuid("supervisor_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  superviseeId: uuid("supervisee_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  isPrimary: boolean("is_primary").notNull().default(true),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  transferredFromSupervisorId: uuid("transferred_from_supervisor_id").references(
+    () => users.id
+  ),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Per-org settings (migration 0023). One row per org, backfilled on
+ * migrate. Houses Enterprise-tier configuration: audit-log retention
+ * preference, SSO setup (later), branding, and feature toggles like
+ * "allow supervisors to invite supervisees" (HR Admins might want to lock
+ * invitation power to themselves in a tightly controlled practice).
+ */
+export const orgSettings = pgTable("org_settings", {
+  orgId: uuid("org_id")
+    .primaryKey()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  auditLogRetentionYears: integer("audit_log_retention_years")
+    .notNull()
+    .default(7),
+  ssoProvider: text("sso_provider"),
+  ssoMetadataUrl: text("sso_metadata_url"),
+  brandingLogoUrl: text("branding_logo_url"),
+  allowSupervisorsToInvite: boolean("allow_supervisors_to_invite")
+    .notNull()
+    .default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const invitations = pgTable("invitations", {
@@ -413,6 +483,11 @@ export const sessionEvents = pgTable("session_events", {
     transcriptWordCount: number;
     editedAt?: string;          // ISO timestamp — set when a supervisor manually edits after generation
     editedByUserId?: string;    // UUID of the supervisor who edited it
+    /** "manual" = supervisor pasted transcript; "teams" = ingested from MS Teams.
+     *  Absent on legacy rows (treat as "manual"). */
+    source?: "manual" | "teams";
+    /** MS Graph onlineMeeting id when source === "teams". */
+    teamsMeetingId?: string;
   }>(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

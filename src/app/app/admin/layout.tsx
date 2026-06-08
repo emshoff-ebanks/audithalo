@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 export const metadata = { title: "Admin — AuditHalo" };
 
 const adminNavLinks = [
+  { href: "/admin/orgs", label: "Orgs" },
   { href: "/admin/rule-drift", label: "Rule drift" },
   { href: "/admin/founding-supervisors", label: "Founding Supervisors" },
 ];

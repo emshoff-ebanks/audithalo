@@ -24,8 +24,14 @@ export const PRICES = {
 
 export type PlanKey = "solo_monthly" | "solo_yearly" | "practice";
 
+/** Subscription tier on organizations.subscription_tier. Enterprise is set
+ *  manually by an admin (via /admin/orgs) once a contract is signed —
+ *  there's no self-serve Stripe Checkout for Enterprise. The webhook also
+ *  recognizes the tier if a custom Stripe Price ID is configured later. */
+export type SubscriptionTier = "solo" | "practice" | "enterprise";
+
 /** Inverse lookup: given a price ID, what tier is it part of? */
-export function tierFromPriceId(priceId: string): "solo" | "practice" | null {
+export function tierFromPriceId(priceId: string): SubscriptionTier | null {
   if (priceId === PRICES.solo_monthly || priceId === PRICES.solo_yearly) {
     return "solo";
   }

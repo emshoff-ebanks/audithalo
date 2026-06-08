@@ -151,6 +151,30 @@ describe("seatCap", () => {
       })
     ).toBe(0);
   });
+
+  it("returns null (unlimited) for enterprise — contract-managed, no Stripe", () => {
+    expect(
+      seatCap({
+        subscriptionStatus: null,
+        subscriptionTier: "enterprise",
+        subscriptionPeriodEnd: null,
+        seatCount: null,
+      })
+    ).toBeNull();
+  });
+
+  it("returns null for enterprise even with canceled subscription status", () => {
+    // Org that was on Practice (canceled their Stripe sub) but then signed
+    // an Enterprise contract still gets unlimited seats from the Enterprise tier.
+    expect(
+      seatCap({
+        subscriptionStatus: "canceled",
+        subscriptionTier: "enterprise",
+        subscriptionPeriodEnd: null,
+        seatCount: null,
+      })
+    ).toBeNull();
+  });
 });
 
 describe("isPastDueGracePeriodExpired", () => {
@@ -212,6 +236,22 @@ describe("isPastDueGracePeriodExpired", () => {
         new Date("2026-01-09T00:00:00Z")
       )
     ).toBe(true);
+  });
+});
+
+describe("seatCapBlockedReason — Enterprise bypass", () => {
+  it("returns null for enterprise even at extreme used counts", () => {
+    expect(
+      seatCapBlockedReason(
+        {
+          subscriptionStatus: null,
+          subscriptionTier: "enterprise",
+          subscriptionPeriodEnd: null,
+          seatCount: null,
+        },
+        9999
+      )
+    ).toBeNull();
   });
 });
 

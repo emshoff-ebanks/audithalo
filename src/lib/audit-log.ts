@@ -60,4 +60,8 @@ export const AUDIT_ACTIONS = {
   // Founding Supervisor program (NIM-4)
   FOUNDING_SUPERVISOR_GRANTED: "user.founding_supervisor_granted",
   FOUNDING_SUPERVISOR_REVOKED: "user.founding_supervisor_revoked",
+  // Audit log export (E3 — Enterprise)
+  AUDIT_LOG_EXPORTED: "audit_log.exported",
+  // Org settings updates (E3 — Enterprise)
+  ORG_SETTINGS_UPDATED: "org_settings.updated",
 } as const;
