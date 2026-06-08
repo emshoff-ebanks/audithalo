@@ -7,12 +7,26 @@ export type SessionNoteData = {
   nextSteps: string[];
 };
 
+/**
+ * AI note metadata stamped on every generation.
+ *
+ * `source` distinguishes manual paste vs Teams transcript ingestion. The
+ * Teams integration path (future) will pass `source: "teams"` and the
+ * `teamsMeetingId` from MS Graph so we can trace which Teams meeting
+ * produced the note. The transcript itself is never persisted — only the
+ * hash + word count for audit. */
 export type SessionNoteMetadata = {
   generatedAt: string;
   generatedByUserId: string;
   model: string;
   transcriptHash: string;
   transcriptWordCount: number;
+  /** "manual" = supervisor pasted the transcript. "teams" = ingested
+   *  from a Teams meeting transcript via MS Graph. Defaults to "manual"
+   *  for backward compat with notes generated before this field existed. */
+  source?: "manual" | "teams";
+  /** MS Graph onlineMeeting id for Teams-sourced notes. */
+  teamsMeetingId?: string;
 };
 
 const SYSTEM_PROMPT = `You are a clinical supervision documentation assistant. Given a transcript of a supervision session between a licensed mental-health supervisor and a pre-licensed supervisee, extract a structured session note.
@@ -36,6 +50,8 @@ const MAX_TRANSCRIPT_CHARS = 50_000;
 export async function generateSessionNote(opts: {
   transcript: string;
   generatedByUserId: string;
+  source?: "manual" | "teams";
+  teamsMeetingId?: string;
 }): Promise<{ note: SessionNoteData; metadata: SessionNoteMetadata }> {
   const trimmed = opts.transcript.trim().slice(0, MAX_TRANSCRIPT_CHARS);
   const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
@@ -102,6 +118,8 @@ export async function generateSessionNote(opts: {
     model,
     transcriptHash: hash,
     transcriptWordCount: wordCount,
+    source: opts.source ?? "manual",
+    ...(opts.teamsMeetingId ? { teamsMeetingId: opts.teamsMeetingId } : {}),
   };
 
   return { note, metadata };

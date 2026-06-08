@@ -110,6 +110,26 @@ describe("aiNoteQuotaPerMonth", () => {
       })
     ).toBe(10);
   });
+
+  it("returns null (unlimited) for enterprise regardless of status", () => {
+    expect(
+      aiNoteQuotaPerMonth({
+        subscriptionStatus: null,
+        subscriptionTier: "enterprise",
+        subscriptionPeriodEnd: null,
+      })
+    ).toBeNull();
+  });
+
+  it("returns null for enterprise even when status is canceled", () => {
+    expect(
+      aiNoteQuotaPerMonth({
+        subscriptionStatus: "canceled",
+        subscriptionTier: "enterprise",
+        subscriptionPeriodEnd: null,
+      })
+    ).toBeNull();
+  });
 });
 
 describe("aiNoteQuotaBlockedReason", () => {
@@ -292,6 +312,19 @@ describe("aiNoteQuotaBlockedReason", () => {
           subscriptionPeriodEnd: recentPeriodEnd,
         },
         5
+      )
+    ).toBeNull();
+  });
+
+  it("returns null for enterprise even at high used counts", () => {
+    expect(
+      aiNoteQuotaBlockedReason(
+        {
+          subscriptionStatus: null,
+          subscriptionTier: "enterprise",
+          subscriptionPeriodEnd: null,
+        },
+        9999
       )
     ).toBeNull();
   });

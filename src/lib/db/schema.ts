@@ -483,6 +483,11 @@ export const sessionEvents = pgTable("session_events", {
     transcriptWordCount: number;
     editedAt?: string;          // ISO timestamp — set when a supervisor manually edits after generation
     editedByUserId?: string;    // UUID of the supervisor who edited it
+    /** "manual" = supervisor pasted transcript; "teams" = ingested from MS Teams.
+     *  Absent on legacy rows (treat as "manual"). */
+    source?: "manual" | "teams";
+    /** MS Graph onlineMeeting id when source === "teams". */
+    teamsMeetingId?: string;
   }>(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

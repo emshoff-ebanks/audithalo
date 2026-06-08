@@ -58,7 +58,11 @@ export default async function BillingPage({
 
   const params = await searchParams;
   const subStatus = org.subscriptionStatus;
+  const isEnterprise = org.subscriptionTier === "enterprise";
+  // Enterprise is contract-managed (no Stripe), so it's always "active" for
+  // billing-UI purposes regardless of subscription_status.
   const hasActive =
+    isEnterprise ||
     subStatus === "active" ||
     subStatus === "trialing" ||
     subStatus === "past_due";
@@ -101,13 +105,17 @@ export default async function BillingPage({
                 <h2 className="font-display text-2xl font-semibold text-foreground capitalize">
                   {org.subscriptionTier ?? "—"}
                 </h2>
-                <Badge
-                  variant={subStatus === "trialing" ? "warning" : "success"}
-                >
-                  {subStatus}
-                </Badge>
+                {isEnterprise ? (
+                  <Badge variant="success">contract</Badge>
+                ) : (
+                  <Badge
+                    variant={subStatus === "trialing" ? "warning" : "success"}
+                  >
+                    {subStatus}
+                  </Badge>
+                )}
               </div>
-              {org.subscriptionPeriodEnd && (
+              {org.subscriptionPeriodEnd && !isEnterprise && (
                 <p className="mt-2 text-sm text-foreground/70">
                   Next renewal:{" "}
                   <span className="font-mono">
@@ -121,9 +129,22 @@ export default async function BillingPage({
                   <span className="font-mono">{org.seatCount}</span>
                 </p>
               )}
-              <div className="mt-5">
-                <PortalButton />
-              </div>
+              {isEnterprise ? (
+                <p className="mt-3 text-sm text-foreground/70">
+                  Enterprise plans are managed by contract. Reach out to{" "}
+                  <a
+                    href="mailto:info@audithalo.com"
+                    className="text-secondary hover:underline"
+                  >
+                    info@audithalo.com
+                  </a>{" "}
+                  for invoice questions, seat additions, or renewal terms.
+                </p>
+              ) : (
+                <div className="mt-5">
+                  <PortalButton />
+                </div>
+              )}
             </>
           ) : (
             <>
