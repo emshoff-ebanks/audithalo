@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { eq, and, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
-import { canSupervise, getCurrentMembership } from "@/lib/authz";
+import { isManagerRole, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import {
   generateInvitationToken,
@@ -74,8 +74,11 @@ export async function inviteSuperviseeAction(
   if (!membership) {
     return { ok: false, error: "Your account has no organization yet." };
   }
-  if (!canSupervise(membership.role)) {
-    return { ok: false, error: "Only supervisors can invite supervisees." };
+  if (!isManagerRole(membership.role)) {
+    return {
+      ok: false,
+      error: "Only supervisors or HR Admins can invite supervisees.",
+    };
   }
 
   // If a rule is pinned, validate the (rule, start-date) pair. Start date is
@@ -305,8 +308,11 @@ export async function cancelInvitationAction(
   if (!membership) {
     return { ok: false, error: "No organization." };
   }
-  if (!canSupervise(membership.role)) {
-    return { ok: false, error: "Only supervisors can cancel invitations." };
+  if (!isManagerRole(membership.role)) {
+    return {
+      ok: false,
+      error: "Only supervisors or HR Admins can cancel invitations.",
+    };
   }
 
   const invite = await db.query.invitations.findFirst({
@@ -368,8 +374,11 @@ export async function resendInvitationAction(
   if (!membership) {
     return { ok: false, error: "No organization." };
   }
-  if (!canSupervise(membership.role)) {
-    return { ok: false, error: "Only supervisors can resend invitations." };
+  if (!isManagerRole(membership.role)) {
+    return {
+      ok: false,
+      error: "Only supervisors or HR Admins can resend invitations.",
+    };
   }
 
   const invite = await db.query.invitations.findFirst({

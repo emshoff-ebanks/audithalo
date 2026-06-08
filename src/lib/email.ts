@@ -31,6 +31,17 @@ export type SendEmailParams = {
  * is logged to the console with the body so we can still test the flow end-to-end.
  */
 export async function sendEmail(params: SendEmailParams): Promise<void> {
+  // IANA reserves `.test` for test environments — nothing routes there.
+  // Skipping delivery for these addresses keeps Resend's reputation clean
+  // when mutation tests submit invite/notification flows. Always active:
+  // safe in prod because no real user can register a .test address.
+  if (params.to.endsWith("@audithalo.test")) {
+    console.log(
+      `[email] skipping send to IANA-reserved test address: ${params.to}`
+    );
+    return;
+  }
+
   if (!resend) {
     console.log(
       `\n=== [email] RESEND_API_KEY not set — logging only ===\n` +

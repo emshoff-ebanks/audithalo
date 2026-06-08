@@ -142,6 +142,61 @@ export async function deleteInvitationsByEmail(email: string): Promise<number> {
   return r.rowCount ?? 0;
 }
 
+/**
+ * Pre-seed an invitation directly for tests that need to exercise the
+ * "cancel an existing invite" path without first running an invite flow.
+ * Uses a placeholder token_hash + 30-day expiry. Inviter is the org's
+ * createdBy (the HR Admin in our seeded org).
+ */
+export async function seedInvitation(opts: {
+  orgId: string;
+  email: string;
+  role: "supervisor" | "supervisee" | "hr_admin" | "executive";
+  name?: string;
+}): Promise<{ id: string }> {
+  const r = await pool().query(
+    `INSERT INTO invitations
+       (org_id, email, name, role, token_hash, expires_at, invited_by_id)
+     SELECT $1, $2, $3, $4::user_role, $5,
+            NOW() + INTERVAL '30 days',
+            o.created_by_id
+     FROM organizations o WHERE o.id = $1
+     RETURNING id`,
+    [
+      opts.orgId,
+      opts.email,
+      opts.name ?? null,
+      opts.role,
+      `e2e-seeded-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    ]
+  );
+  return { id: r.rows[0].id };
+}
+
+// ─── Org settings queries ─────────────────────────────────────────────────
+
+export async function getOrgSettings(
+  orgId: string
+): Promise<{ auditLogRetentionYears: number } | null> {
+  const r = await pool().query(
+    `SELECT audit_log_retention_years AS "auditLogRetentionYears"
+     FROM org_settings WHERE org_id = $1`,
+    [orgId]
+  );
+  return r.rows[0] ?? null;
+}
+
+export async function setOrgRetentionYears(
+  orgId: string,
+  years: number
+): Promise<void> {
+  await pool().query(
+    `UPDATE org_settings SET audit_log_retention_years = $2, updated_at = NOW()
+     WHERE org_id = $1`,
+    [orgId, years]
+  );
+}
+
 // ─── Smoke-row cleanup ────────────────────────────────────────────────────
 
 /**

@@ -31,12 +31,14 @@ if [ -n "$matches" ]; then
 fi
 
 # ─── 2. E2E test credentials hardcoded in production source ───────────────
-# Test credentials must come from env vars only. The seed script
-# (scripts/seed-e2e-users.ts) is allowed to reference the @audithalo.test
-# email pattern since it CREATES them. Spec files in e2e/ are allowed too.
-matches=$(grep -rnE "@audithalo\.test" src/ --exclude=forbidden-patterns.sh 2>/dev/null || true)
+# Hardcoded full test emails (e.g. "e2e-hr-admin@audithalo.test") in src/
+# are a bug — should come from env vars only. The suffix check in
+# src/lib/email.ts (matches addresses ending in @audithalo.test) is
+# allowed and necessary infrastructure, so we only ban literals that
+# include a username prefix.
+matches=$(grep -rnE "[a-z0-9_+.-]+@audithalo\.test" src/ --exclude=forbidden-patterns.sh 2>/dev/null || true)
 if [ -n "$matches" ]; then
-  print_violation "@audithalo.test test email referenced in src/ — should be env var only" "$matches"
+  print_violation "Hardcoded @audithalo.test full email in src/ — should be env var only" "$matches"
   EXIT=1
 fi
 
