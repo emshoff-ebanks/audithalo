@@ -248,15 +248,28 @@ These features are mentioned in the original docs / pricing page but NOT shippin
 
 Before this branch (`release/enterprise`) bulk-merges to main, ALL of these must be green:
 
-- [ ] Migration 0023 applied + verified on prod (via repair-migrations.ts)
-- [ ] All 237 existing vitest tests still pass
-- [ ] New RBAC test suite passes (role-based permission unit tests)
-- [ ] Smoke test: full HR Admin first-day workflow on preview URL
-- [ ] Smoke test: practice supervisor → Enterprise upgrade promotes correctly
-- [ ] Smoke test: supervisor reassignment preserves prior signed sessions
-- [ ] Smoke test: executive cannot reach /dashboard/roster (redirect to /dashboard/executive)
-- [ ] Lead-magnet PDF wording softened (✅ landed on main)
+**Automated (verified in this branch):**
+- [x] vitest — 267/267 passing (was 237 before this branch; +30 new tests across RBAC, billing, HRIS)
+- [x] tsc --noEmit — only 3 pre-existing test fixture errors (permitExpiresAt nullability); zero new errors from this branch
+- [x] eslint on new files — clean (107 pre-existing apostrophe-escape warnings in marketing pages unchanged)
+- [x] `next build` — production build succeeds, all new routes (/admin/orgs, /dashboard/team/import, /dashboard/executive, /dashboard/settings, /api/audit-log/export) compile
+
+**Damon: pre-deploy checklist:**
+- [ ] Migration 0023 applied on prod (via repair-migrations.ts) — see `drizzle/0023_enterprise_rbac_foundation.sql`
+- [ ] Smoke test on preview URL: full HR Admin first-day workflow (invite supervisor, invite executive, deactivate, reassign)
+- [ ] Smoke test on preview URL: practice supervisor → Enterprise upgrade via /admin/orgs auto-promotes to HR Admin (+ welcome email lands)
+- [ ] Smoke test on preview URL: supervisor reassignment closes old supervisor_assignment row, opens new one with transferred_from_supervisor_id; prior signed sessions still attribute to original signer
+- [ ] Smoke test on preview URL: executive role redirects /dashboard → /dashboard/executive; /dashboard/roster returns 302 to /dashboard/executive
+- [ ] Smoke test on preview URL: HR Admin uploads HRIS CSV (use template from /dashboard/team/import), preview flags 1 intentional error, fix CSV, commit, verify invitation emails arrive
+- [ ] Audit log CSV export TOTP-gated; verify download succeeds for HR Admin, fails without TOTP
+
+**Already on main:**
+- [x] Lead-magnet PDF wording softened
+- [x] Sitemap updated for /founding
+
+**External dependencies (no merge block — done in parallel):**
 - [ ] Stripe `founding_supervisor_lifetime` coupon created + test promo verified (Damon)
 - [ ] Resend `RESEND_FOUNDING_AUDIENCE_ID` + `RESEND_LEAD_MAGNETS_AUDIENCE_ID` set on Vercel (Damon)
-- [ ] Sitemap updated for /founding (✅ landed on main)
 - [ ] At least one licensed LCMHCS has read the audit checklist PDF for accuracy
+- [ ] MS Entra ID app registration (blocks Teams + Calendar work — see docs/strategy/06-ms-integrations.md)
+- [ ] Merge.dev account (blocks HRIS Phase 2 + 3 — see docs/strategy/05-hris-integration.md)
