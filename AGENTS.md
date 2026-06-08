@@ -36,7 +36,7 @@ This document tells you what you have, what you don't, and what you're authorize
 | `git` | ✅ Yes | See "Git identity" section below before any commit. |
 | `playwright` | ✅ Yes (dev dep) | `npx playwright test`. Browsers may need `npx playwright install` first. |
 | `gh` (GitHub CLI) | ❌ **NOT installed** | Don't use `gh`. For GitHub work, ask Damon to do it via the web UI, or describe what needs doing. |
-| `vercel` (Vercel CLI) | ✅ Yes (via `npx vercel`, not globally installed) | Already authenticated as `emshoffdon`. Repo is linked: `.vercel/repo.json` points at project `audithalo` (`prj_8jykC5lPyljUYwjQFskCOLBK0tPr`) under team `audit-helo` (`team_U1QGq8IOsFmNpYIHFNX6ecXN`). Common reads: `npx vercel ls audithalo --scope audit-helo` (deployments), `npx vercel env ls --scope audit-helo` (env vars), `npx vercel logs <deployment-url>`. **Never** run `vercel env add/rm`, `vercel deploy --prod`, `vercel alias`, or anything that touches prod without explicit Damon approval. |
+| `vercel` (Vercel CLI) | ✅ Yes (via `npx vercel`, not globally installed) | Already authenticated as `emshoffdon`. Repo is linked: `.vercel/repo.json` points at project `audithalo` (`prj_8jykC5lPyljUYwjQFskCOLBK0tPr`) under team ID `team_U1QGq8IOsFmNpYIHFNX6ecXN`. Because the project is linked, `npx vercel <cmd>` from the repo dir auto-detects scope — **don't pass `--scope <team-slug>`**. Common reads: `npx vercel ls audithalo` (deployments), `npx vercel env ls` (env vars), `npx vercel logs <deployment-url>`. **Never** run `vercel env add/rm`, `vercel deploy --prod`, `vercel alias`, or anything that touches prod without explicit Damon approval. |
 | `psql` | ⚠️ Unknown | Test before relying. Prefer `tsx` scripts that use `@neondatabase/serverless` for ad-hoc DB queries. |
 
 ## Git identity & push discipline
@@ -108,7 +108,7 @@ For everything else: **proceed and report**, don't ask permission. Damon's frust
 
 These are intentional dev no-ops, not bugs. If a task requires one of these, ask Damon for the value (or to set it himself via `.env.local`).
 
-Production env vars are managed in the Vercel dashboard. You CAN read them via `npx vercel env ls --scope audit-helo` (names only — values stay encrypted). Modifying them (`vercel env add/rm`) is destructive and requires explicit Damon approval. To pull a local copy for dev, use `npx vercel env pull .env.local --scope audit-helo --environment=development` — only do this if Damon asks for it; `.env.local` is already populated.
+Production env vars are managed in the Vercel dashboard. You CAN read them via `npx vercel env ls` (names only — values stay encrypted). Modifying them (`vercel env add/rm`) is destructive and requires explicit Damon approval. To pull a local copy for dev, use `npx vercel env pull .env.local --environment=development` — only do this if Damon asks for it; `.env.local` is already populated.
 
 ## Strategy docs — read in this order
 
