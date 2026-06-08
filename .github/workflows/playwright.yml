@@ -15,7 +15,17 @@ jobs:
     env:
       # Default to prod URL. Override per-workflow if you stand up a
       # staging deployment or run against a local build in CI.
-      E2E_BASE_URL: https://app.audithalo.com
+      E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
+      E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
+      E2E_HR_ADMIN_EMAIL: ${{ secrets.E2E_HR_ADMIN_EMAIL }}
+      E2E_HR_ADMIN_PASSWORD: ${{ secrets.E2E_HR_ADMIN_PASSWORD }}
+      E2E_SUPERVISOR_EMAIL: ${{ secrets.E2E_SUPERVISOR_EMAIL }}
+      E2E_SUPERVISOR_PASSWORD: ${{ secrets.E2E_SUPERVISOR_PASSWORD }}
+      E2E_SUPERVISEE_EMAIL: ${{ secrets.E2E_SUPERVISEE_EMAIL }}
+      E2E_SUPERVISEE_PASSWORD: ${{ secrets.E2E_SUPERVISEE_PASSWORD }}
+      E2E_EXECUTIVE_EMAIL: ${{ secrets.E2E_EXECUTIVE_EMAIL }}
+      E2E_EXECUTIVE_PASSWORD: ${{ secrets.E2E_EXECUTIVE_PASSWORD }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - uses: actions/checkout@v4
 

@@ -78,7 +78,16 @@ Required vars (set in both places):
 - `e2e/helpers/db.ts` — Node-side `pg` queries. Functions: `getMembershipRole(userId, orgId)`, `getActiveSupervisorAssignment(superviseeId, orgId)`, `getOrgTier(orgId)`, `findAuditLogEntry({ orgId, action, afterTs })`, `cleanupSmokeRows({ prefix })`
 - **Critical:** this file MUST NOT be imported from any `*.spec.ts` that runs in the browser. Specs import it via a Node-only helper that runs in `test.beforeAll` / `test.afterAll` hooks (which run in the test worker, not the browser).
 
-### Phase 3 — 6 RBAC smoke tests (one spec per gate item)
+### Phase 3 — RBAC smoke tests (partial; 3/6 shipped 2026-06-08, verified 14/14 in 58.8s)
+
+Shipped specs:
+- `e2e/rbac/executive-routing.spec.ts` (3 tests) — `/dashboard` + `/dashboard/roster` both 302 → `/dashboard/executive` for exec role
+- `e2e/rbac/role-aware-headers.spec.ts` (4 tests) — HR Admin sees "Org roster", supervisor sees "Your roster"; header badge reflects role
+- `e2e/rbac/team-access.spec.ts` (3 tests, includes DB verifier) — HR Admin reaches team page; supervisee doesn't see HR-only controls; DB confirms membership role
+
+Deferred (Phase 6 staging needed):
+
+
 - `e2e/rbac/executive-routing.spec.ts` — login as exec; assert `/dashboard` 302s → `/dashboard/executive`; same for `/dashboard/roster`
 - `e2e/rbac/hr-admin-team.spec.ts` — invite supervisor, invite executive (with seat-cap check), deactivate; DB verifier confirms the rows + audit log
 - `e2e/rbac/supervisor-reassignment.spec.ts` — reassign; DB verifier confirms old row has `ended_at` + `transferred_from_supervisor_id`, new row exists; existing signed sessions remain attributed to original signer
