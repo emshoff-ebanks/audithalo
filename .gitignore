@@ -52,3 +52,4 @@ docs/superpowers/
 /playwright-report/
 /test-results/
 /playwright/.cache/
+/playwright/.auth/

@@ -34,35 +34,45 @@ Four accounts, one per role, all on the same staging org once Phase 6 lands. Unt
 | Supervisee | `audihalosupervisor+sve@gmail.com` | `E2E_SUPERVISEE_PASSWORD` |
 | Executive | `audihalosupervisor+exec@gmail.com` | `E2E_EXECUTIVE_PASSWORD` |
 
-Setup steps (one-time):
-1. Register each account at `app.audithalo.com/register` (supervisor role, fresh org per account)
-2. From Damon's admin account, use `/admin/orgs` to promote the HR Admin's org to Enterprise (their role flips automatically)
-3. From the HR Admin account, invite the Supervisor, Supervisee, and Executive into the HR Admin's org
-4. Each accepts the invite. Now all four roles exist in one org.
-5. Set the env vars on Vercel (Production + Preview):
-   - `E2E_BASE_URL=https://app.audithalo.com`
-   - `E2E_HR_ADMIN_EMAIL` / `E2E_HR_ADMIN_PASSWORD`
-   - `E2E_SUPERVISOR_EMAIL` / `E2E_SUPERVISOR_PASSWORD`
-   - `E2E_SUPERVISEE_EMAIL` / `E2E_SUPERVISEE_PASSWORD`
-   - `E2E_EXECUTIVE_EMAIL` / `E2E_EXECUTIVE_PASSWORD`
-   - `E2E_ORG_ID` (UUID of the shared HR Admin org, for DB verifier scoping)
-6. Mirror the same env vars in `.env.local` for local runs.
+Setup is automated via `scripts/seed-e2e-users.ts`. Run once:
 
-## Required env vars (CI secrets)
+```pwsh
+npx tsx scripts/seed-e2e-users.ts
+```
 
-- `E2E_BASE_URL`
-- `E2E_{HR_ADMIN,SUPERVISOR,SUPERVISEE,EXECUTIVE}_EMAIL`
-- `E2E_{HR_ADMIN,SUPERVISOR,SUPERVISEE,EXECUTIVE}_PASSWORD`
-- `E2E_ORG_ID`
-- `DATABASE_URL` (already set; reused by the Node-side verifier — never enters browser context)
+The script:
+- Creates 4 users with `@audithalo.test` emails (IANA-reserved TLD — nothing routes to a real inbox)
+- Creates 1 "E2E Test Org" already at Enterprise tier
+- Inserts 4 memberships + 1 supervisor→supervisee assignment
+- Marks all 4 users `email_verified_at = NOW()`
+- Prints the generated credentials (passwords are bcrypt-hashed in the DB; the printed plaintext is the only copy)
+
+Re-running the script wipes and rebuilds the org with fresh credentials.
+
+## Where env vars live
+
+**Not on Vercel** — the Next.js app doesn't read these. Two locations only:
+
+1. **`.env.local`** (gitignored) — for local Playwright runs. The seed script's output gets pasted here.
+2. **GitHub Actions secrets** — for CI. Add via repo Settings → Secrets and variables → Actions → New repository secret. Same names as `.env.local`. The workflow at `.github/workflows/playwright.yml` reads them via the `env:` block.
+
+Required vars (set in both places):
+
+- `E2E_BASE_URL` (e.g., `https://app.audithalo.com`)
+- `E2E_ORG_ID` (UUID printed by the seed script)
+- `E2E_HR_ADMIN_EMAIL` / `E2E_HR_ADMIN_PASSWORD`
+- `E2E_SUPERVISOR_EMAIL` / `E2E_SUPERVISOR_PASSWORD`
+- `E2E_SUPERVISEE_EMAIL` / `E2E_SUPERVISEE_PASSWORD`
+- `E2E_EXECUTIVE_EMAIL` / `E2E_EXECUTIVE_PASSWORD`
+- `DATABASE_URL` (already set for the app; reused by Node-side verifier — never enters browser context)
 
 ## Phase plan
 
-### Phase 1 — Auth foundation (DONE: scaffold; AWAITING: test users)
-- `e2e/auth.setup.ts` — logs in as each role, saves storage state to `playwright/.auth/<role>.json`
-- `e2e/helpers/auth.ts` — load storage state per test
-- Wired in `playwright.config.ts` as a project with `setup` dependency
-- **Activation gate:** auth project only runs when `E2E_HR_ADMIN_EMAIL` is set. Healthcheck spec continues to run without it.
+### Phase 1 — Auth foundation (DONE, verified against prod)
+- `scripts/seed-e2e-users.ts` — seeds the test org + 4 users idempotently
+- `e2e/auth.setup.ts` — logs in as each role, saves storage state to `playwright/.auth/<role>.json` (gitignored)
+- `playwright.config.ts` — auto-loads `.env.local`; gates `auth-setup` + `rbac` projects on `E2E_HR_ADMIN_EMAIL` presence so the healthcheck spec still runs without creds
+- **Verified 2026-06-08:** `npx playwright test --project=auth-setup` — 4/4 passed in 21.6s against `https://app.audithalo.com`
 
 ### Phase 2 — DB verifier helper
 - `e2e/helpers/db.ts` — Node-side `pg` queries. Functions: `getMembershipRole(userId, orgId)`, `getActiveSupervisorAssignment(superviseeId, orgId)`, `getOrgTier(orgId)`, `findAuditLogEntry({ orgId, action, afterTs })`, `cleanupSmokeRows({ prefix })`

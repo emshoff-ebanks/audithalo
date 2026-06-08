@@ -1,4 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
+import { config as loadEnv } from "dotenv";
+
+// Load .env.local so locally-configured E2E creds are available without
+// needing the operator to remember `dotenv -e .env.local --` prefixes.
+// CI sets these via repo secrets and ignores the missing file.
+loadEnv({ path: ".env.local" });
 
 // E2E_BASE_URL lets you point the suite at any environment:
 //   - default: production app (https://app.audithalo.com)
@@ -7,6 +13,14 @@ import { defineConfig, devices } from "@playwright/test";
 //     *.vercel.app currently only serves the marketing namespace, so
 //     app tests need either prod or local app.localhost.
 const baseURL = process.env.E2E_BASE_URL ?? "https://app.audithalo.com";
+
+// The auth-setup + RBAC projects only activate when test-user credentials
+// are present. This lets the unauthed healthcheck spec run in any env
+// (CI without secrets, fresh contributors, etc.) without failing on
+// missing creds. See docs/strategy/07-e2e-testing.md.
+const hasE2ECreds = !!process.env.E2E_HR_ADMIN_EMAIL;
+
+const STORAGE_HR_ADMIN = "playwright/.auth/hr_admin.json";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -22,6 +36,29 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    // Always run: unauthed healthcheck. Safe against any env.
+    {
+      name: "healthcheck",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /healthcheck\.spec\.ts/,
+    },
+    // Below projects only activate when E2E_* creds are configured.
+    ...(hasE2ECreds
+      ? [
+          {
+            name: "auth-setup",
+            testMatch: /auth\.setup\.ts/,
+          },
+          {
+            name: "rbac",
+            use: {
+              ...devices["Desktop Chrome"],
+              storageState: STORAGE_HR_ADMIN,
+            },
+            testMatch: /rbac\/.*\.spec\.ts/,
+            dependencies: ["auth-setup"],
+          },
+        ]
+      : []),
   ],
 });
