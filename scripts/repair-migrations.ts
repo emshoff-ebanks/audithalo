@@ -61,6 +61,12 @@ const REPAIR_TARGETS: Array<{
     sentinel: `SELECT 1 FROM information_schema.tables
                WHERE table_name='supervisor_assignments'`,
   },
+  {
+    file: "0024_invitation_pending_supervisor.sql",
+    sentinel: `SELECT 1 FROM information_schema.columns
+               WHERE table_name='invitations'
+                 AND column_name='pending_assignment_supervisor_id'`,
+  },
 ];
 
 function sha256(s: string): string {

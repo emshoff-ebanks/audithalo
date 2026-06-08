@@ -11,12 +11,16 @@ import {
 } from "@/app/actions/invitations";
 
 type AvailableRule = { id: string; label: string; summary: string };
+type SupervisorOption = { id: string; name: string };
 
 type Props = {
   availableRules: AvailableRule[];
+  // When set, an "Assign to supervisor" dropdown is rendered. HR Admin only
+  // (supervisor inviters auto-assign to themselves; no dropdown shown).
+  supervisorOptions?: SupervisorOption[];
 };
 
-export function InviteForm({ availableRules }: Props) {
+export function InviteForm({ availableRules, supervisorOptions }: Props) {
   const [state, formAction, pending] = useActionState<
     InviteResult | undefined,
     FormData
@@ -62,6 +66,43 @@ export function InviteForm({ availableRules }: Props) {
           className="mt-1.5"
         />
       </div>
+
+      {supervisorOptions && supervisorOptions.length > 0 && (
+        <div>
+          <Label htmlFor="invite-supervisor">
+            Assign to supervisor{" "}
+            <span className="text-foreground/50">(optional)</span>
+          </Label>
+          <select
+            id="invite-supervisor"
+            name="assignSupervisorId"
+            defaultValue=""
+            className="mt-1.5 w-full h-10 px-3 rounded-sm border border-border bg-background text-sm"
+          >
+            <option value="">— Assign later —</option>
+            {supervisorOptions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-foreground/60">
+            Picking a supervisor now means the supervisee is assigned the
+            moment they accept (no orphaned-roster gap).
+          </p>
+        </div>
+      )}
+
+      {supervisorOptions && supervisorOptions.length === 0 && (
+        <p className="text-xs text-[color:var(--color-warning)] bg-[color:var(--color-warning)]/8 px-3 py-2 rounded-sm">
+          No active supervisors in this org. The invitee will land on the
+          roster unassigned — invite a supervisor from{" "}
+          <a href="/dashboard/team" className="underline">
+            /dashboard/team
+          </a>{" "}
+          and reassign after they accept.
+        </p>
+      )}
 
       <div>
         <Label htmlFor="invite-rule">

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Circle, AlertTriangle, AlertOctagon } from "lucide-react";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import {
   canSupervise,
@@ -59,6 +59,33 @@ export default async function RosterPage({
   const org = await db.query.organizations.findFirst({
     where: eq(schema.organizations.id, membership.orgId),
   });
+
+  // HR Admin's invite form needs a supervisor picker (per spec
+  // 04-enterprise-rbac.md §"Inviting a Supervisee"). Supervisor's form
+  // doesn't show one — they auto-assign to themselves.
+  const supervisorOptionsForForm = viewerIsHrAdmin
+    ? await (async () => {
+        const rows = await db
+          .select({
+            id: schema.users.id,
+            name: schema.users.name,
+            email: schema.users.email,
+          })
+          .from(schema.orgMemberships)
+          .innerJoin(
+            schema.users,
+            eq(schema.orgMemberships.userId, schema.users.id)
+          )
+          .where(
+            and(
+              eq(schema.orgMemberships.orgId, membership.orgId),
+              eq(schema.orgMemberships.role, "supervisor"),
+              isNull(schema.orgMemberships.deactivatedAt)
+            )
+          );
+        return rows.map((r) => ({ id: r.id, name: r.name ?? r.email }));
+      })()
+    : undefined;
 
   // Fetch all supervisees with compliance data (3 batch queries)
   const allRosterRows = await getOrgRosterWithCompliance(membership.orgId);
@@ -381,6 +408,7 @@ export default async function RosterPage({
                   summary: r.summary,
                 };
               })}
+              supervisorOptions={supervisorOptionsForForm}
             />
           </CardContent>
         </Card>

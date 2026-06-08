@@ -356,6 +356,12 @@ export const invitations = pgTable("invitations", {
   pendingContractFiledAt: timestamp("pending_contract_filed_at", {
     withTimezone: true,
   }),
+  // HR Admin picks a supervisor at invite time (migration 0024). On accept,
+  // supervisor_assignments row is created with this user. Null when the
+  // inviter is themselves a supervisor (auto-assigns to themselves).
+  pendingAssignmentSupervisorId: uuid("pending_assignment_supervisor_id").references(
+    () => users.id
+  ),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

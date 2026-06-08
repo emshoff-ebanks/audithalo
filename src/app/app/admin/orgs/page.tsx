@@ -3,6 +3,7 @@ import { db, schema } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { PromoteToEnterpriseForm } from "./_promote-form";
+import { ProvisionEnterpriseForm } from "./_provision-form";
 
 export const metadata = { title: "Orgs — Admin" };
 export const dynamic = "force-dynamic";
@@ -59,6 +60,10 @@ export default async function OrgsPage() {
         org owner&apos;s account to HR Admin (per the locked Enterprise
         upgrade flow). Other roles in the org are untouched.
       </p>
+
+      <div className="mt-6">
+        <ProvisionEnterpriseForm />
+      </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
         <Badge variant="outline">{rows.length} orgs total</Badge>

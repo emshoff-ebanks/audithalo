@@ -34,6 +34,10 @@ const inviteSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD")
     .optional(),
+  // HR Admin's invite form passes this; supervisor's form does not (auto
+  // assigns to themselves). Optional; the action resolves the effective
+  // value based on the inviter's role.
+  assignSupervisorId: z.string().uuid().optional(),
 });
 
 const invitationIdSchema = z.object({
@@ -64,6 +68,7 @@ export async function inviteSuperviseeAction(
     obligationStartedAt: formData.get("obligationStartedAt") || undefined,
     supervisionContractFiledAt:
       formData.get("supervisionContractFiledAt") || undefined,
+    assignSupervisorId: formData.get("assignSupervisorId") || undefined,
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
@@ -98,6 +103,38 @@ export async function inviteSuperviseeAction(
   const pendingContractFiledAt = parsed.data.supervisionContractFiledAt
     ? new Date(`${parsed.data.supervisionContractFiledAt}T00:00:00Z`)
     : null;
+
+  // Resolve effective supervisor for the supervisee_assignments row that
+  // accept-invite will create:
+  //   - If inviter is a Supervisor → auto-assign to themselves (matches
+  //     pre-Enterprise behavior; the form doesn't show a picker for them).
+  //   - If inviter is HR Admin → use the picked supervisor from the form.
+  //     If they didn't pick one, leave null and let HR Admin reassign later
+  //     (the "Primary supervisor" card on the supervisee detail page).
+  let pendingAssignmentSupervisorId: string | null = null;
+  if (membership.role === "supervisor") {
+    pendingAssignmentSupervisorId = session.user.id;
+  } else if (
+    membership.role === "hr_admin" &&
+    parsed.data.assignSupervisorId
+  ) {
+    // Validate the picked supervisor is an active supervisor in this org.
+    const supMembership = await db.query.orgMemberships.findFirst({
+      where: and(
+        eq(schema.orgMemberships.orgId, membership.orgId),
+        eq(schema.orgMemberships.userId, parsed.data.assignSupervisorId),
+        eq(schema.orgMemberships.role, "supervisor"),
+        isNull(schema.orgMemberships.deactivatedAt)
+      ),
+    });
+    if (!supMembership) {
+      return {
+        ok: false,
+        error: "Picked supervisor isn't an active supervisor in this org.",
+      };
+    }
+    pendingAssignmentSupervisorId = parsed.data.assignSupervisorId;
+  }
 
   // If the email already corresponds to a registered user, the existing user
   // can still join — they accept via the same /accept-invite/<token> link and
@@ -144,6 +181,7 @@ export async function inviteSuperviseeAction(
         pendingRuleId,
         pendingObligationStartedAt,
         pendingContractFiledAt,
+        pendingAssignmentSupervisorId,
       })
       .where(eq(schema.invitations.id, openInvite.id));
     await sendInviteEmail({
@@ -218,6 +256,7 @@ export async function inviteSuperviseeAction(
       pendingRuleId,
       pendingObligationStartedAt,
       pendingContractFiledAt,
+      pendingAssignmentSupervisorId,
     })
     .returning({ id: schema.invitations.id });
 

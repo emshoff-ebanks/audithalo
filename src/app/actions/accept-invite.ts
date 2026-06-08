@@ -112,6 +112,28 @@ export async function acceptInviteAction(
     }
   }
 
+  // For supervisee invites, create the supervisor_assignments row with the
+  // supervisor that the inviter chose. Self-assign-to-inviting-supervisor
+  // is handled in inviteSuperviseeAction (writes pendingAssignmentSupervisorId
+  // = inviter.id); HR Admin's picked supervisor is the same field. Null means
+  // HR Admin didn't pick — leave unassigned; they'll reassign from the team
+  // page or supervisee detail page.
+  if (invite.role === "supervisee" && invite.pendingAssignmentSupervisorId) {
+    try {
+      await db.insert(schema.supervisorAssignments).values({
+        orgId: invite.orgId,
+        supervisorId: invite.pendingAssignmentSupervisorId,
+        superviseeId: user.id,
+        isPrimary: true,
+      });
+    } catch (err) {
+      console.error(
+        `[accept-invite] failed to create supervisor_assignments row:`,
+        err
+      );
+    }
+  }
+
   await db
     .update(schema.invitations)
     .set({
@@ -268,6 +290,22 @@ export async function acceptInviteAsExistingUserAction(
     } catch (err) {
       console.error(
         `[accept-invite] failed to apply pending rule ${invite.pendingRuleId}:`,
+        err
+      );
+    }
+  }
+
+  if (invite.role === "supervisee" && invite.pendingAssignmentSupervisorId) {
+    try {
+      await db.insert(schema.supervisorAssignments).values({
+        orgId: invite.orgId,
+        supervisorId: invite.pendingAssignmentSupervisorId,
+        superviseeId: userId,
+        isPrimary: true,
+      });
+    } catch (err) {
+      console.error(
+        `[accept-invite] failed to create supervisor_assignments row:`,
         err
       );
     }

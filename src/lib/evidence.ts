@@ -43,7 +43,12 @@ export async function generateEvidencePackage(sessionEventId: string): Promise<v
   const assignment = await db.query.superviseeRuleAssignments.findFirst({
     where: eq(schema.superviseeRuleAssignments.superviseeId, event.superviseeId),
   });
-  if (!assignment) return;
+  if (!assignment) {
+    console.error(
+      `[evidence] session ${sessionEventId} sealed but supervisee ${event.superviseeId} has no superviseeRuleAssignments row — package NOT generated. Assign a rule and re-trigger sealing.`
+    );
+    return;
+  }
 
   // Resolve the rule from the registry
   const [, jur, lic, vRaw] =
