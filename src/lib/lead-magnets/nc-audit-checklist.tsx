@@ -106,7 +106,7 @@ export function NCAuditChecklistDocument() {
           <Text style={styles.wordmark}>AuditHalo</Text>
           <View>
             <Text style={styles.headerMeta}>NC LCMHCA supervision audit checklist</Text>
-            <Text style={styles.headerMeta}>Drafted from 21 NCAC 53 · verified against NCBLCMHC guidance</Text>
+            <Text style={styles.headerMeta}>Drafted from 21 NCAC 53 · not a substitute for current NCBLCMHC guidance</Text>
           </View>
         </View>
 
@@ -210,8 +210,9 @@ export function NCAuditChecklistDocument() {
         </View>
 
         <Text style={styles.footer}>
-          AuditHalo · audithalo.com · Drafted from 21 NCAC 53 and NCBLCMHC
-          guidance. Reviewed by licensed clinical supervisors. Not legal advice.
+          AuditHalo · audithalo.com · Drafted from 21 NCAC 53. Not legal
+          advice. Verify against current NCBLCMHC guidance before relying on
+          any item for an actual board audit.
         </Text>
       </Page>
     </Document>

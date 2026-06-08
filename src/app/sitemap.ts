@@ -20,6 +20,9 @@ const STATIC_PATHS = [
   "/counseling-supervision-audit-checklist",
   "/lcmhca-supervision-requirements",
   "/apcc-supervision-requirements",
+  // Founding Supervisor program landing — indexable so warm referrals from
+  // the cold-email campaign can also surface organically.
+  "/founding",
   "/contact",
   "/legal/terms",
   "/legal/privacy",

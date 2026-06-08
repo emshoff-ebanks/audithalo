@@ -176,9 +176,9 @@ export function NCLogTemplateDocument() {
         </View>
 
         <Text style={styles.footer}>
-          AuditHalo · audithalo.com · Template based on 21 NCAC 53. Reviewed
-          by licensed clinical supervisors. Not legal advice — verify against
-          NCBLCMHC current guidance.
+          AuditHalo · audithalo.com · Template based on 21 NCAC 53. Not
+          legal advice — verify against current NCBLCMHC guidance before
+          relying on it for an actual board audit.
         </Text>
       </Page>
     </Document>
