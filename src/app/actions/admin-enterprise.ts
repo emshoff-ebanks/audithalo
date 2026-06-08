@@ -78,14 +78,18 @@ export async function promoteOrgToEnterpriseAction(
       .update(schema.orgMemberships)
       .set({ role: "hr_admin" })
       .where(eq(schema.orgMemberships.id, ownerMembership.id));
-    promoted = true;
-
-    // Also bump sessionsValidFrom so the JWT picks up the new role on
-    // their next request instead of staying stale until they re-login.
+    // Sync users.role too — the JWT pulls `role` from users.role at sign-in
+    // (see auth.ts), and downstream guards like `requireHrAdmin()` read
+    // session.user.role. If we only updated org_memberships.role the
+    // promoted user would be blocked from HR-only routes until they were
+    // manually promoted in two places. Bumping sessionsValidFrom alone
+    // would NOT fix this — the JWT issued on next sign-in still reads
+    // users.role.
     await db
       .update(schema.users)
-      .set({ sessionsValidFrom: new Date() })
+      .set({ role: "hr_admin", sessionsValidFrom: new Date() })
       .where(eq(schema.users.id, org.createdById));
+    promoted = true;
   }
 
   try {
