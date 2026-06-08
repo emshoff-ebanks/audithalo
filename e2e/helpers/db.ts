@@ -197,6 +197,92 @@ export async function setOrgRetentionYears(
   );
 }
 
+// ─── User lookups ─────────────────────────────────────────────────────────
+
+export async function getUserIdByEmail(email: string): Promise<string | null> {
+  const r = await pool().query(`SELECT id FROM users WHERE email = $1`, [email]);
+  return r.rows[0]?.id ?? null;
+}
+
+// ─── Rule assignment ─────────────────────────────────────────────────────
+
+/**
+ * Ensure the supervisee has an active rule assignment so that
+ * generateEvidencePackage doesn't silent-skip. Idempotent — if a row
+ * already exists for (supervisee, org) the function is a no-op.
+ */
+export async function ensureSuperviseeRuleAssignment(opts: {
+  orgId: string;
+  superviseeId: string;
+  ruleId?: string;
+}): Promise<void> {
+  const ruleId = opts.ruleId ?? "nc-lcmhca-v1";
+  await pool().query(
+    `INSERT INTO supervisee_rule_assignments
+       (supervisee_id, org_id, rule_id, obligation_started_at)
+     VALUES ($1, $2, $3, NOW() - INTERVAL '30 days')
+     ON CONFLICT DO NOTHING`,
+    [opts.superviseeId, opts.orgId, ruleId]
+  );
+}
+
+// ─── Session event seeding (for sign-and-seal mutation test) ──────────────
+
+export async function seedSupervisionSessionEvent(opts: {
+  orgId: string;
+  superviseeId: string;
+  supervisorId: string;
+  durationHours?: number;
+  sessionType?: "individual" | "triadic" | "group";
+}): Promise<{ id: string }> {
+  const r = await pool().query(
+    `INSERT INTO session_events
+       (supervisee_id, org_id, kind, date, duration_hours,
+        session_type, supervisor_credentials, logged_by_id)
+     VALUES ($1, $2, 'supervision', NOW(), $3, $4, $5::jsonb, $6)
+     RETURNING id`,
+    [
+      opts.superviseeId,
+      opts.orgId,
+      opts.durationHours ?? 1.0,
+      opts.sessionType ?? "individual",
+      JSON.stringify(["LCMHCS"]),
+      opts.supervisorId,
+    ]
+  );
+  return { id: r.rows[0].id };
+}
+
+export async function deleteSessionEvent(id: string): Promise<void> {
+  // evidence_packages cascades on session_events delete (per migration 0004
+  // FK definition). Audit log entries are intentionally NOT cleaned up —
+  // they're meant to be immutable.
+  await pool().query(`DELETE FROM session_events WHERE id = $1`, [id]);
+}
+
+export async function getSessionEventSignatureState(
+  sessionEventId: string
+): Promise<{ sigCount: number; signedAt: Date | null } | null> {
+  const r = await pool().query(
+    `SELECT jsonb_array_length(signatures) AS "sigCount",
+            signed_at AS "signedAt"
+     FROM session_events WHERE id = $1`,
+    [sessionEventId]
+  );
+  return r.rows[0] ?? null;
+}
+
+export async function findEvidencePackageBySessionEventId(
+  sessionEventId: string
+): Promise<{ id: string; documentHash: string; createdAt: Date } | null> {
+  const r = await pool().query(
+    `SELECT id, document_hash AS "documentHash", created_at AS "createdAt"
+     FROM evidence_packages WHERE session_event_id = $1`,
+    [sessionEventId]
+  );
+  return r.rows[0] ?? null;
+}
+
 // ─── Smoke-row cleanup ────────────────────────────────────────────────────
 
 /**
