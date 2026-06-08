@@ -10,6 +10,10 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:codegen:app": "playwright codegen https://app.audithalo.com",
+    "test:e2e:codegen:marketing": "playwright codegen https://audithalo.com",
     "validate:rules": "tsx scripts/validate-rules.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/lib/db/migrate.ts",
@@ -62,6 +66,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/js-yaml": "^4.0.9",
