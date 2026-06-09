@@ -117,7 +117,18 @@ export function seatCapBlockedReason(
   return null;
 }
 
-/** AI note quota for an org's current plan. null = unlimited. 0 = no AI access. */
+/**
+ * AI note quota for an org's current plan. Returned value is the monthly cap;
+ * null is reserved for "contractually unlimited" (we don't actually expose this
+ * today — even Enterprise has a default cap that's expandable on contract).
+ *
+ * Cap math (gpt-4o at $2.50/1M input + $10/1M output):
+ *   - Realistic transcript: ~$0.022/note
+ *   - Worst-case 50k-char transcript: ~$0.053/note
+ * Tiers are sized so the worst-case AI spend stays below ~5% of tier revenue.
+ *
+ * Returns 0 when the subscription isn't active (no AI access).
+ */
 export function aiNoteQuotaPerMonth(
   org: Pick<
     Org,
@@ -126,9 +137,9 @@ export function aiNoteQuotaPerMonth(
     | "subscriptionPeriodEnd"
   >,
   now: Date = new Date()
-): number | null {
-  // Enterprise: contract-managed unlimited AI. See seatCap() for rationale.
-  if (org.subscriptionTier === "enterprise") return null;
+): number {
+  // Enterprise is contract-managed (no Stripe). Bypass status checks.
+  if (org.subscriptionTier === "enterprise") return 500;
   if (!org.subscriptionStatus || !ACTIVE_STATUSES.has(org.subscriptionStatus)) {
     return 0;
   }
@@ -136,7 +147,7 @@ export function aiNoteQuotaPerMonth(
     return 0;
   }
   if (org.subscriptionTier === "solo") return 10;
-  if (org.subscriptionTier === "practice") return null;
+  if (org.subscriptionTier === "practice") return 100;
   return 0;
 }
 
@@ -150,7 +161,6 @@ export function aiNoteQuotaBlockedReason(
   now: Date = new Date()
 ): BlockedReason {
   const quota = aiNoteQuotaPerMonth(org, now);
-  if (quota === null) return null; // unlimited
   if (quota === 0) {
     if (isPastDueGracePeriodExpired(org, now)) {
       return {
@@ -167,10 +177,26 @@ export function aiNoteQuotaBlockedReason(
     };
   }
   if (usedThisMonth >= quota) {
+    // Tier-aware upsell. Solo → Practice. Practice → Enterprise. Enterprise
+    // hits a hard wall and gets directed to support for a contract bump.
+    if (org.subscriptionTier === "solo") {
+      return {
+        message: `You've used ${usedThisMonth} of ${quota} AI session notes this month on the Solo plan. Upgrade to Practice for 100/mo.`,
+        ctaLabel: "Upgrade plan",
+        ctaHref: "/dashboard/billing",
+      };
+    }
+    if (org.subscriptionTier === "practice") {
+      return {
+        message: `You've used ${usedThisMonth} of ${quota} AI session notes this month on the Practice plan. Talk to sales about Enterprise for a higher cap.`,
+        ctaLabel: "Talk to sales",
+        ctaHref: "mailto:info@audithalo.com?subject=Enterprise%20AI%20quota",
+      };
+    }
     return {
-      message: `You've used ${usedThisMonth} of ${quota} AI session notes this month on the Solo plan. Upgrade to Practice for unlimited transcripts.`,
-      ctaLabel: "Upgrade plan",
-      ctaHref: "/dashboard/billing",
+      message: `You've used ${usedThisMonth} of ${quota} AI session notes this month. Contact your account team to expand your contract cap.`,
+      ctaLabel: "Contact us",
+      ctaHref: "mailto:info@audithalo.com?subject=Enterprise%20AI%20quota",
     };
   }
   return null;

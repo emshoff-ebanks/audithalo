@@ -71,7 +71,7 @@ const tiers: Tier[] = [
       { label: "Unlimited supervisees", included: true },
       { label: "Practice compliance heatmap", included: true },
       { label: "Bulk HRIS import (CSV)", included: true },
-      { label: "Unlimited AI transcripts", included: true },
+      { label: "AI session notes (100/mo per org)", included: true },
       { label: "Audit log retention (7 years)", included: true },
       { label: "Priority email support", included: true },
       { label: "Multi-supervisor org (HR Admin role)", included: false },
@@ -89,17 +89,11 @@ const tiers: Tier[] = [
       { label: "Executive read-only dashboard", included: true },
       { label: "Audit log retention up to 20 years + CSV/JSON export", included: true },
       { label: "TOTP-gated sensitive actions", included: true },
+      { label: "AI session notes (500/mo per org, expandable on contract)", included: true },
       { label: "BAA (available on request)", included: true },
       { label: "Custom DPA (available on request)", included: true },
       { label: "Custom state-rule additions", included: true },
       { label: "Direct founder support line", included: true },
-      // Honest roadmap markers — these are real plans but not shipped.
-      // Surfacing as "Roadmap" keeps the pitch credible without overpromising.
-      { label: "Roadmap: SOC 2 Type 2 report", included: false },
-      { label: "Roadmap: SSO / SAML", included: false },
-      { label: "Roadmap: MS Teams transcript ingestion", included: false },
-      { label: "Roadmap: Merge.dev HRIS sync (live, not just CSV)", included: false },
-      { label: "Roadmap: Read/write API", included: false },
     ],
     // Pre-purchase warning surfaced inline on the Enterprise tier card so
     // the supervisor understands the role flip happens automatically when

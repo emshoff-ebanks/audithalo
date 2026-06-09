@@ -55,24 +55,24 @@ describe("aiNoteQuotaPerMonth", () => {
     ).toBe(10);
   });
 
-  it("returns null (unlimited) for active practice", () => {
+  it("returns 100 for active practice", () => {
     expect(
       aiNoteQuotaPerMonth({
         subscriptionStatus: "active",
         subscriptionTier: "practice",
         subscriptionPeriodEnd: null,
       })
-    ).toBeNull();
+    ).toBe(100);
   });
 
-  it("returns null (unlimited) for trialing practice", () => {
+  it("returns 100 for trialing practice", () => {
     expect(
       aiNoteQuotaPerMonth({
         subscriptionStatus: "trialing",
         subscriptionTier: "practice",
         subscriptionPeriodEnd: null,
       })
-    ).toBeNull();
+    ).toBe(100);
   });
 
   it("returns 0 when active but tier is null (defensive)", () => {
@@ -111,24 +111,24 @@ describe("aiNoteQuotaPerMonth", () => {
     ).toBe(10);
   });
 
-  it("returns null (unlimited) for enterprise regardless of status", () => {
+  it("returns 500 for enterprise regardless of status", () => {
     expect(
       aiNoteQuotaPerMonth({
         subscriptionStatus: null,
         subscriptionTier: "enterprise",
         subscriptionPeriodEnd: null,
       })
-    ).toBeNull();
+    ).toBe(500);
   });
 
-  it("returns null for enterprise even when status is canceled", () => {
+  it("returns 500 for enterprise even when status is canceled", () => {
     expect(
       aiNoteQuotaPerMonth({
         subscriptionStatus: "canceled",
         subscriptionTier: "enterprise",
         subscriptionPeriodEnd: null,
       })
-    ).toBeNull();
+    ).toBe(500);
   });
 });
 
@@ -184,7 +184,7 @@ describe("aiNoteQuotaBlockedReason", () => {
     expect(reason).not.toBeNull();
     expect(reason!.message).toMatch(/10 of 10/);
     expect(reason!.message).toMatch(/Solo plan/);
-    expect(reason!.message).toMatch(/Upgrade to Practice/);
+    expect(reason!.message).toMatch(/Upgrade to Practice for 100\/mo/);
     expect(reason!.ctaLabel).toBe("Upgrade plan");
     expect(reason!.ctaHref).toBe("/dashboard/billing");
   });
@@ -215,7 +215,7 @@ describe("aiNoteQuotaBlockedReason", () => {
     ).toBeNull();
   });
 
-  it("returns null for active practice at 100 used", () => {
+  it("returns null for active practice at 99 used (under cap)", () => {
     expect(
       aiNoteQuotaBlockedReason(
         {
@@ -223,22 +223,53 @@ describe("aiNoteQuotaBlockedReason", () => {
           subscriptionTier: "practice",
           subscriptionPeriodEnd: null,
         },
-        100
+        99
       )
     ).toBeNull();
   });
 
-  it("returns null for active practice at 9999 used (truly unlimited)", () => {
+  it("blocks active practice at exactly 100 used", () => {
+    const reason = aiNoteQuotaBlockedReason(
+      {
+        subscriptionStatus: "active",
+        subscriptionTier: "practice",
+        subscriptionPeriodEnd: null,
+      },
+      100
+    );
+    expect(reason).not.toBeNull();
+    expect(reason!.message).toMatch(/100 of 100/);
+    expect(reason!.message).toMatch(/Practice plan/);
+    expect(reason!.message).toMatch(/Enterprise/);
+    expect(reason!.ctaLabel).toBe("Talk to sales");
+  });
+
+  it("returns null for enterprise at 499 used (under cap)", () => {
     expect(
       aiNoteQuotaBlockedReason(
         {
           subscriptionStatus: "active",
-          subscriptionTier: "practice",
+          subscriptionTier: "enterprise",
           subscriptionPeriodEnd: null,
         },
-        9999
+        499
       )
     ).toBeNull();
+  });
+
+  it("blocks enterprise at exactly 500 used (contract expand path)", () => {
+    const reason = aiNoteQuotaBlockedReason(
+      {
+        subscriptionStatus: "active",
+        subscriptionTier: "enterprise",
+        subscriptionPeriodEnd: null,
+      },
+      500
+    );
+    expect(reason).not.toBeNull();
+    expect(reason!.message).toMatch(/500 of 500/);
+    expect(reason!.message).toMatch(/contract/i);
+    expect(reason!.ctaLabel).toBe("Contact us");
   });
 
   it("blocks canceled subscription with no-plan reason pointing at Pricing", () => {
@@ -316,7 +347,7 @@ describe("aiNoteQuotaBlockedReason", () => {
     ).toBeNull();
   });
 
-  it("returns null for enterprise even at high used counts", () => {
+  it("returns null for enterprise under the 500/mo default cap", () => {
     expect(
       aiNoteQuotaBlockedReason(
         {
@@ -324,7 +355,7 @@ describe("aiNoteQuotaBlockedReason", () => {
           subscriptionTier: "enterprise",
           subscriptionPeriodEnd: null,
         },
-        9999
+        100
       )
     ).toBeNull();
   });

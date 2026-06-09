@@ -33,7 +33,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
     "Unlimited supervisees",
     "Practice compliance heatmap",
     "Bulk HRIS import (CSV)",
-    "Unlimited AI transcripts",
+    "AI session notes (100/mo per org)",
     "Audit log retention (7 years)",
     "Priority email support",
   ],

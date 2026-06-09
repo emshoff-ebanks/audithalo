@@ -430,7 +430,7 @@ export default function ForSupervisorsPage() {
               <p className="font-display text-4xl font-bold text-foreground">$25</p>
               <p className="mt-2 text-sm text-foreground/60">per supervisee / month + $49 base</p>
               <ul className="mt-6 space-y-2 text-sm text-foreground/70">
-                {["Everything in Solo Supervisor", "Unlimited supervisees", "Practice compliance heatmap", "Bulk HRIS import (CSV)", "Unlimited AI transcripts", "7-year audit retention"].map((f) => (
+                {["Everything in Solo Supervisor", "Unlimited supervisees", "Practice compliance heatmap", "Bulk HRIS import (CSV)", "AI session notes (100/mo)", "7-year audit retention"].map((f) => (
                   <li key={f} className="flex items-start gap-2">
                     <Check className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-success)]" strokeWidth={2.5} />
                     {f}
