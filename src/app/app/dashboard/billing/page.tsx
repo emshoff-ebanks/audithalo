@@ -22,21 +22,20 @@ export const metadata = {
 const PLAN_FEATURES: Record<string, string[]> = {
   solo: [
     "Up to 3 supervisees",
-    "NC + 1 other state rule",
+    "All 5 supported states (NC, CA, TX, FL, NY)",
     "Supervisor dashboard",
     "E-signature with intent confirmation",
     "Audit-ready evidence package PDF",
     "AI session notes (10 transcripts/mo)",
   ],
   practice: [
+    "Everything in Solo Supervisor",
     "Unlimited supervisees",
-    "All 5 supported states",
-    "HR dashboard + compliance heatmap",
-    "Executive risk rollup",
+    "Practice compliance heatmap",
+    "Bulk HRIS import (CSV)",
     "Unlimited AI transcripts",
     "Audit log retention (7 years)",
-    "SSO / SAML",
-    "Priority support",
+    "Priority email support",
   ],
 };
 

@@ -229,8 +229,10 @@ export default function ForGroupPracticesPage() {
                 More than 20 supervisees, or multiple locations?
               </p>
               <p className="mt-1 text-foreground/70">
-                Enterprise plans include custom state additions, SSO, API access,
-                dedicated support, and a 7-year audit log export.
+                Enterprise adds multi-supervisor org with HR Admin + Executive
+                roles, executive rollup dashboard, custom state additions, up
+                to 20-year audit log retention with CSV/JSON export, and
+                BAA/DPA on request.
               </p>
             </div>
             <Button asChild variant="outline" className="shrink-0">
