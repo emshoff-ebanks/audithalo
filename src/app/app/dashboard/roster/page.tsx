@@ -19,6 +19,7 @@ import { InviteForm } from "./invite-form";
 import { PendingInviteActions } from "./pending-invite-actions";
 import { FilterBar } from "./_filter-bar";
 import { parseRosterFilter } from "./_roster-filter";
+import { ClickableRow } from "@/components/app/clickable-row";
 
 export const metadata = {
   title: "Roster — AuditHalo",
@@ -302,7 +303,11 @@ export default async function RosterPage({
                   })();
 
                   return (
-                    <tr key={row.userId} className={`border-t border-border hover:bg-accent/40 ${rowClasses}`}>
+                    <ClickableRow
+                      key={row.userId}
+                      href={`/dashboard/roster/${row.userId}`}
+                      className={`border-t border-border hover:bg-accent/40 ${rowClasses}`}
+                    >
                       <td className="px-5 py-3 font-medium">
                         <Link
                           href={`/dashboard/roster/${row.userId}`}
@@ -356,7 +361,7 @@ export default async function RosterPage({
                           <span className="text-foreground/40">—</span>
                         )}
                       </td>
-                    </tr>
+                    </ClickableRow>
                   );
                 })}
                 {rosterRows.length === 0 &&

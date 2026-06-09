@@ -100,12 +100,20 @@ export function SessionLog({
               return (
                 <li
                   key={p.id}
-                  className="flex items-center justify-between p-3 rounded-sm border-l-[3px] border-l-[color:var(--color-warn-500)] bg-[color:var(--color-warn-50)]/30"
+                  className="flex items-center justify-between p-3 rounded-sm border-l-[3px] border-l-[color:var(--color-warn-500)] bg-[color:var(--color-warn-50)]/30 cursor-pointer hover:bg-[color:var(--color-warn-50)]/60 transition-colors"
+                  onClick={(ev) => {
+                    const target = ev.target as HTMLElement;
+                    if (target.closest("a, button")) return;
+                    router.push(`/sign/${p.id}`);
+                  }}
                 >
                   <div>
-                    <p className="text-sm font-medium text-foreground">
+                    <Link
+                      href={`/sign/${p.id}`}
+                      className="text-sm font-medium text-foreground hover:underline"
+                    >
                       {p.sessionType ?? "supervision"} session — {format(d, "MMM d, yyyy")}
-                    </p>
+                    </Link>
                     <p className="text-xs text-foreground/60 font-mono">
                       {p.durationHours.toFixed(1)} hrs awaiting signature
                     </p>
