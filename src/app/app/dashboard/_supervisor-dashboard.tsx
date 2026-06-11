@@ -8,9 +8,6 @@ import { db, schema } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { computeOnboardingSteps } from "@/lib/onboarding";
-import { loadAllRules } from "@/lib/rules";
-import { OnboardingChecklist } from "./_onboarding-checklist";
 import { BillingBanner } from "./_billing-banner";
 import { EvidenceExplainer } from "./_evidence-explainer";
 import { PracticePanels, PRACTICE_THRESHOLD } from "./_practice-panel";
@@ -19,14 +16,12 @@ type Props = {
   userId: string;
   userName: string | null;
   userEmail: string;
-  emailVerifiedAt: Date | null;
 };
 
 export async function SupervisorDashboard({
   userId,
   userName,
   userEmail,
-  emailVerifiedAt,
 }: Props) {
   const membership = await getCurrentMembership(userId);
   if (!membership) redirect("/login");
@@ -39,26 +34,10 @@ export async function SupervisorDashboard({
     db.query.users.findFirst({
       where: eq(schema.users.id, userId),
       columns: {
-        supervisorTrainingHours: true,
         isFoundingSupervisor: true,
       },
     }),
   ]);
-
-  // Determine whether any supervisee is on a rule that requires the
-  // supervisor to have a training course on file (e.g. CA APCC 16 CCR §1822).
-  // When true, the onboarding checklist adds a 5th step.
-  const ruleCatalog = loadAllRules();
-  const rosterHasTrainingRequiredRule = roster.some((r) => {
-    if (!r.ruleId) return false;
-    const rule = ruleCatalog.get(r.ruleId.toLowerCase());
-    return rule?.checks.some(
-      (c) => c.id === "supervisor_training_course_required"
-    ) ?? false;
-  });
-  const supervisorTrainingHours = viewer?.supervisorTrainingHours ?? null;
-  const trainingDone =
-    supervisorTrainingHours !== null && supervisorTrainingHours > 0;
 
   const totalSupervisees = roster.length;
   const atRiskCount = roster.filter(
@@ -134,28 +113,6 @@ export async function SupervisorDashboard({
 
       <div className="mt-8 space-y-8">
         <BillingBanner org={org} />
-        {(() => {
-          // Compute onboarding step booleans server-side so we don't have to
-          // ship the full roster (with Date columns and discriminated-union
-          // Gap arrays) across the server/client boundary.
-          const { stepDone } = computeOnboardingSteps({
-            emailVerifiedAt,
-            subscriptionStatus: org?.subscriptionStatus ?? null,
-            roster,
-            supervisorTrainingHours,
-            rosterHasTrainingRequiredRule,
-          });
-          return (
-            <OnboardingChecklist
-              emailDone={stepDone[0]}
-              trialDone={stepDone[1]}
-              rosterDone={stepDone[2]}
-              rulesDone={stepDone[3]}
-              trainingRelevant={rosterHasTrainingRequiredRule}
-              trainingDone={trainingDone}
-            />
-          );
-        })()}
         {hasAnySignedFlow && <EvidenceExplainer />}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {summaryCards.map((card) => {

@@ -1,7 +1,5 @@
-import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { db, schema } from "@/lib/db";
 import { SupervisorDashboard } from "./_supervisor-dashboard";
 import { SuperviseeDashboard } from "./_supervisee-dashboard";
 
@@ -10,11 +8,6 @@ export const metadata = { title: "Dashboard — AuditHalo" };
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-
-  const user = await db.query.users.findFirst({
-    where: eq(schema.users.id, session.user.id),
-    columns: { emailVerifiedAt: true },
-  });
 
   const baseProps = {
     userId: session.user.id,
@@ -35,10 +28,5 @@ export default async function DashboardPage() {
   // supervisor + hr_admin both see the supervisor dashboard. The
   // supervisor dashboard's queries already use org-scoped reads, so
   // HR Admin sees the whole roster correctly.
-  return (
-    <SupervisorDashboard
-      {...baseProps}
-      emailVerifiedAt={user?.emailVerifiedAt ?? null}
-    />
-  );
+  return <SupervisorDashboard {...baseProps} />;
 }
