@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTransition } from "react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/app/actions/auth";
@@ -13,9 +14,15 @@ const ROLE_LABEL: Record<string, string> = {
   executive: "Executive",
 };
 
+// Roles that should see the calendar link — supervisor + HR Admin run
+// their week off it; supervisees see their own sessions but reach them
+// via /dashboard. Executive stays on the executive rollup.
+const CALENDAR_ROLES = new Set(["supervisor", "hr_admin"]);
+
 export function UserMenu({ name, role }: { name: string; role: string }) {
   const [pending, startTransition] = useTransition();
   const roleLabel = ROLE_LABEL[role] ?? role;
+  const showCalendar = CALENDAR_ROLES.has(role);
 
   return (
     <div className="flex items-center gap-3">
@@ -27,6 +34,14 @@ export function UserMenu({ name, role }: { name: string; role: string }) {
           {roleLabel}
         </Badge>
       </div>
+      {showCalendar && (
+        <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+          <Link href="/dashboard/calendar">
+            <CalendarIcon className="h-4 w-4" />
+            Calendar
+          </Link>
+        </Button>
+      )}
       <Button asChild variant="ghost" size="sm">
         <Link href="/dashboard/account">Account</Link>
       </Button>
