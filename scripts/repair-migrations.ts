@@ -67,6 +67,11 @@ const REPAIR_TARGETS: Array<{
                WHERE table_name='invitations'
                  AND column_name='pending_assignment_supervisor_id'`,
   },
+  {
+    file: "0025_calendar_scheduling_foundation.sql",
+    sentinel: `SELECT 1 FROM information_schema.tables
+               WHERE table_name='user_calendar_integrations'`,
+  },
 ];
 
 function sha256(s: string): string {
