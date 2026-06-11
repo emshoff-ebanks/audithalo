@@ -36,7 +36,7 @@ This document tells you what you have, what you don't, and what you're authorize
 | `git` | ✅ Yes | See "Git identity" section below before any commit. |
 | `playwright` | ✅ Yes (dev dep) | `npx playwright test`. Browsers may need `npx playwright install` first. |
 | `gh` (GitHub CLI) | ❌ **NOT installed** | Don't use `gh`. For GitHub work, ask Damon to do it via the web UI, or describe what needs doing. |
-| `vercel` (Vercel CLI) | ✅ Yes (via `npx vercel`, not globally installed) | Already authenticated as `emshoffdon`. Repo is linked: `.vercel/repo.json` points at project `audithalo` (`prj_8jykC5lPyljUYwjQFskCOLBK0tPr`) under team ID `team_U1QGq8IOsFmNpYIHFNX6ecXN`. Because the project is linked, `npx vercel <cmd>` from the repo dir auto-detects scope — **don't pass `--scope <team-slug>`**. Common reads: `npx vercel ls audithalo` (deployments), `npx vercel env ls` (env vars), `npx vercel logs <deployment-url>`. **Never** run `vercel env add/rm`, `vercel deploy --prod`, `vercel alias`, or anything that touches prod without explicit Damon approval. |
+| `vercel` (Vercel CLI) | ✅ Yes (via `npx vercel`, not globally installed) | Repo is linked locally via `.vercel/repo.json` (gitignored — don't paste its IDs into tracked files). Because the project is linked, `npx vercel <cmd>` from the repo dir auto-detects scope. Common reads: `npx vercel ls audithalo` (deployments), `npx vercel env ls` (env vars), `npx vercel logs <deployment-url>`. **Never** run `vercel env add/rm`, `vercel deploy --prod`, `vercel alias`, or anything that touches prod without explicit Damon approval. |
 | `psql` | ⚠️ Unknown | Test before relying. Prefer `tsx` scripts that use `@neondatabase/serverless` for ad-hoc DB queries. |
 
 ## Git identity & push discipline

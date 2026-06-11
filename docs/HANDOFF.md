@@ -69,7 +69,7 @@ Vercel watches `main` and auto-deploys both `audithalo.com` and `app.audithalo.c
 | Styling | **Tailwind CSS 4** | `@theme` directive in `src/app/globals.css` exposes brand tokens as CSS vars. |
 | UI primitives | **shadcn/ui** + Radix | Wired manually (the CLI hangs in non-TTY). `components.json` + `src/lib/utils.ts` (`cn`) + per-component files under `src/components/ui/`. |
 | Auth | **Auth.js v5 beta** (`next-auth@5.0.0-beta.31`) | Credentials provider, JWT sessions, bcryptjs. `src/auth.ts`. Session.user augmented in `src/types/next-auth.d.ts`. |
-| DB | **Neon Postgres** | `postgresql://neondb_owner:...@ep-flat-butterfly-ap1kaqy5...` |
+| DB | **Neon Postgres** | Pooled connection string stored in `DATABASE_URL`. Do not paste the host/credentials into tracked files. |
 | ORM | **Drizzle 0.45.2** + `drizzle-kit` | Migrations: `drizzle/*.sql` + `drizzle/meta/_journal.json`. **Do not** use `drizzle-kit push` (interactive, hangs). Use `npm run db:generate` then `npm run db:migrate`. |
 | Rules | **YAML** + Zod | Files under `rules/<slug>/vN.yaml`. Loader caches in a module Map. `js-yaml` parses unquoted `YYYY-MM-DD` as JS Date — the `dateLike` Zod helper handles it. |
 | PDFs | `@react-pdf/renderer` | `/api/evidence/[id]/route.tsx` — `runtime = "nodejs"`. Buffer wrapped in `new Uint8Array(...)` to satisfy `BodyInit`. |
