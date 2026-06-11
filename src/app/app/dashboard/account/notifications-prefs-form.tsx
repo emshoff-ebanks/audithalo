@@ -16,6 +16,9 @@ const DEFAULTS: Record<NotificationKind, boolean> = {
   session_scheduled: true,
   session_canceled: true,
   session_rescheduled: true,
+  session_reminder_1hour: true,
+  session_reminder_15min: false,
+  session_no_show: true,
 };
 
 const KIND_META: Record<
@@ -72,6 +75,21 @@ const KIND_META: Record<
     description:
       "A scheduled supervision session moved to a new time. The calendar invite updates.",
   },
+  session_reminder_1hour: {
+    label: "Reminder: 1 hour before",
+    description:
+      "Heads-up email an hour before each scheduled supervision session.",
+  },
+  session_reminder_15min: {
+    label: "Reminder: 15 minutes before",
+    description:
+      "Final heads-up 15 minutes before each scheduled supervision session.",
+  },
+  session_no_show: {
+    label: "No-show flagged",
+    description:
+      "Sent to supervisors when a scheduled session crosses the 24-hour window without being completed.",
+  },
 };
 
 const ORDER: NotificationKind[] = [
@@ -79,6 +97,9 @@ const ORDER: NotificationKind[] = [
   "signature_needed",
   "session_scheduled",
   "session_rescheduled",
+  "session_reminder_1hour",
+  "session_reminder_15min",
+  "session_no_show",
   "session_canceled",
   "rule_changed",
   "evidence_sealed",

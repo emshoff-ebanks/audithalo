@@ -111,10 +111,12 @@ export type NotificationKind =
   | "supervisor_rule_not_set"
   | "attestation_overdue"
   // Scheduling kinds (Phase 1+ of docs/strategy/08-scheduling-and-calendar.md).
-  // Reminder + no-show kinds land with the cron in Phase 4.
   | "session_scheduled"
   | "session_canceled"
-  | "session_rescheduled";
+  | "session_rescheduled"
+  | "session_reminder_1hour"
+  | "session_reminder_15min"
+  | "session_no_show";
 
 export type NotificationPrefs = {
   email: Partial<Record<NotificationKind, boolean>>;

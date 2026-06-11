@@ -22,7 +22,15 @@ import type { CalendarProvider } from "@/lib/calendar/oauth-config";
 
 export type ActionResult =
   | { ok: true; sessionId: string }
-  | { ok: false; error: string };
+  | { ok: false; error: string }
+  | {
+      ok: false;
+      error: string;
+      /** Soft fail when conflict detection found events overlapping with
+       *  the requested window. Form can re-submit with confirmConflicts=
+       *  true to schedule anyway. */
+      conflicts: Array<{ title: string; startUtcIso: string; endUtcIso: string }>;
+    };
 
 const MAX_DURATION_HOURS = 8;
 const MIN_DURATION_MINUTES = 15;
@@ -109,6 +117,11 @@ const scheduleSchema = z.object({
   location: z.string().max(500).optional(),
   notes: z.string().max(2000).optional(),
   sessionType: z.enum(["individual", "triadic", "group"]).default("individual"),
+  /** Set by the form on a confirmation re-submit after the user has seen
+   *  the conflict warning. */
+  confirmConflicts: z
+    .union([z.literal("true"), z.literal("false"), z.literal("")])
+    .optional(),
 });
 
 /**
@@ -135,6 +148,7 @@ export async function scheduleSessionAction(
     location: formData.get("location") || undefined,
     notes: formData.get("notes") || undefined,
     sessionType: formData.get("sessionType") || undefined,
+    confirmConflicts: formData.get("confirmConflicts") || undefined,
   });
   if (!parsed.success) {
     return {
@@ -160,6 +174,56 @@ export async function scheduleSessionAction(
     parsed.data.superviseeId,
     orgId
   );
+  // Conflict detection (Phase 4): when the user hasn't already confirmed
+  // away conflicts AND the hosting supervisor has a connected provider,
+  // call listEventsInWindow and surface anything overlapping. This is a
+  // soft block — the user can re-submit with confirmConflicts=true.
+  if (
+    parsed.data.modality === "virtual" &&
+    parsed.data.confirmConflicts !== "true" &&
+    hostingSupervisorId
+  ) {
+    try {
+      const resolved = parsed.data.provider
+        ? await getNamedProviderForUser(
+            hostingSupervisorId,
+            parsed.data.provider as CalendarProvider
+          )
+        : await getProviderForUser(hostingSupervisorId);
+      if (resolved) {
+        const checkStart = new Date(parsed.data.startUtc);
+        const checkEnd = new Date(
+          checkStart.getTime() + parsed.data.durationMinutes * 60_000
+        );
+        const events = await resolved.client.listEventsInWindow(
+          checkStart,
+          checkEnd
+        );
+        // Ignore AuditHalo's own events on the host's calendar — they're
+        // tagged in the description (provider adapters check the
+        // AUDITHALO_EVENT_TAG marker).
+        const conflicts = events
+          .filter((e) => !e.isAuditHaloEvent)
+          .filter((e) => e.startUtc < checkEnd && e.endUtc > checkStart);
+        if (conflicts.length > 0) {
+          return {
+            ok: false,
+            error:
+              "This time conflicts with another event on the host's calendar. Confirm to schedule anyway.",
+            conflicts: conflicts.map((c) => ({
+              title: c.title,
+              startUtcIso: c.startUtc.toISOString(),
+              endUtcIso: c.endUtc.toISOString(),
+            })),
+          };
+        }
+      }
+    } catch (err) {
+      // Conflict detection is best-effort — a failed listEventsInWindow
+      // shouldn't block scheduling. Log + continue.
+      console.warn("[scheduleSession] conflict check failed:", err);
+    }
+  }
   if (!hostingSupervisorId) {
     return {
       ok: false,

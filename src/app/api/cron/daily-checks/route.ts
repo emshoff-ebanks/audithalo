@@ -79,6 +79,7 @@ async function handleDailyChecks(request: Request) {
     },
     pass3_trial_ending_soon: { orgsChecked: 0, notified: 0 },
     pass4_account_purge: { purged: 0 },
+    pass5_no_show: { scanned: 0, flagged: 0, notified: 0 },
   };
 
   // -------------------------------------------------------------------------
@@ -453,6 +454,92 @@ async function handleDailyChecks(request: Request) {
     result.pass4_account_purge.purged = purged.length;
   } catch (err) {
     console.error("[cron] account purge failed:", err);
+  }
+
+  // -------------------------------------------------------------------------
+  // Pass 5 — session_no_show
+  //
+  // Any session_events row with scheduledStatus='scheduled' whose end time
+  // is more than 24h in the past has crossed the no-show window per locked
+  // decision #8 in docs/strategy/08-scheduling-and-calendar.md. Flag it +
+  // notify the supervisor who logged it (or the assigned supervisor when
+  // the actor was HR Admin scheduling on behalf).
+  // -------------------------------------------------------------------------
+  try {
+    const noShowCutoff = new Date(now.getTime() - ONE_DAY_MS);
+    const candidates = await db
+      .select({
+        id: schema.sessionEvents.id,
+        orgId: schema.sessionEvents.orgId,
+        superviseeId: schema.sessionEvents.superviseeId,
+        loggedById: schema.sessionEvents.loggedById,
+        date: schema.sessionEvents.date,
+        durationHours: schema.sessionEvents.durationHours,
+        timeZone: schema.sessionEvents.timeZone,
+        superviseeName: schema.users.name,
+        superviseeEmail: schema.users.email,
+      })
+      .from(schema.sessionEvents)
+      .innerJoin(
+        schema.users,
+        eq(schema.users.id, schema.sessionEvents.superviseeId)
+      )
+      .where(eq(schema.sessionEvents.scheduledStatus, "scheduled"));
+
+    for (const row of candidates) {
+      result.pass5_no_show.scanned += 1;
+      const endMs =
+        row.date.getTime() + Math.round(row.durationHours * 60 * 60_000);
+      if (endMs > noShowCutoff.getTime()) continue; // still within window
+
+      await db
+        .update(schema.sessionEvents)
+        .set({ scheduledStatus: "no_show" })
+        .where(eq(schema.sessionEvents.id, row.id));
+      result.pass5_no_show.flagged += 1;
+
+      // Notify whichever supervisor is currently assigned. Falls back to
+      // the original logger when no active assignment is found.
+      let notifyUserId: string | null = null;
+      const activeAssignment = await db.query.supervisorAssignments.findFirst(
+        {
+          where: and(
+            eq(
+              schema.supervisorAssignments.superviseeId,
+              row.superviseeId
+            ),
+            eq(schema.supervisorAssignments.orgId, row.orgId),
+            isNull(schema.supervisorAssignments.endedAt)
+          ),
+        }
+      );
+      notifyUserId = activeAssignment?.supervisorId ?? row.loggedById;
+
+      const scheduledForLocal = row.timeZone
+        ? new Intl.DateTimeFormat("en-US", {
+            timeZone: row.timeZone,
+            dateStyle: "medium",
+            timeStyle: "short",
+          }).format(row.date)
+        : row.date.toISOString().slice(0, 16).replace("T", " ") + " UTC";
+
+      try {
+        await createNotification({
+          userId: notifyUserId,
+          kind: "session_no_show",
+          payload: {
+            sessionId: row.id,
+            superviseeName: row.superviseeName ?? row.superviseeEmail,
+            scheduledForLocal,
+          },
+        });
+        result.pass5_no_show.notified += 1;
+      } catch (err) {
+        console.error("[cron] session_no_show notification failed:", err);
+      }
+    }
+  } catch (err) {
+    console.error("[cron] no-show pass failed:", err);
   }
 
   return NextResponse.json(result);

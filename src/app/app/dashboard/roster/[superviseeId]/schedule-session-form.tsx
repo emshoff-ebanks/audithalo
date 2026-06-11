@@ -35,6 +35,8 @@ function computeDefaultLocalStart(): string {
 
 type Provider = "microsoft" | "google";
 
+type Conflict = { title: string; startUtcIso: string; endUtcIso: string };
+
 type ConnectedProvider = {
   name: Provider;
   accountEmail: string | null;
@@ -353,14 +355,48 @@ export function ScheduleSessionForm({
         />
       </div>
 
-      {state && state.ok === false && (
-        <p
-          role="alert"
-          className="text-sm text-[color:var(--color-risk)] bg-[color:var(--color-risk)]/8 px-3 py-2 rounded-sm"
-        >
-          {state.error}
-        </p>
-      )}
+      {(() => {
+        if (!state || state.ok !== false) return null;
+        const conflicts: Conflict[] =
+          "conflicts" in state && Array.isArray(state.conflicts)
+            ? (state.conflicts as Conflict[])
+            : [];
+        return (
+          <div
+            role="alert"
+            className="text-sm bg-[color:var(--color-warning)]/10 border border-[color:var(--color-warning)]/30 px-3 py-2 rounded-sm space-y-2"
+          >
+            <p className="text-foreground/90">{state.error}</p>
+            {conflicts.length > 0 && (
+              <ul className="text-xs text-foreground/70 space-y-1">
+                {conflicts.map((c, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="font-mono text-[10px]">
+                      {new Date(c.startUtcIso).toLocaleString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                    <span className="truncate">{c.title}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })()}
+
+      <input
+        type="hidden"
+        name="confirmConflicts"
+        value={
+          state && state.ok === false && "conflicts" in state
+            ? "true"
+            : "false"
+        }
+      />
 
       <Button
         type="submit"
@@ -374,9 +410,18 @@ export function ScheduleSessionForm({
         {pending && <Loader2 className="h-3 w-3 animate-spin" />}
         {pending
           ? "Scheduling…"
-          : recurring
-            ? `Schedule ${occurrenceCount} sessions`
-            : "Schedule session"}
+          : (() => {
+              const hasConflicts =
+                state &&
+                state.ok === false &&
+                "conflicts" in state &&
+                Array.isArray((state as { conflicts?: unknown }).conflicts) &&
+                ((state as { conflicts: unknown[] }).conflicts.length ?? 0) > 0;
+              if (hasConflicts) return "Schedule anyway";
+              return recurring
+                ? `Schedule ${occurrenceCount} sessions`
+                : "Schedule session";
+            })()}
       </Button>
 
       <p className="text-xs text-foreground/60">

@@ -25,6 +25,9 @@ export const NOTIFICATION_DEFAULTS: Required<NotificationPrefs> = {
     session_scheduled: true,
     session_canceled: true,
     session_rescheduled: true,
+    session_reminder_1hour: true,
+    session_reminder_15min: false,
+    session_no_show: true,
   },
 };
 
@@ -322,6 +325,61 @@ function renderEmail(
           kind,
         }),
         text: `${greetingText} ${rescheduledByName} moved the supervision session from ${oldLocal} to ${newLocal}. Open: ${url}`,
+      };
+    }
+    case "session_reminder_1hour":
+    case "session_reminder_15min": {
+      const minutesAway = kind === "session_reminder_1hour" ? 60 : 15;
+      const sessionId = String(payload.sessionId ?? "");
+      const scheduledForLocal = String(payload.scheduledForLocal ?? "");
+      const joinUrl =
+        typeof payload.joinUrl === "string" && payload.joinUrl
+          ? payload.joinUrl
+          : `${APP_URL}/sign/${sessionId}`;
+      const where =
+        payload.meetingProvider === "teams"
+          ? "Microsoft Teams"
+          : payload.meetingProvider === "google_meet"
+            ? "Google Meet"
+            : "In person";
+      const subj =
+        minutesAway === 60
+          ? `Supervision in an hour — ${scheduledForLocal}`
+          : `Supervision in 15 minutes — ${scheduledForLocal}`;
+      return {
+        subject: subj,
+        html: shell({
+          heading:
+            minutesAway === 60
+              ? "Your supervision session starts in about an hour."
+              : "Your supervision session starts in about 15 minutes.",
+          body: `<p>${greetingHtml} just a heads-up — the session is set for <strong>${esc(scheduledForLocal)}</strong> (${esc(where)}).</p>`,
+          ctaHref: joinUrl,
+          ctaLabel:
+            payload.meetingProvider === "in_person"
+              ? "Open session"
+              : "Join meeting",
+          kind,
+        }),
+        text: `${greetingText} your supervision session starts in about ${minutesAway} minutes (${scheduledForLocal}, ${where}). ${joinUrl}`,
+      };
+    }
+    case "session_no_show": {
+      const superviseeName = String(
+        payload.superviseeName ?? "your supervisee"
+      );
+      const scheduledForLocal = String(payload.scheduledForLocal ?? "");
+      const url = `${APP_URL}/dashboard/roster`;
+      return {
+        subject: `No-show flagged — ${superviseeName}`,
+        html: shell({
+          heading: "Scheduled session marked as a no-show.",
+          body: `<p>${greetingHtml} ${esc(superviseeName)} had a supervision session scheduled for <strong>${esc(scheduledForLocal)}</strong> that was never marked complete. AuditHalo flagged it as a no-show. No compliance hours were credited. Reach out to reschedule when you're ready.</p>`,
+          ctaHref: url,
+          ctaLabel: "Open roster",
+          kind,
+        }),
+        text: `${greetingText} ${superviseeName}'s ${scheduledForLocal} supervision was flagged as a no-show. Open: ${url}`,
       };
     }
     case "session_canceled": {

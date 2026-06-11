@@ -68,6 +68,11 @@ function iconFor(kind: NotificationKind) {
       return <CalendarX className="h-4 w-4 text-[color:var(--color-warning)]" />;
     case "session_rescheduled":
       return <CalendarClock className="h-4 w-4 text-[color:var(--color-warning)]" />;
+    case "session_reminder_1hour":
+    case "session_reminder_15min":
+      return <CalendarClock className="h-4 w-4 text-secondary" />;
+    case "session_no_show":
+      return <AlertOctagon className="h-4 w-4 text-[color:var(--color-risk)]" />;
   }
 }
 
@@ -93,6 +98,12 @@ function messageFor(n: NotificationRow): string {
       return `Supervision canceled (${n.payload.scheduledForLocal ?? "scheduled session"})`;
     case "session_rescheduled":
       return `Supervision moved to ${n.payload.newScheduledForLocal ?? "a new time"}`;
+    case "session_reminder_1hour":
+      return `Supervision in 1 hour — ${n.payload.scheduledForLocal ?? "scheduled session"}`;
+    case "session_reminder_15min":
+      return `Supervision in 15 minutes — ${n.payload.scheduledForLocal ?? "starting soon"}`;
+    case "session_no_show":
+      return `No-show flagged — ${n.payload.superviseeName ?? "a supervisee"}`;
   }
 }
 
