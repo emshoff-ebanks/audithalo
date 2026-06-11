@@ -287,13 +287,14 @@ async function main() {
       );
       const sessionEventId = sessInsert.rows[0].id;
 
-      // Mint the evidence package. Document content is a minimal but valid
-      // shape — the canonical hash is what state boards verify against.
+      // Mint the evidence package. Shape MUST match what
+      // generateEvidencePackage() produces (src/lib/evidence.ts) — the UI
+      // reads `documentContent.session.kind` etc. so the nested `session`
+      // object is required. The canonical hash is what state boards verify
+      // against; both shapes hash differently but only one renders.
       const document = {
         sessionEventId,
-        sessionDate: sessionDate.toISOString().slice(0, 10),
-        durationHours: 1.0,
-        sessionType: "individual",
+        ruleId: RULE_ID,
         rule: {
           jurisdiction: "NC",
           licenseCode: "LCMHCA",
@@ -308,6 +309,16 @@ async function main() {
           id: userIds.supervisor,
           name: supervisorName,
           credentials: ["LCMHCS"],
+        },
+        session: {
+          id: sessionEventId,
+          date: sessionDate.toISOString(),
+          durationHours: 1.0,
+          kind: "supervision",
+          sessionType: "individual",
+          supervisorCredentials: ["LCMHCS"],
+          groupAttendees: null,
+          signedAt: sveSignedAt.toISOString(),
         },
         signatures: sigs,
         ...(aiNote ? { aiNote } : {}),

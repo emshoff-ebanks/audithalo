@@ -89,11 +89,14 @@ export function loadProviderCredentials(
   return { clientId, clientSecret };
 }
 
-/** Absolute redirect URI for a provider, derived from APP_URL. */
+/**
+ * Absolute redirect URI for a provider. Reads APP_URL; falls back to the
+ * canonical prod hostname so a missing env var doesn't 500 the OAuth
+ * start route. The redirect URI MUST match what's registered in the
+ * Entra/Google consoles — both consoles have https://app.audithalo.com
+ * registered, so the fallback is correct for prod.
+ */
 export function getRedirectUri(provider: CalendarProvider): string {
-  const appUrl = process.env.APP_URL;
-  if (!appUrl) {
-    throw new Error("APP_URL is not set — required for OAuth redirect URI.");
-  }
+  const appUrl = process.env.APP_URL ?? "https://app.audithalo.com";
   return `${appUrl.replace(/\/$/, "")}/api/auth/${provider}/callback`;
 }

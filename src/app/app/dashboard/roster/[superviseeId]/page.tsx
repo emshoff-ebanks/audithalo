@@ -511,9 +511,28 @@ export default async function SuperviseeDetailPage({
           {evidencePackages.length > 0 && (
             <ul className="divide-y divide-border">
               {evidencePackages.map((p) => {
-                const doc = p.documentContent as {
-                  session: { date: string; sessionType: string | null; kind: string };
-                };
+                // documentContent's exact shape has drifted across versions
+                // (the canonical hash is what audits verify, not the JSON
+                // shape). Accept both the current nested shape from
+                // generateEvidencePackage AND the flatter shape produced by
+                // older seed/test fixtures by reading whichever is present.
+                const raw = (p.documentContent ?? {}) as Record<string, unknown>;
+                const nested = raw.session as
+                  | { date?: string; sessionType?: string | null; kind?: string }
+                  | undefined;
+                const kind =
+                  nested?.kind ??
+                  (typeof raw.kind === "string" ? raw.kind : "supervision");
+                const sessionType =
+                  nested?.sessionType ??
+                  (typeof raw.sessionType === "string"
+                    ? raw.sessionType
+                    : null);
+                const date =
+                  nested?.date ??
+                  (typeof raw.sessionDate === "string"
+                    ? raw.sessionDate
+                    : "");
                 return (
                   <li
                     key={p.id}
@@ -524,10 +543,10 @@ export default async function SuperviseeDetailPage({
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-sm font-medium text-foreground">
-                            {doc.session.kind === "supervision"
-                              ? `${doc.session.sessionType ?? "supervision"} session`
+                            {kind === "supervision"
+                              ? `${sessionType ?? "supervision"} session`
                               : "Practice session"}{" "}
-                            · {doc.session.date.slice(0, 10)}
+                            · {date.slice(0, 10)}
                           </p>
                           {/* Green "Sealed" badge so the gold icon reads as
                               "official package" rather than "still pending".

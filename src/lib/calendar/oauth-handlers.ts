@@ -209,8 +209,10 @@ async function fetchAccountEmail(
 }
 
 function absoluteAppUrl(): URL {
-  const raw = process.env.APP_URL;
-  if (!raw) throw new Error("APP_URL is not set.");
+  // Fall back to the canonical prod hostname when APP_URL is unset so a
+  // missing env var on first deploy doesn't 500 the OAuth flow. The
+  // redirect URIs registered in Entra + Google already point at this host.
+  const raw = process.env.APP_URL ?? "https://app.audithalo.com";
   return new URL(raw);
 }
 
