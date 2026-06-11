@@ -49,6 +49,9 @@ type Props = {
   /** When set (HR Admin scheduling on behalf), copy adapts to point at
    *  the hosting supervisor's account rather than the actor's. */
   onBehalfOfName: string | null;
+  /** Other supervisees in the org the actor can add to a group session.
+   *  Excludes the primary. */
+  groupCandidates: { id: string; name: string }[];
 };
 
 const PROVIDER_LABEL: Record<Provider, string> = {
@@ -60,7 +63,11 @@ export function ScheduleSessionForm({
   superviseeId,
   connectedProviders,
   onBehalfOfName,
+  groupCandidates,
 }: Props) {
+  const [additionalAttendeeIds, setAdditionalAttendeeIds] = useState<
+    Set<string>
+  >(new Set());
   const onBehalf = !!onBehalfOfName;
   const [recurring, setRecurring] = useState(false);
   // Two action states swapped based on the recurring toggle. useActionState
@@ -127,6 +134,12 @@ export function ScheduleSessionForm({
       ref={formRef}
       action={(fd) => {
         const built = buildStartUtc(fd);
+        if (additionalAttendeeIds.size > 0) {
+          built.set(
+            "additionalAttendeeIds",
+            [...additionalAttendeeIds].join(",")
+          );
+        }
         if (recurring) {
           built.set("frequency", frequency);
           built.set("occurrenceCount", String(occurrenceCount));
@@ -343,6 +356,43 @@ export function ScheduleSessionForm({
           <option value="group">Group</option>
         </select>
       </div>
+
+      {groupCandidates.length > 0 && (
+        <div>
+          <Label>Additional supervisees (group session)</Label>
+          <div className="mt-1.5 max-h-32 overflow-y-auto rounded-sm border border-border bg-card p-2 space-y-1">
+            {groupCandidates.map((s) => {
+              const checked = additionalAttendeeIds.has(s.id);
+              return (
+                <label
+                  key={s.id}
+                  className="flex items-center gap-2 px-1 py-0.5 rounded-sm cursor-pointer hover:bg-accent/40 text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() =>
+                      setAdditionalAttendeeIds((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(s.id)) next.delete(s.id);
+                        else next.add(s.id);
+                        return next;
+                      })
+                    }
+                    className="accent-foreground"
+                  />
+                  <span className="text-foreground">{s.name}</span>
+                </label>
+              );
+            })}
+          </div>
+          <p className="text-xs text-foreground/60 mt-1">
+            {additionalAttendeeIds.size === 0
+              ? "Leave blank for a 1:1 session. ALL added supervisees will need to sign before the session seals."
+              : `${additionalAttendeeIds.size} additional ${additionalAttendeeIds.size === 1 ? "supervisee" : "supervisees"} added.`}
+          </p>
+        </div>
+      )}
 
       <div>
         <Label htmlFor="notes">Notes (shown in the calendar invite)</Label>

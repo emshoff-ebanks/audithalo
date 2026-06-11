@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { ArrowLeft, Users, AlertTriangle, FileSignature, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  Users,
+  AlertTriangle,
+  FileSignature,
+  ShieldCheck,
+  CalendarClock,
+  CalendarX,
+} from "lucide-react";
 import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import {
   getCurrentMembership,
@@ -178,6 +186,30 @@ export default async function ExecutiveDashboardPage() {
         />
       </div>
 
+      {/* Scheduling rollup — Phase 5 additions. Sits below the headline
+          cards so the existing four don't grow into a 6-up that breaks
+          mobile layout. */}
+      <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <SummaryCard
+          label="Scheduled this week"
+          value={monthStats.scheduledThisWeek}
+          Icon={CalendarClock}
+        />
+        <SummaryCard
+          label="No-shows last 30d"
+          value={monthStats.noShowsLast30Days}
+          Icon={CalendarX}
+          warn={monthStats.noShowsLast30Days > 0}
+          good={monthStats.noShowsLast30Days === 0}
+        />
+        <SummaryCard
+          label="Sealed this month"
+          value={monthStats.evidenceSealed}
+          Icon={FileSignature}
+          good
+        />
+      </div>
+
       {/* Needs attention — top 8 */}
       <div className="mt-10">
         <h2 className="font-display text-xl font-semibold text-foreground mb-4">
@@ -350,9 +382,21 @@ function supervisors(
 async function monthRollup(orgId: string): Promise<{
   supervisionHours: number;
   evidenceSealed: number;
+  scheduledThisWeek: number;
+  noShowsLast30Days: number;
 }> {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // Mon-start week per the existing calendar view convention.
+  const startOfWeek = new Date(now);
+  const dow = (startOfWeek.getDay() + 6) % 7;
+  startOfWeek.setDate(startOfWeek.getDate() - dow);
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60_000);
 
   const [hoursRow] = await db
     .select({
@@ -377,8 +421,33 @@ async function monthRollup(orgId: string): Promise<{
       )
     );
 
+  const [scheduledThisWeekRow] = await db
+    .select({ count: sql<number>`COUNT(*)::int` })
+    .from(schema.sessionEvents)
+    .where(
+      and(
+        eq(schema.sessionEvents.orgId, orgId),
+        eq(schema.sessionEvents.scheduledStatus, "scheduled"),
+        gte(schema.sessionEvents.date, startOfWeek),
+        sql`${schema.sessionEvents.date} < ${endOfWeek}`
+      )
+    );
+
+  const [noShowsRow] = await db
+    .select({ count: sql<number>`COUNT(*)::int` })
+    .from(schema.sessionEvents)
+    .where(
+      and(
+        eq(schema.sessionEvents.orgId, orgId),
+        eq(schema.sessionEvents.scheduledStatus, "no_show"),
+        gte(schema.sessionEvents.date, thirtyDaysAgo)
+      )
+    );
+
   return {
     supervisionHours: Math.round((hoursRow?.total ?? 0) * 10) / 10,
     evidenceSealed: packagesRow?.count ?? 0,
+    scheduledThisWeek: scheduledThisWeekRow?.count ?? 0,
+    noShowsLast30Days: noShowsRow?.count ?? 0,
   };
 }

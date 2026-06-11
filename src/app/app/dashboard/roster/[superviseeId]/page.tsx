@@ -198,6 +198,65 @@ export default async function SuperviseeDetailPage({
     }
   }
 
+  // Other supervisees in the org the actor can pull into a group
+  // session (Phase 5). Same scope as the calendar-page roster: a
+  // supervisor sees their own assigned supervisees minus the primary;
+  // HR Admin sees the whole org's supervisees minus the primary.
+  let groupCandidates: { id: string; name: string }[] = [];
+  if (viewerCanScheduleSession) {
+    if (viewerCanSupervise) {
+      const assignmentRows = await db
+        .select({
+          id: schema.users.id,
+          name: schema.users.name,
+          email: schema.users.email,
+        })
+        .from(schema.supervisorAssignments)
+        .innerJoin(
+          schema.users,
+          eq(schema.users.id, schema.supervisorAssignments.superviseeId)
+        )
+        .where(
+          and(
+            eq(
+              schema.supervisorAssignments.supervisorId,
+              session.user.id
+            ),
+            eq(
+              schema.supervisorAssignments.orgId,
+              myMembership.orgId
+            ),
+            isNull(schema.supervisorAssignments.endedAt)
+          )
+        );
+      groupCandidates = assignmentRows
+        .filter((r) => r.id !== superviseeId)
+        .map((r) => ({ id: r.id, name: r.name ?? r.email }));
+    } else if (viewerIsHrAdminEarly) {
+      const orgSupervisees = await db
+        .select({
+          id: schema.users.id,
+          name: schema.users.name,
+          email: schema.users.email,
+        })
+        .from(schema.orgMemberships)
+        .innerJoin(
+          schema.users,
+          eq(schema.users.id, schema.orgMemberships.userId)
+        )
+        .where(
+          and(
+            eq(schema.orgMemberships.orgId, myMembership.orgId),
+            eq(schema.orgMemberships.role, "supervisee"),
+            isNull(schema.orgMemberships.deactivatedAt)
+          )
+        );
+      groupCandidates = orgSupervisees
+        .filter((r) => r.id !== superviseeId)
+        .map((r) => ({ id: r.id, name: r.name ?? r.email }));
+    }
+  }
+
   // Calendar integrations the HOSTING supervisor has connected — used by
   // the schedule form to pick a meeting provider (Phase 1b/1c). Empty
   // array = the form tells the actor to (have the host) connect one
@@ -523,6 +582,7 @@ export default async function SuperviseeDetailPage({
                 hasAssignedSupervisor={
                   !!hostingSupervisorIdForPage || viewerCanSupervise
                 }
+                groupCandidates={groupCandidates}
               />
             </CardContent>
           </Card>

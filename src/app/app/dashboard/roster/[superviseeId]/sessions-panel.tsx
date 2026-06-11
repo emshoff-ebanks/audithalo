@@ -14,23 +14,13 @@ type ConnectedProvider = {
 
 type Props = {
   superviseeId: string;
-  /** Actor's own clinical-supervisor permission. Drives the log-past
-   *  sub-form's "kind" picker (only true supervisors can log
-   *  supervision sessions; HR Admin cannot log clinical events). */
   viewerCanSupervise: boolean;
-  /** Actor can use the SCHEDULE form. True for supervisor + HR Admin. */
   viewerCanScheduleSession: boolean;
-  /** Connected providers belonging to the HOSTING supervisor (themselves
-   *  when supervisor; the supervisee's assigned supervisor when HR Admin). */
   connectedProviders: ConnectedProvider[];
-  /** Display name of the supervisor whose calendar will host the
-   *  session, when scheduling on behalf. Null when the actor IS the
-   *  hosting supervisor. */
   hostingSupervisorName: string | null;
-  /** False only when the actor is HR Admin AND no active supervisor is
-   *  assigned to this supervisee. Used to gate the schedule form with a
-   *  clearer error than "Connect a calendar". */
   hasAssignedSupervisor: boolean;
+  /** Other supervisees the actor can pull into a group session (Phase 5). */
+  groupCandidates: { id: string; name: string }[];
 };
 
 /**
@@ -51,6 +41,7 @@ export function SessionsPanel({
   connectedProviders,
   hostingSupervisorName,
   hasAssignedSupervisor,
+  groupCandidates,
 }: Props) {
   const [mode, setMode] = useState<"log_past" | "schedule_new">(
     viewerCanScheduleSession ? "schedule_new" : "log_past"
@@ -108,6 +99,7 @@ export function SessionsPanel({
               superviseeId={superviseeId}
               connectedProviders={connectedProviders}
               onBehalfOfName={hostingSupervisorName}
+              groupCandidates={groupCandidates}
             />
           )
         ) : (

@@ -122,6 +122,10 @@ const scheduleSchema = z.object({
   confirmConflicts: z
     .union([z.literal("true"), z.literal("false"), z.literal("")])
     .optional(),
+  /** Phase 5 group sessions: comma-separated user_ids of additional
+   *  supervisees beyond the primary. Each gets a session_attendees row
+   *  and must sign before seal. */
+  additionalAttendeeIds: z.string().optional(),
 });
 
 /**
@@ -149,6 +153,7 @@ export async function scheduleSessionAction(
     notes: formData.get("notes") || undefined,
     sessionType: formData.get("sessionType") || undefined,
     confirmConflicts: formData.get("confirmConflicts") || undefined,
+    additionalAttendeeIds: formData.get("additionalAttendeeIds") || undefined,
   });
   if (!parsed.success) {
     return {
@@ -333,13 +338,25 @@ export async function scheduleSessionAction(
     .returning({ id: schema.sessionEvents.id });
   const sessionId = inserted.id;
 
-  // Group session attendees (Phase 1 only persists the primary; group
-  // sessions land fully in Phase 5 with the multi-select supervisee picker).
-  await db.insert(schema.sessionAttendees).values({
-    sessionEventId: sessionId,
-    userId: parsed.data.superviseeId,
-    isPrimarySupervisee: true,
-  });
+  // Group session attendees. Primary supervisee + any extras passed via
+  // additionalAttendeeIds. All attendee rows must be signed before seal
+  // (Phase 5 signSessionAction enforces this).
+  const additionalIds = parseAdditionalAttendees(
+    parsed.data.additionalAttendeeIds,
+    parsed.data.superviseeId
+  );
+  await db.insert(schema.sessionAttendees).values([
+    {
+      sessionEventId: sessionId,
+      userId: parsed.data.superviseeId,
+      isPrimarySupervisee: true,
+    },
+    ...additionalIds.map((userId) => ({
+      sessionEventId: sessionId,
+      userId,
+      isPrimarySupervisee: false,
+    })),
+  ]);
 
   // Format the local time once for the notification + audit log.
   const scheduledForLocal = formatLocal(startUtc, parsed.data.timeZone);
@@ -373,24 +390,58 @@ export async function scheduleSessionAction(
     durationMinutes: parsed.data.durationMinutes,
   });
 
-  try {
-    await createNotification({
-      userId: parsed.data.superviseeId,
-      kind: "session_scheduled",
-      payload: {
-        sessionId,
-        scheduledForLocal,
-        supervisorName: supervisor.name ?? supervisor.email,
-        meetingProvider,
-      },
-    });
-  } catch (err) {
-    console.error("[notifications] session_scheduled failed:", err);
+  // Notify the primary supervisee + any additional group attendees.
+  const notifyIds = [parsed.data.superviseeId, ...additionalIds];
+  for (const userId of notifyIds) {
+    try {
+      await createNotification({
+        userId,
+        kind: "session_scheduled",
+        payload: {
+          sessionId,
+          scheduledForLocal,
+          supervisorName: supervisor.name ?? supervisor.email,
+          meetingProvider,
+        },
+      });
+    } catch (err) {
+      console.error("[notifications] session_scheduled failed:", err);
+    }
   }
 
   revalidatePath(`/dashboard/roster/${parsed.data.superviseeId}`);
   revalidatePath(`/sign/${sessionId}`);
   return { ok: true, sessionId };
+}
+
+/**
+ * Parse the additional-attendees form field. Defensive against:
+ *   - empty / undefined
+ *   - the primary already being in the list (drop it)
+ *   - duplicate entries
+ *   - non-UUID garbage (dropped silently)
+ */
+function parseAdditionalAttendees(
+  raw: string | undefined,
+  primaryId: string
+): string[] {
+  if (!raw) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const id of raw.split(",").map((s) => s.trim()).filter(Boolean)) {
+    if (id === primaryId) continue;
+    if (seen.has(id)) continue;
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        id
+      )
+    ) {
+      continue;
+    }
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
 }
 
 const cancelSchema = z.object({

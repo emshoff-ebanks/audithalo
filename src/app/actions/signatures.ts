@@ -74,21 +74,14 @@ export async function signSessionAction(
 
   // Atomic SQL append — protects against the read-modify-write race when two
   // signers click "Sign" simultaneously. We append to whatever signatures are
-  // CURRENTLY in the row (not the snapshot we read above), and decide
-  // signed_at from the post-append array — all in one statement.
-  // The WHERE clause's NOT EXISTS guards against the same signer appending twice
-  // even if the JS-level check raced past.
+  // CURRENTLY in the row (not the snapshot we read above). signed_at is
+  // computed in a second step (below) because the seal condition now depends
+  // on session_attendees, not just the two role literals — group sessions
+  // require every attendee to sign.
   const newSigJson = JSON.stringify(candidate);
   const result = await db.execute(sql`
     UPDATE session_events
-    SET
-      signatures = signatures || ${newSigJson}::jsonb,
-      signed_at = CASE
-        WHEN (signatures || ${newSigJson}::jsonb) @> '[{"signerRole":"supervisee"}]'::jsonb
-         AND (signatures || ${newSigJson}::jsonb) @> '[{"signerRole":"supervisor"}]'::jsonb
-        THEN NOW()
-        ELSE signed_at
-      END
+    SET signatures = signatures || ${newSigJson}::jsonb
     WHERE id = ${sessionEvent.id}
       AND NOT EXISTS (
         SELECT 1 FROM jsonb_array_elements(signatures) AS s
@@ -97,8 +90,6 @@ export async function signSessionAction(
     RETURNING signed_at, signatures
   `);
 
-  // rowCount semantics vary by driver — neon-http returns rows array.
-  // If zero rows updated, the NOT EXISTS guard triggered (duplicate signer).
   const rows = (
     result as unknown as {
       rows: {
@@ -111,7 +102,39 @@ export async function signSessionAction(
     return { ok: false, error: "You already signed this session." };
   }
 
-  const fullySigned = rows[0].signed_at !== null;
+  // Seal evaluation:
+  //   - Every row in session_attendees must have a signature whose
+  //     signerId matches userId. For 1:1 this is one supervisee. For
+  //     group sessions (Phase 5) it's every additional supervisee too.
+  //   - At least one signer must carry signerRole='supervisor'.
+  // Existing post-Phase-1d rows always have at least the primary
+  // supervisee in session_attendees. Legacy pre-scheduling rows have
+  // no attendees row — fall back to the historical 1:1 rule.
+  const attendees = await db
+    .select({ userId: schema.sessionAttendees.userId })
+    .from(schema.sessionAttendees)
+    .where(eq(schema.sessionAttendees.sessionEventId, sessionEvent.id));
+  const signatures = rows[0].signatures;
+  const signedBy = new Set(signatures.map((s) => s.signerId));
+  const allAttendeesSigned =
+    attendees.length === 0
+      ? // Legacy fallback: at least one row with supervisee role.
+        signatures.some((s) => s.signerRole === "supervisee")
+      : attendees.every((a) => signedBy.has(a.userId));
+  const hasSupervisorSig = signatures.some(
+    (s) => s.signerRole === "supervisor"
+  );
+  const shouldSeal = allAttendeesSigned && hasSupervisorSig;
+
+  let fullySigned = rows[0].signed_at !== null;
+  if (shouldSeal && !fullySigned) {
+    await db.execute(sql`
+      UPDATE session_events
+      SET signed_at = NOW()
+      WHERE id = ${sessionEvent.id} AND signed_at IS NULL
+    `);
+    fullySigned = true;
+  }
   if (fullySigned) {
     await generateEvidencePackage(sessionEvent.id);
   }
