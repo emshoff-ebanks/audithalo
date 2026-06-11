@@ -6,7 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Agent runtime contract
 
-You are working on **AuditHalo** — a multi-tenant supervision-compliance SaaS for licensed mental-health supervisors. The user is **Damon** (info@audithalo.com / damon@medipyxis.com). Production lives at `audithalo.com` (marketing) and `app.audithalo.com` (app).
+You are working on **AuditHalo** — a multi-tenant supervision-compliance SaaS for licensed mental-health supervisors. The product owner is **Damon** (contact at info@audithalo.com). Production lives at `audithalo.com` (marketing) and `app.audithalo.com` (app).
 
 This document tells you what you have, what you don't, and what you're authorized to do without checking in. Read it once at session start. Don't re-ask the user about anything documented here.
 
@@ -46,7 +46,7 @@ This document tells you what you have, what you don't, and what you're authorize
 - `user.email = 228783329+emshoff-ebanks@users.noreply.github.com`
 - `user.name = emshoff-ebanks`
 
-**Never** commit or push as `damon@medipyxis.com` / `Damon`. The `medipyxis` identity is a personal-billing account that must not appear in AuditHalo's commit history.
+**Never** commit or push as any other identity. A separate personal-billing account must not appear in AuditHalo's commit history — `ci/forbidden-patterns.sh` blocks the specific string.
 
 Before your first commit in a session, verify:
 

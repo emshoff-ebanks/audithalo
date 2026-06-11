@@ -29,10 +29,10 @@ Four accounts, one per role, all on the same staging org once Phase 6 lands. Unt
 
 | Role | Suggested email (Gmail+alias) | Password env var |
 |---|---|---|
-| HR Admin | `audihalosupervisor+hr@gmail.com` | `E2E_HR_ADMIN_PASSWORD` |
-| Supervisor | `audihalosupervisor+sup@gmail.com` | `E2E_SUPERVISOR_PASSWORD` |
-| Supervisee | `audihalosupervisor+sve@gmail.com` | `E2E_SUPERVISEE_PASSWORD` |
-| Executive | `audihalosupervisor+exec@gmail.com` | `E2E_EXECUTIVE_PASSWORD` |
+| HR Admin | `&lt;your-gmail&gt;+hr@gmail.com` | `E2E_HR_ADMIN_PASSWORD` |
+| Supervisor | `&lt;your-gmail&gt;+sup@gmail.com` | `E2E_SUPERVISOR_PASSWORD` |
+| Supervisee | `&lt;your-gmail&gt;+sve@gmail.com` | `E2E_SUPERVISEE_PASSWORD` |
+| Executive | `&lt;your-gmail&gt;+exec@gmail.com` | `E2E_EXECUTIVE_PASSWORD` |
 
 Setup is automated via `scripts/seed-e2e-users.ts`. Run once:
 

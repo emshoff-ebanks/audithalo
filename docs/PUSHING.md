@@ -6,7 +6,7 @@
 
 ## The hard rule
 
-> Never push, commit, or attribute anything to `medipyxisman`, `medipyxis`, or `damon@medipyxis.com`. That is a separate company. This repo is owned by **`emshoff-ebanks`** (GitHub numeric ID `228783329`).
+> Never push or commit under any identity other than **`emshoff-ebanks`** (GitHub numeric ID `228783329`). The CI gate at `ci/forbidden-patterns.sh` blocks the strings of an old, unrelated personal-billing account that must not appear in AuditHalo's history.
 
 All commits must show the GitHub-noreply email tied to `emshoff-ebanks`:
 
@@ -75,12 +75,12 @@ For docs-only commits, the build is essentially a no-op rebuild — fine to ship
 
 ## Recovery: when push fails with auth/credential errors
 
-Symptom: `remote: Repository not found.` or `fatal: Authentication failed` or a credential prompt that auto-fills `medipyxisman`.
+Symptom: `remote: Repository not found.` or `fatal: Authentication failed` or a credential prompt that auto-fills the wrong GitHub account.
 
 This means **Git Credential Manager has the wrong account cached**. Purge it on Windows:
 
 ```pwsh
-git credential-manager github logout medipyxisman
+git credential-manager github logout <stale-username>
 cmdkey /delete:git:https://github.com
 ```
 

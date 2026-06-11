@@ -20,8 +20,7 @@ Both are one Next.js app, routed by host via a proxy.
 
 ## 2. Who you are working with
 
-- **Damon** (signs in as Damon in chat).
-- Email: `damon@medipyxis.com` (user email — **NOT a git author**, see §3).
+- **Damon** (signs in as Damon in chat). Contact via `info@audithalo.com`.
 - GitHub login: `emshoff-ebanks` (numeric ID `228783329`).
 - New to GitHub and Vercel — needs clear, step-by-step instructions when infra work is involved.
 - Original AuditHalo was built on Emergent. This is the clean rebuild.
@@ -32,7 +31,7 @@ Both are one Next.js app, routed by host via a proxy.
 
 ### 3.1 Git identity and pushing
 
-> **Never** push, commit, or attribute anything to `medipyxisman`, `medipyxis`, or the `damon@medipyxis.com` email. That account is for a separate company and must not appear in this repo. The owner is **`emshoff-ebanks`** (ID `228783329`).
+> **Never** push or commit under any identity other than **`emshoff-ebanks`** (ID `228783329`). A previous personal-billing account is blocked at CI — the specific string is enforced by `ci/forbidden-patterns.sh`.
 
 **Read [`docs/PUSHING.md`](PUSHING.md) before you commit or push.** It has the per-command flags, the credential-cache reset commands, and the Vercel auto-deploy explanation.
 
@@ -45,7 +44,7 @@ git -c user.email="228783329+emshoff-ebanks@users.noreply.github.com" \
 git push origin main
 ```
 
-If push fails with `Repository not found`, credentials are cached for the wrong account. Purge with `git credential-manager github logout medipyxisman` and `cmdkey /delete:git:https://github.com`, then push again to trigger re-auth.
+If push fails with `Repository not found`, credentials are cached for the wrong account. Purge with `git credential-manager github logout <stale-username>` and `cmdkey /delete:git:https://github.com`, then push again to trigger re-auth.
 
 Vercel watches `main` and auto-deploys both `audithalo.com` and `app.audithalo.com` on every push. No Vercel CLI commands needed for deploy.
 

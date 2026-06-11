@@ -36,7 +36,7 @@ These are the answers we're treating as settled. Don't re-litigate without expli
 
 All previously-open questions resolved 2026-06-11. See locked decisions above. The only remaining gate is:
 
-- **Pre-launch verification**: Damon does end-to-end smoke test on prod with a real Microsoft + real Google account before each phase ships. Caleb does role-based UI walkthrough using `audihalosupervisor@gmail.com` + Damon Test Org.
+- **Pre-launch verification**: Damon does end-to-end smoke test on prod with a real Microsoft + real Google account before each phase ships. Caleb does role-based UI walkthrough using `&lt;test-supervisor-email&gt;` + Damon Test Org.
 
 ## Why we need an Entra ID app registration + a Google Cloud project
 
@@ -434,7 +434,7 @@ When implementation begins, every phase merges with:
 - [ ] Playwright e2e green (need new specs for schedule/cancel/reschedule)
 - [ ] forbidden-pattern grep gate clean
 - [ ] Damon-verified smoke test on prod with a real Teams account
-- [ ] Caleb-verified UI walkthrough on `audihalosupervisor@gmail.com` + Damon Test Org
+- [ ] Caleb-verified UI walkthrough on `&lt;test-supervisor-email&gt;` + Damon Test Org
 - [ ] Migration applied to prod Neon via `repair-migrations.ts` (additive only — no destructive ops)
 
 ## UI/UX guardrails (read before designing any new component)

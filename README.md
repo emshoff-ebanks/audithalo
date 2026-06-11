@@ -82,11 +82,13 @@ npx vitest run
 
 Most context lives in `/docs`:
 
-- **[`docs/HANDOFF.md`](docs/HANDOFF.md)** — read this first to get the full project state in one document
-- **[`docs/PUSHING.md`](docs/PUSHING.md)** — how to commit and push (read this before your first push)
 - **[`docs/strategy/01-launch-plan.md`](docs/strategy/01-launch-plan.md)** — GTM, pricing, roadmap, locked decisions
+- **[`docs/strategy/04-enterprise-rbac.md`](docs/strategy/04-enterprise-rbac.md)** — Enterprise tier RBAC + multi-supervisor org spec
+- **[`docs/strategy/08-scheduling-and-calendar.md`](docs/strategy/08-scheduling-and-calendar.md)** — scheduling, Teams/Meet integration, calendar view
 - **[`docs/brand/brand-book.md`](docs/brand/brand-book.md)** — palette, typography, voice, logo
 - **[`docs/brand/messaging.md`](docs/brand/messaging.md)** — taglines, elevator pitches, headline bank
+
+A couple of files in `/docs` (`HANDOFF.md`, `PUSHING.md`) and the root `AGENTS.md` document the day-to-day workflow used by AI coding sessions on this repo. They're tracked because they're load-bearing for the maintainer's own setup; if you're reading the code from the outside, they're not required.
 
 ---
 
@@ -98,6 +100,26 @@ If you spot an error in any encoded rule, please open an issue with the citation
 
 ---
 
+## Security
+
+If you believe you've found a security issue — credential leak, auth bypass, evidence-package tamper, anything that could affect a customer's data — please email **info@audithalo.com** with the details rather than opening a public issue. We'll respond within two business days.
+
+---
+
+## Contact
+
+- General / press / partnerships → **info@audithalo.com**
+- Rule-dataset corrections → open a GitHub issue with the citation
+- Reviewer access for state boards → email **info@audithalo.com** for a read-only account
+
+The marketing site lives at [audithalo.com](https://audithalo.com); the application at [app.audithalo.com](https://app.audithalo.com).
+
+---
+
 ## License
 
-All rights reserved. AuditHalo and the AuditHalo mark are trademarks of the project owner. Code is published on GitHub for transparency, not for redistribution.
+Source-available, **not** open-source. Copyright © 2026 the AuditHalo project owner. All rights reserved.
+
+The code in this repository is published for transparency and review. No license to use, copy, modify, redistribute, or run the code in production is granted by the publication of this repository. The "AuditHalo" name, the AuditHalo mark, and the state-rules dataset (`rules/`) are trademarks and proprietary work product of the project owner; the rules dataset in particular took meaningful effort to research, encode, cite, and verify and is **not** dedicated to the public domain.
+
+If you want to license any part of this repository, email **info@audithalo.com**.
