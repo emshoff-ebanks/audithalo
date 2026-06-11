@@ -86,6 +86,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? "supervisee";
+        token.name = user.name;
+        token.email = user.email;
         return token;
       }
 
@@ -106,6 +108,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (isTokenRevoked(token.iat, dbUser.sessionsValidFrom ?? null)) {
             return null;
           }
+          // Refresh display-name + email on the JWT so account-page edits
+          // (NameForm, EmailChangeForm) propagate without forcing a
+          // re-login. Without this, the JWT stays stuck with the values
+          // stamped at sign-in.
+          if (dbUser.name !== undefined) token.name = dbUser.name;
+          if (dbUser.email !== undefined) token.email = dbUser.email;
+          if (dbUser.role && dbUser.role !== token.role) {
+            token.role = dbUser.role;
+          }
         } catch (err) {
           // DB hiccup: prefer keeping the user signed in rather than
           // logging them out on every transient DB error. Auth.js will
@@ -120,6 +131,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.id) {
         session.user.id = token.id as string;
         session.user.role = (token.role as string) ?? "supervisee";
+        // Mirror name + email from token (refreshed in the jwt callback)
+        // so every page that reads session.user.name picks up account
+        // edits without needing a sign-out / sign-in cycle.
+        if (typeof token.name === "string") session.user.name = token.name;
+        if (typeof token.email === "string") session.user.email = token.email;
       }
       return session;
     },

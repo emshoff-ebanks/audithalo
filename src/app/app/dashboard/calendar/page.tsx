@@ -190,26 +190,58 @@ export default async function CalendarPage({
 
     events = rows
       .filter((r) => r.kind === "supervision")
-      .map((r): CalendarEvent => {
-        const startMs = r.startUtc.getTime();
-        const endMs = startMs + Math.round(r.durationHours * 60_000 * 60);
-        const sup = supervisorMap.get(r.superviseeId) ?? null;
-        return {
-          id: r.id,
-          superviseeId: r.superviseeId,
-          superviseeName: r.superviseeName ?? r.superviseeEmail,
-          startIso: r.startUtc.toISOString(),
-          endIso: new Date(endMs).toISOString(),
-          durationMinutes: Math.round(r.durationHours * 60),
-          sessionType: r.sessionType,
-          scheduledStatus: r.scheduledStatus,
-          signed: r.signedAt !== null,
-          meetingProvider: r.meetingProvider,
-          meetingJoinUrl: r.meetingJoinUrl,
-          timeZone: r.timeZone,
-          supervisorName: sup ? sup.name ?? sup.email : null,
-          supervisorId: sup?.id ?? null,
-        };
+      .flatMap((r): CalendarEvent[] => {
+        // Defensive: Drizzle+Neon return timestamp columns as Date, but
+        // the surrounding code crashed in production when a row with an
+        // unexpected shape (string date? null duration?) hit Math/Date
+        // math. Skip+log instead of nuking the whole page render.
+        try {
+          const startDate =
+            r.startUtc instanceof Date ? r.startUtc : new Date(r.startUtc as unknown as string);
+          if (Number.isNaN(startDate.getTime())) {
+            console.warn("[calendar] skipping row with bad date:", r.id, r.startUtc);
+            return [];
+          }
+          const durationHoursRaw =
+            typeof r.durationHours === "number"
+              ? r.durationHours
+              : Number(r.durationHours);
+          if (!Number.isFinite(durationHoursRaw) || durationHoursRaw <= 0) {
+            console.warn(
+              "[calendar] skipping row with bad duration:",
+              r.id,
+              r.durationHours
+            );
+            return [];
+          }
+          const startMs = startDate.getTime();
+          const endMs = startMs + Math.round(durationHoursRaw * 60 * 60_000);
+          const sup = supervisorMap.get(r.superviseeId) ?? null;
+          const ev: CalendarEvent = {
+            id: r.id,
+            superviseeId: r.superviseeId,
+            superviseeName: r.superviseeName ?? r.superviseeEmail,
+            startIso: startDate.toISOString(),
+            endIso: new Date(endMs).toISOString(),
+            durationMinutes: Math.round(durationHoursRaw * 60),
+            sessionType: r.sessionType,
+            scheduledStatus: r.scheduledStatus,
+            signed: r.signedAt !== null,
+            meetingProvider: r.meetingProvider,
+            meetingJoinUrl: r.meetingJoinUrl,
+            timeZone: r.timeZone,
+            supervisorName: sup ? sup.name ?? sup.email : null,
+            supervisorId: sup?.id ?? null,
+          };
+          return [ev];
+        } catch (err) {
+          console.error(
+            "[calendar] failed to map session row, skipping:",
+            r.id,
+            err
+          );
+          return [];
+        }
       });
   }
 

@@ -474,6 +474,24 @@ export function ScheduleSessionForm({
             })()}
       </Button>
 
+      {(() => {
+        const why: string[] = [];
+        if (!tz) why.push("waiting for your browser timezone to load — refresh if this persists");
+        if (modality === "virtual" && connectedProviders.length === 0) {
+          why.push(
+            onBehalf
+              ? `${onBehalfOfName ?? "the supervisor"} hasn't connected a calendar yet`
+              : "no calendar connected — choose In person, or connect one from Account → Integrations"
+          );
+        }
+        if (why.length === 0) return null;
+        return (
+          <p className="text-xs text-foreground/60">
+            Button disabled because: {why.join("; ")}.
+          </p>
+        );
+      })()}
+
       <p className="text-xs text-foreground/60">
         Times shown in <span className="font-mono">{tz || "your timezone"}</span>.
         Both parties receive a calendar invite.

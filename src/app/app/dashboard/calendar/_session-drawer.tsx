@@ -65,8 +65,35 @@ function DrawerBody({
   }, [state]);
 
   const status = visualStatusFor(event, now);
-  const startMs = new Date(event.startIso).getTime();
-  const endMs = new Date(event.endIso).getTime();
+  const startDate = new Date(event.startIso);
+  const endDate = new Date(event.endIso);
+  const startMs = startDate.getTime();
+  const endMs = endDate.getTime();
+  // Guard: if the row's date was malformed somewhere upstream, render a
+  // simple "session not viewable" panel instead of throwing during
+  // Intl.format and tripping the error boundary.
+  if (Number.isNaN(startMs) || Number.isNaN(endMs)) {
+    return (
+      <div
+        className="fixed inset-0 z-40 flex justify-end"
+        role="dialog"
+        aria-modal="true"
+      >
+        <button
+          type="button"
+          aria-label="Close session details"
+          className="absolute inset-0 bg-foreground/30 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        <aside className="relative w-full max-w-sm h-full bg-card border-l border-border shadow-xl p-4">
+          <p className="text-sm text-foreground/70">
+            This session&apos;s time data couldn&apos;t be read. Open the session
+            page from the roster to see details.
+          </p>
+        </aside>
+      </div>
+    );
+  }
   const joinable =
     !!event.meetingJoinUrl &&
     now >= startMs - 10 * 60_000 &&
@@ -79,7 +106,7 @@ function DrawerBody({
     month: "long",
     day: "numeric",
     year: "numeric",
-  }).format(new Date(event.startIso));
+  }).format(startDate);
   const timeFmt = new Intl.DateTimeFormat(undefined, {
     hour: "numeric",
     minute: "2-digit",
@@ -136,8 +163,7 @@ function DrawerBody({
             <Row icon={<CalIcon className="h-4 w-4" />}>
               <p className="font-medium text-foreground">{dateFmt}</p>
               <p className="text-xs text-foreground/60">
-                {timeFmt.format(new Date(event.startIso))} –{" "}
-                {timeFmt.format(new Date(event.endIso))}
+                {timeFmt.format(startDate)} – {timeFmt.format(endDate)}
                 {tzNote}
                 <span className="mx-1.5">·</span>
                 {event.durationMinutes} min
