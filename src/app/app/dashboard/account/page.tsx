@@ -19,6 +19,8 @@ import { TotpDisableForm } from "./totp-disable-form";
 import { NotificationsPrefsForm } from "./notifications-prefs-form";
 import { CompliancePrefsForm } from "./compliance-prefs-form";
 import { DeleteAccountForm } from "./delete-account-form";
+import { IntegrationsSection } from "./integrations-section";
+import { IntegrationsResultBanner } from "./_integrations-result-banner";
 
 export const metadata = { title: "Account — AuditHalo" };
 
@@ -32,6 +34,7 @@ const NAV_ITEMS: { id: string; label: string; supervisorOnly?: boolean }[] = [
   { id: "email", label: "Email" },
   { id: "billing", label: "Billing", supervisorOnly: true },
   { id: "notifications", label: "Notifications" },
+  { id: "integrations", label: "Integrations" },
   { id: "compliance", label: "Compliance", supervisorOnly: true },
   { id: "training", label: "Supervisor training", supervisorOnly: true },
   { id: "profile", label: "Profile" },
@@ -170,7 +173,13 @@ export default async function AccountPage() {
         </CardContent>
       </Card>
 
-      {/* 4. Compliance preferences — supervisor only */}
+      {/* 4. Calendar integrations — visible to everyone (any user can
+            connect their personal Microsoft or Google account for
+            scheduling per docs/strategy/08). */}
+      <IntegrationsResultBanner />
+      <IntegrationsSection userId={user.id} />
+
+      {/* 5. Compliance preferences — supervisor only */}
       {userCanSupervise && (
         <Card id="compliance">
           <CardHeader>
@@ -307,7 +316,7 @@ export default async function AccountPage() {
             Delete account
           </p>
           <p className="text-sm text-foreground/70 mb-4">
-            Permanently delete your AuditHalo account. You'll be signed out
+            Permanently delete your AuditHalo account. You&apos;ll be signed out
             immediately and your data is purged after 30 days. Email{" "}
             <a
               href="mailto:info@audithalo.com"
