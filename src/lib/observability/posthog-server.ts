@@ -53,6 +53,8 @@ export type PosthogEvent =
   | "session_logged"
   | "session_scheduled"
   | "session_canceled"
+  | "session_rescheduled"
+  | "recurring_series_created"
   | "signature_completed"
   | "evidence_package_sealed"
   | "trial_converted"

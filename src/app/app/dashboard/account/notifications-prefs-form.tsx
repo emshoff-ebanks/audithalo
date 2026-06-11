@@ -15,6 +15,7 @@ const DEFAULTS: Record<NotificationKind, boolean> = {
   trial_ending_soon: true,
   session_scheduled: true,
   session_canceled: true,
+  session_rescheduled: true,
 };
 
 const KIND_META: Record<
@@ -66,12 +67,18 @@ const KIND_META: Record<
     description:
       "A scheduled supervision session was canceled. The calendar invite is withdrawn.",
   },
+  session_rescheduled: {
+    label: "Supervision rescheduled",
+    description:
+      "A scheduled supervision session moved to a new time. The calendar invite updates.",
+  },
 };
 
 const ORDER: NotificationKind[] = [
   "invite_accepted",
   "signature_needed",
   "session_scheduled",
+  "session_rescheduled",
   "session_canceled",
   "rule_changed",
   "evidence_sealed",

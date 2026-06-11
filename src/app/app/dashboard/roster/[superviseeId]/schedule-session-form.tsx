@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  scheduleRecurringSeriesAction,
   scheduleSessionAction,
   type ActionResult,
 } from "@/app/actions/sessions";
@@ -59,11 +60,25 @@ export function ScheduleSessionForm({
   onBehalfOfName,
 }: Props) {
   const onBehalf = !!onBehalfOfName;
-  const [state, formAction, pending] = useActionState<
+  const [recurring, setRecurring] = useState(false);
+  // Two action states swapped based on the recurring toggle. useActionState
+  // bindings have to be stable per-render, so we keep both alive and pick
+  // which one to dispatch in the form's action handler.
+  const [oneOffState, oneOffAction, oneOffPending] = useActionState<
     ActionResult | undefined,
     FormData
   >(scheduleSessionAction, undefined);
+  const [recurringState, recurringAction, recurringPending] = useActionState<
+    ActionResult | undefined,
+    FormData
+  >(scheduleRecurringSeriesAction, undefined);
+  const state = recurring ? recurringState : oneOffState;
+  const pending = recurring ? recurringPending : oneOffPending;
   const formRef = useRef<HTMLFormElement>(null);
+  const [frequency, setFrequency] = useState<
+    "weekly" | "biweekly" | "every_3_weeks" | "monthly"
+  >("weekly");
+  const [occurrenceCount, setOccurrenceCount] = useState(8);
 
   const [modality, setModality] = useState<"virtual" | "in_person">("virtual");
 
@@ -108,7 +123,16 @@ export function ScheduleSessionForm({
   return (
     <form
       ref={formRef}
-      action={(fd) => formAction(buildStartUtc(fd))}
+      action={(fd) => {
+        const built = buildStartUtc(fd);
+        if (recurring) {
+          built.set("frequency", frequency);
+          built.set("occurrenceCount", String(occurrenceCount));
+          recurringAction(built);
+        } else {
+          oneOffAction(built);
+        }
+      }}
       className="space-y-3"
     >
       <input type="hidden" name="superviseeId" value={superviseeId} />
@@ -245,6 +269,65 @@ export function ScheduleSessionForm({
         </div>
       </div>
 
+      <div className="rounded-sm border border-border p-3 space-y-3">
+        <label className="flex items-start gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={recurring}
+            onChange={(e) => setRecurring(e.target.checked)}
+            className="mt-0.5 accent-foreground"
+          />
+          <span>
+            <span className="text-sm font-medium text-foreground">
+              Repeat this session
+            </span>
+            <span className="block text-xs text-foreground/60 mt-0.5">
+              Creates a recurring series on the calendar with one
+              meeting link that covers every occurrence.
+            </span>
+          </span>
+        </label>
+        {recurring && (
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <div>
+              <Label htmlFor="frequency">Frequency</Label>
+              <select
+                id="frequency"
+                value={frequency}
+                onChange={(e) =>
+                  setFrequency(e.target.value as typeof frequency)
+                }
+                className="mt-1.5 flex h-10 w-full rounded-sm border border-input bg-card px-3 py-2 text-sm text-foreground"
+              >
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Every 2 weeks</option>
+                <option value="every_3_weeks">Every 3 weeks</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="occurrenceCount">Number of sessions</Label>
+              <Input
+                id="occurrenceCount"
+                type="number"
+                min={2}
+                max={52}
+                value={occurrenceCount}
+                onChange={(e) =>
+                  setOccurrenceCount(
+                    Math.max(2, Math.min(52, Number(e.target.value) || 2))
+                  )
+                }
+                className="mt-1.5"
+              />
+              <p className="text-xs text-foreground/60 mt-1">
+                Capped at 52 (about a year of weekly).
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div>
         <Label htmlFor="sessionType">Supervision type</Label>
         <select
@@ -289,7 +372,11 @@ export function ScheduleSessionForm({
         }
       >
         {pending && <Loader2 className="h-3 w-3 animate-spin" />}
-        {pending ? "Scheduling…" : "Schedule session"}
+        {pending
+          ? "Scheduling…"
+          : recurring
+            ? `Schedule ${occurrenceCount} sessions`
+            : "Schedule session"}
       </Button>
 
       <p className="text-xs text-foreground/60">

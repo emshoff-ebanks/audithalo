@@ -8,6 +8,7 @@ import {
   cancelScheduledSessionAction,
   type ActionResult,
 } from "@/app/actions/sessions";
+import { RescheduleForm } from "./reschedule-form";
 
 type Props = {
   sessionId: string;
@@ -19,6 +20,9 @@ type Props = {
   meetingJoinUrl: string | null;
   location: string | null;
   canCancel: boolean;
+  /** Reschedule available when the row isn't part of a recurring series.
+   *  Phase 3.5 will lift that restriction. */
+  canReschedule: boolean;
 };
 
 export function ScheduledSessionCard({
@@ -31,12 +35,14 @@ export function ScheduledSessionCard({
   meetingJoinUrl,
   location,
   canCancel,
+  canReschedule,
 }: Props) {
   const [state, formAction, pending] = useActionState<
     ActionResult | undefined,
     FormData
   >(cancelScheduledSessionAction, undefined);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showReschedule, setShowReschedule] = useState(false);
 
   const startMs = new Date(scheduledForUtcIso).getTime();
   // Read the client clock via useSyncExternalStore so render stays pure
@@ -126,7 +132,28 @@ export function ScheduledSessionCard({
         </Button>
       )}
 
-      {canCancel && !showConfirm && (
+      {canReschedule && !showReschedule && (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={() => setShowReschedule(true)}
+        >
+          Reschedule
+        </Button>
+      )}
+
+      {canReschedule && showReschedule && (
+        <RescheduleForm
+          sessionId={sessionId}
+          currentStartUtcIso={scheduledForUtcIso}
+          currentDurationMinutes={durationMinutes}
+          currentTimeZone={timeZone}
+          onCancel={() => setShowReschedule(false)}
+        />
+      )}
+
+      {canCancel && !showConfirm && !showReschedule && (
         <button
           type="button"
           onClick={() => setShowConfirm(true)}

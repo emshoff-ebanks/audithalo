@@ -66,6 +66,8 @@ function iconFor(kind: NotificationKind) {
       return <CalendarClock className="h-4 w-4 text-secondary" />;
     case "session_canceled":
       return <CalendarX className="h-4 w-4 text-[color:var(--color-warning)]" />;
+    case "session_rescheduled":
+      return <CalendarClock className="h-4 w-4 text-[color:var(--color-warning)]" />;
   }
 }
 
@@ -89,6 +91,8 @@ function messageFor(n: NotificationRow): string {
       return `Supervision scheduled for ${n.payload.scheduledForLocal ?? "a future time"}`;
     case "session_canceled":
       return `Supervision canceled (${n.payload.scheduledForLocal ?? "scheduled session"})`;
+    case "session_rescheduled":
+      return `Supervision moved to ${n.payload.newScheduledForLocal ?? "a new time"}`;
   }
 }
 

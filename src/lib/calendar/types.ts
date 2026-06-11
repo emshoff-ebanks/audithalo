@@ -11,6 +11,29 @@
  */
 import type { CalendarProvider } from "./oauth-config";
 
+/**
+ * Recurrence pattern for a series. The provider adapters translate this
+ * to native recurrence (MS Graph `recurrence` object, Google Calendar
+ * RRULE) so ONE provider event covers every occurrence and all attendees
+ * see a single repeating series on their personal calendar.
+ *
+ * Materialized session_events rows in AuditHalo still get one row per
+ * occurrence — the provider recurrence is purely a calendar-mirroring
+ * optimization so we don't make N API calls.
+ */
+export type RecurrencePattern = {
+  /** Days between occurrences mapped from the strategy doc:
+   *   weekly       → 7
+   *   biweekly     → 14
+   *   every_3_weeks → 21
+   *   monthly      → 30 (provider-native MONTHLY semantics, not exact 30d)
+   */
+  frequency: "weekly" | "biweekly" | "every_3_weeks" | "monthly";
+  /** Total occurrences including the first. Capped at 52 by the locked
+   *  decision in 08-scheduling-and-calendar.md §9. */
+  occurrenceCount: number;
+};
+
 /** What the scheduler hands to a provider to create a session calendar event. */
 export type CreateEventInput = {
   /** Visible title on the calendar, e.g. "Supervision: Dr. Rivera ↔ Jordan Reyes". */
@@ -31,6 +54,10 @@ export type CreateEventInput = {
   withMeetingLink: boolean;
   /** Free-text location for in-person sessions. Ignored when withMeetingLink. */
   location?: string;
+  /** Set when this event represents a recurring series. The provider
+   *  will create ONE event with native recurrence covering every
+   *  occurrence — joinUrl + eventId apply to all of them. */
+  recurrence?: RecurrencePattern;
 };
 
 export type CreateEventOutput = {

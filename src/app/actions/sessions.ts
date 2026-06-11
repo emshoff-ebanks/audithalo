@@ -451,6 +451,471 @@ export async function cancelScheduledSessionAction(
   return { ok: true, sessionId: sessionEvent.id };
 }
 
+// ---------------------------------------------------------------------------
+// Phase 3 — recurring series
+// ---------------------------------------------------------------------------
+
+const FREQUENCY = z.enum(["weekly", "biweekly", "every_3_weeks", "monthly"]);
+const OCCURRENCE_CAP = 52;
+
+const scheduleRecurringSchema = scheduleSchema.extend({
+  frequency: FREQUENCY,
+  /** How many total occurrences to materialize, including the first.
+   *  Capped at OCCURRENCE_CAP per locked decision #9. */
+  occurrenceCount: z.coerce.number().int().min(2).max(OCCURRENCE_CAP),
+});
+
+/**
+ * Add `intervalDays` days for weekly cadences, or one calendar month for
+ * monthly. The latter uses Date's month-overflow semantics — Jan 31 +
+ * 1 month → Mar 3 by default — but that surprise is rare for supervision
+ * scheduling (most series start at month boundaries). Acceptable for v1.
+ */
+function nextOccurrence(
+  base: Date,
+  frequency: z.infer<typeof FREQUENCY>,
+  index: number
+): Date {
+  const out = new Date(base);
+  if (frequency === "monthly") {
+    out.setMonth(out.getMonth() + index);
+    return out;
+  }
+  const days = frequency === "weekly" ? 7 : frequency === "biweekly" ? 14 : 21;
+  out.setDate(out.getDate() + days * index);
+  return out;
+}
+
+/**
+ * Schedule a recurring supervision series. Creates ONE provider event
+ * with native recurrence (Outlook/Google handles the per-occurrence
+ * calendar mirroring), then materializes N session_events rows in
+ * AuditHalo's DB so each instance has a row to sign + seal against.
+ */
+export async function scheduleRecurringSeriesAction(
+  _prev: ActionResult | undefined,
+  formData: FormData
+): Promise<ActionResult> {
+  const parsed = scheduleRecurringSchema.safeParse({
+    superviseeId: formData.get("superviseeId"),
+    startUtc: formData.get("startUtc"),
+    durationMinutes: formData.get("durationMinutes"),
+    timeZone: formData.get("timeZone"),
+    modality: formData.get("modality"),
+    provider: formData.get("provider") || undefined,
+    location: formData.get("location") || undefined,
+    notes: formData.get("notes") || undefined,
+    sessionType: formData.get("sessionType") || undefined,
+    frequency: formData.get("frequency"),
+    occurrenceCount: formData.get("occurrenceCount"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+
+  let access;
+  try {
+    access = await requireSchedulerAccess(parsed.data.superviseeId);
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
+  }
+  const { session, orgId, viewerRole } = access;
+
+  const hostingSupervisorId = await resolveHostingSupervisorId(
+    session.user.id,
+    viewerRole,
+    parsed.data.superviseeId,
+    orgId
+  );
+  if (!hostingSupervisorId) {
+    return {
+      ok: false,
+      error:
+        "This supervisee has no assigned supervisor. Assign one before scheduling.",
+    };
+  }
+
+  const firstStart = new Date(parsed.data.startUtc);
+  if (Number.isNaN(firstStart.getTime())) {
+    return { ok: false, error: "Invalid start time." };
+  }
+  if (firstStart.getTime() < Date.now() - 60_000) {
+    return { ok: false, error: "Pick a start time in the future." };
+  }
+  const firstEnd = new Date(
+    firstStart.getTime() + parsed.data.durationMinutes * 60_000
+  );
+
+  const [supervisee, supervisor] = await Promise.all([
+    db.query.users.findFirst({
+      where: eq(schema.users.id, parsed.data.superviseeId),
+      columns: { id: true, email: true, name: true },
+    }),
+    db.query.users.findFirst({
+      where: eq(schema.users.id, hostingSupervisorId),
+      columns: { id: true, email: true, name: true },
+    }),
+  ]);
+  if (!supervisee || !supervisor) {
+    return { ok: false, error: "Supervisor or supervisee not found." };
+  }
+
+  let meetingProvider: "teams" | "google_meet" | "in_person" = "in_person";
+  let meetingJoinUrl: string | null = null;
+  let meetingId: string | null = null;
+  let providerEventId: string | null = null;
+
+  if (parsed.data.modality === "virtual") {
+    const resolved = parsed.data.provider
+      ? await getNamedProviderForUser(
+          hostingSupervisorId,
+          parsed.data.provider as CalendarProvider
+        )
+      : await getProviderForUser(hostingSupervisorId);
+    if (!resolved) {
+      return {
+        ok: false,
+        error:
+          "Connect a calendar before scheduling a virtual recurring series.",
+      };
+    }
+    try {
+      const created = await resolved.client.createEvent({
+        title: `Supervision: ${supervisor.name ?? supervisor.email} ↔ ${supervisee.name ?? supervisee.email}`,
+        description: parsed.data.notes,
+        startUtc: firstStart,
+        endUtc: firstEnd,
+        timeZone: parsed.data.timeZone,
+        attendeeEmails: [supervisor.email, supervisee.email].filter(
+          (e): e is string => !!e
+        ),
+        withMeetingLink: true,
+        recurrence: {
+          frequency: parsed.data.frequency,
+          occurrenceCount: parsed.data.occurrenceCount,
+        },
+      });
+      meetingProvider =
+        resolved.client.name === "microsoft" ? "teams" : "google_meet";
+      meetingJoinUrl = created.joinUrl ?? null;
+      meetingId = created.eventId;
+      providerEventId = created.eventId;
+    } catch (err) {
+      console.error("[scheduleRecurringSeries] createEvent failed:", err);
+      return {
+        ok: false,
+        error: `Calendar provider failed to create the series: ${(err as Error).message}`,
+      };
+    }
+  }
+
+  // Persist the series template first so the materialized rows can
+  // carry recurring_series_id.
+  const lastOccurrenceDate = nextOccurrence(
+    firstStart,
+    parsed.data.frequency,
+    parsed.data.occurrenceCount - 1
+  );
+  const [seriesRow] = await db
+    .insert(schema.recurringSessionSeries)
+    .values({
+      orgId,
+      supervisorId: hostingSupervisorId,
+      superviseeIds: [parsed.data.superviseeId],
+      startDate: firstStart.toISOString().slice(0, 10),
+      timeOfDay: firstStart.toISOString().slice(11, 19),
+      durationMinutes: parsed.data.durationMinutes,
+      timeZone: parsed.data.timeZone,
+      frequency: parsed.data.frequency,
+      endType: "count",
+      endCount: parsed.data.occurrenceCount,
+      endDate: lastOccurrenceDate.toISOString().slice(0, 10),
+      meetingProvider:
+        parsed.data.modality === "virtual" ? meetingProvider : "in_person",
+      location:
+        parsed.data.modality === "in_person"
+          ? parsed.data.location ?? null
+          : null,
+      notes: parsed.data.notes ?? null,
+      createdByUserId: session.user.id,
+    })
+    .returning({ id: schema.recurringSessionSeries.id });
+  const seriesId = seriesRow.id;
+
+  const calendarEventIds = providerEventId
+    ? ({ [hostingSupervisorId]: providerEventId } as Record<string, string>)
+    : null;
+
+  // Materialize one session_events row per occurrence. They all share
+  // the same meeting_id + join URL because they ride the SAME provider
+  // event (native recurrence on the provider side).
+  const insertedSessionIds: string[] = [];
+  for (let i = 0; i < parsed.data.occurrenceCount; i++) {
+    const occStart = nextOccurrence(firstStart, parsed.data.frequency, i);
+    const [inserted] = await db
+      .insert(schema.sessionEvents)
+      .values({
+        superviseeId: parsed.data.superviseeId,
+        orgId,
+        kind: "supervision",
+        date: occStart,
+        durationHours: parsed.data.durationMinutes / 60,
+        sessionType: parsed.data.sessionType,
+        loggedById: session.user.id,
+        scheduledStatus: "scheduled",
+        recurringSeriesId: seriesId,
+        meetingProvider,
+        meetingJoinUrl,
+        meetingId,
+        calendarEventIds,
+        timeZone: parsed.data.timeZone,
+      })
+      .returning({ id: schema.sessionEvents.id });
+    insertedSessionIds.push(inserted.id);
+    await db.insert(schema.sessionAttendees).values({
+      sessionEventId: inserted.id,
+      userId: parsed.data.superviseeId,
+      isPrimarySupervisee: true,
+    });
+  }
+
+  try {
+    await logAuditEvent({
+      orgId,
+      actorUserId: session.user.id,
+      action: AUDIT_ACTIONS.RECURRING_SERIES_CREATED,
+      resourceType: "recurring_session_series",
+      resourceId: seriesId,
+      details: {
+        superviseeId: parsed.data.superviseeId,
+        frequency: parsed.data.frequency,
+        occurrenceCount: parsed.data.occurrenceCount,
+        firstStartUtc: firstStart.toISOString(),
+        meetingProvider,
+        materializedSessionEventIds: insertedSessionIds,
+      },
+    });
+  } catch (err) {
+    console.error("[audit-log] failed to record recurring series:", err);
+  }
+
+  capture("recurring_series_created", session.user.id, {
+    orgId,
+    superviseeId: parsed.data.superviseeId,
+    frequency: parsed.data.frequency,
+    occurrenceCount: parsed.data.occurrenceCount,
+    meetingProvider,
+  });
+
+  // Notify the supervisee about the FIRST occurrence; the rest piggyback
+  // on the provider's native series invite. Sending N session_scheduled
+  // notifications would be noise.
+  const firstLocal = formatLocal(firstStart, parsed.data.timeZone);
+  try {
+    await createNotification({
+      userId: parsed.data.superviseeId,
+      kind: "session_scheduled",
+      payload: {
+        sessionId: insertedSessionIds[0],
+        scheduledForLocal: `${firstLocal} (recurring — ${parsed.data.occurrenceCount} sessions)`,
+        supervisorName: supervisor.name ?? supervisor.email,
+        meetingProvider,
+      },
+    });
+  } catch (err) {
+    console.error("[notifications] session_scheduled failed:", err);
+  }
+
+  revalidatePath(`/dashboard/roster/${parsed.data.superviseeId}`);
+  revalidatePath("/dashboard/calendar");
+  // Return the FIRST session id so the form can redirect into the
+  // sign page for the first occurrence, mirroring single-shot scheduling.
+  return { ok: true, sessionId: insertedSessionIds[0] ?? "" };
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3 — reschedule a one-off session
+// ---------------------------------------------------------------------------
+
+const rescheduleSchema = z.object({
+  sessionId: z.string().uuid(),
+  newStartUtc: z.string().datetime(),
+  newDurationMinutes: z.coerce
+    .number()
+    .int()
+    .min(MIN_DURATION_MINUTES)
+    .max(MAX_DURATION_HOURS * 60),
+  timeZone: z.string().min(1),
+});
+
+/**
+ * Reschedule a single scheduled session. Updates the row + calls
+ * provider.updateEvent on each attached calendar event + fires
+ * session_rescheduled.
+ *
+ * v1 limitation: recurring instances (rows with recurring_series_id !=
+ * null) cannot be rescheduled here — provider-side instance overrides
+ * are deferred to Phase 3.5. The UI gates the reschedule button.
+ */
+export async function rescheduleSessionAction(
+  _prev: ActionResult | undefined,
+  formData: FormData
+): Promise<ActionResult> {
+  const parsed = rescheduleSchema.safeParse({
+    sessionId: formData.get("sessionId"),
+    newStartUtc: formData.get("newStartUtc"),
+    newDurationMinutes: formData.get("newDurationMinutes"),
+    timeZone: formData.get("timeZone"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const sessionEvent = await db.query.sessionEvents.findFirst({
+    where: eq(schema.sessionEvents.id, parsed.data.sessionId),
+  });
+  if (!sessionEvent) return { ok: false, error: "Session not found." };
+
+  const myMembership = await getCurrentMembership(session.user.id);
+  if (!myMembership || myMembership.orgId !== sessionEvent.orgId) {
+    return { ok: false, error: "You can't reschedule this session." };
+  }
+  const isOriginalLogger = sessionEvent.loggedById === session.user.id;
+  const isHr = isHrAdmin(myMembership.role);
+  if (!isOriginalLogger && !isHr && !canSupervise(myMembership.role)) {
+    return { ok: false, error: "You can't reschedule this session." };
+  }
+
+  if (sessionEvent.scheduledStatus !== "scheduled") {
+    return {
+      ok: false,
+      error: `Session is already ${sessionEvent.scheduledStatus ?? "logged"}.`,
+    };
+  }
+
+  if (sessionEvent.recurringSeriesId) {
+    return {
+      ok: false,
+      error:
+        "Recurring sessions can't be rescheduled individually yet. Cancel this occurrence and schedule a new one in its place.",
+    };
+  }
+
+  const newStart = new Date(parsed.data.newStartUtc);
+  if (Number.isNaN(newStart.getTime())) {
+    return { ok: false, error: "Invalid new start time." };
+  }
+  if (newStart.getTime() < Date.now() - 60_000) {
+    return { ok: false, error: "Pick a new start time in the future." };
+  }
+  const newEnd = new Date(
+    newStart.getTime() + parsed.data.newDurationMinutes * 60_000
+  );
+
+  // Capture the old time string BEFORE we update the row, so the
+  // notification payload reads correctly.
+  const oldStart = sessionEvent.date;
+  const oldLocal = sessionEvent.timeZone
+    ? formatLocal(oldStart, sessionEvent.timeZone)
+    : formatLocal(oldStart, parsed.data.timeZone);
+  const newLocal = formatLocal(newStart, parsed.data.timeZone);
+
+  let providerWarning: string | null = null;
+  const eventIds = sessionEvent.calendarEventIds ?? {};
+  for (const [userId, eventId] of Object.entries(eventIds)) {
+    try {
+      const provider =
+        sessionEvent.meetingProvider === "teams"
+          ? "microsoft"
+          : sessionEvent.meetingProvider === "google_meet"
+            ? "google"
+            : null;
+      if (!provider) continue;
+      const resolved = await getNamedProviderForUser(userId, provider);
+      if (!resolved) continue;
+      await resolved.client.updateEvent({
+        eventId,
+        startUtc: newStart,
+        endUtc: newEnd,
+        timeZone: parsed.data.timeZone,
+      });
+    } catch (err) {
+      console.warn("[rescheduleSession] provider updateEvent failed:", err);
+      providerWarning =
+        "Updated AuditHalo, but couldn't push the new time to the calendar provider. Please update the event manually.";
+    }
+  }
+
+  await db
+    .update(schema.sessionEvents)
+    .set({
+      date: newStart,
+      durationHours: parsed.data.newDurationMinutes / 60,
+      timeZone: parsed.data.timeZone,
+    })
+    .where(eq(schema.sessionEvents.id, parsed.data.sessionId));
+
+  const actor = await db.query.users.findFirst({
+    where: eq(schema.users.id, session.user.id),
+    columns: { name: true, email: true },
+  });
+
+  try {
+    await logAuditEvent({
+      orgId: sessionEvent.orgId,
+      actorUserId: session.user.id,
+      action: AUDIT_ACTIONS.SESSION_RESCHEDULED,
+      resourceType: "session_event",
+      resourceId: sessionEvent.id,
+      details: {
+        superviseeId: sessionEvent.superviseeId,
+        oldStartUtc: oldStart.toISOString(),
+        newStartUtc: newStart.toISOString(),
+        newDurationMinutes: parsed.data.newDurationMinutes,
+        timeZone: parsed.data.timeZone,
+        providerCalendarUpdateWarning: providerWarning,
+      },
+    });
+  } catch (err) {
+    console.error("[audit-log] failed to record session.rescheduled:", err);
+  }
+
+  capture("session_rescheduled", session.user.id, {
+    orgId: sessionEvent.orgId,
+    superviseeId: sessionEvent.superviseeId,
+    sessionEventId: sessionEvent.id,
+  });
+
+  try {
+    await createNotification({
+      userId: sessionEvent.superviseeId,
+      kind: "session_rescheduled",
+      payload: {
+        sessionId: sessionEvent.id,
+        oldScheduledForLocal: oldLocal,
+        newScheduledForLocal: newLocal,
+        rescheduledByName: actor?.name ?? actor?.email ?? "your supervisor",
+      },
+    });
+  } catch (err) {
+    console.error("[notifications] session_rescheduled failed:", err);
+  }
+
+  revalidatePath(`/dashboard/roster/${sessionEvent.superviseeId}`);
+  revalidatePath(`/sign/${sessionEvent.id}`);
+  revalidatePath("/dashboard/calendar");
+  return { ok: true, sessionId: sessionEvent.id };
+}
+
 /** Render a UTC instant in the given IANA timezone for display. */
 function formatLocal(d: Date, timeZone: string): string {
   try {

@@ -99,6 +99,9 @@ export default async function SignSessionPage({
               meetingJoinUrl={sessionEvent.meetingJoinUrl}
               location={null}
               canCancel={canCancelScheduled}
+              canReschedule={
+                canCancelScheduled && !sessionEvent.recurringSeriesId
+              }
             />
           </CardContent>
         </Card>

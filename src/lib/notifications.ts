@@ -24,6 +24,7 @@ export const NOTIFICATION_DEFAULTS: Required<NotificationPrefs> = {
     trial_ending_soon: true,
     session_scheduled: true,
     session_canceled: true,
+    session_rescheduled: true,
   },
 };
 
@@ -301,6 +302,26 @@ function renderEmail(
           kind,
         }),
         text: `${greetingText} ${supervisorName} scheduled supervision for ${scheduledForLocal} (${where}). Open: ${url}`,
+      };
+    }
+    case "session_rescheduled": {
+      const sessionId = String(payload.sessionId ?? "");
+      const oldLocal = String(payload.oldScheduledForLocal ?? "");
+      const newLocal = String(payload.newScheduledForLocal ?? "");
+      const rescheduledByName = String(
+        payload.rescheduledByName ?? "your supervisor"
+      );
+      const url = `${APP_URL}/sign/${sessionId}`;
+      return {
+        subject: `Supervision moved — now ${newLocal}`,
+        html: shell({
+          heading: "Your supervision session was rescheduled.",
+          body: `<p>${greetingHtml} ${esc(rescheduledByName)} moved the supervision session from <strong>${esc(oldLocal)}</strong> to <strong>${esc(newLocal)}</strong>. The calendar invite has been updated.</p>`,
+          ctaHref: url,
+          ctaLabel: "Open session",
+          kind,
+        }),
+        text: `${greetingText} ${rescheduledByName} moved the supervision session from ${oldLocal} to ${newLocal}. Open: ${url}`,
       };
     }
     case "session_canceled": {

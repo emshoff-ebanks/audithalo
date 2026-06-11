@@ -95,6 +95,22 @@ function buildEventBody(input: CreateEventInput | UpdateEventInput): Record<stri
   if ("location" in input && input.location && !("withMeetingLink" in input && input.withMeetingLink)) {
     body.location = input.location;
   }
+  if ("recurrence" in input && input.recurrence) {
+    const r = input.recurrence;
+    if (r.frequency === "monthly") {
+      body.recurrence = [`RRULE:FREQ=MONTHLY;COUNT=${r.occurrenceCount}`];
+    } else {
+      const interval =
+        r.frequency === "weekly"
+          ? 1
+          : r.frequency === "biweekly"
+            ? 2
+            : 3;
+      body.recurrence = [
+        `RRULE:FREQ=WEEKLY;INTERVAL=${interval};COUNT=${r.occurrenceCount}`,
+      ];
+    }
+  }
   return body;
 }
 

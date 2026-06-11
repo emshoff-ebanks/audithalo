@@ -97,8 +97,54 @@ function buildEventBody(input: CreateEventInput | UpdateEventInput): Record<stri
   if ("location" in input && input.location && !("withMeetingLink" in input && input.withMeetingLink)) {
     body.location = { displayName: input.location };
   }
+  if ("recurrence" in input && input.recurrence && "startUtc" in input && input.startUtc) {
+    const r = input.recurrence;
+    const start = input.startUtc;
+    // Graph supports weekly + monthly natively. Biweekly + every-3-weeks
+    // ride on weekly recurrence with interval=2 or 3.
+    let pattern: Record<string, unknown>;
+    if (r.frequency === "monthly") {
+      pattern = {
+        type: "absoluteMonthly",
+        interval: 1,
+        dayOfMonth: start.getDate(),
+      };
+    } else {
+      const interval =
+        r.frequency === "weekly"
+          ? 1
+          : r.frequency === "biweekly"
+            ? 2
+            : 3;
+      pattern = {
+        type: "weekly",
+        interval,
+        daysOfWeek: [GRAPH_WEEKDAY[start.getDay()]],
+        firstDayOfWeek: "monday",
+      };
+    }
+    const isoDate = start.toISOString().slice(0, 10);
+    body.recurrence = {
+      pattern,
+      range: {
+        type: "numbered",
+        startDate: isoDate,
+        numberOfOccurrences: r.occurrenceCount,
+      },
+    };
+  }
   return body;
 }
+
+const GRAPH_WEEKDAY = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+];
 
 export function createMicrosoftProvider(
   accessToken: string,

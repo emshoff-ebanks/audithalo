@@ -113,7 +113,8 @@ export type NotificationKind =
   // Scheduling kinds (Phase 1+ of docs/strategy/08-scheduling-and-calendar.md).
   // Reminder + no-show kinds land with the cron in Phase 4.
   | "session_scheduled"
-  | "session_canceled";
+  | "session_canceled"
+  | "session_rescheduled";
 
 export type NotificationPrefs = {
   email: Partial<Record<NotificationKind, boolean>>;
