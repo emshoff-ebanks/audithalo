@@ -19,21 +19,49 @@ This is the entry point to the entire compliance loop. Every downstream feature 
 These are the answers we're treating as settled. Don't re-litigate without explicit decision.
 
 1. **One-off + recurring both ship.** RI International explicitly asked about recurring; one-off is the simpler primitive recurring builds on top of.
-2. **Microsoft Teams + Outlook Calendar first (per `06-ms-integrations.md`).** Then Google (Calendar + Meet) as a second provider on the same architecture.
-3. **AuditHalo is the source of truth for the SCHEDULE.** Calendar providers (Outlook, Google) get mirrors of our schedule. We do NOT read THEIR calendar as the source of truth — that's a different feature (conflict detection, below) and uses read scope.
+2. **Microsoft (Teams + Outlook Calendar) AND Google (Meet + Calendar) ship in parallel.** Updated 2026-06-11: previously phased Microsoft-first, but Caleb wants both at the same time. Same provider-abstraction architecture; the second one is mostly OAuth + provider implementation, not a redesign.
+3. **AuditHalo is the source of truth for the SCHEDULE.** Calendar providers (Outlook, Google) get mirrors of our schedule. We do NOT read THEIR calendar as the source of truth — that's conflict detection (below), which uses read scope.
 4. **Group sessions supported.** N supervisees per session. Each must sign before seal. (Original AuditHalo had this; we keep it.)
-5. **One-tap-to-join inside the app.** Provider join URL opens in browser (Teams web) or Teams native client (deep link). Same pattern for Meet.
+5. **One-tap-to-join inside the app.** Provider join URL opens in browser (web client) or native client (deep link). Same pattern for Teams and Meet.
 6. **Notifications default**: in-app bell + email. SMS skipped until customer asks.
 7. **Calendar UI lives at `/dashboard/calendar`** as a dedicated route. NOT a global header dropdown.
+8. **No-show window: 24 hours.** Scheduled sessions not marked complete within 24h of their end time auto-flag as no-show. The row stays in the DB for audit visibility, but no compliance credit. Supervisor gets a notification to reschedule. (Confirmed 2026-06-11.)
+9. **Recurring series cap: 52 occurrences / 1 year.** Beyond that, HR Admin/supervisor renews. (Confirmed 2026-06-11.)
+10. **Default reminder timing: T-1hr + T-15min, bell + email.** User-customizable in `/dashboard/account#notifications`. (Confirmed 2026-06-11.)
+11. **Conflict detection v1: supervisor's calendar only.** Soft warning, not a block. Supervisee calendar check is a nice-to-have for later. (Confirmed 2026-06-11.)
+12. **Provider picker default behavior: remember the supervisor's preferred provider per-user, don't prompt every time.** A small "Change" link offers per-session override. (Confirmed 2026-06-11.)
+13. **Unified "Sessions" panel on the supervisee detail page replaces the existing "Log session" form.** Single panel with a mode toggle: "Log a past session" (today's behavior) OR "Schedule a new session" (new). Section name: **"Sessions"**. Fields adapt to the mode. The standalone `+ New session` button on `/dashboard/calendar` opens the same form pre-filled with the empty-slot context. (Confirmed 2026-06-11.)
 
-## Open decisions (need Caleb's input before code)
+## Open decisions
 
-- **Reschedule semantics for recurring**: when a supervisor reschedules occurrence #5 of a weekly series, does it affect only that occurrence, all future, or all? Industry convention is the "this occurrence / this and all future / entire series" three-button modal (like Google Calendar). Adopting that unless objected.
-- **No-show window**: how many hours after scheduled time without action does AuditHalo flag as no-show? Proposing 24h.
-- **Hard limit on series length**: a "weekly forever" recurrence is bad data hygiene. Proposing cap at 52 occurrences / 1 year; HR Admin can renew.
-- **Default reminder timing**: schedule + T-1h + T-15m, per Caleb's spec. User-customizable in `/dashboard/account#notifications` (proposing dropdown: "1 hr + 15 min" / "24 hr + 1 hr" / "Only at meeting time" / Custom).
-- **Conflict detection scope**: just the supervisor's calendar, or both parties? Proposing supervisor-only for v1; both parties = nice-to-have post-launch.
-- **Pre-launch verification gate**: who tests this end-to-end with a real Teams account before we ship?
+All previously-open questions resolved 2026-06-11. See locked decisions above. The only remaining gate is:
+
+- **Pre-launch verification**: Damon does end-to-end smoke test on prod with a real Microsoft + real Google account before each phase ships. Caleb does role-based UI walkthrough using `audihalosupervisor@gmail.com` + Damon Test Org.
+
+## Why we need an Entra ID app registration + a Google Cloud project
+
+This trips up everyone who hasn't done third-party OAuth integrations before. It's not for testing — it's the only way to call Microsoft Graph / Google Calendar APIs **at all**.
+
+### How OAuth 2.0 works in this context
+
+1. **One-time, by us (AuditHalo)**: Register an "AuditHalo" app in Entra ID (Microsoft) and a parallel app in Google Cloud Console. Each platform gives us back:
+   - A **Client ID** (public — identifies our app)
+   - A **Client Secret** (private — proves the requester IS our app)
+   - A list of **scopes** we're allowed to ask users for (Calendars.ReadWrite, OnlineMeetings.Read, etc.)
+   - A configured **Redirect URI** (where the platform sends users back after they authorize)
+
+2. **Per-user, automatic**: When a supervisor clicks "Connect Microsoft" or "Connect Google" in `/dashboard/account#integrations`, our app redirects them to Microsoft/Google's login page **using OUR Client ID**. The user logs in with THEIR account, sees a consent screen ("AuditHalo wants to access your Calendar — Allow?"), clicks Allow. The platform sends them back to AuditHalo with an access token tied to THAT user.
+
+3. **Going forward**: We store the per-user access + refresh token (encrypted in `user_calendar_integrations`) and use it to make API calls on THEIR behalf — creating Teams meetings on THEIR account, writing events to THEIR Outlook calendar.
+
+So all API requests **do** route through our app registration (so the platform knows who's asking) — but the actual data is per-user, scoped to the token we have for each individual customer.
+
+### What this means practically
+
+- **One Entra ID app registration enables every customer's supervisor to connect their Microsoft account.** Not per-customer, not per-org. Damon does it once.
+- Same for the Google Cloud project — one client ID covers all customers.
+- Without these, neither Microsoft nor Google know who's asking and refuse the API calls. There is no alternative or workaround — every legitimate app that touches these APIs goes through this registration.
+- Effort: ~30 min each. Click-paths for Entra are in `docs/strategy/06-ms-integrations.md`. Google Cloud Console click-path will be added below when we draft the Google subsection in detail.
 
 ## Information architecture — where features live
 
@@ -55,29 +83,44 @@ These are the answers we're treating as settled. Don't re-litigate without expli
 A supervisor should be able to start scheduling from multiple places without thinking:
 
 1. **`/dashboard/calendar`** — `+ New session` button top-right
-2. **`/dashboard/roster/[id]`** — `Schedule supervision` button on the right rail (pre-fills supervisee)
-3. **`/dashboard`** (supervisor view) — quick action card
+2. **`/dashboard/roster/[id]`** — the unified **"Sessions"** panel (see below). Pre-fills the supervisee.
+3. **`/dashboard`** (supervisor view) — quick action card on the home dashboard
 4. **Click an empty slot on the calendar week view** — opens scheduler pre-filled with that time
 
-### The schedule-session form
+### The unified "Sessions" panel on `/dashboard/roster/[id]`
 
-Single modal with two tabs (per a Lucide Tab pattern):
+Replaces today's "Log session" form (which only handles past sessions). The panel header reads **"Sessions"**. Inside, a mode toggle:
 
-**Tab "One-off"** (default):
-- Supervisee picker (multi-select for group; single-select default)
-- Date + time + duration (number of minutes)
+```
+┌─ Sessions ──────────────────────────────────────┐
+│  ⦿ Log a past session                          │
+│  ○ Schedule a new session                       │
+│                                                 │
+│  [Form fields adapt to the chosen mode]         │
+└─────────────────────────────────────────────────┘
+```
+
+**Mode: Log a past session** (default, existing behavior):
+- Date (defaults to today, must be <= today)
+- Hours, session kind (practice / supervision), session type (individual / triadic / group), notes
+- Submit → existing `logSessionAction`
+
+**Mode: Schedule a new session** (new):
+- Date + time + duration
 - Modality: Virtual / In-person
-- If Virtual: provider picker (Microsoft Teams / Google Meet) — only shows providers the supervisor has connected; default = first connected
-- If In-person: location text input
+- Virtual sub-mode: provider auto-selected from user's preferred (small "Change" link to override)
+- In-person sub-mode: location text input
+- Additional supervisees (group session) — multi-select; default empty
 - Optional notes
-- Reminder timing override (default per user setting)
-- Submit → POST to `scheduleSessionAction`
+- Recurring toggle (collapsed by default) — expands frequency + end-condition fields
+- Reminder timing override (defaults to user's saved preference)
+- Submit → new `scheduleSessionAction` or `scheduleRecurringSeriesAction`
 
-**Tab "Recurring"**:
-- Same fields as one-off, plus:
-- Frequency: Weekly (default) / Bi-weekly / Every 3 weeks / Monthly
-- End: After N occurrences (default 12) / On date / Never (capped 52)
-- Submit → POST to `scheduleRecurringSeriesAction`
+This is a single panel, not two. The toggle is the only divergence. Visually adopts the design system's surface tokens — see `docs/design-system.md` for the form-field + card-surface specs.
+
+### Standalone schedule modal (from `/dashboard/calendar` + dashboard quick action)
+
+When entered from the calendar page or dashboard quick action (no supervisee pre-filled), the modal opens with the **"Schedule a new session"** mode pre-selected (no toggle) and a supervisee picker added at the top. Otherwise identical fields. Logging-past from those entry points is intentionally not offered — log-past entry points stay on the supervisee detail page where context is clear.
 
 ## The calendar view (`/dashboard/calendar`)
 
@@ -320,19 +363,24 @@ For group: signing requires ALL attendees to sign, not just primary. Existing `s
 
 ## Phase delivery plan
 
-Aiming to land in 5 chunks. Each chunk ships as one PR + bulk-merge to main, no rolling deploys.
+Aiming to land in 5 chunks. Each chunk ships as one PR + bulk-merge to main, no rolling deploys. **Microsoft and Google ship together** (locked decision #2) — there is no phase that's Microsoft-only. The provider abstraction layer is built into Phase 1.
 
-### Phase 1 — One-off scheduling, Teams only (1-2 weeks)
+### Phase 1 — One-off scheduling, both providers (2-3 weeks)
 
-- `scheduleSessionAction` server action
-- Schedule modal UI on `/dashboard/roster/[id]` (one entry point first)
+- Provider abstraction layer (`src/lib/calendar/provider.ts`) with Microsoft + Google implementations
 - Microsoft OAuth + token refresh (per `06-ms-integrations.md`)
-- Teams meeting creation + Outlook calendar event on supervisor + supervisee
+- Google OAuth + token refresh
+- Connect/disconnect UI in `/dashboard/account#integrations` for both providers
+- `scheduleSessionAction` server action — provider-agnostic
+- "Sessions" panel (unified log+schedule with mode toggle) on `/dashboard/roster/[id]`
+- Standalone schedule modal from `/dashboard` quick action
+- Calendar event + meeting link creation on supervisor + supervisee calendars
 - `session_scheduled` notification
 - Pre-meeting state on `/sign/[id]` with Join button when within window
 - Time-zone storage + local display
+- Cancel (delete event on providers + notify)
 
-Out of scope for Phase 1: calendar view, recurring, Google, conflict detection, reschedule (cancel is in).
+Out of scope for Phase 1: calendar view, recurring, conflict detection, reschedule (cancel only).
 
 ### Phase 2 — Calendar view (1 week)
 
@@ -342,28 +390,25 @@ Out of scope for Phase 1: calendar view, recurring, Google, conflict detection, 
 - Empty-slot click → pre-filled schedule modal
 - Supervisor + HR Admin variants
 
-### Phase 3 — Recurring (1 week)
+### Phase 3 — Recurring + reschedule (1 week)
 
 - `recurring_session_series` table + migration
-- Recurring tab in schedule modal
+- Recurring toggle on schedule form
 - `scheduleRecurringSeriesAction` materializes N session_events
-- Edit/cancel: "this / this+future / entire series" pattern
+- Reschedule action (both one-off and recurring): "this / this+future / entire series" pattern with provider sync
 
-### Phase 4 — Google Calendar + Meet (1 week)
+### Phase 4 — Reminders, conflict detection, no-show (3-5 days)
 
-- Google OAuth client + connect UI in `/dashboard/account#integrations`
-- `GoogleCalendarProvider` implementing the abstraction layer
-- Provider picker in schedule modal becomes useful (Teams OR Meet)
+- Reminder cron at 5-min granularity (T-1h, T-15m, fired per user pref)
+- Conflict detection on schedule submit (supervisor calendar read)
+- No-show cron at T+24h with flag + notification
+- Account page reminder-timing customization UI
 
-### Phase 5 — Polish + edge cases (3-5 days)
+### Phase 5 — Group + executive metrics (2-3 days)
 
-- Reschedule with provider sync
-- Conflict detection
-- No-show cron + flag + notification
-- Reminder cron (T-1h, T-15m)
-- Group session signing flow update
-- Account page reminder-timing customization
-- Executive dashboard metrics
+- Group session signing flow (all attendees must sign)
+- `session_attendees` table (Option A: keep `supervisee_id` + add additional attendees)
+- Executive dashboard metrics ("Sessions scheduled this week", "No-shows last 30 days")
 
 ### Phase 6 (later, post-launch) — Teams transcript auto-fetch
 
@@ -392,8 +437,28 @@ When implementation begins, every phase merges with:
 - [ ] Caleb-verified UI walkthrough on `audihalosupervisor@gmail.com` + Damon Test Org
 - [ ] Migration applied to prod Neon via `repair-migrations.ts` (additive only — no destructive ops)
 
+## UI/UX guardrails (read before designing any new component)
+
+Every new surface in this feature MUST conform to:
+
+- **`docs/design-system.md`** — surface tokens, spacing scale, form-field patterns, button hierarchy, status badge variants, the existing `<ClickableRow>` interaction pattern (already shipped — every new row in the calendar drawer + schedule modal should use it where applicable).
+- **`docs/brand/brand-book.md`** — palette tokens (signet gold reserved for sealed/verified states ONLY — do NOT use it on "scheduled" or "completed" states), typography (Cabinet Grotesk display + IBM Plex Sans body + IBM Plex Mono for timestamps and meeting IDs), voice rules (no marketing hyperbole; "Schedule a session" not "Lock in your supervision moment").
+- Status badge color use across this feature:
+  - Scheduled (upcoming) → `--secondary` (Halo Blue)
+  - Currently happening (within window) → `--warning` (amber border, pulsing)
+  - Completed (awaiting sign) → `--warning` (orange fill)
+  - Signed / sealed → `--success` (green) + `--gold` (signet) accent on the sealed badge
+  - Canceled → `--muted` with strikethrough
+  - No-show → `--risk` with dashed border
+- Mobile: calendar view defaults to **List** mode under `md:` breakpoint. Week/month views are desktop-first. Match the existing roster page's `md:` pattern.
+- Form patterns: reuse the existing `<Label>` + `<Input>` + `<Select>` primitives from `src/components/ui/`. Do not introduce new form atoms.
+- Loading states: skeleton rows for the calendar grid (3-second timeout before showing "still loading…" helper). Match the existing roster page's loading pattern.
+- Empty states: must use the existing pattern from the team page's empty sections (small text, no big illustrations).
+
 ## Cross-references
 
-- `06-ms-integrations.md` — Microsoft OAuth + transcript-fetch spec. Phase 1 depends on the OAuth half.
+- `06-ms-integrations.md` — Microsoft OAuth + transcript-fetch spec. Phase 1 implements the OAuth half for both providers.
 - `04-enterprise-rbac.md` — RBAC matrix. HR Admin can schedule/reschedule org-wide; Supervisor scheduled-roster-only; Supervisee read-only on their own sessions.
-- `01-launch-plan.md` §11 — Phase 4 in the roadmap is "AI docs + Teams import." Scheduling sits between Phase 3 and Phase 4 in temporal order.
+- `01-launch-plan.md` §11 — Phase 4 in the original roadmap is "AI docs + Teams import." Scheduling sits between Phase 3 and Phase 4 in temporal order.
+- `docs/design-system.md` — surface tokens, component patterns, interaction primitives.
+- `docs/brand/brand-book.md` — palette, typography, voice rules.
