@@ -13,6 +13,8 @@ const DEFAULTS: Record<NotificationKind, boolean> = {
   supervisor_rule_not_set: false,
   attestation_overdue: true,
   trial_ending_soon: true,
+  session_scheduled: true,
+  session_canceled: true,
 };
 
 const KIND_META: Record<
@@ -54,11 +56,23 @@ const KIND_META: Record<
     description:
       "Heads-up 3 days before your free trial ends so you can add a payment method.",
   },
+  session_scheduled: {
+    label: "Supervision scheduled",
+    description:
+      "A supervision session was put on the calendar. Includes the join link.",
+  },
+  session_canceled: {
+    label: "Supervision canceled",
+    description:
+      "A scheduled supervision session was canceled. The calendar invite is withdrawn.",
+  },
 };
 
 const ORDER: NotificationKind[] = [
   "invite_accepted",
   "signature_needed",
+  "session_scheduled",
+  "session_canceled",
   "rule_changed",
   "evidence_sealed",
   "supervisor_rule_not_set",

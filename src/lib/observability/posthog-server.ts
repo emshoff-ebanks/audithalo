@@ -51,6 +51,8 @@ export type PosthogEvent =
   | "supervisee_added"
   | "state_rule_selected"
   | "session_logged"
+  | "session_scheduled"
+  | "session_canceled"
   | "signature_completed"
   | "evidence_package_sealed"
   | "trial_converted"

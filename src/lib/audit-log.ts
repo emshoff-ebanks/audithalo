@@ -52,6 +52,8 @@ export const AUDIT_ACTIONS = {
   SESSION_LOGGED: "session.logged",
   SESSION_SIGNED: "session.signed",
   SESSION_SEALED: "session.sealed",
+  SESSION_SCHEDULED: "session.scheduled",
+  SESSION_CANCELED: "session.canceled",
   // Roles
   MEMBER_ROLE_CHANGED: "member.role_changed",
   // Attestations (Phase 5.2)

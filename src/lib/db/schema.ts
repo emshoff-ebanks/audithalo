@@ -109,7 +109,11 @@ export type NotificationKind =
   | "trial_ending_soon"
   | "evidence_sealed"
   | "supervisor_rule_not_set"
-  | "attestation_overdue";
+  | "attestation_overdue"
+  // Scheduling kinds (Phase 1+ of docs/strategy/08-scheduling-and-calendar.md).
+  // Reminder + no-show kinds land with the cron in Phase 4.
+  | "session_scheduled"
+  | "session_canceled";
 
 export type NotificationPrefs = {
   email: Partial<Record<NotificationKind, boolean>>;

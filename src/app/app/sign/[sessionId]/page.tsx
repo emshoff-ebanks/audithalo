@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { SignForm } from "./sign-form";
 import { SessionNoteForm } from "./session-note-form";
 import { SessionNoteDisplay } from "./session-note-display";
+import { ScheduledSessionCard } from "./scheduled-session-card";
 
 export const metadata = {
   title: "Sign session — AuditHalo",
@@ -48,6 +49,89 @@ export default async function SignSessionPage({
     (s) => s.signerId === session.user.id
   );
   const fullySigned = !!sessionEvent.signedAt;
+
+  // Pre-meeting branch: if the row was created by scheduleSessionAction
+  // AND the meeting hasn't ended yet, show the scheduled-session card
+  // (Join button + cancel) instead of the post-meeting sign UI.
+  const durationMinutes = Math.round(sessionEvent.durationHours * 60);
+  const endMs = sessionEvent.date.getTime() + durationMinutes * 60_000;
+  const isPreMeeting =
+    sessionEvent.scheduledStatus === "scheduled" && endMs > Date.now();
+  const canCancelScheduled =
+    isPreMeeting &&
+    (sessionEvent.loggedById === session.user.id ||
+      canSupervise(membership.role));
+
+  if (isPreMeeting) {
+    const scheduledForLocal = sessionEvent.timeZone
+      ? new Intl.DateTimeFormat("en-US", {
+          timeZone: sessionEvent.timeZone,
+          dateStyle: "full",
+          timeStyle: "short",
+        }).format(sessionEvent.date)
+      : sessionEvent.date
+          .toISOString()
+          .slice(0, 16)
+          .replace("T", " ") + " UTC";
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-8 sm:py-12">
+        <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
+          <Link href={`/dashboard/roster/${sessionEvent.superviseeId}`}>
+            <ArrowLeft />
+            Back to supervisee
+          </Link>
+        </Button>
+        <Card className="mt-2">
+          <CardContent className="p-6">
+            <ScheduledSessionCard
+              sessionId={sessionEvent.id}
+              scheduledForUtcIso={sessionEvent.date.toISOString()}
+              scheduledForLocal={scheduledForLocal}
+              durationMinutes={durationMinutes}
+              timeZone={sessionEvent.timeZone}
+              meetingProvider={
+                sessionEvent.meetingProvider as
+                  | "teams"
+                  | "google_meet"
+                  | "in_person"
+                  | null
+              }
+              meetingJoinUrl={sessionEvent.meetingJoinUrl}
+              location={null}
+              canCancel={canCancelScheduled}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Canceled branch: surface the status instead of dropping the user into
+  // a sign UI that doesn't apply.
+  if (sessionEvent.scheduledStatus === "canceled") {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-8 sm:py-12">
+        <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
+          <Link href={`/dashboard/roster/${sessionEvent.superviseeId}`}>
+            <ArrowLeft />
+            Back to supervisee
+          </Link>
+        </Button>
+        <Card>
+          <CardContent className="p-6 space-y-3">
+            <Badge variant="outline">Canceled</Badge>
+            <h1 className="font-display text-2xl font-semibold text-foreground">
+              This session was canceled
+            </h1>
+            <p className="text-sm text-foreground/70">
+              No signature or transcript is required. The row stays in the audit
+              log.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-8 sm:py-12">

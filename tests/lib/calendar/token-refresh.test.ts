@@ -12,9 +12,10 @@ beforeAll(() => {
 });
 
 const dbUpdateMock = vi.fn();
-const dbSetMock = vi.fn(
-  (..._args: unknown[]) => ({ where: vi.fn().mockResolvedValue(undefined) })
-);
+const dbSetMock = vi.fn((updates: unknown) => {
+  void updates;
+  return { where: vi.fn().mockResolvedValue(undefined) };
+});
 
 vi.mock("@/lib/db", () => ({
   db: {

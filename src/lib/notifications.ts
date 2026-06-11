@@ -22,6 +22,8 @@ export const NOTIFICATION_DEFAULTS: Required<NotificationPrefs> = {
     supervisor_rule_not_set: false,
     attestation_overdue: true,
     trial_ending_soon: true,
+    session_scheduled: true,
+    session_canceled: true,
   },
 };
 
@@ -275,5 +277,51 @@ function renderEmail(
         text: `${greetingText} your AuditHalo trial ends ${trialEndsAt} (${daysLeft} ${dayWord} from now). Add a payment method: ${url}`,
       };
     }
+    case "session_scheduled": {
+      const sessionId = String(payload.sessionId ?? "");
+      const scheduledForLocal = String(payload.scheduledForLocal ?? "");
+      const supervisorName = String(payload.supervisorName ?? "your supervisor");
+      const meetingProvider = String(payload.meetingProvider ?? "in_person");
+      const url = `${APP_URL}/sign/${sessionId}`;
+      const where =
+        meetingProvider === "teams"
+          ? "Microsoft Teams"
+          : meetingProvider === "google_meet"
+            ? "Google Meet"
+            : meetingProvider === "in_person"
+              ? "In person"
+              : meetingProvider;
+      return {
+        subject: `Supervision scheduled — ${scheduledForLocal}`,
+        html: shell({
+          heading: "A supervision session is on the calendar.",
+          body: `<p>${greetingHtml} ${esc(supervisorName)} scheduled a supervision session with you for <strong>${esc(scheduledForLocal)}</strong> (${esc(where)}). The calendar invite has been sent to your inbox; you can also join from AuditHalo when the time comes.</p>`,
+          ctaHref: url,
+          ctaLabel: "Open session",
+          kind,
+        }),
+        text: `${greetingText} ${supervisorName} scheduled supervision for ${scheduledForLocal} (${where}). Open: ${url}`,
+      };
+    }
+    case "session_canceled": {
+      const scheduledForLocal = String(payload.scheduledForLocal ?? "");
+      const canceledByName = String(payload.canceledByName ?? "your supervisor");
+      const url = `${APP_URL}/dashboard/roster`;
+      return {
+        subject: `Supervision canceled — ${scheduledForLocal}`,
+        html: shell({
+          heading: "Supervision session canceled.",
+          body: `<p>${greetingHtml} ${esc(canceledByName)} canceled the supervision session previously scheduled for <strong>${esc(scheduledForLocal)}</strong>. The calendar invite has been withdrawn. Reach out to reschedule when you're ready.</p>`,
+          ctaHref: url,
+          ctaLabel: "Open AuditHalo",
+          kind,
+        }),
+        text: `${greetingText} ${canceledByName} canceled the supervision session scheduled for ${scheduledForLocal}. Reach out to reschedule.`,
+      };
+    }
   }
+  // Exhaustiveness check — if a new NotificationKind is added without a case
+  // above, this assignment fails compilation.
+  const _exhaustive: never = kind;
+  throw new Error(`Unhandled notification kind: ${_exhaustive as string}`);
 }

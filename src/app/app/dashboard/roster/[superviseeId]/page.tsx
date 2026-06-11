@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AssignRuleForm } from "./assign-rule-form";
-import { LogSessionForm } from "./log-session-form";
+import { SessionsPanel } from "./sessions-panel";
 import { RuleSummaryCard } from "./rule-summary-card";
 import { SessionLog } from "@/components/app/session-log";
 import { GapRenderer } from "./_gap-renderer";
@@ -166,6 +166,34 @@ export default async function SuperviseeDetailPage({
     where: eq(schema.users.id, superviseeId),
   });
   if (!supervisee) notFound();
+
+  // Calendar integrations the viewer has connected — used by the schedule
+  // form to pick a meeting provider (Phase 1b/1c). Empty array = the form
+  // tells the user to connect one before scheduling a virtual session.
+  const viewerConnectedProviders = viewerCanSupervise
+    ? (
+        await db
+          .select({
+            name: schema.userCalendarIntegrations.provider,
+            accountEmail: schema.userCalendarIntegrations.accountEmail,
+            isPreferred: schema.userCalendarIntegrations.isPreferred,
+          })
+          .from(schema.userCalendarIntegrations)
+          .where(
+            and(
+              eq(
+                schema.userCalendarIntegrations.userId,
+                session.user.id
+              ),
+              isNull(schema.userCalendarIntegrations.disconnectedAt)
+            )
+          )
+      )
+        .filter(
+          (r): r is { name: "microsoft" | "google"; accountEmail: string | null; isPreferred: boolean } =>
+            r.name === "microsoft" || r.name === "google"
+        )
+    : [];
 
   // HR Admin only: fetch current supervisor + active supervisor options for
   // the in-page reassignment dropdown (per spec §7).
@@ -447,12 +475,10 @@ export default async function SuperviseeDetailPage({
 
           <Card>
             <CardContent className="p-6">
-              <p className="label-overline mb-3">
-                {viewerIsManager ? "Log a session" : "Log practice hours"}
-              </p>
-              <LogSessionForm
+              <SessionsPanel
                 superviseeId={superviseeId}
-                allowSupervision={viewerCanSupervise}
+                viewerCanSupervise={viewerCanSupervise}
+                connectedProviders={viewerConnectedProviders}
               />
             </CardContent>
           </Card>
