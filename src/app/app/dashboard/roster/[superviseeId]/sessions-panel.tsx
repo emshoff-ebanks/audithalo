@@ -14,8 +14,23 @@ type ConnectedProvider = {
 
 type Props = {
   superviseeId: string;
+  /** Actor's own clinical-supervisor permission. Drives the log-past
+   *  sub-form's "kind" picker (only true supervisors can log
+   *  supervision sessions; HR Admin cannot log clinical events). */
   viewerCanSupervise: boolean;
+  /** Actor can use the SCHEDULE form. True for supervisor + HR Admin. */
+  viewerCanScheduleSession: boolean;
+  /** Connected providers belonging to the HOSTING supervisor (themselves
+   *  when supervisor; the supervisee's assigned supervisor when HR Admin). */
   connectedProviders: ConnectedProvider[];
+  /** Display name of the supervisor whose calendar will host the
+   *  session, when scheduling on behalf. Null when the actor IS the
+   *  hosting supervisor. */
+  hostingSupervisorName: string | null;
+  /** False only when the actor is HR Admin AND no active supervisor is
+   *  assigned to this supervisee. Used to gate the schedule form with a
+   *  clearer error than "Connect a calendar". */
+  hasAssignedSupervisor: boolean;
 };
 
 /**
@@ -23,23 +38,43 @@ type Props = {
  * form. Mode toggle picks between logging a past session (existing flow)
  * and scheduling a new one (Phase 1 of docs/strategy/08).
  *
- * Supervisees who hit this page see the log-only sub-form for their own
- * practice hours; they can't schedule supervision sessions.
+ * Supervisor: full panel (schedule + log).
+ * HR Admin:   schedule on behalf of the supervisee's assigned supervisor.
+ *             Cannot log clinical supervision events (authz firewall —
+ *             same as supervisee.ts) so the toggle is hidden.
+ * Supervisee: log own practice hours only.
  */
 export function SessionsPanel({
   superviseeId,
   viewerCanSupervise,
+  viewerCanScheduleSession,
   connectedProviders,
+  hostingSupervisorName,
+  hasAssignedSupervisor,
 }: Props) {
   const [mode, setMode] = useState<"log_past" | "schedule_new">(
-    viewerCanSupervise ? "schedule_new" : "log_past"
+    viewerCanScheduleSession ? "schedule_new" : "log_past"
   );
+  const onBehalf = !!hostingSupervisorName;
+  // HR Admin gets schedule-only — they can't log clinical events.
+  const showToggle = viewerCanSupervise;
 
   return (
     <div className="space-y-4">
       <p className="label-overline">Sessions</p>
 
-      {viewerCanSupervise && (
+      {onBehalf && (
+        <div className="rounded-sm border border-secondary/30 bg-secondary/5 px-3 py-2 text-xs text-foreground/80">
+          Scheduling on behalf of{" "}
+          <span className="font-medium text-foreground">
+            {hostingSupervisorName}
+          </span>
+          . The event lands on their Outlook or Google Calendar; they show
+          up as the supervisor on the audit trail.
+        </div>
+      )}
+
+      {showToggle && (
         <div
           role="radiogroup"
           aria-label="Session entry mode"
@@ -61,11 +96,20 @@ export function SessionsPanel({
       )}
 
       <div>
-        {mode === "schedule_new" && viewerCanSupervise ? (
-          <ScheduleSessionForm
-            superviseeId={superviseeId}
-            connectedProviders={connectedProviders}
-          />
+        {mode === "schedule_new" && viewerCanScheduleSession ? (
+          !hasAssignedSupervisor ? (
+            <p className="text-sm text-foreground/70 rounded-sm border border-border bg-card px-3 py-3">
+              No supervisor is assigned to this supervisee yet. Assign one
+              from the right-hand panel before scheduling — the calendar
+              event needs to land on the supervisor&apos;s account.
+            </p>
+          ) : (
+            <ScheduleSessionForm
+              superviseeId={superviseeId}
+              connectedProviders={connectedProviders}
+              onBehalfOfName={hostingSupervisorName}
+            />
+          )
         ) : (
           <LogSessionForm
             superviseeId={superviseeId}

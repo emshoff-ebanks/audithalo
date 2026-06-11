@@ -43,6 +43,9 @@ type ConnectedProvider = {
 type Props = {
   superviseeId: string;
   connectedProviders: ConnectedProvider[];
+  /** When set (HR Admin scheduling on behalf), copy adapts to point at
+   *  the hosting supervisor's account rather than the actor's. */
+  onBehalfOfName: string | null;
 };
 
 const PROVIDER_LABEL: Record<Provider, string> = {
@@ -53,7 +56,9 @@ const PROVIDER_LABEL: Record<Provider, string> = {
 export function ScheduleSessionForm({
   superviseeId,
   connectedProviders,
+  onBehalfOfName,
 }: Props) {
+  const onBehalf = !!onBehalfOfName;
   const [state, formAction, pending] = useActionState<
     ActionResult | undefined,
     FormData
@@ -139,16 +144,30 @@ export function ScheduleSessionForm({
         <div>
           <Label htmlFor="provider">Calendar / meeting provider</Label>
           {connectedProviders.length === 0 ? (
-            <p className="mt-1.5 text-sm text-foreground/70">
-              No calendar connected.{" "}
-              <a
-                href="/dashboard/account#integrations"
-                className="underline hover:no-underline"
-              >
-                Connect Microsoft or Google
-              </a>{" "}
-              to schedule virtual sessions.
-            </p>
+            onBehalf ? (
+              <p className="mt-1.5 text-sm text-foreground/70">
+                <span className="font-medium text-foreground">
+                  {onBehalfOfName}
+                </span>{" "}
+                hasn&apos;t connected a calendar yet. Ask them to connect
+                Microsoft or Google from{" "}
+                <span className="font-mono text-xs">
+                  Account → Integrations
+                </span>{" "}
+                before you can schedule a virtual session on their behalf.
+              </p>
+            ) : (
+              <p className="mt-1.5 text-sm text-foreground/70">
+                No calendar connected.{" "}
+                <a
+                  href="/dashboard/account#integrations"
+                  className="underline hover:no-underline"
+                >
+                  Connect Microsoft or Google
+                </a>{" "}
+                to schedule virtual sessions.
+              </p>
+            )
           ) : connectedProviders.length === 1 ? (
             <p className="mt-1.5 text-sm text-foreground/70">
               Using{" "}

@@ -167,37 +167,74 @@ export default async function SuperviseeDetailPage({
   });
   if (!supervisee) notFound();
 
-  // Calendar integrations the viewer has connected — used by the schedule
-  // form to pick a meeting provider (Phase 1b/1c). Empty array = the form
-  // tells the user to connect one before scheduling a virtual session.
-  const viewerConnectedProviders = viewerCanSupervise
-    ? (
-        await db
-          .select({
-            name: schema.userCalendarIntegrations.provider,
-            accountEmail: schema.userCalendarIntegrations.accountEmail,
-            isPreferred: schema.userCalendarIntegrations.isPreferred,
-          })
-          .from(schema.userCalendarIntegrations)
-          .where(
-            and(
-              eq(
-                schema.userCalendarIntegrations.userId,
-                session.user.id
-              ),
-              isNull(schema.userCalendarIntegrations.disconnectedAt)
+  // Who will *host* a session scheduled from this page:
+  //   - Supervisor viewing → themselves.
+  //   - HR Admin viewing → the supervisee's currently-assigned supervisor.
+  // For other roles the schedule form isn't shown.
+  // We resolve the active supervisor here so the form can fetch the
+  // right user's calendar integrations + show "Scheduling on behalf of …".
+  const viewerIsHrAdminEarly = isHrAdmin(session.user.role);
+  const viewerCanScheduleSession = viewerCanSupervise || viewerIsHrAdminEarly;
+  let hostingSupervisorIdForPage: string | null = null;
+  let hostingSupervisorNameForPage: string | null = null;
+  if (viewerCanSupervise) {
+    hostingSupervisorIdForPage = session.user.id;
+  } else if (viewerIsHrAdminEarly) {
+    const activeAssignmentForScheduling =
+      await db.query.supervisorAssignments.findFirst({
+        where: and(
+          eq(schema.supervisorAssignments.superviseeId, superviseeId),
+          eq(schema.supervisorAssignments.orgId, myMembership.orgId),
+          isNull(schema.supervisorAssignments.endedAt)
+        ),
+      });
+    if (activeAssignmentForScheduling) {
+      hostingSupervisorIdForPage = activeAssignmentForScheduling.supervisorId;
+      const sup = await db.query.users.findFirst({
+        where: eq(schema.users.id, hostingSupervisorIdForPage),
+        columns: { name: true, email: true },
+      });
+      hostingSupervisorNameForPage = sup?.name ?? sup?.email ?? null;
+    }
+  }
+
+  // Calendar integrations the HOSTING supervisor has connected — used by
+  // the schedule form to pick a meeting provider (Phase 1b/1c). Empty
+  // array = the form tells the actor to (have the host) connect one
+  // before scheduling a virtual session.
+  const viewerConnectedProviders =
+    viewerCanScheduleSession && hostingSupervisorIdForPage
+      ? (
+          await db
+            .select({
+              name: schema.userCalendarIntegrations.provider,
+              accountEmail: schema.userCalendarIntegrations.accountEmail,
+              isPreferred: schema.userCalendarIntegrations.isPreferred,
+            })
+            .from(schema.userCalendarIntegrations)
+            .where(
+              and(
+                eq(
+                  schema.userCalendarIntegrations.userId,
+                  hostingSupervisorIdForPage
+                ),
+                isNull(schema.userCalendarIntegrations.disconnectedAt)
+              )
             )
-          )
-      )
-        .filter(
-          (r): r is { name: "microsoft" | "google"; accountEmail: string | null; isPreferred: boolean } =>
-            r.name === "microsoft" || r.name === "google"
+        ).filter(
+          (
+            r
+          ): r is {
+            name: "microsoft" | "google";
+            accountEmail: string | null;
+            isPreferred: boolean;
+          } => r.name === "microsoft" || r.name === "google"
         )
-    : [];
+      : [];
 
   // HR Admin only: fetch current supervisor + active supervisor options for
   // the in-page reassignment dropdown (per spec §7).
-  const viewerIsHrAdmin = isHrAdmin(session.user.role);
+  const viewerIsHrAdmin = viewerIsHrAdminEarly;
   let currentSupervisorId: string | null = null;
   let activeSupervisorOptions: { id: string; name: string }[] = [];
   if (viewerIsHrAdmin) {
@@ -478,7 +515,14 @@ export default async function SuperviseeDetailPage({
               <SessionsPanel
                 superviseeId={superviseeId}
                 viewerCanSupervise={viewerCanSupervise}
+                viewerCanScheduleSession={viewerCanScheduleSession}
                 connectedProviders={viewerConnectedProviders}
+                hostingSupervisorName={
+                  viewerCanSupervise ? null : hostingSupervisorNameForPage
+                }
+                hasAssignedSupervisor={
+                  !!hostingSupervisorIdForPage || viewerCanSupervise
+                }
               />
             </CardContent>
           </Card>

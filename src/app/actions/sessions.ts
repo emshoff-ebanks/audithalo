@@ -2,9 +2,14 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
-import { canSupervise, getCurrentMembership, isManagerRole } from "@/lib/authz";
+import {
+  canSupervise,
+  getCurrentMembership,
+  isHrAdmin,
+  isManagerRole,
+} from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { createNotification } from "@/lib/notifications";
@@ -24,8 +29,9 @@ const MIN_DURATION_MINUTES = 15;
 
 /**
  * Cross-check that the actor has access to schedule sessions on the
- * given supervisee. Mirrors `requireOrgAccess` in supervisee.ts but
- * tightened — only managers (supervisor or HR admin) can schedule.
+ * given supervisee. Supervisor (their own roster) and HR Admin (org-wide
+ * on behalf of an assigned supervisor) can both schedule. Executive is
+ * read-only and is excluded even though it's a manager role.
  */
 async function requireSchedulerAccess(superviseeId: string) {
   const session = await auth();
@@ -33,8 +39,18 @@ async function requireSchedulerAccess(superviseeId: string) {
 
   const myMembership = await getCurrentMembership(session.user.id);
   if (!myMembership) throw new Error("No organization");
-  if (!isManagerRole(myMembership.role) || !canSupervise(myMembership.role)) {
-    throw new Error("Only supervisors can schedule supervision sessions.");
+  if (
+    !canSupervise(myMembership.role) &&
+    !isHrAdmin(myMembership.role)
+  ) {
+    throw new Error(
+      "Only supervisors and HR admins can schedule supervision sessions."
+    );
+  }
+  if (!isManagerRole(myMembership.role)) {
+    // Defensive: should be unreachable if the role list above is in sync
+    // with isManagerRole, but keeps the check honest.
+    throw new Error("Insufficient permissions.");
   }
 
   const targetMembership = await db.query.orgMemberships.findFirst({
@@ -46,6 +62,33 @@ async function requireSchedulerAccess(superviseeId: string) {
   if (!targetMembership) throw new Error("Not in your roster");
 
   return { session, orgId: myMembership.orgId, viewerRole: myMembership.role };
+}
+
+/**
+ * Resolve which supervisor will *host* the scheduled session — whose
+ * calendar gets the event, whose Teams/Meet account mints the link, and
+ * who shows up as the supervisor on the audit trail. Phase 1f rule:
+ *   - Supervisor actor → themselves.
+ *   - HR Admin actor → the supervisee's active supervisor (from
+ *     supervisor_assignments). If the supervisee has no active
+ *     supervisor, return null so the caller can surface a clear error
+ *     instead of blindly assigning the HR Admin as host.
+ */
+async function resolveHostingSupervisorId(
+  actorUserId: string,
+  actorRole: string,
+  superviseeId: string,
+  orgId: string
+): Promise<string | null> {
+  if (canSupervise(actorRole)) return actorUserId;
+  const active = await db.query.supervisorAssignments.findFirst({
+    where: and(
+      eq(schema.supervisorAssignments.superviseeId, superviseeId),
+      eq(schema.supervisorAssignments.orgId, orgId),
+      isNull(schema.supervisorAssignments.endedAt)
+    ),
+  });
+  return active?.supervisorId ?? null;
 }
 
 const scheduleSchema = z.object({
@@ -106,7 +149,25 @@ export async function scheduleSessionAction(
   } catch (err) {
     return { ok: false, error: (err as Error).message };
   }
-  const { session, orgId } = access;
+  const { session, orgId, viewerRole } = access;
+
+  // Pick the user whose calendar / Teams-or-Meet account hosts this
+  // session. Supervisor → themselves. HR Admin → the supervisee's
+  // currently-assigned supervisor.
+  const hostingSupervisorId = await resolveHostingSupervisorId(
+    session.user.id,
+    viewerRole,
+    parsed.data.superviseeId,
+    orgId
+  );
+  if (!hostingSupervisorId) {
+    return {
+      ok: false,
+      error:
+        "This supervisee has no assigned supervisor. Assign one before scheduling.",
+    };
+  }
+  const isOnBehalf = hostingSupervisorId !== session.user.id;
 
   const startUtc = new Date(parsed.data.startUtc);
   const endUtc = new Date(
@@ -125,7 +186,7 @@ export async function scheduleSessionAction(
       columns: { id: true, email: true, name: true },
     }),
     db.query.users.findFirst({
-      where: eq(schema.users.id, session.user.id),
+      where: eq(schema.users.id, hostingSupervisorId),
       columns: { id: true, email: true, name: true },
     }),
   ]);
@@ -133,7 +194,10 @@ export async function scheduleSessionAction(
     return { ok: false, error: "Supervisor or supervisee not found." };
   }
 
-  // Resolve the calendar provider — only used for virtual sessions.
+  // Resolve the calendar provider — only used for virtual sessions. The
+  // provider integration belongs to the HOSTING supervisor, not the
+  // actor (so HR-Admin-on-behalf scheduling writes the event to the
+  // supervisor's Outlook/Google Calendar, not the HR Admin's).
   let meetingProvider: "teams" | "google_meet" | "in_person" = "in_person";
   let meetingJoinUrl: string | null = null;
   let meetingId: string | null = null;
@@ -142,16 +206,17 @@ export async function scheduleSessionAction(
   if (parsed.data.modality === "virtual") {
     const resolved = parsed.data.provider
       ? await getNamedProviderForUser(
-          session.user.id,
+          hostingSupervisorId,
           parsed.data.provider as CalendarProvider
         )
-      : await getProviderForUser(session.user.id);
+      : await getProviderForUser(hostingSupervisorId);
 
     if (!resolved) {
       return {
         ok: false,
-        error:
-          "Connect a calendar in Account → Integrations before scheduling a virtual session.",
+        error: isOnBehalf
+          ? `${supervisor.name ?? supervisor.email} hasn't connected a calendar. Ask them to connect Microsoft or Google in Account → Integrations before scheduling on their behalf.`
+          : "Connect a calendar in Account → Integrations before scheduling a virtual session.",
       };
     }
     try {
@@ -170,7 +235,9 @@ export async function scheduleSessionAction(
         resolved.client.name === "microsoft" ? "teams" : "google_meet";
       meetingJoinUrl = created.joinUrl ?? null;
       meetingId = created.eventId;
-      calendarEventIds = { [session.user.id]: created.eventId };
+      // Key by the hosting supervisor since the event lives on THEIR
+      // calendar. Cancel/reschedule lookups use this map.
+      calendarEventIds = { [hostingSupervisorId]: created.eventId };
     } catch (err) {
       console.error("[scheduleSession] provider createEvent failed:", err);
       return {
