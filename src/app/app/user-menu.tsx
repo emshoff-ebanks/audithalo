@@ -35,10 +35,15 @@ export function UserMenu({ name, role }: { name: string; role: string }) {
         </Badge>
       </div>
       {showCalendar && (
-        <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-          <Link href="/dashboard/calendar">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="px-2 sm:px-3"
+        >
+          <Link href="/dashboard/calendar" aria-label="Calendar">
             <CalendarIcon className="h-4 w-4" />
-            Calendar
+            <span className="hidden sm:inline">Calendar</span>
           </Link>
         </Button>
       )}

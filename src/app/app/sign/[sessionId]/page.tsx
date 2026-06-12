@@ -102,6 +102,7 @@ export default async function SignSessionPage({
               canReschedule={
                 canCancelScheduled && !sessionEvent.recurringSeriesId
               }
+              isRecurring={!!sessionEvent.recurringSeriesId}
             />
           </CardContent>
         </Card>

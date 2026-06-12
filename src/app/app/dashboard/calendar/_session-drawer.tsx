@@ -16,6 +16,7 @@ import {
   cancelScheduledSessionAction,
   type ActionResult,
 } from "@/app/actions/sessions";
+import { RescheduleForm } from "@/app/app/sign/[sessionId]/reschedule-form";
 import { EventStatusBadge } from "./_status-badge";
 import { visualStatusFor, type CalendarEvent } from "./_types";
 
@@ -57,6 +58,7 @@ function DrawerBody({
     FormData
   >(cancelScheduledSessionAction, undefined);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showReschedule, setShowReschedule] = useState(false);
 
   useEffect(() => {
     if (state?.ok) onClose();
@@ -99,6 +101,10 @@ function DrawerBody({
     now >= startMs - 10 * 60_000 &&
     now < endMs;
   const cancellable = event.scheduledStatus === "scheduled" && endMs > now;
+  // v1 limitation: rescheduleSessionAction rejects recurring instances
+  // (Phase 3.5 will lift that). UI hides the button accordingly.
+  const reschedulable = cancellable && !event.recurringSeriesId;
+  const isRecurring = !!event.recurringSeriesId;
 
   const tzNote = event.timeZone ? ` (${event.timeZone})` : "";
   const dateFmt = new Intl.DateTimeFormat(undefined, {
@@ -211,9 +217,29 @@ function DrawerBody({
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
+            {reschedulable && !showReschedule && !showConfirm && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowReschedule(true)}
+              >
+                Reschedule
+              </Button>
+            )}
           </div>
 
-          {cancellable && !showConfirm && (
+          {reschedulable && showReschedule && (
+            <RescheduleForm
+              sessionId={event.id}
+              currentStartUtcIso={event.startIso}
+              currentDurationMinutes={event.durationMinutes}
+              currentTimeZone={event.timeZone}
+              onCancel={() => setShowReschedule(false)}
+            />
+          )}
+
+          {cancellable && !showConfirm && !showReschedule && (
             <button
               type="button"
               onClick={() => setShowConfirm(true)}
@@ -229,8 +255,9 @@ function DrawerBody({
             >
               <input type="hidden" name="sessionId" value={event.id} />
               <p className="text-sm text-foreground">
-                Cancel this scheduled session? The calendar invite will be
-                withdrawn and the supervisee will be notified.
+                {isRecurring
+                  ? "Cancel this single occurrence? It will be removed from AuditHalo and the supervisee will be notified. Note: the recurring series on your Outlook or Google calendar isn't modified — only this one row is canceled here."
+                  : "Cancel this scheduled session? The calendar invite will be withdrawn and the supervisee will be notified."}
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button

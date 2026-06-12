@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import {
   canSupervise,
@@ -341,9 +341,10 @@ export async function scheduleSessionAction(
   // Group session attendees. Primary supervisee + any extras passed via
   // additionalAttendeeIds. All attendee rows must be signed before seal
   // (Phase 5 signSessionAction enforces this).
-  const additionalIds = parseAdditionalAttendees(
+  const additionalIds = await parseAdditionalAttendees(
     parsed.data.additionalAttendeeIds,
-    parsed.data.superviseeId
+    parsed.data.superviseeId,
+    orgId
   );
   await db.insert(schema.sessionAttendees).values([
     {
@@ -415,19 +416,25 @@ export async function scheduleSessionAction(
 }
 
 /**
- * Parse the additional-attendees form field. Defensive against:
+ * Parse the additional-attendees form field + validate. Defensive against:
  *   - empty / undefined
  *   - the primary already being in the list (drop it)
  *   - duplicate entries
  *   - non-UUID garbage (dropped silently)
+ *   - cross-org user ids (an actor could submit arbitrary UUIDs and the
+ *     pre-validation code would queue them as attendees, leaking a
+ *     session_scheduled email to other orgs). Validates each surviving
+ *     id is an active supervisee org_memberships row in the actor's
+ *     organization.
  */
-function parseAdditionalAttendees(
+async function parseAdditionalAttendees(
   raw: string | undefined,
-  primaryId: string
-): string[] {
+  primaryId: string,
+  orgId: string
+): Promise<string[]> {
   if (!raw) return [];
   const seen = new Set<string>();
-  const out: string[] = [];
+  const candidates: string[] = [];
   for (const id of raw.split(",").map((s) => s.trim()).filter(Boolean)) {
     if (id === primaryId) continue;
     if (seen.has(id)) continue;
@@ -439,9 +446,23 @@ function parseAdditionalAttendees(
       continue;
     }
     seen.add(id);
-    out.push(id);
+    candidates.push(id);
   }
-  return out;
+  if (candidates.length === 0) return [];
+  // Filter to active supervisee memberships in the actor's org.
+  const rows = await db
+    .select({ userId: schema.orgMemberships.userId })
+    .from(schema.orgMemberships)
+    .where(
+      and(
+        eq(schema.orgMemberships.orgId, orgId),
+        eq(schema.orgMemberships.role, "supervisee"),
+        isNull(schema.orgMemberships.deactivatedAt),
+        inArray(schema.orgMemberships.userId, candidates)
+      )
+    );
+  const allowed = new Set(rows.map((r) => r.userId));
+  return candidates.filter((id) => allowed.has(id));
 }
 
 const cancelSchema = z.object({
@@ -474,9 +495,25 @@ export async function cancelScheduledSessionAction(
     return { ok: false, error: "You can't cancel this session." };
   }
   // Only the original supervisor or any HR admin can cancel.
+  // Who can cancel: HR Admin (org-wide); the supervisor currently
+  // assigned to this supervisee; or the original scheduler. Prior gate
+  // used `canSupervise && isManagerRole` which collapses to supervisor-
+  // only AND let any supervisor in the org act on any peer's session.
   const isOriginalLogger = sessionEvent.loggedById === session.user.id;
-  const isHr = canSupervise(myMembership.role) && isManagerRole(myMembership.role);
-  if (!isOriginalLogger && !isHr) {
+  const isHr = isHrAdmin(myMembership.role);
+  let isAssignedSupervisor = false;
+  if (canSupervise(myMembership.role) && !isOriginalLogger && !isHr) {
+    const active = await db.query.supervisorAssignments.findFirst({
+      where: and(
+        eq(schema.supervisorAssignments.superviseeId, sessionEvent.superviseeId),
+        eq(schema.supervisorAssignments.orgId, sessionEvent.orgId),
+        eq(schema.supervisorAssignments.supervisorId, session.user.id),
+        isNull(schema.supervisorAssignments.endedAt)
+      ),
+    });
+    isAssignedSupervisor = !!active;
+  }
+  if (!isOriginalLogger && !isHr && !isAssignedSupervisor) {
     return { ok: false, error: "You can't cancel this session." };
   }
 
@@ -904,9 +941,24 @@ export async function rescheduleSessionAction(
   if (!myMembership || myMembership.orgId !== sessionEvent.orgId) {
     return { ok: false, error: "You can't reschedule this session." };
   }
+  // Same gate as cancel: HR Admin org-wide; the supervisor currently
+  // assigned to this supervisee; or the original scheduler. The prior
+  // check let any supervisor in the org act on any peer's session.
   const isOriginalLogger = sessionEvent.loggedById === session.user.id;
   const isHr = isHrAdmin(myMembership.role);
-  if (!isOriginalLogger && !isHr && !canSupervise(myMembership.role)) {
+  let isAssignedSupervisor = false;
+  if (canSupervise(myMembership.role) && !isOriginalLogger && !isHr) {
+    const active = await db.query.supervisorAssignments.findFirst({
+      where: and(
+        eq(schema.supervisorAssignments.superviseeId, sessionEvent.superviseeId),
+        eq(schema.supervisorAssignments.orgId, sessionEvent.orgId),
+        eq(schema.supervisorAssignments.supervisorId, session.user.id),
+        isNull(schema.supervisorAssignments.endedAt)
+      ),
+    });
+    isAssignedSupervisor = !!active;
+  }
+  if (!isOriginalLogger && !isHr && !isAssignedSupervisor) {
     return { ok: false, error: "You can't reschedule this session." };
   }
 

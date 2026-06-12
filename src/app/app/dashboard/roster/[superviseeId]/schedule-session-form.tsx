@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useSearchParams } from "next/navigation";
 import {
   scheduleRecurringSeriesAction,
   scheduleSessionAction,
@@ -21,16 +22,21 @@ function noopSubscribe(): () => void {
   return () => {};
 }
 
+/** Convert a UTC ISO instant to the browser-local datetime-local string. */
+function toLocalDatetimeString(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${y}-${m}-${day}T${hh}:${mm}`;
+}
+
 function computeDefaultLocalStart(): string {
   const t = new Date();
   t.setDate(t.getDate() + 1);
   t.setMinutes(t.getMinutes() < 30 ? 30 : 60, 0, 0);
-  const y = t.getFullYear();
-  const m = String(t.getMonth() + 1).padStart(2, "0");
-  const d = String(t.getDate()).padStart(2, "0");
-  const hh = String(t.getHours()).padStart(2, "0");
-  const mm = String(t.getMinutes()).padStart(2, "0");
-  return `${y}-${m}-${d}T${hh}:${mm}`;
+  return toLocalDatetimeString(t);
 }
 
 type Provider = "microsoft" | "google";
@@ -99,9 +105,21 @@ export function ScheduleSessionForm({
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
     () => ""
   );
+  // If the user arrived from /dashboard/calendar's empty-slot modal,
+  // the URL carries ?start=<utc-iso>. Prefer that over the "tomorrow at
+  // the next 30-min slot" fallback so the form lands pre-filled on the
+  // exact time they clicked.
+  const searchParams = useSearchParams();
+  const startFromUrl = searchParams?.get("start") ?? null;
   const defaultLocalStart = useSyncExternalStore(
     noopSubscribe,
-    computeDefaultLocalStart,
+    () => {
+      if (startFromUrl) {
+        const d = new Date(startFromUrl);
+        if (!Number.isNaN(d.getTime())) return toLocalDatetimeString(d);
+      }
+      return computeDefaultLocalStart();
+    },
     () => ""
   );
 

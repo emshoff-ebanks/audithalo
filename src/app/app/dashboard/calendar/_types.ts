@@ -33,6 +33,10 @@ export type CalendarEvent = {
   /** HR Admin view only. Null for supervisor's own calendar. */
   supervisorName: string | null;
   supervisorId: string | null;
+  /** Non-null when this row belongs to a recurring series. Drives
+   *  reschedule-button visibility (v1 disallows single-instance moves)
+   *  and the cancel-confirm copy that warns about the provider series. */
+  recurringSeriesId: string | null;
 };
 
 export type Supervisee = {

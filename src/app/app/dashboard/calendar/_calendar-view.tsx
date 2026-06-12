@@ -231,25 +231,54 @@ export function CalendarView({
             No sessions match these filters in this range.
           </div>
         ) : view === "week" ? (
-          <CalendarWeekView
-            anchor={anchor}
-            events={visibleEvents}
-            now={now}
-            viewerIsHrAdmin={viewerIsHrAdmin}
-            onEventClick={setDrawerEventId}
-            onEmptySlotClick={(slotStartUtcIso) =>
-              viewerIsManager &&
-              setScheduleModalSlot({ startUtcIso: slotStartUtcIso })
-            }
-          />
+          // Week + Month grids are too wide for phones (the week grid is
+          // pinned at min-w-[840px]). On <md viewports render List instead,
+          // which conveys the same data at a usable density. Toggle in the
+          // segmented control still works to switch back to Month on the
+          // detail-friendly fragments of a wider mobile + landscape.
+          <>
+            <div className="hidden md:block">
+              <CalendarWeekView
+                anchor={anchor}
+                events={visibleEvents}
+                now={now}
+                viewerIsHrAdmin={viewerIsHrAdmin}
+                onEventClick={setDrawerEventId}
+                onEmptySlotClick={(slotStartUtcIso) =>
+                  viewerIsManager &&
+                  setScheduleModalSlot({ startUtcIso: slotStartUtcIso })
+                }
+              />
+            </div>
+            <div className="md:hidden">
+              <CalendarListView
+                events={visibleEvents}
+                now={now}
+                viewerIsHrAdmin={viewerIsHrAdmin}
+                onEventClick={setDrawerEventId}
+              />
+            </div>
+          </>
         ) : view === "month" ? (
-          <CalendarMonthView
-            anchor={anchor}
-            events={visibleEvents}
-            now={now}
-            viewerIsHrAdmin={viewerIsHrAdmin}
-            onEventClick={setDrawerEventId}
-          />
+          <>
+            <div className="hidden md:block">
+              <CalendarMonthView
+                anchor={anchor}
+                events={visibleEvents}
+                now={now}
+                viewerIsHrAdmin={viewerIsHrAdmin}
+                onEventClick={setDrawerEventId}
+              />
+            </div>
+            <div className="md:hidden">
+              <CalendarListView
+                events={visibleEvents}
+                now={now}
+                viewerIsHrAdmin={viewerIsHrAdmin}
+                onEventClick={setDrawerEventId}
+              />
+            </div>
+          </>
         ) : (
           <CalendarListView
             events={visibleEvents}

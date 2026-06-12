@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
@@ -54,6 +54,35 @@ export async function signSessionAction(
   if (session.user.id === sessionEvent.superviseeId) {
     signerRole = "supervisee";
   } else if (canSupervise(membership.role)) {
+    // Tighten: an org's other supervisors are NOT required signers on
+    // sessions outside their own roster. The supervisor signer must
+    // either have logged the session (covers legacy + supervisor's own
+    // roster) OR be the currently-assigned supervisor of the primary
+    // supervisee. The supervisor_attendees table also makes any user
+    // listed there a required signer (handled by the attendees-check
+    // sealing logic below).
+    const isOriginalLogger = sessionEvent.loggedById === session.user.id;
+    let isAssignedSupervisor = false;
+    if (!isOriginalLogger) {
+      const active = await db.query.supervisorAssignments.findFirst({
+        where: and(
+          eq(
+            schema.supervisorAssignments.superviseeId,
+            sessionEvent.superviseeId
+          ),
+          eq(schema.supervisorAssignments.orgId, sessionEvent.orgId),
+          eq(schema.supervisorAssignments.supervisorId, session.user.id),
+          isNull(schema.supervisorAssignments.endedAt)
+        ),
+      });
+      isAssignedSupervisor = !!active;
+    }
+    if (!isOriginalLogger && !isAssignedSupervisor) {
+      return {
+        ok: false,
+        error: "You aren't a required signer for this session.",
+      };
+    }
     signerRole = "supervisor";
   } else {
     return { ok: false, error: "You aren't a required signer for this session." };

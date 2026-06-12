@@ -67,21 +67,30 @@ export function IntegrationsResultBanner() {
     );
   }
 
+  const humanError = friendlyOAuthError(error ?? "");
   return (
     <div
       role="alert"
       className="flex items-start gap-3 rounded-md border border-[color:var(--color-risk)]/30 bg-[color:var(--color-risk)]/5 p-3 text-sm"
     >
       <AlertTriangle className="mt-0.5 h-4 w-4 text-[color:var(--color-risk)]" />
-      <p className="flex-1 text-foreground/80">
-        We couldn&apos;t finish connecting that account.{" "}
-        <span className="font-mono text-xs text-foreground/60">({error})</span>{" "}
-        Try again — if it keeps failing, email{" "}
-        <a href="mailto:info@audithalo.com" className="underline">
-          info@audithalo.com
-        </a>
-        .
-      </p>
+      <div className="flex-1 text-foreground/80">
+        <p>
+          {humanError}{" "}
+          {humanError.endsWith(".") ? "" : "."}{" "}
+          Try again — if it keeps failing, email{" "}
+          <a href="mailto:info@audithalo.com" className="underline">
+            info@audithalo.com
+          </a>
+          .
+        </p>
+        <details className="mt-2 text-xs text-foreground/50">
+          <summary className="cursor-pointer select-none">
+            Technical details
+          </summary>
+          <p className="font-mono mt-1">{error}</p>
+        </details>
+      </div>
       <button
         type="button"
         onClick={() => setVisible(false)}
@@ -92,4 +101,28 @@ export function IntegrationsResultBanner() {
       </button>
     </div>
   );
+}
+
+/**
+ * Map known OAuth error codes from /api/auth/{provider}/callback to
+ * human-readable copy. Unknown codes fall through to a generic message —
+ * the raw code stays visible in the "Technical details" disclosure.
+ */
+function friendlyOAuthError(code: string): string {
+  if (code.endsWith("_state_mismatch")) {
+    return "Your sign-in session expired before the connection finished. Start the connect from Account → Integrations again.";
+  }
+  if (code.endsWith("_missing_code")) {
+    return "The provider returned without a consent code — that usually means consent was canceled.";
+  }
+  if (code.endsWith("_token_exchange_failed")) {
+    return "We couldn't redeem the consent code with the provider. The provider may be temporarily unavailable, or the redirect URI in our app registration is out of date.";
+  }
+  if (code.endsWith("_access_denied")) {
+    return "Consent was denied. To connect this calendar you need to approve every calendar + meeting scope we ask for.";
+  }
+  if (code.endsWith("_consent_required")) {
+    return "Your IT admin needs to grant tenant-wide consent before this calendar can be connected.";
+  }
+  return "We couldn't finish connecting that account.";
 }

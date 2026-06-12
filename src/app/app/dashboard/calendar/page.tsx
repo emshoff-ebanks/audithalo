@@ -123,6 +123,7 @@ export default async function CalendarPage({
         meetingJoinUrl: schema.sessionEvents.meetingJoinUrl,
         timeZone: schema.sessionEvents.timeZone,
         loggedById: schema.sessionEvents.loggedById,
+        recurringSeriesId: schema.sessionEvents.recurringSeriesId,
         superviseeName: schema.users.name,
         superviseeEmail: schema.users.email,
       })
@@ -232,6 +233,7 @@ export default async function CalendarPage({
             timeZone: r.timeZone,
             supervisorName: sup ? sup.name ?? sup.email : null,
             supervisorId: sup?.id ?? null,
+            recurringSeriesId: r.recurringSeriesId ?? null,
           };
           return [ev];
         } catch (err) {

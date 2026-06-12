@@ -50,7 +50,11 @@ export function ScheduleModal({ startUtcIso, supervisees, onClose }: Props) {
 
   function goToDetail() {
     if (!picked) return;
-    router.push(`/dashboard/roster/${picked}`);
+    // Carry the clicked-slot timestamp into the supervisee detail page so
+    // the schedule form lands pre-filled instead of forcing the user to
+    // re-enter the time they just clicked.
+    const qs = new URLSearchParams({ start: startUtcIso });
+    router.push(`/dashboard/roster/${picked}?${qs.toString()}#sessions`);
   }
 
   return (
@@ -108,11 +112,10 @@ export function ScheduleModal({ startUtcIso, supervisees, onClose }: Props) {
                 </select>
               </div>
               <p className="text-xs text-foreground/60">
-                We&apos;ll open the supervisee&apos;s page where the full
-                schedule form (with their assigned calendar provider) lives.
-                Carry-over of the picked slot into that form lands in the
-                next phase — for now, you&apos;ll re-enter the start time
-                there.
+                We&apos;ll open the supervisee&apos;s page with the full
+                schedule form pre-filled at this start time. You can adjust
+                modality, duration, provider, and notes there before
+                submitting.
               </p>
               <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <Button variant="ghost" onClick={onClose} type="button">

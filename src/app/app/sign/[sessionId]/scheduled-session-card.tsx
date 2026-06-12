@@ -23,6 +23,9 @@ type Props = {
   /** Reschedule available when the row isn't part of a recurring series.
    *  Phase 3.5 will lift that restriction. */
   canReschedule: boolean;
+  /** Drives the cancel-confirm copy variant — when this row belongs to a
+   *  recurring series we warn that the provider series isn't touched. */
+  isRecurring: boolean;
 };
 
 export function ScheduledSessionCard({
@@ -36,6 +39,7 @@ export function ScheduledSessionCard({
   location,
   canCancel,
   canReschedule,
+  isRecurring,
 }: Props) {
   const [state, formAction, pending] = useActionState<
     ActionResult | undefined,
@@ -167,8 +171,9 @@ export function ScheduledSessionCard({
         <form action={formAction} className="space-y-3 rounded-sm border border-[color:var(--color-risk)]/30 bg-[color:var(--color-risk)]/5 p-4">
           <input type="hidden" name="sessionId" value={sessionId} />
           <p className="text-sm text-foreground">
-            Cancel this scheduled session? The calendar invite will be withdrawn
-            and the supervisee will be notified.
+            {isRecurring
+              ? "Cancel this single occurrence? It will be removed from AuditHalo and the supervisee will be notified. Note: the recurring series on your Outlook or Google calendar isn't modified — only this one row is canceled here."
+              : "Cancel this scheduled session? The calendar invite will be withdrawn and the supervisee will be notified."}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button
