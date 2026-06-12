@@ -29,12 +29,13 @@ export default async function TeamImportPage() {
         Bulk import
       </Badge>
       <h1 className="font-display text-3xl font-semibold text-foreground">
-        Import from HRIS
+        Import team from CSV
       </h1>
       <p className="mt-3 text-foreground/70 max-w-2xl">
-        Paste or upload a CSV exported from your HRIS (Workday, BambooHR, Rippling,
-        ADP, etc.). Validate the rows, then send invitations in one batch. Existing
-        members and people with an open invitation are skipped automatically.
+        Paste or upload a CSV — either a roster you maintain by hand or an
+        export from an HRIS (Workday, BambooHR, Rippling, ADP, etc.). Validate
+        the rows, then send invitations in one batch. Existing members and
+        people with an open invitation are skipped automatically.
       </p>
 
       <div className="mt-4 p-3 rounded-sm border-l-[3px] border-secondary bg-secondary/5 text-xs text-foreground/80 leading-relaxed">

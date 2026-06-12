@@ -161,7 +161,7 @@ export default async function TeamPage() {
         <div className="mt-5">
           <Button asChild variant="outline" size="sm">
             <Link href="/dashboard/team/import">
-              Bulk import from HRIS (CSV)
+              Import team from CSV
             </Link>
           </Button>
         </div>

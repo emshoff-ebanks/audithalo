@@ -1,11 +1,12 @@
 "use client";
 
 import { useActionState, useState, useSyncExternalStore } from "react";
-import { Calendar, Video, MapPin, Loader2 } from "lucide-react";
+import { Calendar, Video, MapPin, Loader2, UserX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   cancelScheduledSessionAction,
+  markSessionNoShowAction,
   type ActionResult,
 } from "@/app/actions/sessions";
 import { RescheduleForm } from "./reschedule-form";
@@ -23,6 +24,9 @@ type Props = {
   /** Reschedule available when the row isn't part of a recurring series.
    *  Phase 3.5 will lift that restriction. */
   canReschedule: boolean;
+  /** Mark-as-no-show authorization — wider than canCancel because the
+   *  supervisee can also flag their own meeting as didn't-attend. */
+  canMarkNoShow: boolean;
   /** Drives the cancel-confirm copy variant — when this row belongs to a
    *  recurring series we warn that the provider series isn't touched. */
   isRecurring: boolean;
@@ -39,14 +43,20 @@ export function ScheduledSessionCard({
   location,
   canCancel,
   canReschedule,
+  canMarkNoShow,
   isRecurring,
 }: Props) {
   const [state, formAction, pending] = useActionState<
     ActionResult | undefined,
     FormData
   >(cancelScheduledSessionAction, undefined);
+  const [noShowState, noShowAction, noShowPending] = useActionState<
+    ActionResult | undefined,
+    FormData
+  >(markSessionNoShowAction, undefined);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showReschedule, setShowReschedule] = useState(false);
+  const [showNoShowConfirm, setShowNoShowConfirm] = useState(false);
 
   const startMs = new Date(scheduledForUtcIso).getTime();
   // Read the client clock via useSyncExternalStore so render stays pure
@@ -201,6 +211,64 @@ export function ScheduledSessionCard({
               className="text-sm text-[color:var(--color-risk)]"
             >
               {state.error}
+            </p>
+          )}
+        </form>
+      )}
+
+      {/* "Didn't attend" — distinct from Cancel. Cancel = intentionally
+          scrapped; no-show = scheduled time passed without anyone meeting.
+          Only useful once the meeting has actually started, so we gate on
+          minutesToStart <= 0. Anyone authorized to cancel can flag it. */}
+      {canMarkNoShow && minutesToStart <= 0 && !showNoShowConfirm && !showConfirm && (
+        <button
+          type="button"
+          onClick={() => setShowNoShowConfirm(true)}
+          className="inline-flex items-center gap-1.5 text-xs text-foreground/60 underline hover:text-foreground"
+        >
+          <UserX className="h-3 w-3" />
+          Didn&apos;t attend
+        </button>
+      )}
+
+      {canMarkNoShow && minutesToStart <= 0 && showNoShowConfirm && (
+        <form
+          action={noShowAction}
+          className="space-y-3 rounded-sm border border-[color:var(--color-warning)]/30 bg-[color:var(--color-warning)]/5 p-4"
+        >
+          <input type="hidden" name="sessionId" value={sessionId} />
+          <p className="text-sm text-foreground">
+            Flag this session as a no-show? It won&apos;t count toward
+            supervision hours and the row stays in the audit log marked
+            &quot;no-show&quot;. The calendar event isn&apos;t modified — only
+            the AuditHalo record.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              disabled={noShowPending}
+            >
+              {noShowPending && <Loader2 className="h-3 w-3 animate-spin" />}
+              Yes, mark no-show
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowNoShowConfirm(false)}
+              disabled={noShowPending}
+            >
+              Cancel
+            </Button>
+          </div>
+          {noShowState && noShowState.ok === false && (
+            <p
+              role="alert"
+              className="text-sm text-[color:var(--color-risk)]"
+            >
+              {noShowState.error}
             </p>
           )}
         </form>

@@ -61,6 +61,12 @@ export default async function SignSessionPage({
     isPreMeeting &&
     (sessionEvent.loggedById === session.user.id ||
       canSupervise(membership.role));
+  // "Didn't attend" is widened to the supervisee on their own row — they
+  // also need a way to record "the meeting time came and went and the
+  // supervisor never showed" without escalating to email/Slack.
+  const canMarkNoShow =
+    isPreMeeting &&
+    (canCancelScheduled || session.user.id === sessionEvent.superviseeId);
 
   if (isPreMeeting) {
     const scheduledForLocal = sessionEvent.timeZone
@@ -102,6 +108,7 @@ export default async function SignSessionPage({
               canReschedule={
                 canCancelScheduled && !sessionEvent.recurringSeriesId
               }
+              canMarkNoShow={canMarkNoShow}
               isRecurring={!!sessionEvent.recurringSeriesId}
             />
           </CardContent>

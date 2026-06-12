@@ -621,6 +621,149 @@ export async function cancelScheduledSessionAction(
   return { ok: true, sessionId: sessionEvent.id };
 }
 
+const noShowSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+/**
+ * Mark a scheduled session as no-show. Distinct from cancel: nobody
+ * intentionally scrapped the meeting — the scheduled time came and went
+ * without it taking place. We DO NOT delete provider calendar events
+ * (the calendar history is the audit trail) but we update our row so
+ * the session log surfaces "No-show" instead of leaving an unsigned
+ * pending row that nobody can complete. Allowed for the supervisee,
+ * the assigned supervisor, HR Admin, or the original scheduler.
+ */
+export async function markSessionNoShowAction(
+  _prev: ActionResult | undefined,
+  formData: FormData
+): Promise<ActionResult> {
+  const parsed = noShowSchema.safeParse({
+    sessionId: formData.get("sessionId"),
+  });
+  if (!parsed.success) return { ok: false, error: "Invalid input." };
+
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const sessionEvent = await db.query.sessionEvents.findFirst({
+    where: eq(schema.sessionEvents.id, parsed.data.sessionId),
+  });
+  if (!sessionEvent) return { ok: false, error: "Session not found." };
+
+  const myMembership = await getCurrentMembership(session.user.id);
+  if (!myMembership || myMembership.orgId !== sessionEvent.orgId) {
+    return { ok: false, error: "You can't update this session." };
+  }
+
+  // Authz: supervisee on their own row, HR Admin, original scheduler, or
+  // the supervisee's currently-assigned supervisor.
+  const isSelfSupervisee = sessionEvent.superviseeId === session.user.id;
+  const isOriginalLogger = sessionEvent.loggedById === session.user.id;
+  const isHr = isHrAdmin(myMembership.role);
+  let isAssignedSupervisor = false;
+  if (
+    canSupervise(myMembership.role) &&
+    !isOriginalLogger &&
+    !isHr &&
+    !isSelfSupervisee
+  ) {
+    const active = await db.query.supervisorAssignments.findFirst({
+      where: and(
+        eq(schema.supervisorAssignments.superviseeId, sessionEvent.superviseeId),
+        eq(schema.supervisorAssignments.orgId, sessionEvent.orgId),
+        eq(schema.supervisorAssignments.supervisorId, session.user.id),
+        isNull(schema.supervisorAssignments.endedAt)
+      ),
+    });
+    isAssignedSupervisor = !!active;
+  }
+  if (!isSelfSupervisee && !isOriginalLogger && !isHr && !isAssignedSupervisor) {
+    return { ok: false, error: "You can't update this session." };
+  }
+
+  if (sessionEvent.scheduledStatus !== "scheduled") {
+    return {
+      ok: false,
+      error: `Session is already ${sessionEvent.scheduledStatus ?? "logged"}.`,
+    };
+  }
+
+  // Guard: a meeting that hasn't started yet is a cancel, not a no-show.
+  // Forces the user to pick the right semantic — otherwise "Didn't attend"
+  // would just be a confusing alias for Cancel.
+  if (sessionEvent.date.getTime() > Date.now()) {
+    return {
+      ok: false,
+      error:
+        "Meeting hasn't started yet — use Cancel instead of marking it as no-show.",
+    };
+  }
+
+  await db
+    .update(schema.sessionEvents)
+    .set({ scheduledStatus: "no_show" })
+    .where(eq(schema.sessionEvents.id, parsed.data.sessionId));
+
+  const scheduledForLocal = sessionEvent.timeZone
+    ? formatLocal(sessionEvent.date, sessionEvent.timeZone)
+    : sessionEvent.date.toISOString().slice(0, 16).replace("T", " ");
+
+  try {
+    await logAuditEvent({
+      orgId: sessionEvent.orgId,
+      actorUserId: session.user.id,
+      action: AUDIT_ACTIONS.SESSION_NO_SHOW,
+      resourceType: "session_event",
+      resourceId: sessionEvent.id,
+      details: {
+        superviseeId: sessionEvent.superviseeId,
+        scheduledFor: sessionEvent.date.toISOString(),
+        markedBy: isSelfSupervisee
+          ? "supervisee"
+          : isAssignedSupervisor || canSupervise(myMembership.role)
+            ? "supervisor"
+            : "hr_admin",
+      },
+    });
+  } catch (err) {
+    console.error("[audit-log] failed to record session.no_show:", err);
+  }
+
+  // Notify the supervisor when the supervisee was the one who flagged.
+  // The supervisor still needs to know the meeting didn't take place so
+  // hour accrual isn't expected from this row.
+  if (isSelfSupervisee) {
+    try {
+      const active = await db.query.supervisorAssignments.findFirst({
+        where: and(
+          eq(schema.supervisorAssignments.superviseeId, sessionEvent.superviseeId),
+          eq(schema.supervisorAssignments.orgId, sessionEvent.orgId),
+          isNull(schema.supervisorAssignments.endedAt)
+        ),
+      });
+      if (active?.supervisorId) {
+        await createNotification({
+          userId: active.supervisorId,
+          kind: "session_no_show",
+          payload: {
+            sessionId: sessionEvent.id,
+            superviseeId: sessionEvent.superviseeId,
+            scheduledForLocal,
+          },
+        });
+      }
+    } catch (err) {
+      console.error("[notifications] session_no_show failed:", err);
+    }
+  }
+
+  revalidatePath(`/dashboard/roster/${sessionEvent.superviseeId}`);
+  revalidatePath(`/sign/${sessionEvent.id}`);
+
+  return { ok: true, sessionId: sessionEvent.id };
+}
+
 // ---------------------------------------------------------------------------
 // Phase 3 — recurring series
 // ---------------------------------------------------------------------------

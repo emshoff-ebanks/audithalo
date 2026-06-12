@@ -90,6 +90,19 @@ export function ImportForm() {
             placeholder="email,name,role,primary_supervisor_email"
             className="mt-2 w-full rounded-sm border border-input bg-card px-3 py-2 text-sm font-mono text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring"
           />
+          <p className="mt-1.5 text-xs text-foreground/60 leading-relaxed">
+            Required: <span className="font-mono">email</span>,{" "}
+            <span className="font-mono">name</span>,{" "}
+            <span className="font-mono">role</span> (supervisor, supervisee, or
+            executive). Optional:{" "}
+            <span className="font-mono">primary_supervisor_email</span>,{" "}
+            <span className="font-mono">rule_id</span>,{" "}
+            <span className="font-mono">obligation_started_at</span>,{" "}
+            <span className="font-mono">external_id</span> — your HRIS
+            employee ID (e.g., EMP-1042). Stored on the member record so a
+            later sync can match rows back to your system. Leave blank if you
+            don&apos;t track one.
+          </p>
         </div>
 
         <form action={previewAction}>

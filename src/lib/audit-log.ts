@@ -54,6 +54,7 @@ export const AUDIT_ACTIONS = {
   SESSION_SEALED: "session.sealed",
   SESSION_SCHEDULED: "session.scheduled",
   SESSION_CANCELED: "session.canceled",
+  SESSION_NO_SHOW: "session.no_show",
   SESSION_RESCHEDULED: "session.rescheduled",
   RECURRING_SERIES_CREATED: "session.recurring_series_created",
   // Roles
