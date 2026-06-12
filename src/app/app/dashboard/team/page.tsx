@@ -158,10 +158,16 @@ export default async function TeamPage() {
       </p>
 
       {canManage && (
-        <div className="mt-5">
+        <div className="mt-5 flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm">
             <Link href="/dashboard/team/import">
               Import team from CSV
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard/team/rules">
+              <Shield className="h-3.5 w-3.5" />
+              Customize state rules
             </Link>
           </Button>
         </div>
