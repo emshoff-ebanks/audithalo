@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
@@ -69,6 +69,12 @@ export default async function AccountPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-6 py-6 sm:py-12 space-y-6 sm:space-y-8">
+      <Button asChild variant="ghost" size="sm" className="-ml-3">
+        <Link href="/dashboard">
+          <ArrowLeft />
+          Back to dashboard
+        </Link>
+      </Button>
       <div>
         <p className="label-overline mb-4">Account settings</p>
         <h1 className="font-display text-3xl font-semibold text-foreground">

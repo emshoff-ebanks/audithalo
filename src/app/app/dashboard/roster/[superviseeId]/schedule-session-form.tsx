@@ -466,6 +466,53 @@ export function ScheduleSessionForm({
         }
       />
 
+      {/* Prominent blocker callout directly above the submit button — the
+          smaller "why disabled" hint stayed below the button too long
+          without anyone noticing. */}
+      {(() => {
+        if (pending) return null;
+        if (modality === "virtual" && connectedProviders.length === 0) {
+          return (
+            <div className="rounded-sm border border-[color:var(--color-warning)]/40 bg-[color:var(--color-warning)]/10 px-3 py-2.5 text-sm text-foreground">
+              <p className="font-medium mb-0.5">Calendar not connected</p>
+              <p className="text-xs text-foreground/80">
+                {onBehalf ? (
+                  <>
+                    Schedule is blocked because{" "}
+                    <span className="font-medium">{onBehalfOfName}</span>{" "}
+                    hasn&apos;t connected Microsoft or Google yet. Ask them to
+                    open <span className="font-mono text-[11px]">Account → Integrations</span>{" "}
+                    and connect a calendar — then refresh this page.
+                  </>
+                ) : (
+                  <>
+                    Schedule is blocked because you haven&apos;t connected
+                    Microsoft or Google yet.{" "}
+                    <a
+                      href="/dashboard/account#integrations"
+                      className="underline hover:no-underline font-medium"
+                    >
+                      Connect a calendar
+                    </a>
+                    , or switch this session to <strong>In person</strong>{" "}
+                    above and continue.
+                  </>
+                )}
+              </p>
+            </div>
+          );
+        }
+        if (!tz) {
+          return (
+            <p className="rounded-sm border border-border bg-card px-3 py-2 text-xs text-foreground/70">
+              Waiting for your browser to report its timezone. Refresh the page
+              if this persists.
+            </p>
+          );
+        }
+        return null;
+      })()}
+
       <Button
         type="submit"
         className="w-full"
@@ -491,24 +538,6 @@ export function ScheduleSessionForm({
                 : "Schedule session";
             })()}
       </Button>
-
-      {(() => {
-        const why: string[] = [];
-        if (!tz) why.push("waiting for your browser timezone to load — refresh if this persists");
-        if (modality === "virtual" && connectedProviders.length === 0) {
-          why.push(
-            onBehalf
-              ? `${onBehalfOfName ?? "the supervisor"} hasn't connected a calendar yet`
-              : "no calendar connected — choose In person, or connect one from Account → Integrations"
-          );
-        }
-        if (why.length === 0) return null;
-        return (
-          <p className="text-xs text-foreground/60">
-            Button disabled because: {why.join("; ")}.
-          </p>
-        );
-      })()}
 
       <p className="text-xs text-foreground/60">
         Times shown in <span className="font-mono">{tz || "your timezone"}</span>.

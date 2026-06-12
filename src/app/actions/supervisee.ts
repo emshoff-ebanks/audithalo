@@ -184,6 +184,11 @@ export async function assignRuleAction(
   }
 
   revalidatePath(`/dashboard/roster/${parsed.data.superviseeId}`);
+  // Also nuke the supervisee's own /dashboard so their dashboard's
+  // "Tracking against … " line picks up the new rule immediately.
+  // Without this, they keep seeing the old rule name until their JWT
+  // happens to refresh or they sign in/out.
+  revalidatePath("/dashboard", "layout");
   return { ok: true };
 }
 

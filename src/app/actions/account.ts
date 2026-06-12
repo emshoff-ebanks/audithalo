@@ -452,8 +452,12 @@ export async function updateNameAction(
     .set({ name: parsed.data.name.trim() })
     .where(eq(schema.users.id, session.user.id));
 
-  revalidatePath("/dashboard/account");
-  revalidatePath("/dashboard");
+  // Bust every server-rendered cache that interpolates the display name —
+  // header UserMenu, dashboards, /sign rendering, evidence-package
+  // titles, every roster row. revalidatePath("/", "layout") nukes the
+  // entire app layout's RSC payload so the next nav pulls the refreshed
+  // JWT (which the jwt callback updates from the DB on every request).
+  revalidatePath("/", "layout");
   return { ok: true, message: "Name updated." };
 }
 

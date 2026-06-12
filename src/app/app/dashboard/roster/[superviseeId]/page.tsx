@@ -589,16 +589,36 @@ export default async function SuperviseeDetailPage({
         </div>
       )}
 
-      {assignment && (
-        <div className="mt-6">
-          <CompletedAttestations
-            assignmentId={assignment.id}
-            superviseeId={superviseeId}
-            items={completedAttestations}
-            viewerCanSupervise={viewerCanSupervise}
-          />
-        </div>
-      )}
+      {/* Order on this page: Session log (most-touched) → Evidence packages
+          (sealed history) → Completed compliance tasks (rarely-touched
+          attestation receipts at the bottom). */}
+      <Card className="mt-6">
+        <CardContent className="p-6">
+          <p className="label-overline mb-4">Session log ({events.length})</p>
+          {events.length === 0 ? (
+            <p className="text-sm text-foreground/60 py-4">
+              No sessions logged yet.
+            </p>
+          ) : (
+            <SessionLog
+              events={events.map((e) => ({
+                id: e.id,
+                kind: e.kind,
+                date: e.date,
+                durationHours: e.durationHours,
+                sessionType: e.sessionType,
+                signedAt: e.signedAt,
+                signatures: e.signatures ?? [],
+                practiceState: e.practiceState,
+              }))}
+              viewerIsManager={viewerIsManager}
+              viewerUserId={session.user.id}
+              superviseeId={superviseeId}
+              superviseeState={supervisee.state ?? null}
+            />
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="mt-6">
         <CardContent className="p-0">
@@ -680,33 +700,16 @@ export default async function SuperviseeDetailPage({
         </CardContent>
       </Card>
 
-      <Card className="mt-6">
-        <CardContent className="p-6">
-          <p className="label-overline mb-4">Session log ({events.length})</p>
-          {events.length === 0 ? (
-            <p className="text-sm text-foreground/60 py-4">
-              No sessions logged yet.
-            </p>
-          ) : (
-            <SessionLog
-              events={events.map((e) => ({
-                id: e.id,
-                kind: e.kind,
-                date: e.date,
-                durationHours: e.durationHours,
-                sessionType: e.sessionType,
-                signedAt: e.signedAt,
-                signatures: e.signatures ?? [],
-                practiceState: e.practiceState,
-              }))}
-              viewerIsManager={viewerIsManager}
-              viewerUserId={session.user.id}
-              superviseeId={superviseeId}
-              superviseeState={supervisee.state ?? null}
-            />
-          )}
-        </CardContent>
-      </Card>
+      {assignment && (
+        <div className="mt-6">
+          <CompletedAttestations
+            assignmentId={assignment.id}
+            superviseeId={superviseeId}
+            items={completedAttestations}
+            viewerCanSupervise={viewerCanSupervise}
+          />
+        </div>
+      )}
     </div>
   );
 }
