@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   CheckCircle2,
@@ -77,23 +78,44 @@ function iconFor(kind: NotificationKind) {
 }
 
 function messageFor(n: NotificationRow): string {
+  const sup = (n.payload.superviseeName as string | undefined) ?? null;
+  const sessionDate = (n.payload.sessionDate as string | undefined) ?? null;
+  const sessionType = (n.payload.sessionType as string | undefined) ?? null;
+  const hours = n.payload.durationHours as number | undefined;
+  const sessionSuffix = [
+    sessionType ? `${sessionType} session` : null,
+    sessionDate ? sessionDate.slice(0, 10) : null,
+    typeof hours === "number" ? `${hours.toFixed(1)} hr` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   switch (n.kind) {
     case "invite_accepted":
-      return `${n.payload.superviseeName ?? "Someone"} accepted your invite`;
+      return `${sup ?? "Someone"} accepted your invite`;
     case "signature_needed":
-      return "Supervision session needs your signature";
+      // The original "Supervision session needs your signature" carried no
+      // context — a supervisor with two supervisees couldn't tell who from
+      // the bell alone. Now: name + date + hours when available.
+      return sup
+        ? `${sup} needs your signature${sessionSuffix ? ` — ${sessionSuffix}` : ""}`
+        : `Supervision session needs your signature${sessionSuffix ? ` — ${sessionSuffix}` : ""}`;
     case "rule_changed":
       return `Rule version changed to ${n.payload.newRuleLabel ?? "a new version"}`;
     case "evidence_sealed":
-      return "An evidence package was sealed";
+      // Same rationale — name plus the session this packet is for.
+      return sup
+        ? `Evidence package sealed for ${sup}${sessionSuffix ? ` — ${sessionSuffix}` : ""}`
+        : `An evidence package was sealed${sessionSuffix ? ` — ${sessionSuffix}` : ""}`;
     case "supervisor_rule_not_set":
-      return `${n.payload.superviseeName ?? "A supervisee"} is missing a state rule`;
+      return `${sup ?? "A supervisee"} is missing a state rule`;
     case "attestation_overdue":
-      return `Overdue compliance gap on ${n.payload.superviseeName ?? "a supervisee"}`;
+      return `Overdue compliance gap on ${sup ?? "a supervisee"}`;
     case "trial_ending_soon":
       return `Your trial ends in ${n.payload.daysLeft ?? 3} days`;
     case "session_scheduled":
-      return `Supervision scheduled for ${n.payload.scheduledForLocal ?? "a future time"}`;
+      return sup
+        ? `Supervision scheduled with ${sup} — ${n.payload.scheduledForLocal ?? "a future time"}`
+        : `Supervision scheduled for ${n.payload.scheduledForLocal ?? "a future time"}`;
     case "session_canceled":
       return `Supervision canceled (${n.payload.scheduledForLocal ?? "scheduled session"})`;
     case "session_rescheduled":
@@ -103,7 +125,51 @@ function messageFor(n: NotificationRow): string {
     case "session_reminder_15min":
       return `Supervision in 15 minutes — ${n.payload.scheduledForLocal ?? "starting soon"}`;
     case "session_no_show":
-      return `No-show flagged — ${n.payload.superviseeName ?? "a supervisee"}`;
+      return `No-show flagged — ${sup ?? "a supervisee"}`;
+  }
+}
+
+/**
+ * Where the user lands when they click a notification row. Returns null
+ * for kinds without a single obvious destination — those just mark-read
+ * and don't navigate.
+ */
+function destinationFor(n: NotificationRow): string | null {
+  const sessionId = n.payload.sessionId as string | undefined;
+  const superviseeId = n.payload.superviseeId as string | undefined;
+  const packageId = n.payload.packageId as string | undefined;
+  switch (n.kind) {
+    case "invite_accepted":
+      return superviseeId
+        ? `/dashboard/roster/${superviseeId}`
+        : "/dashboard/roster";
+    case "signature_needed":
+    case "session_scheduled":
+    case "session_rescheduled":
+    case "session_reminder_1hour":
+    case "session_reminder_15min":
+    case "session_no_show":
+      return sessionId ? `/sign/${sessionId}` : null;
+    case "session_canceled":
+      return superviseeId
+        ? `/dashboard/roster/${superviseeId}`
+        : "/dashboard/roster";
+    case "rule_changed":
+    case "supervisor_rule_not_set":
+    case "attestation_overdue":
+      return superviseeId
+        ? `/dashboard/roster/${superviseeId}`
+        : "/dashboard/roster";
+    case "evidence_sealed":
+      // Take them straight to the package detail (PDF download lives
+      // inside the supervisee detail row). Falling back to roster.
+      return superviseeId
+        ? `/dashboard/roster/${superviseeId}#evidence`
+        : packageId
+          ? `/dashboard/roster`
+          : "/dashboard";
+    case "trial_ending_soon":
+      return "/dashboard/billing";
   }
 }
 
@@ -111,6 +177,7 @@ export function NotificationsBell({ initialNotifications }: Props) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationRow[]>(initialNotifications);
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   const unread = items.length;
 
@@ -181,13 +248,24 @@ export function NotificationsBell({ initialNotifications }: Props) {
     });
   }
 
-  function handleClick(id: string) {
+  function handleClick(n: NotificationRow) {
+    // Mark read, close the panel, and route to the actionable
+    // destination. Previously the click just marked-read and the row
+    // vanished — leaving the user wondering what they were supposed to
+    // do (especially for signature_needed, where the next step is sign
+    // the session). Navigate even if mark-read fails so a flaky DB hit
+    // doesn't trap the user.
+    const dest = destinationFor(n);
+    setItems((prev) => prev.filter((m) => m.id !== n.id));
+    setOpen(false);
     startTransition(async () => {
-      const result = await markNotificationReadAction({ id });
-      if (result.ok) {
-        setItems((prev) => prev.filter((n) => n.id !== id));
+      try {
+        await markNotificationReadAction({ id: n.id });
+      } catch (err) {
+        console.error("[bell] mark-read failed:", err);
       }
     });
+    if (dest) router.push(dest);
   }
 
   return (
@@ -244,7 +322,7 @@ export function NotificationsBell({ initialNotifications }: Props) {
                 <li key={n.id}>
                   <button
                     type="button"
-                    onClick={() => handleClick(n.id)}
+                    onClick={() => handleClick(n)}
                     className="w-full flex items-start gap-3 px-4 py-3 hover:bg-accent/40 text-left"
                   >
                     <span className="mt-0.5 shrink-0">{iconFor(n.kind)}</span>

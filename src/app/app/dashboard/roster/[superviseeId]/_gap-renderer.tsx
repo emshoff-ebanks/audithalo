@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AlertOctagon,
   AlertTriangle,
@@ -88,6 +89,7 @@ function AttestationGap({
   assignmentId,
   viewerCanSupervise,
 }: GapRendererProps) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -111,6 +113,12 @@ function AttestationGap({
       });
       if (result.ok) {
         setDone(true);
+        // revalidatePath on the server only busts the cache — without an
+        // explicit refresh the user keeps seeing "Attested — refreshing"
+        // because the client RSC tree never re-fetches. router.refresh()
+        // pulls the updated server tree so this gap drops out of the
+        // gaps-and-warnings list entirely.
+        router.refresh();
       } else {
         setError(result.reason);
       }

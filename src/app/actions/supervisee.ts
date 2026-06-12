@@ -323,7 +323,15 @@ export async function logSessionAction(
   // need signatures). createNotification writes the bell row and (when the
   // supervisee opts in for signature_needed — default true) sends the email.
   // Failure must never block the action — wrapped in try/catch.
-  if (parsed.data.kind === "supervision") {
+  //
+  // Guard: don't ping the supervisee for a session that hasn't happened yet.
+  // The scheduling path (Phase 5 group/recurring sessions) creates rows with
+  // future dates that the user shouldn't be asked to sign until the meeting
+  // is actually over. A scheduled-session reminder fires through
+  // session_reminder_1hour/_15min instead.
+  const sessionStart = new Date(parsed.data.date);
+  const sessionIsInFuture = sessionStart.getTime() > Date.now();
+  if (parsed.data.kind === "supervision" && !sessionIsInFuture) {
     try {
       await createNotification({
         userId: parsed.data.superviseeId,
@@ -346,8 +354,9 @@ export async function logSessionAction(
   // the logger straight to /sign/[id] so they can sign immediately instead
   // of scrolling back through the session log. Practice events don't need
   // signing — leave the supervisor on the supervisee page to keep batch-
-  // logging fast.
-  if (parsed.data.kind === "supervision") {
+  // logging fast. Future-dated supervision rows (scheduled ahead) don't get
+  // the auto-redirect either — there's nothing to sign yet.
+  if (parsed.data.kind === "supervision" && !sessionIsInFuture) {
     redirect(`/sign/${insertedId}`);
   }
 

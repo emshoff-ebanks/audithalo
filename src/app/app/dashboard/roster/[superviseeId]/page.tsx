@@ -135,13 +135,24 @@ function deriveCompletedAttestations(
 
 export default async function SuperviseeDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ superviseeId: string }>;
+  searchParams: Promise<{ flagged?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const { superviseeId } = await params;
+  const { flagged } = await searchParams;
+  // ?flagged=id1,id2 — set by the DataCorrection gap action so the session
+  // log can scroll into view + amber-highlight the rows that need editing.
+  const flaggedSessionIds = flagged
+    ? flagged
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
 
   // Supervisees can only view themselves
   const viewerIsManager = isManagerRole(session.user.role);
@@ -592,7 +603,7 @@ export default async function SuperviseeDetailPage({
       {/* Order on this page: Session log (most-touched) → Evidence packages
           (sealed history) → Completed compliance tasks (rarely-touched
           attestation receipts at the bottom). */}
-      <Card className="mt-6">
+      <Card id="session-log" className="mt-6">
         <CardContent className="p-6">
           <p className="label-overline mb-4">Session log ({events.length})</p>
           {events.length === 0 ? (
@@ -615,6 +626,7 @@ export default async function SuperviseeDetailPage({
               viewerUserId={session.user.id}
               superviseeId={superviseeId}
               superviseeState={supervisee.state ?? null}
+              flaggedSessionIds={flaggedSessionIds}
             />
           )}
         </CardContent>

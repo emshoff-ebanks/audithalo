@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
@@ -29,6 +29,9 @@ type Props = {
   viewerUserId: string;
   superviseeId: string;
   superviseeState?: string | null;
+  /** Session IDs flagged from a "Review flagged sessions" gap link — these
+   *  rows get a sticky amber border + are scrolled into view on mount. */
+  flaggedSessionIds?: string[];
 };
 
 type Filter = "all" | "pending" | "signed";
@@ -39,10 +42,30 @@ export function SessionLog({
   viewerUserId,
   superviseeId,
   superviseeState,
+  flaggedSessionIds = [],
 }: Props) {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const flaggedSet = useMemo(
+    () => new Set(flaggedSessionIds),
+    [flaggedSessionIds]
+  );
+  const firstFlaggedRowRef = useRef<HTMLTableRowElement | null>(null);
+
+  // Today at start-of-day in local tz — used to hide future-dated rows from
+  // the "Needs your attention" pending list (scheduled meetings haven't
+  // happened yet so they don't need a signature). Recomputed once per render.
+  const todayStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  function isFuture(e: SessionEvent): boolean {
+    const d = typeof e.date === "string" ? parseISO(e.date) : e.date;
+    return d.getTime() > todayStart.getTime();
+  }
 
   const filteredEvents = useMemo(() => {
     if (filter === "pending") return events.filter((e) => e.signedAt === null);
@@ -50,9 +73,17 @@ export function SessionLog({
     return events;
   }, [events, filter]);
 
+  // "Needs your attention" pending list — only past-or-today sessions. A
+  // recurring meeting scheduled three weeks out shouldn't show up here:
+  // nobody can sign for a session that hasn't happened yet, and surfacing
+  // it as "pending" clutters the list and trains the user to ignore it.
   const pendingItems = useMemo(
-    () => events.filter((e) => e.kind === "supervision" && e.signedAt === null),
-    [events]
+    () =>
+      events.filter(
+        (e) =>
+          e.kind === "supervision" && e.signedAt === null && !isFuture(e)
+      ),
+    [events, todayStart]
   );
 
   const grouped = useMemo(() => {
@@ -68,17 +99,52 @@ export function SessionLog({
   }, [filteredEvents]);
 
   const currentMonthKey = format(new Date(), "yyyy-MM");
+  // Month keys for any month that contains a flagged session — those need
+  // to auto-open so the highlighted row is actually visible after scroll.
+  const flaggedMonthKeys = useMemo(() => {
+    const out = new Set<string>();
+    for (const e of events) {
+      if (!flaggedSet.has(e.id)) continue;
+      const d = typeof e.date === "string" ? parseISO(e.date) : e.date;
+      out.add(format(d, "yyyy-MM"));
+    }
+    return out;
+  }, [events, flaggedSet]);
 
   function toggleMonth(key: string) {
     const next = new Set(expanded);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
+    if (key === currentMonthKey) {
+      // Current month is open by default → toggle stores the "closed" sentinel
+      // so re-clicking re-opens it.
+      const sentinel = `${key}-closed`;
+      if (next.has(sentinel)) next.delete(sentinel);
+      else next.add(sentinel);
+    } else {
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+    }
     setExpanded(next);
   }
 
   function isExpanded(key: string) {
-    return key === currentMonthKey ? !expanded.has(`${key}-closed`) : expanded.has(key);
+    // Auto-open: current month + any month containing a flagged session.
+    // For the current month, the "closed" sentinel is the user explicitly
+    // collapsing it; otherwise stays open by default.
+    if (key === currentMonthKey) return !expanded.has(`${key}-closed`);
+    if (flaggedMonthKeys.has(key)) return !expanded.has(`${key}-closed-flag`);
+    return expanded.has(key);
   }
+
+  // Scroll the first flagged row into view + focus it on mount. Runs once
+  // per change in flagged set (typically once on landing from a gap link).
+  useEffect(() => {
+    if (flaggedSet.size === 0) return;
+    if (!firstFlaggedRowRef.current) return;
+    firstFlaggedRowRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [flaggedSet]);
 
   return (
     <div>
@@ -167,12 +233,25 @@ export function SessionLog({
           {grouped.map(([monthKey, items]) => {
             const isOpen = isExpanded(monthKey);
             const totalHours = items.reduce((s, e) => s + e.durationHours, 0);
+            const isCurrentMonth = monthKey === currentMonthKey;
+            const hasFlagged = flaggedMonthKeys.has(monthKey);
             return (
-              <div key={monthKey} className="border border-border rounded-sm overflow-hidden">
+              <div
+                key={monthKey}
+                className={`border rounded-sm overflow-hidden ${
+                  isCurrentMonth
+                    ? "border-secondary/40 ring-1 ring-secondary/20"
+                    : "border-border"
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => toggleMonth(monthKey)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-accent hover:bg-accent/80 transition-colors"
+                  className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${
+                    isCurrentMonth
+                      ? "bg-secondary/10 hover:bg-secondary/15"
+                      : "bg-accent hover:bg-accent/80"
+                  }`}
                 >
                   <div className="flex items-center gap-2">
                     {isOpen ? (
@@ -183,6 +262,16 @@ export function SessionLog({
                     <span className="font-medium text-sm text-foreground">
                       {format(parseISO(`${monthKey}-01`), "MMMM yyyy")}
                     </span>
+                    {isCurrentMonth && (
+                      <Badge variant="outline" className="text-[10px] border-secondary/40 text-secondary">
+                        This month
+                      </Badge>
+                    )}
+                    {hasFlagged && !isCurrentMonth && (
+                      <Badge variant="outline-warn" className="text-[10px]">
+                        Flagged
+                      </Badge>
+                    )}
                   </div>
                   <span className="text-xs text-foreground/60 font-mono">
                     {items.length} session{items.length !== 1 ? "s" : ""} ·{" "}
@@ -200,14 +289,29 @@ export function SessionLog({
                           (s) => s.signerId === viewerUserId
                         );
                         const isSelfSupervisee = viewerUserId === superviseeId;
+                        const isFutureRow = isFuture(e);
+                        // No signing on future-dated supervision rows — the
+                        // meeting hasn't happened yet. Show "Scheduled" status
+                        // and a neutral "View" link.
                         const canSign =
                           !fullySigned &&
                           !myselfHasSigned &&
+                          !isFutureRow &&
                           (isSelfSupervisee || viewerIsManager);
+                        const isFlagged = flaggedSet.has(e.id);
+                        const rowRef =
+                          isFlagged && !firstFlaggedRowRef.current
+                            ? firstFlaggedRowRef
+                            : null;
                         return (
                           <tr
                             key={e.id}
-                            className="border-t border-border first:border-t-0 cursor-pointer hover:bg-accent/40 transition-colors"
+                            ref={rowRef}
+                            className={`border-t first:border-t-0 cursor-pointer transition-colors ${
+                              isFlagged
+                                ? "border-[color:var(--color-warning)]/40 bg-[color:var(--color-warning)]/10 hover:bg-[color:var(--color-warning)]/15"
+                                : "border-border hover:bg-accent/40"
+                            }`}
                             onClick={(ev) => {
                               // Only navigate on row clicks that didn't hit a
                               // nested interactive element (the action Link
@@ -250,6 +354,10 @@ export function SessionLog({
                                 <Badge variant="success">
                                   <FileSignature className="h-3 w-3" />
                                   Sealed
+                                </Badge>
+                              ) : isFutureRow ? (
+                                <Badge variant="outline">
+                                  Scheduled
                                 </Badge>
                               ) : (
                                 <Badge variant="outline-warn">
