@@ -62,6 +62,9 @@ export const AUDIT_ACTIONS = {
   // Attestations (Phase 5.2)
   ATTESTATION_CREATED: "attestation.created",
   ATTESTATION_REVOKED: "attestation.revoked",
+  // Org rule overrides (Cycle 3 — see docs/strategy/09-rules-admin.md)
+  ORG_RULE_OVERRIDE_UPSERTED: "org_rule_override.upserted",
+  ORG_RULE_OVERRIDE_DEACTIVATED: "org_rule_override.deactivated",
   // Founding Supervisor program (NIM-4)
   FOUNDING_SUPERVISOR_GRANTED: "user.founding_supervisor_granted",
   FOUNDING_SUPERVISOR_REVOKED: "user.founding_supervisor_revoked",
