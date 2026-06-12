@@ -155,16 +155,28 @@ export async function signSessionAction(
   );
   const shouldSeal = allAttendeesSigned && hasSupervisorSig;
 
-  let fullySigned = rows[0].signed_at !== null;
-  if (shouldSeal && !fullySigned) {
-    await db.execute(sql`
+  const alreadySealed = rows[0].signed_at !== null;
+  // Whether THIS action call is the one that actually flipped signed_at
+  // — used to gate the one-shot generateEvidencePackage + capture +
+  // sealed-notification side-effects. Without this guard, two attendees
+  // signing at the same instant both compute shouldSeal=true (their
+  // signature payloads converge after the append), both regenerate the
+  // evidence package, and both fire `evidence_sealed` notifications to
+  // every signer. The CAS via `signed_at IS NULL` ensures exactly one
+  // winner.
+  let didSealNow = false;
+  if (shouldSeal && !alreadySealed) {
+    const sealRes = await db.execute(sql`
       UPDATE session_events
       SET signed_at = NOW()
       WHERE id = ${sessionEvent.id} AND signed_at IS NULL
+      RETURNING id
     `);
-    fullySigned = true;
+    const sealedRows = (sealRes as unknown as { rows: unknown[] }).rows;
+    didSealNow = sealedRows.length === 1;
   }
-  if (fullySigned) {
+  const fullySigned = alreadySealed || didSealNow;
+  if (didSealNow) {
     await generateEvidencePackage(sessionEvent.id);
   }
 
@@ -176,9 +188,11 @@ export async function signSessionAction(
     fullySigned,
   });
 
-  if (fullySigned) {
+  if (didSealNow) {
     // North-star activation event — fires once both signers complete the
-    // session and the tamper-evident package has been generated.
+    // session and the tamper-evident package has been generated. Only
+    // the winner of the CAS fires it; the loser stays quiet so the
+    // event count matches sessions sealed.
     capture("evidence_package_sealed", session.user.id, {
       orgId: sessionEvent.orgId,
       sessionEventId: sessionEvent.id,
@@ -196,7 +210,7 @@ export async function signSessionAction(
       resourceId: sessionEvent.id,
       details: { signerRole, sessionType: sessionEvent.sessionType ?? null },
     });
-    if (fullySigned) {
+    if (didSealNow) {
       await logAuditEvent({
         orgId: sessionEvent.orgId,
         actorUserId: session.user.id,
@@ -210,10 +224,11 @@ export async function signSessionAction(
     console.error("[audit-log] failed to record session sign:", err);
   }
 
-  // If the session is now fully sealed, notify both signers with a closing
-  // confirmation including the evidence-package download URL. Notification
-  // failure must NEVER block the action — wrapped in try/catch.
-  if (fullySigned) {
+  // Only the CAS winner sends the closing "evidence sealed" emails. If
+  // we keyed this off fullySigned, both racers would fire the same set
+  // of notifications to every attendee. didSealNow guarantees one
+  // batch per session.
+  if (didSealNow) {
     try {
       const pkg = await db.query.evidencePackages.findFirst({
         where: eq(schema.evidencePackages.sessionEventId, sessionEvent.id),

@@ -3,6 +3,8 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { and, eq, inArray, isNull } from "drizzle-orm";
+import { addDays, addMonths } from "date-fns";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { auth } from "@/auth";
 import {
   canSupervise,
@@ -249,7 +251,16 @@ export async function scheduleSessionAction(
     return { ok: false, error: "Pick a start time in the future." };
   }
 
-  const [supervisee, supervisor] = await Promise.all([
+  // Parse the additional group attendees up-front so their emails can
+  // ride the calendar invite (without this, only the primary supervisee
+  // was on the Outlook/Meet event — additional attendees got the
+  // AuditHalo notification but no calendar invite).
+  const additionalIds = await parseAdditionalAttendees(
+    parsed.data.additionalAttendeeIds,
+    parsed.data.superviseeId,
+    orgId
+  );
+  const [supervisee, supervisor, additionalAttendees] = await Promise.all([
     db.query.users.findFirst({
       where: eq(schema.users.id, parsed.data.superviseeId),
       columns: { id: true, email: true, name: true },
@@ -258,10 +269,19 @@ export async function scheduleSessionAction(
       where: eq(schema.users.id, hostingSupervisorId),
       columns: { id: true, email: true, name: true },
     }),
+    additionalIds.length === 0
+      ? Promise.resolve([] as { id: string; email: string; name: string | null }[])
+      : db.query.users.findMany({
+          where: inArray(schema.users.id, additionalIds),
+          columns: { id: true, email: true, name: true },
+        }),
   ]);
   if (!supervisee || !supervisor) {
     return { ok: false, error: "Supervisor or supervisee not found." };
   }
+  const additionalEmails = additionalAttendees
+    .map((a) => a.email)
+    .filter((e): e is string => !!e);
 
   // Resolve the calendar provider — only used for virtual sessions. The
   // provider integration belongs to the HOSTING supervisor, not the
@@ -295,9 +315,11 @@ export async function scheduleSessionAction(
         startUtc,
         endUtc,
         timeZone: parsed.data.timeZone,
-        attendeeEmails: [supervisor.email, supervisee.email].filter(
-          (e): e is string => !!e
-        ),
+        attendeeEmails: [
+          supervisor.email,
+          supervisee.email,
+          ...additionalEmails,
+        ].filter((e): e is string => !!e),
         withMeetingLink: true,
       });
       meetingProvider =
@@ -338,14 +360,10 @@ export async function scheduleSessionAction(
     .returning({ id: schema.sessionEvents.id });
   const sessionId = inserted.id;
 
-  // Group session attendees. Primary supervisee + any extras passed via
-  // additionalAttendeeIds. All attendee rows must be signed before seal
-  // (Phase 5 signSessionAction enforces this).
-  const additionalIds = await parseAdditionalAttendees(
-    parsed.data.additionalAttendeeIds,
-    parsed.data.superviseeId,
-    orgId
-  );
+  // Group session attendees. Primary supervisee + any extras already
+  // parsed above (so their emails could ride the calendar invite). All
+  // attendee rows must be signed before seal (Phase 5 signSessionAction
+  // enforces this).
   await db.insert(schema.sessionAttendees).values([
     {
       sessionEventId: sessionId,
@@ -618,24 +636,37 @@ const scheduleRecurringSchema = scheduleSchema.extend({
 });
 
 /**
- * Add `intervalDays` days for weekly cadences, or one calendar month for
- * monthly. The latter uses Date's month-overflow semantics — Jan 31 +
- * 1 month → Mar 3 by default — but that surprise is rare for supervision
- * scheduling (most series start at month boundaries). Acceptable for v1.
+ * Compute the Nth occurrence's UTC instant in the series's timezone,
+ * keeping the wall-clock time of day stable across DST transitions.
+ *
+ * Without tz awareness, plain `Date.setDate(base+7*N)` walks UTC fields,
+ * which on a UTC server drifts the user's wall clock by 1 hour the week
+ * after DST starts/ends (a 3pm ET series silently slides to 2pm or 4pm).
+ * date-fns-tz's tzDate / fromZonedTime do the right thing — we read the
+ * base's wall-clock parts in the series tz, add weeks/months in that
+ * frame, then convert back to UTC. Provider-side recurrence already
+ * gets this right; this helper aligns our materialized rows with it.
  */
 function nextOccurrence(
   base: Date,
   frequency: z.infer<typeof FREQUENCY>,
-  index: number
+  index: number,
+  timeZone: string
 ): Date {
-  const out = new Date(base);
-  if (frequency === "monthly") {
-    out.setMonth(out.getMonth() + index);
-    return out;
-  }
-  const days = frequency === "weekly" ? 7 : frequency === "biweekly" ? 14 : 21;
-  out.setDate(out.getDate() + days * index);
-  return out;
+  if (index === 0) return base;
+  const zoned = toZonedTime(base, timeZone);
+  const stepped =
+    frequency === "monthly"
+      ? addMonths(zoned, index)
+      : addDays(
+          zoned,
+          (frequency === "weekly"
+            ? 7
+            : frequency === "biweekly"
+              ? 14
+              : 21) * index
+        );
+  return fromZonedTime(stepped, timeZone);
 }
 
 /**
@@ -660,6 +691,7 @@ export async function scheduleRecurringSeriesAction(
     sessionType: formData.get("sessionType") || undefined,
     frequency: formData.get("frequency"),
     occurrenceCount: formData.get("occurrenceCount"),
+    additionalAttendeeIds: formData.get("additionalAttendeeIds") || undefined,
   });
   if (!parsed.success) {
     return {
@@ -701,7 +733,12 @@ export async function scheduleRecurringSeriesAction(
     firstStart.getTime() + parsed.data.durationMinutes * 60_000
   );
 
-  const [supervisee, supervisor] = await Promise.all([
+  const additionalIds = await parseAdditionalAttendees(
+    parsed.data.additionalAttendeeIds,
+    parsed.data.superviseeId,
+    orgId
+  );
+  const [supervisee, supervisor, additionalAttendees] = await Promise.all([
     db.query.users.findFirst({
       where: eq(schema.users.id, parsed.data.superviseeId),
       columns: { id: true, email: true, name: true },
@@ -710,10 +747,19 @@ export async function scheduleRecurringSeriesAction(
       where: eq(schema.users.id, hostingSupervisorId),
       columns: { id: true, email: true, name: true },
     }),
+    additionalIds.length === 0
+      ? Promise.resolve([] as { id: string; email: string; name: string | null }[])
+      : db.query.users.findMany({
+          where: inArray(schema.users.id, additionalIds),
+          columns: { id: true, email: true, name: true },
+        }),
   ]);
   if (!supervisee || !supervisor) {
     return { ok: false, error: "Supervisor or supervisee not found." };
   }
+  const additionalEmails = additionalAttendees
+    .map((a) => a.email)
+    .filter((e): e is string => !!e);
 
   let meetingProvider: "teams" | "google_meet" | "in_person" = "in_person";
   let meetingJoinUrl: string | null = null;
@@ -741,9 +787,11 @@ export async function scheduleRecurringSeriesAction(
         startUtc: firstStart,
         endUtc: firstEnd,
         timeZone: parsed.data.timeZone,
-        attendeeEmails: [supervisor.email, supervisee.email].filter(
-          (e): e is string => !!e
-        ),
+        attendeeEmails: [
+          supervisor.email,
+          supervisee.email,
+          ...additionalEmails,
+        ].filter((e): e is string => !!e),
         withMeetingLink: true,
         recurrence: {
           frequency: parsed.data.frequency,
@@ -769,22 +817,46 @@ export async function scheduleRecurringSeriesAction(
   const lastOccurrenceDate = nextOccurrence(
     firstStart,
     parsed.data.frequency,
-    parsed.data.occurrenceCount - 1
+    parsed.data.occurrenceCount - 1,
+    parsed.data.timeZone
   );
+  // Wall-clock time-of-day formatted in the series tz, not UTC. The
+  // earlier code used .toISOString().slice(11,19) which is the UTC
+  // time, so a 3pm ET start was stored as "19:00:00" — wrong when read
+  // back for display.
+  const wallTime = new Intl.DateTimeFormat("en-GB", {
+    timeZone: parsed.data.timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(firstStart);
+  const wallDate = new Intl.DateTimeFormat("en-CA", {
+    timeZone: parsed.data.timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(firstStart);
+  const wallEndDate = new Intl.DateTimeFormat("en-CA", {
+    timeZone: parsed.data.timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(lastOccurrenceDate);
   const [seriesRow] = await db
     .insert(schema.recurringSessionSeries)
     .values({
       orgId,
       supervisorId: hostingSupervisorId,
-      superviseeIds: [parsed.data.superviseeId],
-      startDate: firstStart.toISOString().slice(0, 10),
-      timeOfDay: firstStart.toISOString().slice(11, 19),
+      superviseeIds: [parsed.data.superviseeId, ...additionalIds],
+      startDate: wallDate,
+      timeOfDay: wallTime,
       durationMinutes: parsed.data.durationMinutes,
       timeZone: parsed.data.timeZone,
       frequency: parsed.data.frequency,
       endType: "count",
       endCount: parsed.data.occurrenceCount,
-      endDate: lastOccurrenceDate.toISOString().slice(0, 10),
+      endDate: wallEndDate,
       meetingProvider:
         parsed.data.modality === "virtual" ? meetingProvider : "in_person",
       location:
@@ -801,38 +873,59 @@ export async function scheduleRecurringSeriesAction(
     ? ({ [hostingSupervisorId]: providerEventId } as Record<string, string>)
     : null;
 
-  // Materialize one session_events row per occurrence. They all share
-  // the same meeting_id + join URL because they ride the SAME provider
-  // event (native recurrence on the provider side).
-  const insertedSessionIds: string[] = [];
-  for (let i = 0; i < parsed.data.occurrenceCount; i++) {
-    const occStart = nextOccurrence(firstStart, parsed.data.frequency, i);
-    const [inserted] = await db
-      .insert(schema.sessionEvents)
-      .values({
-        superviseeId: parsed.data.superviseeId,
-        orgId,
-        kind: "supervision",
-        date: occStart,
-        durationHours: parsed.data.durationMinutes / 60,
-        sessionType: parsed.data.sessionType,
-        loggedById: session.user.id,
-        scheduledStatus: "scheduled",
-        recurringSeriesId: seriesId,
-        meetingProvider,
-        meetingJoinUrl,
-        meetingId,
-        calendarEventIds,
-        timeZone: parsed.data.timeZone,
-      })
-      .returning({ id: schema.sessionEvents.id });
-    insertedSessionIds.push(inserted.id);
-    await db.insert(schema.sessionAttendees).values({
-      sessionEventId: inserted.id,
+  // Bulk-insert all session_events rows up-front instead of N sequential
+  // round-trips (Phase 5 with 52 occurrences was 104 round-trips end to
+  // end). Each row references the same provider event by id — Outlook /
+  // Google's native recurrence does the calendar-side mirroring, the
+  // AuditHalo rows exist so each instance has a sign + seal target.
+  const occurrenceStarts = Array.from(
+    { length: parsed.data.occurrenceCount },
+    (_, i) =>
+      nextOccurrence(
+        firstStart,
+        parsed.data.frequency,
+        i,
+        parsed.data.timeZone
+      )
+  );
+  const sessionRowValues = occurrenceStarts.map((occStart) => ({
+    superviseeId: parsed.data.superviseeId,
+    orgId,
+    kind: "supervision" as const,
+    date: occStart,
+    durationHours: parsed.data.durationMinutes / 60,
+    sessionType: parsed.data.sessionType,
+    loggedById: session.user.id,
+    scheduledStatus: "scheduled" as const,
+    recurringSeriesId: seriesId,
+    meetingProvider,
+    meetingJoinUrl,
+    meetingId,
+    calendarEventIds,
+    timeZone: parsed.data.timeZone,
+  }));
+  const insertedRows = await db
+    .insert(schema.sessionEvents)
+    .values(sessionRowValues)
+    .returning({ id: schema.sessionEvents.id });
+  const insertedSessionIds = insertedRows.map((r) => r.id);
+
+  // One bulk insert covers every (occurrence × attendee) pair. For a
+  // 52-week series with 3 additional supervisees that's 52*4=208 rows
+  // in a single round-trip.
+  const attendeeValues = insertedSessionIds.flatMap((sessionEventId) => [
+    {
+      sessionEventId,
       userId: parsed.data.superviseeId,
       isPrimarySupervisee: true,
-    });
-  }
+    },
+    ...additionalIds.map((userId) => ({
+      sessionEventId,
+      userId,
+      isPrimarySupervisee: false,
+    })),
+  ]);
+  await db.insert(schema.sessionAttendees).values(attendeeValues);
 
   try {
     await logAuditEvent({
@@ -843,6 +936,7 @@ export async function scheduleRecurringSeriesAction(
       resourceId: seriesId,
       details: {
         superviseeId: parsed.data.superviseeId,
+        additionalAttendeeIds: additionalIds,
         frequency: parsed.data.frequency,
         occurrenceCount: parsed.data.occurrenceCount,
         firstStartUtc: firstStart.toISOString(),
@@ -862,23 +956,27 @@ export async function scheduleRecurringSeriesAction(
     meetingProvider,
   });
 
-  // Notify the supervisee about the FIRST occurrence; the rest piggyback
-  // on the provider's native series invite. Sending N session_scheduled
-  // notifications would be noise.
+  // Notify every attendee (primary + any group additions) about the
+  // FIRST occurrence; subsequent occurrences ride the provider's native
+  // series invite, and the per-occurrence reminder cron handles the
+  // T-1h / T-15m heads-up. Sending N session_scheduled notifications
+  // would be noise.
   const firstLocal = formatLocal(firstStart, parsed.data.timeZone);
-  try {
-    await createNotification({
-      userId: parsed.data.superviseeId,
-      kind: "session_scheduled",
-      payload: {
-        sessionId: insertedSessionIds[0],
-        scheduledForLocal: `${firstLocal} (recurring — ${parsed.data.occurrenceCount} sessions)`,
-        supervisorName: supervisor.name ?? supervisor.email,
-        meetingProvider,
-      },
-    });
-  } catch (err) {
-    console.error("[notifications] session_scheduled failed:", err);
+  for (const userId of [parsed.data.superviseeId, ...additionalIds]) {
+    try {
+      await createNotification({
+        userId,
+        kind: "session_scheduled",
+        payload: {
+          sessionId: insertedSessionIds[0],
+          scheduledForLocal: `${firstLocal} (recurring — ${parsed.data.occurrenceCount} sessions)`,
+          supervisorName: supervisor.name ?? supervisor.email,
+          meetingProvider,
+        },
+      });
+    } catch (err) {
+      console.error("[notifications] session_scheduled failed:", err);
+    }
   }
 
   revalidatePath(`/dashboard/roster/${parsed.data.superviseeId}`);

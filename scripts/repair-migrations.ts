@@ -72,6 +72,11 @@ const REPAIR_TARGETS: Array<{
     sentinel: `SELECT 1 FROM information_schema.tables
                WHERE table_name='user_calendar_integrations'`,
   },
+  {
+    file: "0026_calendar_perf_indexes.sql",
+    sentinel: `SELECT 1 FROM pg_indexes
+               WHERE indexname='session_events_scheduled_status_date_idx'`,
+  },
 ];
 
 function sha256(s: string): string {

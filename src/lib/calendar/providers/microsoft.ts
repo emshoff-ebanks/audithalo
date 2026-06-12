@@ -100,6 +100,22 @@ function buildEventBody(input: CreateEventInput | UpdateEventInput): Record<stri
   if ("recurrence" in input && input.recurrence && "startUtc" in input && input.startUtc) {
     const r = input.recurrence;
     const start = input.startUtc;
+    const tz = "timeZone" in input ? input.timeZone : "UTC";
+    // start.getDay() / getDate() return SERVER-LOCAL fields. On a UTC
+    // Vercel function a Mon 11pm ET session lives at Tue 04:00 UTC, so
+    // the weekday + day-of-month must be read in the user's tz, not
+    // the server's, or the recurrence will land on the wrong day.
+    const partsInTz = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz ?? "UTC",
+      weekday: "long",
+      day: "numeric",
+    }).formatToParts(start);
+    const weekdayInTz = (
+      partsInTz.find((p) => p.type === "weekday")?.value ?? ""
+    ).toLowerCase();
+    const dayOfMonthInTz = Number(
+      partsInTz.find((p) => p.type === "day")?.value ?? "1"
+    );
     // Graph supports weekly + monthly natively. Biweekly + every-3-weeks
     // ride on weekly recurrence with interval=2 or 3.
     let pattern: Record<string, unknown>;
@@ -107,7 +123,7 @@ function buildEventBody(input: CreateEventInput | UpdateEventInput): Record<stri
       pattern = {
         type: "absoluteMonthly",
         interval: 1,
-        dayOfMonth: start.getDate(),
+        dayOfMonth: dayOfMonthInTz,
       };
     } else {
       const interval =
@@ -119,16 +135,23 @@ function buildEventBody(input: CreateEventInput | UpdateEventInput): Record<stri
       pattern = {
         type: "weekly",
         interval,
-        daysOfWeek: [GRAPH_WEEKDAY[start.getDay()]],
+        daysOfWeek: [weekdayInTz],
         firstDayOfWeek: "monday",
       };
     }
-    const isoDate = start.toISOString().slice(0, 10);
+    // startDate must be wall-clock date in tz, not UTC slice — same DST
+    // hazard as the weekday/day above.
+    const startDateInTz = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz ?? "UTC",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(start);
     body.recurrence = {
       pattern,
       range: {
         type: "numbered",
-        startDate: isoDate,
+        startDate: startDateInTz,
         numberOfOccurrences: r.occurrenceCount,
       },
     };
@@ -136,15 +159,6 @@ function buildEventBody(input: CreateEventInput | UpdateEventInput): Record<stri
   return body;
 }
 
-const GRAPH_WEEKDAY = [
-  "sunday",
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-];
 
 export function createMicrosoftProvider(
   accessToken: string,
