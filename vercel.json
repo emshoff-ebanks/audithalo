@@ -7,10 +7,6 @@
     {
       "path": "/api/cron/rule-drift",
       "schedule": "0 13 * * 1"
-    },
-    {
-      "path": "/api/cron/scheduled-session-reminders",
-      "schedule": "*/5 * * * *"
     }
   ]
 }
