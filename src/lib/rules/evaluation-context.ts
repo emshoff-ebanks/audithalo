@@ -71,3 +71,45 @@ export function resolveEvaluation(
 
   return { rule, evaluation: evaluate(ctx, rule) };
 }
+
+/** Same context construction the org-aware resolver uses — exported so
+ *  evaluation-context-with-overrides.ts can share it without duplication. */
+export function buildEvaluationContext(
+  assignment: Assignment,
+  events: SessionEvent[],
+  asOf: Date
+): EvaluationContext {
+  return {
+    superviseeId: assignment.superviseeId,
+    startedAt: assignment.obligationStartedAt.toISOString(),
+    supervisionContractFiledAt:
+      assignment.supervisionContractFiledAt?.toISOString(),
+    permitExpiresAt: assignment.permitExpiresAt?.toISOString(),
+    sessions: events.map((e) =>
+      e.kind === "practice"
+        ? {
+            kind: "practice" as const,
+            id: e.id,
+            date: e.date.toISOString(),
+            durationHours: e.durationHours,
+            directContactHours: e.directContactHours ?? undefined,
+            practiceState: e.practiceState ?? undefined,
+          }
+        : {
+            kind: "supervision" as const,
+            id: e.id,
+            date: e.date.toISOString(),
+            durationHours: e.durationHours,
+            sessionType:
+              (e.sessionType as "individual" | "triadic" | "group") ??
+              "individual",
+            supervisorCredentials:
+              (e.supervisorCredentials as string[]) ?? [],
+            groupAttendees: e.groupAttendees ?? undefined,
+            supervisorTrainingHours:
+              e.supervisorTrainingHours ?? undefined,
+          }
+    ),
+    asOf: asOf.toISOString(),
+  };
+}

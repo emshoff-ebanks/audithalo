@@ -713,3 +713,94 @@ export const ruleSourceSnapshots = pgTable("rule_source_snapshots", {
   /** Last error message — populated when status="error". */
   errorMessage: text("error_message"),
 });
+
+// ===========================================================================
+// Org rule overrides (migration 0027).
+// Two-tier rule model — see docs/strategy/09-rules-admin.md.
+//   canonical_rule_id IS NOT NULL → override on a canonical YAML rule.
+//   canonical_rule_id IS NULL     → custom org-authored rule (no canonical).
+// ===========================================================================
+
+export type RuleStructuredPatch = Partial<{
+  total_practice_hours_required: number;
+  total_supervision_hours_required: number;
+  min_duration_months: number;
+  max_duration_months: number;
+  group_max_attendees: number;
+  min_individual_supervision_fraction: number;
+}>;
+
+/** Shape of `checks_patch` for an OVERRIDE row. */
+export type ChecksOverridePatch = {
+  /** New checks to append. IDs must use the custom_ prefix. */
+  add?: Array<{
+    id: string;
+    severity: "info" | "warning" | "blocker";
+    description: string;
+    params?: Record<string, unknown>;
+  }>;
+  /** Canonical check IDs to drop from the merged rule. */
+  remove?: string[];
+  /** Param edits keyed by canonical check id. Replaces the whole params
+   *  object — partial merge happens above this layer in the merge helper. */
+  replace_params?: Record<string, Record<string, unknown>>;
+  /** Severity downgrades keyed by canonical check id. Only direction
+   *  allowed: blocker → warning → info. Validated in the action. */
+  replace_severity?: Record<string, "info" | "warning" | "blocker">;
+};
+
+/** Shape of `checks_patch` for a CUSTOM rule row. */
+export type ChecksCustomPatch = {
+  checks: Array<{
+    id: string;
+    severity: "info" | "warning" | "blocker";
+    description: string;
+    params?: Record<string, unknown>;
+  }>;
+};
+
+/** Shape of `custom_metadata` for a CUSTOM rule row. */
+export type CustomRuleMetadata = {
+  license_name: string;
+  issuing_board: string;
+  summary: string;
+  citation: { admincode: string; statute?: string; url: string };
+  verification: {
+    last_verified_at: string;
+    last_verified_by: string;
+  };
+};
+
+export const orgRuleOverrides = pgTable("org_rule_overrides", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orgId: uuid("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  /** Canonical rule id (e.g. "nc-lcmhca-v1") when this row is an override.
+   *  NULL when this row defines a custom org-authored rule. */
+  canonicalRuleId: text("canonical_rule_id"),
+  jurisdiction: text("jurisdiction").notNull(),
+  licenseCode: text("license_code").notNull(),
+  version: integer("version").notNull().default(1),
+  label: text("label").notNull(),
+  structuredPatch: jsonb("structured_patch")
+    .$type<RuleStructuredPatch>()
+    .notNull()
+    .default({}),
+  checksPatch: jsonb("checks_patch")
+    .$type<ChecksOverridePatch | ChecksCustomPatch>()
+    .notNull()
+    .default({}),
+  customMetadata: jsonb("custom_metadata").$type<CustomRuleMetadata>(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id),
+  lastEditedBy: uuid("last_edited_by").references(() => users.id),
+});
