@@ -15,8 +15,20 @@
  */
 
 import { evaluate, loadAllRules } from "@/lib/rules";
-import type { EvaluationContext, EvaluationResult } from "@/lib/rules/types";
-import type { SessionSignature } from "@/lib/db/schema";
+import {
+  isCustomRuleId,
+  mergeOverride,
+} from "@/lib/rules/overrides";
+import type {
+  EvaluationContext,
+  EvaluationResult,
+  Rule,
+} from "@/lib/rules/types";
+import type {
+  ChecksOverridePatch,
+  RuleStructuredPatch,
+  SessionSignature,
+} from "@/lib/db/schema";
 
 // ---------------------------------------------------------------------------
 // Inline mirror of schema.sessionEvents.$inferSelect
@@ -71,12 +83,67 @@ export type RosterRow = {
   pendingSignatureCount: number;
 };
 
+/**
+ * Per-org rule data used to apply overrides during batch evaluation.
+ *
+ *   - `overridesByCanonical` is keyed by lowercased canonical rule id
+ *     (e.g. "ny-lmhc-lp-v1") and holds the patch shape the merger consumes.
+ *   - `customRulesById` is keyed by the synthetic custom rule id
+ *     (e.g. "org:abc:custom:wy-lpca-v1") and holds the already-built Rule
+ *     object so the loop just picks it up.
+ *
+ * Both maps default to empty when not supplied — preserves the cycle-1
+ * canonical-only behavior for callers that haven't been migrated yet.
+ */
+export type RosterRuleOverrides = {
+  overridesByCanonical: Map<
+    string,
+    { structuredPatch: RuleStructuredPatch; checksPatch: ChecksOverridePatch }
+  >;
+  customRulesById: Map<string, Rule>;
+};
+
+const EMPTY_OVERRIDES: RosterRuleOverrides = {
+  overridesByCanonical: new Map(),
+  customRulesById: new Map(),
+};
+
 // ---------------------------------------------------------------------------
 // Pure computation (exported for unit testing)
 // ---------------------------------------------------------------------------
 
-export function computeRosterCompliance(entries: RawEntry[]): RosterRow[] {
+export function computeRosterCompliance(
+  entries: RawEntry[],
+  overrides: RosterRuleOverrides = EMPTY_OVERRIDES
+): RosterRow[] {
   const rules = loadAllRules();
+
+  function resolveRule(ruleId: string): Rule | undefined {
+    const id = ruleId.toLowerCase();
+    if (isCustomRuleId(id)) {
+      return overrides.customRulesById.get(id);
+    }
+    const canonical = rules.get(id);
+    if (!canonical) return undefined;
+    const patch = overrides.overridesByCanonical.get(id);
+    if (!patch) return canonical;
+    try {
+      return mergeOverride(canonical, {
+        canonicalRuleId: id,
+        jurisdiction: canonical.jurisdiction,
+        licenseCode: canonical.license_code,
+        version: canonical.version,
+        label: "",
+        structuredPatch: patch.structuredPatch,
+        checksPatch: patch.checksPatch,
+        customMetadata: null,
+      });
+    } catch {
+      // Bad override patch shouldn't tank the whole row — fall back to
+      // canonical and let the dashboard surface the issue elsewhere.
+      return canonical;
+    }
+  }
 
   return entries.map((entry) => {
     // Count pending signatures: supervision events where signedAt is null
@@ -101,7 +168,7 @@ export function computeRosterCompliance(entries: RawEntry[]): RosterRow[] {
       };
     }
 
-    const rule = rules.get(entry.ruleId.toLowerCase());
+    const rule = resolveRule(entry.ruleId);
 
     if (!rule) {
       return {
@@ -197,6 +264,66 @@ export async function getOrgRosterWithCompliance(
     import("drizzle-orm"),
   ]);
 
+  // Cycle 5+ fix: also fetch active org overrides + custom-rule rows so
+  // computeRosterCompliance can layer them at evaluation time. Previously
+  // every roster surface (roster table, executive dashboard, supervisor
+  // dashboard) silently evaluated against canonical-only — overrides were
+  // invisible.
+  const orgRuleRows = await db
+    .select()
+    .from(schema.orgRuleOverrides)
+    .where(
+      and(
+        eq(schema.orgRuleOverrides.orgId, orgId),
+        eq(schema.orgRuleOverrides.isActive, true)
+      )
+    );
+  const overridesByCanonical = new Map<
+    string,
+    { structuredPatch: RuleStructuredPatch; checksPatch: ChecksOverridePatch }
+  >();
+  const customRulesById = new Map<string, Rule>();
+  for (const row of orgRuleRows) {
+    if (row.canonicalRuleId !== null) {
+      overridesByCanonical.set(row.canonicalRuleId.toLowerCase(), {
+        structuredPatch: row.structuredPatch,
+        checksPatch: row.checksPatch as ChecksOverridePatch,
+      });
+    } else {
+      const { buildCustomRule, customRuleId } = await import(
+        "@/lib/rules/overrides"
+      );
+      try {
+        const built = buildCustomRule(orgId, {
+          canonicalRuleId: null,
+          jurisdiction: row.jurisdiction,
+          licenseCode: row.licenseCode,
+          version: row.version,
+          label: row.label,
+          structuredPatch: row.structuredPatch,
+          checksPatch: row.checksPatch,
+          customMetadata: row.customMetadata,
+        });
+        const id = customRuleId(orgId, {
+          canonicalRuleId: null,
+          jurisdiction: row.jurisdiction,
+          licenseCode: row.licenseCode,
+          version: row.version,
+          label: row.label,
+          structuredPatch: row.structuredPatch,
+          checksPatch: row.checksPatch,
+          customMetadata: row.customMetadata,
+        });
+        customRulesById.set(id.toLowerCase(), built);
+      } catch (err) {
+        console.error(
+          `[roster] failed to build custom rule for org=${orgId} (${row.jurisdiction}-${row.licenseCode}-v${row.version}):`,
+          err
+        );
+      }
+    }
+  }
+
   // Query 1: supervisees in this org joined with user profile data
   const superviseeRows = await db
     .select({
@@ -270,5 +397,8 @@ export async function getOrgRosterWithCompliance(
     };
   });
 
-  return computeRosterCompliance(rawEntries);
+  return computeRosterCompliance(rawEntries, {
+    overridesByCanonical,
+    customRulesById,
+  });
 }

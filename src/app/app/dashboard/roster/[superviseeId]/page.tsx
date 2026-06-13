@@ -15,9 +15,9 @@ import {
   isCustomRuleId,
   latestVersionForState,
   loadAllRules,
-  resolveEvaluation,
   toneClasses,
 } from "@/lib/rules";
+import { resolveEvaluationWithOverrides } from "@/lib/rules/evaluation-context-with-overrides";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -362,7 +362,9 @@ export default async function SuperviseeDetailPage({
     orderBy: [desc(schema.evidencePackages.createdAt)],
   });
 
-  const resolved = assignment ? resolveEvaluation(assignment, events) : null;
+  const resolved = assignment
+    ? await resolveEvaluationWithOverrides(assignment, events)
+    : null;
   const rule = resolved?.rule ?? null;
   const evalResult = resolved?.evaluation ?? null;
 

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { computeRosterCompliance } from "@/lib/db/roster-queries";
+import { getRule } from "@/lib/rules/loader";
 import type { EvaluationResult } from "@/lib/rules/types";
 
 // Helper to build a minimal RawEntry
@@ -181,5 +182,49 @@ describe("computeRosterCompliance", () => {
 
     const rows = computeRosterCompliance(entries);
     expect(rows[0].pendingSignatureCount).toBe(0);
+  });
+
+  // Regression: org overrides on a canonical rule must reach the roster
+  // evaluator. Without this, tightening total_practice_hours_required from
+  // 3000 → 3001 was visible on the rules dashboard but never affected the
+  // supervisee compliance number — the "3000 required" stuck even after
+  // the override saved.
+  it("applies org overrides on top of canonical when supplied", () => {
+    const canonical = getRule("NC", "LCMHCA", 1);
+    const tighter = canonical.structured.total_practice_hours_required + 1;
+
+    const entries = [
+      makeEntry({
+        ruleId: "nc-lcmhca-v1",
+        obligationStartedAt: new Date("2026-01-01T00:00:00Z"),
+        supervisionContractFiledAt: new Date("2025-12-15T00:00:00Z"),
+        rawEvents: [],
+      }),
+    ];
+
+    const baseline = computeRosterCompliance(entries);
+    const overridden = computeRosterCompliance(entries, {
+      overridesByCanonical: new Map([
+        [
+          "nc-lcmhca-v1",
+          {
+            structuredPatch: { total_practice_hours_required: tighter },
+            checksPatch: {},
+          },
+        ],
+      ]),
+      customRulesById: new Map(),
+    });
+
+    const baselineCheck = baseline[0].evaluation?.gaps.find(
+      (g) => g.code === "total_practice_hours"
+    );
+    const overriddenCheck = overridden[0].evaluation?.gaps.find(
+      (g) => g.code === "total_practice_hours"
+    );
+    expect(baselineCheck?.detail?.required).toBe(
+      canonical.structured.total_practice_hours_required
+    );
+    expect(overriddenCheck?.detail?.required).toBe(tighter);
   });
 });

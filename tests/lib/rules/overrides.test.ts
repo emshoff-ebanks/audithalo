@@ -86,6 +86,53 @@ describe("mergeOverride", () => {
     expect(merged.checks.length).toBe(canonical.checks.length - 1);
   });
 
+  // Regression for the 2026-06-12 user-visible bug: tightening a structured
+  // field was visible on the rules dashboard but the supervisee compliance
+  // still showed the canonical value because the matching check reads its
+  // own params, not rule.structured. mergeOverride must propagate.
+  it("propagates total_practice_hours_required to the total_practice_hours check param", () => {
+    const canonical = getRule("NC", "LCMHCA", 1);
+    const tighter = canonical.structured.total_practice_hours_required + 1;
+    const merged = mergeOverride(
+      canonical,
+      emptyOverrideRow({
+        structuredPatch: { total_practice_hours_required: tighter },
+      })
+    );
+    const check = merged.checks.find((c) => c.id === "total_practice_hours");
+    expect(check).toBeDefined();
+    expect(check!.params.required).toBe(tighter);
+  });
+
+  it("propagates max_duration_months to the duration_window check param", () => {
+    const canonical = getRule("NC", "LCMHCA", 1);
+    const merged = mergeOverride(
+      canonical,
+      emptyOverrideRow({
+        structuredPatch: { max_duration_months: 48 },
+      })
+    );
+    const check = merged.checks.find((c) => c.id === "duration_window");
+    if (check) {
+      expect(check.params.max_months).toBe(48);
+    }
+  });
+
+  it("explicit replace_params win over structured propagation", () => {
+    const canonical = getRule("NC", "LCMHCA", 1);
+    const merged = mergeOverride(
+      canonical,
+      emptyOverrideRow({
+        structuredPatch: { total_practice_hours_required: 3001 },
+        checksPatch: {
+          replace_params: { total_practice_hours: { required: 9999 } },
+        },
+      })
+    );
+    const check = merged.checks.find((c) => c.id === "total_practice_hours");
+    expect(check!.params.required).toBe(9999);
+  });
+
   it("merges params via checks_patch.replace_params", () => {
     const canonical = getRule("NC", "LCMHCA", 1);
     const before = canonical.checks.find((c) => c.id === "group_size_limit");

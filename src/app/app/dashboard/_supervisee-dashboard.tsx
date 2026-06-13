@@ -4,11 +4,8 @@ import { and, eq, desc } from "drizzle-orm";
 import { ArrowRight, FileSignature, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
-import {
-  resolveEvaluation,
-  riskBadgeLabel,
-  riskBadgeVariant,
-} from "@/lib/rules";
+import { riskBadgeLabel, riskBadgeVariant } from "@/lib/rules";
+import { resolveEvaluationWithOverrides } from "@/lib/rules/evaluation-context-with-overrides";
 import { pendingSignaturesForUser } from "@/lib/supervisee";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -65,7 +62,7 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
     orderBy: [desc(schema.sessionEvents.date)],
   });
 
-  const resolved = resolveEvaluation(assignment, events);
+  const resolved = await resolveEvaluationWithOverrides(assignment, events);
   const rule = resolved?.rule ?? null;
   const evalResult = resolved?.evaluation ?? null;
 

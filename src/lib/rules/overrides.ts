@@ -69,9 +69,50 @@ export function parseCustomRuleId(ruleId: string): {
 }
 
 /**
+ * Map from a structured field on the rule to the (check id, param key)
+ * pair the evaluator reads. Each YAML canonical rule duplicates the same
+ * value in two places — `structured.total_practice_hours_required: 3000`
+ * AND `checks[total_practice_hours].params.required: 3000` — so the
+ * override editor (which only edits structured) must propagate to the
+ * check's params here, otherwise the evaluator never sees the override.
+ *
+ * Update this table when a new structured field gains a corresponding
+ * evaluator-side check. Missing entries mean the structured field is
+ * informational only (e.g. min_duration_months currently has no enforcing
+ * check beyond duration_window which already maps).
+ */
+const STRUCTURED_TO_CHECK_PARAM: Record<
+  string,
+  Array<{ checkId: string; paramKey: string }>
+> = {
+  total_practice_hours_required: [
+    { checkId: "total_practice_hours", paramKey: "required" },
+  ],
+  total_supervision_hours_required: [
+    { checkId: "total_supervision_hours", paramKey: "required" },
+  ],
+  group_max_attendees: [
+    { checkId: "group_size_limit", paramKey: "max_attendees" },
+  ],
+  min_individual_supervision_fraction: [
+    {
+      checkId: "individual_supervision_minimum_share",
+      paramKey: "min_individual_fraction",
+    },
+  ],
+  min_duration_months: [
+    { checkId: "duration_window", paramKey: "min_months" },
+  ],
+  max_duration_months: [
+    { checkId: "duration_window", paramKey: "max_months" },
+  ],
+};
+
+/**
  * Apply an org override on top of a canonical rule.
  *
- *   structured_patch fields replace the canonical structured field one-for-one.
+ *   structured_patch fields replace the canonical structured field one-for-one
+ *   AND propagate to the matching evaluator check params (see table above).
  *   checks_patch.add appends new checks (custom_ prefix required).
  *   checks_patch.remove drops the named canonical checks.
  *   checks_patch.replace_params replaces the params object on the named check.
@@ -87,6 +128,22 @@ export function mergeOverride(canonical: Rule, patch: OverrideRow): Rule {
   const replaceParams = checksPatch.replace_params ?? {};
   const replaceSeverity = checksPatch.replace_severity ?? {};
 
+  // Propagate structured-patch values into the matching check.params keys
+  // so the evaluator picks up the override. Merged on top of any explicit
+  // replace_params already in checksPatch — explicit always wins.
+  const structuredAsCheckParams: Record<string, Record<string, unknown>> = {};
+  for (const [structuredKey, value] of Object.entries(patch.structuredPatch)) {
+    if (value === undefined) continue;
+    const targets = STRUCTURED_TO_CHECK_PARAM[structuredKey];
+    if (!targets) continue;
+    for (const t of targets) {
+      structuredAsCheckParams[t.checkId] = {
+        ...structuredAsCheckParams[t.checkId],
+        [t.paramKey]: value,
+      };
+    }
+  }
+
   const merged: Rule = {
     ...canonical,
     structured: {
@@ -96,13 +153,21 @@ export function mergeOverride(canonical: Rule, patch: OverrideRow): Rule {
     checks: [
       ...canonical.checks
         .filter((c) => !removeSet.has(c.id))
-        .map((c) => ({
-          ...c,
-          severity: replaceSeverity[c.id] ?? c.severity,
-          params: replaceParams[c.id]
-            ? { ...c.params, ...replaceParams[c.id] }
-            : c.params,
-        })),
+        .map((c) => {
+          const fromStructured = structuredAsCheckParams[c.id];
+          const explicit = replaceParams[c.id];
+          // Explicit replace_params win over structured propagation; both
+          // win over canonical defaults.
+          const params =
+            fromStructured || explicit
+              ? { ...c.params, ...fromStructured, ...explicit }
+              : c.params;
+          return {
+            ...c,
+            severity: replaceSeverity[c.id] ?? c.severity,
+            params,
+          };
+        }),
       ...(checksPatch.add ?? []).map((c) => ({
         id: c.id,
         severity: c.severity,

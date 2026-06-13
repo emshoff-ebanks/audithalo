@@ -134,8 +134,8 @@ export default async function RulesAdminPage() {
         </p>
       </div>
 
-      <div className="rounded-sm border border-[color:var(--color-warning)]/40 bg-[color:var(--color-warning)]/5 p-4 flex gap-3">
-        <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--color-warning)]" />
+      <div className="rounded-sm border border-[color:var(--color-risk)]/50 bg-[color:var(--color-risk)]/8 p-4 flex gap-3">
+        <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--color-risk)]" />
         <div className="space-y-2 text-sm">
           <p className="font-medium text-foreground">
             Customizing a state rule changes how AuditHalo evaluates your
