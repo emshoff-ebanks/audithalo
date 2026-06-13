@@ -420,17 +420,32 @@ export default async function SuperviseeDetailPage({
     : [];
 
   // Phase 6.0 — surface a banner when the assignment is on an older version
-  // than the latest available for its (state, license) pair.
-  const ruleVersionDrift = (() => {
+  // than the latest available for its (state, license) pair. Cycle 6 extends
+  // it: when this org has an active override on the *current* canonical, the
+  // banner offers a third option to re-author the override on the new
+  // canonical version instead of dropping it.
+  const ruleVersionDrift = await (async () => {
     if (!rule || !assignment) return null;
     const latest = latestVersionForState(rule.jurisdiction, rule.license_code);
     if (latest === null || latest <= rule.version) return null;
     const newRuleId =
       `${rule.jurisdiction}-${rule.license_code}-v${latest}`.toLowerCase();
+    const currentRuleId =
+      `${rule.jurisdiction}-${rule.license_code}-v${rule.version}`.toLowerCase();
+
+    const activeOverride = await db.query.orgRuleOverrides.findFirst({
+      where: and(
+        eq(schema.orgRuleOverrides.orgId, myMembership.orgId),
+        eq(schema.orgRuleOverrides.canonicalRuleId, currentRuleId),
+        eq(schema.orgRuleOverrides.isActive, true)
+      ),
+    });
+
     return {
       currentLabel: `${rule.jurisdiction} ${rule.license_code} v${rule.version}`,
       newLabel: `${rule.jurisdiction} ${rule.license_code} v${latest}`,
       newRuleId,
+      currentOverrideId: activeOverride?.id ?? null,
     };
   })();
 
@@ -486,6 +501,7 @@ export default async function SuperviseeDetailPage({
           newRuleId={ruleVersionDrift.newRuleId}
           newLabel={ruleVersionDrift.newLabel}
           viewerCanSupervise={viewerCanSupervise}
+          currentOverrideId={ruleVersionDrift.currentOverrideId}
         />
       )}
 
