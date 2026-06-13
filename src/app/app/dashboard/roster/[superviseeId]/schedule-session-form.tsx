@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useActionState,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,10 +11,6 @@ import {
   scheduleSessionAction,
   type ActionResult,
 } from "@/app/actions/sessions";
-
-function noopSubscribe(): () => void {
-  return () => {};
-}
 
 /** Convert a UTC ISO instant to the browser-local datetime-local string. */
 function toLocalDatetimeString(d: Date): string {
@@ -97,31 +87,30 @@ export function ScheduleSessionForm({
 
   const [modality, setModality] = useState<"virtual" | "in_person">("virtual");
 
-  // Read browser-only values via useSyncExternalStore so render stays
-  // pure and we don't trip the set-state-in-effect lint. Server snapshot
-  // is empty; client snapshot is the real value post-hydration.
-  const tz = useSyncExternalStore(
-    noopSubscribe,
-    () => Intl.DateTimeFormat().resolvedOptions().timeZone,
-    () => ""
-  );
-  // If the user arrived from /dashboard/calendar's empty-slot modal,
-  // the URL carries ?start=<utc-iso>. Prefer that over the "tomorrow at
-  // the next 30-min slot" fallback so the form lands pre-filled on the
-  // exact time they clicked.
+  // Browser-only values picked up after hydration. Initialize empty on
+  // SSR (deterministic) and overwrite once mounted — using useState +
+  // useEffect instead of useSyncExternalStore avoids the
+  // snapshot-returns-a-new-value-per-render trap that infinite-loops
+  // React (error #185).
   const searchParams = useSearchParams();
   const startFromUrl = searchParams?.get("start") ?? null;
-  const defaultLocalStart = useSyncExternalStore(
-    noopSubscribe,
-    () => {
-      if (startFromUrl) {
-        const d = new Date(startFromUrl);
-        if (!Number.isNaN(d.getTime())) return toLocalDatetimeString(d);
+  const [tz, setTz] = useState<string>("");
+  const [defaultLocalStart, setDefaultLocalStart] = useState<string>("");
+  useEffect(() => {
+    // Cascading mount-time updates to swap empty SSR placeholders for
+    // browser-only values. Lint disable is intentional; see
+    // _calendar-view.tsx for the same SSR-safe pattern.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTz(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    if (startFromUrl) {
+      const d = new Date(startFromUrl);
+      if (!Number.isNaN(d.getTime())) {
+        setDefaultLocalStart(toLocalDatetimeString(d));
+        return;
       }
-      return computeDefaultLocalStart();
-    },
-    () => ""
-  );
+    }
+    setDefaultLocalStart(computeDefaultLocalStart());
+  }, [startFromUrl]);
 
   // Seed the provider picker with the user's preferred (or only) connected
   // provider. Derived from props, so safe to compute during render.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Plus, Calendar as CalIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,11 +35,6 @@ const DEFAULT_STATUSES: StatusFilter[] = [
   "no_show",
 ]; // canceled hidden by default
 
-function clockSubscribe(cb: () => void): () => void {
-  const id = setInterval(cb, 60_000);
-  return () => clearInterval(id);
-}
-
 export function CalendarView({
   view,
   anchorIso,
@@ -64,12 +59,22 @@ export function CalendarView({
   } | null>(null);
 
   // Live clock so the "happening now" / "starts soon" styling stays
-  // accurate. Reads via useSyncExternalStore so render stays pure.
-  const now = useSyncExternalStore(
-    clockSubscribe,
-    () => Date.now(),
-    () => Date.parse(anchorIso)
-  );
+  // accurate. Server-renders with the anchor's parsed time (deterministic,
+  // no hydration mismatch), then upgrades to wall-clock on mount and
+  // ticks every 60s. Previously used useSyncExternalStore with
+  // `() => Date.now()` as the snapshot fn, which infinite-looped because
+  // every render's snapshot differed from the previous (React error #185).
+  const [now, setNow] = useState<number>(() => Date.parse(anchorIso));
+  useEffect(() => {
+    // One cascading render to swap the SSR-safe anchor time for the wall
+    // clock, then a 60s interval. The lint rule against synchronous
+    // setState in effects misses that for SSR-safe live-clock UIs the
+    // mount-time upgrade is unavoidable.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const visibleEvents = useMemo(() => {
     return events.filter((e) => {

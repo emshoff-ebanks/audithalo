@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useSyncExternalStore } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Calendar, Video, MapPin, Loader2, UserX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,14 +59,23 @@ export function ScheduledSessionCard({
   const [showNoShowConfirm, setShowNoShowConfirm] = useState(false);
 
   const startMs = new Date(scheduledForUtcIso).getTime();
-  // Read the client clock via useSyncExternalStore so render stays pure
-  // (no direct Date.now() at render time) and ticks every 30s so the
-  // countdown stays accurate without polling state.
-  const nowMs = useSyncExternalStore(
-    subscribeToClock,
-    () => Date.now(),
-    () => startMs // server snapshot: show "starts in 0 min" until hydration
-  );
+  // Live clock for the join-button window + "happening now" badge.
+  // Server-renders with startMs so the countdown shows "starts in 0 min"
+  // pre-hydration (deterministic), then upgrades to wall-clock on mount
+  // and ticks every 30s.
+  // Previously used useSyncExternalStore with `() => Date.now()` as the
+  // snapshot fn, which infinite-looped because every render's snapshot
+  // differed from the previous (React error #185).
+  const [nowMs, setNowMs] = useState<number>(() => startMs);
+  useEffect(() => {
+    // One cascading render to upgrade from the SSR snapshot to wall
+    // clock; see _calendar-view.tsx for the same pattern. The lint
+    // disable is intentional.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNowMs(Date.now());
+    const id = setInterval(() => setNowMs(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
   const minutesToStart = Math.round((startMs - nowMs) / 60_000);
   const minutesToEnd = minutesToStart + durationMinutes;
   // Show Join button from 10 min before start through end of the meeting.
@@ -282,10 +291,6 @@ export function ScheduledSessionCard({
   );
 }
 
-function subscribeToClock(callback: () => void): () => void {
-  const id = setInterval(callback, 30_000);
-  return () => clearInterval(id);
-}
 
 function formatCountdown(mins: number): string {
   if (mins < 60) return `${mins} min`;

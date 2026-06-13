@@ -26,27 +26,6 @@ export default function DashboardError({
 }) {
   useEffect(() => {
     console.error("[dashboard] render error:", error);
-    // Temporary 2026-06-12: post the client stack to the server so we can
-    // read it in Vercel runtime logs. Sentry is disabled in prod; without
-    // this we only see the Next.js digest, which can't be mapped back to
-    // a source location. Remove after the calendar issue is rooted out.
-    try {
-      void fetch("/api/client-error", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: error?.message,
-          stack: error?.stack,
-          digest: error?.digest,
-          url: typeof window !== "undefined" ? window.location.href : null,
-          userAgent:
-            typeof navigator !== "undefined" ? navigator.userAgent : null,
-        }),
-        keepalive: true,
-      });
-    } catch {
-      // Reporting must never break the error UI.
-    }
   }, [error]);
 
   return (
