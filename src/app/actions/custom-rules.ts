@@ -13,6 +13,7 @@ import {
   customRuleId,
   type OverrideRow as OverrideRowShape,
 } from "@/lib/rules/overrides";
+import { notifyOverrideCoAdmins } from "@/lib/rules/co-admin-notify";
 import {
   buildRuleCheckFromInstance,
   TEMPLATE_CATALOG,
@@ -288,6 +289,14 @@ export async function createCustomRuleAction(
   } catch (err) {
     console.error("[audit-log] org_custom_rule.created failed:", err);
   }
+
+  // Cycle 7: notify co-admins of the new custom rule.
+  await notifyOverrideCoAdmins({
+    orgId: membership.orgId,
+    actorUserId: session.user.id,
+    action: "created",
+    ruleLabel: `${parsed.data.jurisdiction} ${parsed.data.licenseCode} v${version} (org-created)`,
+  });
 
   revalidatePath("/dashboard/team/rules");
   return { ok: true, ruleId };

@@ -319,6 +319,74 @@ export async function sendInviteAcceptedEmail(opts: {
 }
 
 /**
+ * Notifies the org's other HR Admins that a rule override or custom rule
+ * changed. Sent on upsert / create / deactivate so two co-admins can't
+ * silently drift on org policy.
+ *
+ * Co-admin scope: this is informational, not an approval flow. The viewer
+ * can drill into the dashboard's "View diff" and history if they want
+ * detail. The email body intentionally keeps to the headline.
+ */
+export async function sendOverrideChangedEmail(opts: {
+  to: string;
+  recipientName: string;
+  actorName: string;
+  /** Headline action: "saved", "deactivated", or "created". */
+  action: "saved" | "deactivated" | "created";
+  /** Plain-English label of the rule, e.g. "NC LCMHCA v1 override" or
+   *  "WY LPCA (org-created)". */
+  ruleLabel: string;
+  /** Optional one-line diff summary — e.g. "1 tighter · 0 looser". Only
+   *  set when the change was an upsert with a non-empty diff. */
+  diffSummary?: string;
+  dashboardUrl: string;
+}): Promise<void> {
+  const verb =
+    opts.action === "saved"
+      ? "saved an override on"
+      : opts.action === "deactivated"
+        ? "deactivated"
+        : "created";
+  const subject =
+    opts.action === "saved"
+      ? `${opts.actorName} updated ${opts.ruleLabel}`
+      : opts.action === "deactivated"
+        ? `${opts.actorName} deactivated ${opts.ruleLabel}`
+        : `${opts.actorName} added a custom rule: ${opts.ruleLabel}`;
+  await sendEmail({
+    to: opts.to,
+    subject,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#08111F; max-width: 560px;">
+        <h2 style="font-size: 22px; margin: 0 0 16px;">${opts.actorName} ${verb} a rule for your org.</h2>
+        <p style="font-size: 16px; line-height: 1.6;">
+          Hi ${opts.recipientName}, this is a heads-up that <strong>${opts.actorName}</strong> ${verb} <strong>${opts.ruleLabel}</strong> in your org's rule policy.
+        </p>
+        ${opts.diffSummary
+          ? `<p style="font-size: 14px; color: #5f6470; font-family: monospace; background:#FBFAF6; padding: 10px 12px; border-radius: 4px; margin: 16px 0;">${opts.diffSummary}</p>`
+          : ""}
+        <p style="font-size: 15px; line-height: 1.6;">
+          You can review the change, see the full diff against canonical,
+          and walk the audit history from the rules dashboard.
+        </p>
+        <p style="margin: 28px 0;">
+          <a href="${opts.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background:#071A3D; color:#FBFAF6; text-decoration:none; font-weight:600; border-radius: 4px;">
+            Open rules dashboard
+          </a>
+        </p>
+        <p style="font-size: 12px; color: #5f6470;">
+          Or copy this link: ${opts.dashboardUrl}
+        </p>
+        <p style="font-size: 12px; color: #5f6470; margin-top: 24px;">
+          This is a co-admin notification &mdash; no action is required unless you disagree with the change.
+        </p>
+      </div>
+    `,
+    text: `Hi ${opts.recipientName}, ${opts.actorName} ${verb} ${opts.ruleLabel} in your org's rule policy.${opts.diffSummary ? " " + opts.diffSummary + "." : ""} Review at: ${opts.dashboardUrl}`,
+  });
+}
+
+/**
  * Confirms to both signers that a supervision session is fully signed and the
  * evidence package has been generated. Includes the authenticated download URL
  * and a public verify URL suitable for forwarding to state boards.

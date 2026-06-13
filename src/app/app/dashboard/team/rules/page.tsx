@@ -244,6 +244,14 @@ export default async function RulesAdminPage() {
                   Canonical rule not found.
                 </p>
               );
+              // Cycle 7: counter summary shown next to the row label so HR
+              // Admins see at a glance how tight/loose their org policy is
+              // vs. canonical without clicking "View diff".
+              let counter: {
+                tighter: number;
+                looser: number;
+                removed: number;
+              } | null = null;
               if (parts && row.canonicalRuleId) {
                 try {
                   const canonical = getRule(
@@ -257,6 +265,22 @@ export default async function RulesAdminPage() {
                       typeof summarizeOverrideDiff
                     >[1]["checksPatch"],
                   });
+                  counter = {
+                    tighter: diff.structured.filter(
+                      (d) => d.direction === "tighter"
+                    ).length,
+                    // "looser" lumps in structured-looser fields AND
+                    // severity downgrades; both make the rule easier on
+                    // the supervisee than canonical.
+                    looser:
+                      diff.structured.filter(
+                        (d) => d.direction === "looser" || d.direction === "changed"
+                      ).length +
+                      diff.checks.filter((d) => d.kind === "severity_changed")
+                        .length,
+                    removed: diff.checks.filter((d) => d.kind === "removed")
+                      .length,
+                  };
                   diffSlot = diff.isNoOp ? (
                     <p className="text-foreground/60 italic">
                       No effective changes from canonical.
@@ -319,9 +343,42 @@ export default async function RulesAdminPage() {
                     <CardContent className="p-4 space-y-3">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0 space-y-1">
-                          <p className="font-medium text-foreground">
-                            {row.label}
-                          </p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium text-foreground">
+                              {row.label}
+                            </p>
+                            {counter && (
+                              <span className="inline-flex flex-wrap gap-1.5">
+                                {counter.tighter > 0 && (
+                                  <Badge
+                                    variant="outline-warn"
+                                    className="text-[9px]"
+                                    title="Fields where your override is stricter than canonical."
+                                  >
+                                    {counter.tighter} tighter
+                                  </Badge>
+                                )}
+                                {counter.looser > 0 && (
+                                  <Badge
+                                    variant="risk"
+                                    className="text-[9px]"
+                                    title="Fields or checks where your override is more permissive than canonical."
+                                  >
+                                    {counter.looser} looser
+                                  </Badge>
+                                )}
+                                {counter.removed > 0 && (
+                                  <Badge
+                                    variant="risk"
+                                    className="text-[9px]"
+                                    title="Canonical checks your override has disabled."
+                                  >
+                                    {counter.removed} removed
+                                  </Badge>
+                                )}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-foreground/60 font-mono">
                             on {row.canonicalRuleId} &middot; last edited by{" "}
                             {editorById.get(

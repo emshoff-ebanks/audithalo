@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, Pencil } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { riskBadgeLabel, riskBadgeVariant } from "@/lib/rules/presentation";
@@ -20,6 +20,12 @@ type Props = {
     admincode: string;
     sourceUrl: string;
     riskLevel: "green" | "yellow" | "red" | undefined;
+    /** Cycle 7: this assignment points at an org-authored custom rule
+     *  (not a board-verified canonical rule). Surfaces a warning badge. */
+    isOrgCreated?: boolean;
+    /** Cycle 7: this assignment's canonical rule has an active override
+     *  for the org. Surfaces a subtle "Override active" badge. */
+    hasActiveOverride?: boolean;
   };
   // Defaults for the edit form
   currentRuleId: string; // e.g. "nc-lcmhca-v1"
@@ -94,12 +100,30 @@ export function RuleSummaryCard({
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <Badge
-            variant={riskBadgeVariant(currentRule.riskLevel)}
-            className="mb-2"
-          >
-            {riskBadgeLabel(currentRule.riskLevel)}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <Badge variant={riskBadgeVariant(currentRule.riskLevel)}>
+              {riskBadgeLabel(currentRule.riskLevel)}
+            </Badge>
+            {currentRule.isOrgCreated && (
+              <Badge
+                variant="risk"
+                className="text-[10px]"
+                title="This rule was authored by your org, not verified against a state board."
+              >
+                <AlertTriangle className="h-3 w-3" />
+                Org-created &middot; not board-verified
+              </Badge>
+            )}
+            {currentRule.hasActiveOverride && !currentRule.isOrgCreated && (
+              <Badge
+                variant="outline-warn"
+                className="text-[10px]"
+                title="Your org has an active override on this canonical rule."
+              >
+                Override active
+              </Badge>
+            )}
+          </div>
           <h2 className="font-display text-xl font-semibold text-foreground">
             {currentRule.jurisdiction} {currentRule.licenseCode} v
             {currentRule.version}

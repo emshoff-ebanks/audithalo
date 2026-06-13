@@ -12,6 +12,8 @@ import {
   mergeOverride,
   type OverrideRow as OverrideRowShape,
 } from "@/lib/rules/overrides";
+import { summarizeOverrideDiff } from "@/lib/rules/diff";
+import { notifyOverrideCoAdmins } from "@/lib/rules/co-admin-notify";
 import type {
   ChecksOverridePatch,
   RuleStructuredPatch,
@@ -257,6 +259,44 @@ export async function upsertCanonicalOverrideAction(
     }
   }
 
+  // Cycle 7: notify org's other HR Admins so two co-admins don't silently
+  // drift. Non-blocking — the notify helper swallows its own errors.
+  const diff = summarizeOverrideDiff(canonical, {
+    structuredPatch: parsed.data.structuredPatch as RuleStructuredPatch,
+    checksPatch,
+  });
+  const diffSummary = diff.isNoOp
+    ? undefined
+    : [
+        diff.structured.filter((d) => d.direction === "tighter").length > 0
+          ? `${diff.structured.filter((d) => d.direction === "tighter").length} tighter`
+          : null,
+        diff.structured.filter(
+          (d) => d.direction === "looser" || d.direction === "changed"
+        ).length +
+          diff.checks.filter((d) => d.kind === "severity_changed").length >
+        0
+          ? `${
+              diff.structured.filter(
+                (d) => d.direction === "looser" || d.direction === "changed"
+              ).length +
+              diff.checks.filter((d) => d.kind === "severity_changed").length
+            } looser`
+          : null,
+        diff.checks.filter((d) => d.kind === "removed").length > 0
+          ? `${diff.checks.filter((d) => d.kind === "removed").length} removed`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+  await notifyOverrideCoAdmins({
+    orgId: membership.orgId,
+    actorUserId: session.user.id,
+    action: "saved",
+    ruleLabel: `${canonical.jurisdiction} ${canonical.license_code} v${canonical.version} override`,
+    diffSummary,
+  });
+
   revalidatePath("/dashboard/team/rules");
   revalidatePath(`/dashboard/team/rules/${parsed.data.canonicalRuleId}`);
   return { ok: true };
@@ -360,6 +400,17 @@ export async function deactivateOverrideAction(
   } catch (err) {
     console.error("[audit-log] override deactivation failed:", err);
   }
+
+  // Cycle 7: notify co-admins of the deactivation.
+  const ruleLabel = isCustom
+    ? `${row.jurisdiction} ${row.licenseCode} v${row.version} (org-created)`
+    : `${row.canonicalRuleId} override`;
+  await notifyOverrideCoAdmins({
+    orgId: membership.orgId,
+    actorUserId: session.user.id,
+    action: "deactivated",
+    ruleLabel,
+  });
 
   revalidatePath("/dashboard/team/rules");
   if (row.canonicalRuleId) {

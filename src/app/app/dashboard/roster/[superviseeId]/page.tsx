@@ -12,6 +12,7 @@ import { canSupervise, getCurrentMembership, isHrAdmin, isManagerRole } from "@/
 import { db, schema } from "@/lib/db";
 import { ReassignSupervisorDropdown } from "@/app/app/dashboard/team/_invite-forms";
 import {
+  isCustomRuleId,
   latestVersionForState,
   loadAllRules,
   resolveEvaluation,
@@ -419,33 +420,40 @@ export default async function SuperviseeDetailPage({
     ? deriveCompletedAttestations(assignment)
     : [];
 
+  // Cycle 7: look up any active override on the assignment's current
+  // canonical, independent of whether a newer version exists. Used both
+  // by the version-drift banner (Cycle 6) and the rule-summary card badge
+  // (Cycle 7) so a single query feeds both surfaces.
+  const currentCanonicalOverride =
+    rule && assignment && !isCustomRuleId(assignment.ruleId)
+      ? await db.query.orgRuleOverrides.findFirst({
+          where: and(
+            eq(schema.orgRuleOverrides.orgId, myMembership.orgId),
+            eq(
+              schema.orgRuleOverrides.canonicalRuleId,
+              `${rule.jurisdiction}-${rule.license_code}-v${rule.version}`.toLowerCase()
+            ),
+            eq(schema.orgRuleOverrides.isActive, true)
+          ),
+        })
+      : null;
+
   // Phase 6.0 — surface a banner when the assignment is on an older version
   // than the latest available for its (state, license) pair. Cycle 6 extends
   // it: when this org has an active override on the *current* canonical, the
   // banner offers a third option to re-author the override on the new
   // canonical version instead of dropping it.
-  const ruleVersionDrift = await (async () => {
+  const ruleVersionDrift = (() => {
     if (!rule || !assignment) return null;
     const latest = latestVersionForState(rule.jurisdiction, rule.license_code);
     if (latest === null || latest <= rule.version) return null;
     const newRuleId =
       `${rule.jurisdiction}-${rule.license_code}-v${latest}`.toLowerCase();
-    const currentRuleId =
-      `${rule.jurisdiction}-${rule.license_code}-v${rule.version}`.toLowerCase();
-
-    const activeOverride = await db.query.orgRuleOverrides.findFirst({
-      where: and(
-        eq(schema.orgRuleOverrides.orgId, myMembership.orgId),
-        eq(schema.orgRuleOverrides.canonicalRuleId, currentRuleId),
-        eq(schema.orgRuleOverrides.isActive, true)
-      ),
-    });
-
     return {
       currentLabel: `${rule.jurisdiction} ${rule.license_code} v${rule.version}`,
       newLabel: `${rule.jurisdiction} ${rule.license_code} v${latest}`,
       newRuleId,
-      currentOverrideId: activeOverride?.id ?? null,
+      currentOverrideId: currentCanonicalOverride?.id ?? null,
     };
   })();
 
@@ -564,6 +572,10 @@ export default async function SuperviseeDetailPage({
                   admincode: rule.citation.admincode,
                   sourceUrl: rule.citation.url,
                   riskLevel: evalResult?.riskLevel,
+                  isOrgCreated: assignment
+                    ? isCustomRuleId(assignment.ruleId)
+                    : false,
+                  hasActiveOverride: !!currentCanonicalOverride,
                 }}
                 currentRuleId={assignment!.ruleId}
                 currentObligationStartedAt={assignment!.obligationStartedAt
