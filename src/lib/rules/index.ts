@@ -24,6 +24,7 @@ export {
   isCustomRuleId,
   mergeOverride,
   orgIdFromCustomRuleId,
+  parseCustomRuleId,
 } from "./overrides";
 export type { OverrideRow } from "./overrides";
 // resolveEvaluationWithOverrides intentionally NOT exported from the barrel

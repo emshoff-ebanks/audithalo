@@ -65,6 +65,8 @@ export const AUDIT_ACTIONS = {
   // Org rule overrides (Cycle 3 — see docs/strategy/09-rules-admin.md)
   ORG_RULE_OVERRIDE_UPSERTED: "org_rule_override.upserted",
   ORG_RULE_OVERRIDE_DEACTIVATED: "org_rule_override.deactivated",
+  // Custom org-authored rules (Cycle 4)
+  ORG_CUSTOM_RULE_CREATED: "org_custom_rule.created",
   // Founding Supervisor program (NIM-4)
   FOUNDING_SUPERVISOR_GRANTED: "user.founding_supervisor_granted",
   FOUNDING_SUPERVISOR_REVOKED: "user.founding_supervisor_revoked",

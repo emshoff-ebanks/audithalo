@@ -50,6 +50,24 @@ export function orgIdFromCustomRuleId(ruleId: string): string | null {
   return m ? m[1] : null;
 }
 
+/** Parse a synthetic custom rule id back into its components. Returns null on
+ *  shape mismatch. Mirrors customRuleId() above. */
+export function parseCustomRuleId(ruleId: string): {
+  orgId: string;
+  jurisdiction: string;
+  licenseCode: string;
+  version: number;
+} | null {
+  const m = /^org:([^:]+):custom:([a-z]{2})-(.+)-v(\d+)$/i.exec(ruleId);
+  if (!m) return null;
+  return {
+    orgId: m[1],
+    jurisdiction: m[2].toUpperCase(),
+    licenseCode: m[3].toUpperCase(),
+    version: parseInt(m[4], 10),
+  };
+}
+
 /**
  * Apply an org override on top of a canonical rule.
  *

@@ -18,7 +18,7 @@ import {
   buildCustomRule,
   isCustomRuleId,
   mergeOverride,
-  orgIdFromCustomRuleId,
+  parseCustomRuleId,
   type OverrideRow,
 } from "./overrides";
 import type { Rule } from "./types";
@@ -44,13 +44,20 @@ export async function resolveEvaluationWithOverrides(
   let rule: Rule | null = null;
 
   if (isCustomRuleId(assignment.ruleId)) {
-    // Custom rule: the entire definition lives in org_rule_overrides.
-    const expectedOrgId = orgIdFromCustomRuleId(assignment.ruleId);
-    if (!expectedOrgId || expectedOrgId !== assignment.orgId) return null;
+    // Custom rule: the entire definition lives in org_rule_overrides. An
+    // org can have multiple active custom rules (one per jur/license/version
+    // tuple), so look up the row keyed by all four columns rather than just
+    // orgId — otherwise we'd return the first active row regardless of which
+    // custom rule the assignment actually points at.
+    const parts = parseCustomRuleId(assignment.ruleId);
+    if (!parts || parts.orgId !== assignment.orgId) return null;
 
     const row = await db.query.orgRuleOverrides.findFirst({
       where: and(
         eq(schema.orgRuleOverrides.orgId, assignment.orgId),
+        eq(schema.orgRuleOverrides.jurisdiction, parts.jurisdiction),
+        eq(schema.orgRuleOverrides.licenseCode, parts.licenseCode),
+        eq(schema.orgRuleOverrides.version, parts.version),
         eq(schema.orgRuleOverrides.isActive, true)
       ),
     });

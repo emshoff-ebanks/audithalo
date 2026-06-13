@@ -366,11 +366,34 @@ export default async function SuperviseeDetailPage({
   const evalResult = resolved?.evaluation ?? null;
 
   const allRuleObjects = [...loadAllRules().values()];
-  const allRules = allRuleObjects.map((r) => ({
+  const canonicalRules = allRuleObjects.map((r) => ({
     id: `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`,
     label: `${r.jurisdiction} ${r.license_code} v${r.version}`,
     summary: r.summary.split("\n")[0] ?? "",
   }));
+
+  // Append the org's active custom rules so HR Admins can assign them
+  // alongside canonical ones (Cycle 4). The custom-rule id format
+  // (`org:<orgId>:custom:<jur>-<lic>-v<n>`) is recognized by the resolver.
+  const orgCustomRows = await db
+    .select()
+    .from(schema.orgRuleOverrides)
+    .where(
+      and(
+        eq(schema.orgRuleOverrides.orgId, myMembership.orgId),
+        eq(schema.orgRuleOverrides.isActive, true),
+        isNull(schema.orgRuleOverrides.canonicalRuleId)
+      )
+    );
+  const customRules = orgCustomRows.map((r) => ({
+    id: `org:${myMembership.orgId}:custom:${r.jurisdiction.toLowerCase()}-${r.licenseCode.toLowerCase()}-v${r.version}`,
+    label: `${r.label} (org-created)`,
+    summary:
+      (r.customMetadata as { summary?: string } | null)?.summary?.split(
+        "\n"
+      )[0] ?? "Org-created custom rule",
+  }));
+  const allRules = [...canonicalRules, ...customRules];
 
   // Per-rule guidance for the assignment form: key_warnings + window-close
   // math from each rule's YAML. Surfaced inline so supervisors see the most
@@ -493,14 +516,14 @@ export default async function SuperviseeDetailPage({
                   No rule assigned yet.
                 </h2>
                 <p className="mt-2 text-foreground/70">
-                  This supervisee's licensed supervisor hasn't picked a state rule yet.
+                  This supervisee&apos;s licensed supervisor hasn&apos;t picked a state rule yet.
                   Hour progress and at-risk flags will start once they do.
                 </p>
               </>
             ) : (
               <>
                 <h2 className="font-display text-xl font-semibold text-foreground">
-                  Your supervisor hasn't assigned your state rule yet.
+                  Your supervisor hasn&apos;t assigned your state rule yet.
                 </h2>
                 <p className="mt-2 text-foreground/70">
                   Reach out to your supervisor so they can pick the right rule (e.g., NC

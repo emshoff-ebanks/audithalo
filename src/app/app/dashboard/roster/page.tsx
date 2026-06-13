@@ -91,6 +91,25 @@ export default async function RosterPage({
   // Fetch all supervisees with compliance data (3 batch queries)
   const allRosterRows = await getOrgRosterWithCompliance(membership.orgId);
 
+  // Org's active custom rules — surfaced to the invite form's rule picker.
+  const orgCustomRows = await db
+    .select()
+    .from(schema.orgRuleOverrides)
+    .where(
+      and(
+        eq(schema.orgRuleOverrides.orgId, membership.orgId),
+        eq(schema.orgRuleOverrides.isActive, true),
+        isNull(schema.orgRuleOverrides.canonicalRuleId)
+      )
+    );
+  const orgCustomRules = orgCustomRows.map((r) => ({
+    id: `org:${membership.orgId}:custom:${r.jurisdiction.toLowerCase()}-${r.licenseCode.toLowerCase()}-v${r.version}`,
+    label: `${r.label} (org-created)`,
+    summary:
+      (r.customMetadata as { summary?: string } | null)?.summary ??
+      "Org-created custom rule",
+  }));
+
   // Fetch pending invitations for THIS roster page — supervisee invites only.
   // Supervisor/HR Admin/Executive invitations live on /dashboard/team and
   // were mixing into this table without a role indicator, confusing HR Admins
@@ -405,14 +424,19 @@ export default async function RosterPage({
           <CardContent className="p-6">
             <p className="label-overline mb-3">Invite a supervisee</p>
             <InviteForm
-              availableRules={[...loadAllRules().values()].map((r) => {
-                const id = `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`;
-                return {
-                  id,
-                  label: `${r.jurisdiction} ${r.license_code} v${r.version}`,
-                  summary: r.summary,
-                };
-              })}
+              availableRules={[
+                ...[...loadAllRules().values()].map((r) => {
+                  const id = `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`;
+                  return {
+                    id,
+                    label: `${r.jurisdiction} ${r.license_code} v${r.version}`,
+                    summary: r.summary,
+                  };
+                }),
+                // Org's active custom rules — synthetic ids the resolver
+                // recognizes. Cycle 4.
+                ...orgCustomRules,
+              ]}
               supervisorOptions={supervisorOptionsForForm}
             />
           </CardContent>

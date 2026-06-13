@@ -8,7 +8,12 @@ import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { isValidStateCode } from "@/lib/us-states";
-import { getRule, listRuleIds } from "@/lib/rules";
+import {
+  getRule,
+  isCustomRuleId,
+  listRuleIds,
+  parseCustomRuleId,
+} from "@/lib/rules";
 import { sendRuleChangedEmail } from "@/lib/email";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { createNotification } from "@/lib/notifications";
@@ -76,11 +81,6 @@ export async function assignRuleAction(
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
-  const validRuleIds = new Set(listRuleIds());
-  if (!validRuleIds.has(parsed.data.ruleId)) {
-    return { ok: false, error: `Unknown rule "${parsed.data.ruleId}".` };
-  }
-
   let access;
   try {
     access = await requireOrgAccess(parsed.data.superviseeId);
@@ -91,6 +91,39 @@ export async function assignRuleAction(
     return { ok: false, error: "Only supervisors can assign rules." };
   }
   const { orgId } = access;
+
+  // Two valid namespaces: canonical YAML ids (matched against listRuleIds)
+  // and org-scoped custom rule ids (must belong to *this* org and reference
+  // an active row in org_rule_overrides).
+  if (isCustomRuleId(parsed.data.ruleId)) {
+    const parts = parseCustomRuleId(parsed.data.ruleId);
+    if (!parts || parts.orgId !== orgId) {
+      return {
+        ok: false,
+        error: "That custom rule doesn't belong to your organization.",
+      };
+    }
+    const row = await db.query.orgRuleOverrides.findFirst({
+      where: and(
+        eq(schema.orgRuleOverrides.orgId, orgId),
+        eq(schema.orgRuleOverrides.jurisdiction, parts.jurisdiction),
+        eq(schema.orgRuleOverrides.licenseCode, parts.licenseCode),
+        eq(schema.orgRuleOverrides.version, parts.version),
+        eq(schema.orgRuleOverrides.isActive, true)
+      ),
+    });
+    if (!row || row.canonicalRuleId !== null) {
+      return {
+        ok: false,
+        error: `Custom rule "${parsed.data.ruleId}" no longer exists.`,
+      };
+    }
+  } else {
+    const validRuleIds = new Set(listRuleIds());
+    if (!validRuleIds.has(parsed.data.ruleId)) {
+      return { ok: false, error: `Unknown rule "${parsed.data.ruleId}".` };
+    }
+  }
 
   // Upsert pattern: delete prior assignment for this supervisee+org+rule (rare in v1), insert fresh.
   // Fetch the prior assignment FIRST so we know whether to send a "rule changed" email.
