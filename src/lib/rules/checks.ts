@@ -153,13 +153,6 @@ const preRegistrationRequired: CheckFn = (ctx, _rule, check) => {
     signal === "supervisionContractFiledAt"
       ? ctx.supervisionContractFiledAt
       : undefined;
-  const action = attestationAction({
-    checkId: check.id,
-    signalField: signal,
-    actionLabel: "Mark contract as filed",
-    valueShape: "date",
-    helpText: "Pick the date the supervision contract was filed with the board.",
-  });
   if (!filed) {
     return [
       {
@@ -167,24 +160,43 @@ const preRegistrationRequired: CheckFn = (ctx, _rule, check) => {
         severity: check.severity,
         message:
           "Supervision contract has not been filed with the state board. No hours can count until it is filed.",
-        action,
+        action: attestationAction({
+          checkId: check.id,
+          signalField: signal,
+          actionLabel: "Mark contract as filed",
+          valueShape: "date",
+          helpText:
+            "Pick the date the supervision contract was filed with the board.",
+        }),
       },
     ];
   }
-  // Sessions that pre-date the filing don't count
-  const firstSession = sortedByDate(ctx.sessions)[0];
-  if (firstSession && Date.parse(firstSession.date) < Date.parse(filed)) {
+  // Sessions that pre-date the filing don't count toward licensure. The
+  // attestation form for this branch was confusing — the contract date is
+  // already set, so re-submitting the same date silently no-ops while the
+  // gap persists. The fix is to point the user at the offending sessions
+  // via the data_correction action, which scrolls to the session log and
+  // highlights each pre-filing row so they can be deleted or moved.
+  const offendingSessions = ctx.sessions.filter(
+    (s) => Date.parse(s.date) < Date.parse(filed)
+  );
+  if (offendingSessions.length > 0) {
     return [
       {
         code: check.id,
         severity: check.severity,
-        message:
-          "Hours logged before the supervision contract was filed do not count toward licensure.",
+        message: `${offendingSessions.length} session(s) logged before the supervision contract was filed do not count toward licensure.`,
         detail: {
           contractFiledAt: filed,
-          firstSessionDate: firstSession.date,
+          firstSessionDate: offendingSessions[0]?.date,
+          offendingCount: offendingSessions.length,
         },
-        action,
+        action: dataCorrectionAction({
+          actionLabel: "Review flagged sessions",
+          targetSessionIds: offendingSessions.map((s) => s.id),
+          helpText:
+            "Open each flagged session — either delete it (logged in error) or move its date to on/after the contract filing date.",
+        }),
       },
     ];
   }
