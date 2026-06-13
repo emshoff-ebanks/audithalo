@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getRule } from "@/lib/rules/loader";
 import { isCustomRuleId } from "@/lib/rules/overrides";
+import { summarizeOverrideDiff } from "@/lib/rules/diff";
+import { OverrideRowActions } from "./_override-row-actions";
+import { History } from "lucide-react";
 
 export const metadata = { title: "State rules — AuditHalo" };
 export const dynamic = "force-dynamic";
@@ -231,29 +234,130 @@ export default async function RulesAdminPage() {
           </Card>
         ) : (
           <ul className="space-y-2">
-            {overrideRows.map((row) => (
-              <li key={row.id}>
-                <Card>
-                  <CardContent className="p-4 flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0 space-y-1">
-                      <p className="font-medium text-foreground">{row.label}</p>
-                      <p className="text-xs text-foreground/60 font-mono">
-                        on {row.canonicalRuleId} &middot; last edited by{" "}
-                        {editorById.get(row.lastEditedBy ?? row.createdBy) ??
-                          "an HR Admin"}{" "}
-                        on {row.updatedAt.toISOString().slice(0, 10)}
-                      </p>
+            {overrideRows.map((row) => {
+              // The override row points at a canonical rule id; if we can
+              // resolve the canonical, render an inline diff slot for the
+              // row's actions component.
+              const parts = row.canonicalRuleId?.match(/^(.+?)-(.+?)-v(\d+)$/);
+              let diffSlot: React.ReactNode = (
+                <p className="text-foreground/60 italic">
+                  Canonical rule not found.
+                </p>
+              );
+              if (parts && row.canonicalRuleId) {
+                try {
+                  const canonical = getRule(
+                    parts[1].toUpperCase(),
+                    parts[2].toUpperCase(),
+                    parseInt(parts[3], 10)
+                  );
+                  const diff = summarizeOverrideDiff(canonical, {
+                    structuredPatch: row.structuredPatch,
+                    checksPatch: row.checksPatch as Parameters<
+                      typeof summarizeOverrideDiff
+                    >[1]["checksPatch"],
+                  });
+                  diffSlot = diff.isNoOp ? (
+                    <p className="text-foreground/60 italic">
+                      No effective changes from canonical.
+                    </p>
+                  ) : (
+                    <div className="space-y-1">
+                      {diff.structured.map((d) => (
+                        <p key={d.field} className="flex flex-wrap gap-2">
+                          <span className="text-foreground/80">{d.field}</span>
+                          <span className="font-mono text-foreground/60">
+                            {d.canonicalValue ?? "—"} →{" "}
+                            <span className="text-foreground">
+                              {d.overrideValue}
+                            </span>
+                          </span>
+                          <Badge
+                            variant={
+                              d.direction === "tighter"
+                                ? "outline-warn"
+                                : "outline"
+                            }
+                            className="text-[9px] uppercase"
+                          >
+                            {d.direction}
+                          </Badge>
+                        </p>
+                      ))}
+                      {diff.checks.map((d) => (
+                        <p
+                          key={`${d.kind}-${d.checkId}`}
+                          className="flex flex-wrap gap-2"
+                        >
+                          <span className="font-mono text-foreground/80">
+                            {d.checkId}
+                          </span>
+                          {d.kind === "severity_changed" ? (
+                            <span className="text-foreground/60">
+                              severity {d.canonicalSeverity} →{" "}
+                              <span className="text-foreground">
+                                {d.overrideSeverity}
+                              </span>
+                            </span>
+                          ) : (
+                            <Badge variant="risk" className="text-[9px] uppercase">
+                              Removed
+                            </Badge>
+                          )}
+                        </p>
+                      ))}
                     </div>
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/dashboard/team/rules/${row.canonicalRuleId}`}>
-                        Open editor
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
+                  );
+                } catch {
+                  // canonical rule disappeared (renamed?) — leave the not-found
+                  // slot in place
+                }
+              }
+              return (
+                <li key={row.id}>
+                  <Card>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0 space-y-1">
+                          <p className="font-medium text-foreground">
+                            {row.label}
+                          </p>
+                          <p className="text-xs text-foreground/60 font-mono">
+                            on {row.canonicalRuleId} &middot; last edited by{" "}
+                            {editorById.get(
+                              row.lastEditedBy ?? row.createdBy
+                            ) ?? "an HR Admin"}{" "}
+                            on {row.updatedAt.toISOString().slice(0, 10)}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Button asChild variant="ghost" size="sm">
+                            <Link
+                              href={`/dashboard/team/rules/${row.canonicalRuleId}/history`}
+                            >
+                              <History className="h-3.5 w-3.5" />
+                              History
+                            </Link>
+                          </Button>
+                          <Button asChild variant="outline" size="sm">
+                            <Link
+                              href={`/dashboard/team/rules/${row.canonicalRuleId}`}
+                            >
+                              Open editor
+                              <ArrowRight className="h-3.5 w-3.5" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                      <OverrideRowActions
+                        overrideId={row.id}
+                        diffSlot={diffSlot}
+                      />
+                    </CardContent>
+                  </Card>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

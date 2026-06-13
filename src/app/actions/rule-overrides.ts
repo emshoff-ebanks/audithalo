@@ -261,3 +261,112 @@ export async function upsertCanonicalOverrideAction(
   revalidatePath(`/dashboard/team/rules/${parsed.data.canonicalRuleId}`);
   return { ok: true };
 }
+
+const deactivateSchema = z.object({
+  overrideId: z.string().uuid(),
+});
+
+export type DeactivateResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+/**
+ * Deactivate an override or custom-rule row. The row stays in the table
+ * (is_active = false) so the audit trail is preserved — undoes by re-saving
+ * a new active row via the editor / wizard.
+ *
+ * For custom rules: refuses if any active assignment still points at the
+ * synthetic rule id. The HR Admin must reassign those supervisees first;
+ * otherwise the resolver would return null and the supervisee dashboard
+ * would lose its rule.
+ *
+ * Authz: HR Admin only.
+ */
+export async function deactivateOverrideAction(
+  input: z.infer<typeof deactivateSchema>
+): Promise<DeactivateResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const membership = await getCurrentMembership(session.user.id);
+  if (!membership) return { ok: false, error: "No organization." };
+  if (!canManageOrg(membership.role)) {
+    return { ok: false, error: "Only HR Admins can deactivate rule overrides." };
+  }
+
+  const parsed = deactivateSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Invalid input." };
+  }
+
+  const row = await db.query.orgRuleOverrides.findFirst({
+    where: and(
+      eq(schema.orgRuleOverrides.id, parsed.data.overrideId),
+      eq(schema.orgRuleOverrides.orgId, membership.orgId)
+    ),
+  });
+  if (!row) return { ok: false, error: "Override not found." };
+  if (!row.isActive) return { ok: false, error: "Already inactive." };
+
+  const isCustom = row.canonicalRuleId === null;
+
+  // Custom-rule guard: refuse if active assignments still point at this
+  // rule. Reassign-first ensures we never silently break the resolver for
+  // an in-flight supervisee.
+  if (isCustom) {
+    const syntheticId =
+      `org:${membership.orgId}:custom:${row.jurisdiction.toLowerCase()}-${row.licenseCode.toLowerCase()}-v${row.version}`;
+    const stillAssigned = await db.query.superviseeRuleAssignments.findFirst({
+      where: and(
+        eq(schema.superviseeRuleAssignments.orgId, membership.orgId),
+        eq(schema.superviseeRuleAssignments.ruleId, syntheticId)
+      ),
+    });
+    if (stillAssigned) {
+      return {
+        ok: false,
+        error:
+          "One or more supervisees are still assigned this custom rule. Reassign them to a different rule first.",
+      };
+    }
+  }
+
+  await db
+    .update(schema.orgRuleOverrides)
+    .set({
+      isActive: false,
+      lastEditedBy: session.user.id,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.orgRuleOverrides.id, row.id));
+
+  try {
+    await logAuditEvent({
+      orgId: membership.orgId,
+      actorUserId: session.user.id,
+      action: isCustom
+        ? AUDIT_ACTIONS.ORG_CUSTOM_RULE_DEACTIVATED
+        : AUDIT_ACTIONS.ORG_RULE_OVERRIDE_DEACTIVATED,
+      resourceType: "org_rule_override",
+      resourceId: row.id,
+      details: isCustom
+        ? {
+            jurisdiction: row.jurisdiction,
+            licenseCode: row.licenseCode,
+            version: row.version,
+          }
+        : { canonicalRuleId: row.canonicalRuleId },
+    });
+  } catch (err) {
+    console.error("[audit-log] override deactivation failed:", err);
+  }
+
+  revalidatePath("/dashboard/team/rules");
+  if (row.canonicalRuleId) {
+    revalidatePath(`/dashboard/team/rules/${row.canonicalRuleId}`);
+    revalidatePath(`/dashboard/team/rules/${row.canonicalRuleId}/history`);
+  } else {
+    revalidatePath(`/dashboard/team/rules/custom/${row.id}`);
+  }
+  return { ok: true };
+}

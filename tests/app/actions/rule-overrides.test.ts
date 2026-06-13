@@ -19,6 +19,7 @@ vi.mock("@/lib/authz", () => ({
 
 // findFirst returns the "existing" override row (or undefined for create).
 const FIND_FIRST_MOCK = vi.fn();
+const ASSIGNMENT_FIND_FIRST_MOCK = vi.fn();
 const UPDATE_WHERE_MOCK = vi.fn().mockResolvedValue(undefined);
 const UPDATE_SET_MOCK = vi.fn(() => ({ where: UPDATE_WHERE_MOCK }));
 const UPDATE_MOCK = vi.fn(() => ({ set: UPDATE_SET_MOCK }));
@@ -32,6 +33,10 @@ vi.mock("@/lib/db", () => ({
       orgRuleOverrides: {
         findFirst: (...args: unknown[]) => FIND_FIRST_MOCK(...args),
       },
+      superviseeRuleAssignments: {
+        findFirst: (...args: unknown[]) =>
+          ASSIGNMENT_FIND_FIRST_MOCK(...args),
+      },
     },
     update: (...args: unknown[]) => UPDATE_MOCK(...args),
     insert: (...args: unknown[]) => INSERT_MOCK(...args),
@@ -43,6 +48,10 @@ vi.mock("@/lib/db", () => ({
       canonicalRuleId: { name: "canonical_rule_id" },
       isActive: { name: "is_active" },
     },
+    superviseeRuleAssignments: {
+      orgId: { name: "org_id" },
+      ruleId: { name: "rule_id" },
+    },
   },
 }));
 
@@ -51,6 +60,7 @@ vi.mock("@/lib/audit-log", () => ({
   AUDIT_ACTIONS: {
     ORG_RULE_OVERRIDE_UPSERTED: "org_rule_override.upserted",
     ORG_RULE_OVERRIDE_DEACTIVATED: "org_rule_override.deactivated",
+    ORG_CUSTOM_RULE_DEACTIVATED: "org_custom_rule.deactivated",
   },
 }));
 
@@ -58,7 +68,10 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-import { upsertCanonicalOverrideAction } from "@/app/actions/rule-overrides";
+import {
+  deactivateOverrideAction,
+  upsertCanonicalOverrideAction,
+} from "@/app/actions/rule-overrides";
 
 const HR_ADMIN_SESSION = { user: { id: "user-1" } };
 const HR_ADMIN_MEMBERSHIP = { orgId: "org-1", role: "hr_admin" };
@@ -71,6 +84,7 @@ function asHrAdmin() {
 beforeEach(() => {
   vi.clearAllMocks();
   FIND_FIRST_MOCK.mockResolvedValue(undefined);
+  ASSIGNMENT_FIND_FIRST_MOCK.mockResolvedValue(undefined);
 });
 
 describe("upsertCanonicalOverrideAction — authz", () => {
@@ -269,5 +283,110 @@ describe("upsertCanonicalOverrideAction — invalid canonical rule id", () => {
       expectedUpdatedAt: null,
     });
     expect(r).toEqual({ ok: false, error: "Canonical rule no longer exists." });
+  });
+});
+
+describe("deactivateOverrideAction", () => {
+  const VALID_UUID = "11111111-1111-4111-8111-111111111111";
+
+  it("rejects unauthenticated callers", async () => {
+    AUTH_MOCK.mockResolvedValue(null);
+    const r = await deactivateOverrideAction({ overrideId: VALID_UUID });
+    expect(r).toEqual({ ok: false, error: "Not authenticated." });
+  });
+
+  it("rejects non-HR-Admin callers", async () => {
+    AUTH_MOCK.mockResolvedValue(HR_ADMIN_SESSION);
+    GET_MEMBERSHIP_MOCK.mockResolvedValue({
+      orgId: "org-1",
+      role: "supervisor",
+    });
+    const r = await deactivateOverrideAction({ overrideId: VALID_UUID });
+    expect(r).toEqual({
+      ok: false,
+      error: "Only HR Admins can deactivate rule overrides.",
+    });
+  });
+
+  it("rejects a row that doesn't belong to the org", async () => {
+    asHrAdmin();
+    FIND_FIRST_MOCK.mockResolvedValue(undefined);
+    const r = await deactivateOverrideAction({ overrideId: VALID_UUID });
+    expect(r).toEqual({ ok: false, error: "Override not found." });
+    expect(UPDATE_MOCK).not.toHaveBeenCalled();
+  });
+
+  it("rejects a row that's already inactive", async () => {
+    asHrAdmin();
+    FIND_FIRST_MOCK.mockResolvedValue({
+      id: VALID_UUID,
+      orgId: "org-1",
+      canonicalRuleId: "nc-lcmhca-v1",
+      jurisdiction: "NC",
+      licenseCode: "LCMHCA",
+      version: 1,
+      isActive: false,
+    });
+    const r = await deactivateOverrideAction({ overrideId: VALID_UUID });
+    expect(r).toEqual({ ok: false, error: "Already inactive." });
+    expect(UPDATE_MOCK).not.toHaveBeenCalled();
+  });
+
+  it("deactivates a canonical override row successfully", async () => {
+    asHrAdmin();
+    FIND_FIRST_MOCK.mockResolvedValue({
+      id: VALID_UUID,
+      orgId: "org-1",
+      canonicalRuleId: "nc-lcmhca-v1",
+      jurisdiction: "NC",
+      licenseCode: "LCMHCA",
+      version: 1,
+      isActive: true,
+    });
+    const r = await deactivateOverrideAction({ overrideId: VALID_UUID });
+    expect(r).toEqual({ ok: true });
+    expect(UPDATE_MOCK).toHaveBeenCalledOnce();
+    expect(UPDATE_SET_MOCK).toHaveBeenCalledWith(
+      expect.objectContaining({ isActive: false })
+    );
+  });
+
+  it("refuses to deactivate a custom rule when assignments still point at it", async () => {
+    asHrAdmin();
+    FIND_FIRST_MOCK.mockResolvedValue({
+      id: VALID_UUID,
+      orgId: "org-1",
+      canonicalRuleId: null,
+      jurisdiction: "WY",
+      licenseCode: "LPCA",
+      version: 1,
+      isActive: true,
+    });
+    ASSIGNMENT_FIND_FIRST_MOCK.mockResolvedValue({
+      id: "assignment-1",
+      orgId: "org-1",
+      ruleId: "org:org-1:custom:wy-lpca-v1",
+    });
+    const r = await deactivateOverrideAction({ overrideId: VALID_UUID });
+    expect(r.ok).toBe(false);
+    expect(r.ok === false && r.error).toMatch(/still assigned/i);
+    expect(UPDATE_MOCK).not.toHaveBeenCalled();
+  });
+
+  it("deactivates a custom rule with no remaining assignments", async () => {
+    asHrAdmin();
+    FIND_FIRST_MOCK.mockResolvedValue({
+      id: VALID_UUID,
+      orgId: "org-1",
+      canonicalRuleId: null,
+      jurisdiction: "WY",
+      licenseCode: "LPCA",
+      version: 1,
+      isActive: true,
+    });
+    ASSIGNMENT_FIND_FIRST_MOCK.mockResolvedValue(undefined);
+    const r = await deactivateOverrideAction({ overrideId: VALID_UUID });
+    expect(r).toEqual({ ok: true });
+    expect(UPDATE_MOCK).toHaveBeenCalledOnce();
   });
 });
