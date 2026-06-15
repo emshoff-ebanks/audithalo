@@ -38,9 +38,6 @@ export async function applyRuleVersionAction(
 ): Promise<RuleActionResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, error: "Not authenticated." };
-  if (!canSupervise(session.user.role)) {
-    return { ok: false, error: "Only supervisors can apply rule updates." };
-  }
 
   const parsed = applySchema.safeParse(input);
   if (!parsed.success) {
@@ -52,6 +49,11 @@ export async function applyRuleVersionAction(
 
   const membership = await getCurrentMembership(session.user.id);
   if (!membership) return { ok: false, error: "No organization." };
+  // Role gate uses membership.role (Enterprise canonical source) — see
+  // src/lib/authz.ts header comment.
+  if (!canSupervise(membership.role)) {
+    return { ok: false, error: "Only supervisors can apply rule updates." };
+  }
 
   const assignment = await db.query.superviseeRuleAssignments.findFirst({
     where: eq(schema.superviseeRuleAssignments.id, parsed.data.assignmentId),
@@ -134,15 +136,15 @@ export async function dismissRuleChangeAction(
 ): Promise<RuleActionResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, error: "Not authenticated." };
-  if (!canSupervise(session.user.role)) {
-    return { ok: false, error: "Only supervisors can dismiss rule updates." };
-  }
 
   const parsed = dismissSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Invalid input." };
 
   const membership = await getCurrentMembership(session.user.id);
   if (!membership) return { ok: false, error: "No organization." };
+  if (!canSupervise(membership.role)) {
+    return { ok: false, error: "Only supervisors can dismiss rule updates." };
+  }
 
   const assignment = await db.query.superviseeRuleAssignments.findFirst({
     where: eq(schema.superviseeRuleAssignments.id, parsed.data.assignmentId),

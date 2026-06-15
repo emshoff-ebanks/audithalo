@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership } from "@/lib/authz";
@@ -40,9 +40,6 @@ export async function attestAction(input: {
 }): Promise<AttestActionResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, reason: "Not authenticated." };
-  if (!canSupervise(session.user.role)) {
-    return { ok: false, reason: "Only supervisors can record attestations." };
-  }
 
   const parsed = attestSchema.safeParse({
     assignmentId: input.assignmentId,
@@ -60,6 +57,12 @@ export async function attestAction(input: {
 
   const membership = await getCurrentMembership(session.user.id);
   if (!membership) return { ok: false, reason: "No organization." };
+  // Source of truth is the membership row, not the JWT-stamped users.role —
+  // in Enterprise a user can hold different roles in different orgs, and
+  // users.role lags membership changes until the next JWT mint.
+  if (!canSupervise(membership.role)) {
+    return { ok: false, reason: "Only supervisors can record attestations." };
+  }
 
   const assignment = await db.query.superviseeRuleAssignments.findFirst({
     where: eq(schema.superviseeRuleAssignments.id, parsed.data.assignmentId),
@@ -160,9 +163,6 @@ export async function undoAttestationAction(input: {
 }): Promise<AttestActionResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, reason: "Not authenticated." };
-  if (!canSupervise(session.user.role)) {
-    return { ok: false, reason: "Only supervisors can revoke attestations." };
-  }
 
   const parsed = undoSchema.safeParse(input);
   if (!parsed.success) {
@@ -171,6 +171,9 @@ export async function undoAttestationAction(input: {
 
   const membership = await getCurrentMembership(session.user.id);
   if (!membership) return { ok: false, reason: "No organization." };
+  if (!canSupervise(membership.role)) {
+    return { ok: false, reason: "Only supervisors can revoke attestations." };
+  }
 
   const assignment = await db.query.superviseeRuleAssignments.findFirst({
     where: eq(schema.superviseeRuleAssignments.id, parsed.data.assignmentId),
