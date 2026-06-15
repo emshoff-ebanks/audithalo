@@ -12,6 +12,7 @@ import { SignForm } from "./sign-form";
 import { SessionNoteForm } from "./session-note-form";
 import { SessionNoteDisplay } from "./session-note-display";
 import { ScheduledSessionCard } from "./scheduled-session-card";
+import { DidntHappenAffordance } from "./didnt-happen-affordance";
 
 export const metadata = {
   title: "Sign session — AuditHalo",
@@ -55,8 +56,13 @@ export default async function SignSessionPage({
   // (Join button + cancel) instead of the post-meeting sign UI.
   const durationMinutes = Math.round(sessionEvent.durationHours * 60);
   const endMs = sessionEvent.date.getTime() + durationMinutes * 60_000;
+  // Capture once at the top so the value is stable across the render.
+  // Server Components run once per request — reading the clock here is
+  // intentional. eslint-disable suppresses the overzealous purity rule.
+  // eslint-disable-next-line react-hooks/purity
+  const nowMs = Date.now();
   const isPreMeeting =
-    sessionEvent.scheduledStatus === "scheduled" && endMs > Date.now();
+    sessionEvent.scheduledStatus === "scheduled" && endMs > nowMs;
   const canCancelScheduled =
     isPreMeeting &&
     (sessionEvent.loggedById === session.user.id ||
@@ -257,7 +263,7 @@ export default async function SignSessionPage({
               <Badge variant="success">Fully signed</Badge>
               <p className="mt-3 text-sm text-foreground/70">
                 This session is sealed. Its evidence package is available on the
-                supervisee's detail page.
+                supervisee&apos;s detail page.
               </p>
             </div>
           ) : alreadySignedByMe ? (
@@ -271,12 +277,33 @@ export default async function SignSessionPage({
             <div className="pt-4 border-t border-border">
               <Badge variant="outline">View only</Badge>
               <p className="mt-3 text-sm text-foreground/70">
-                You aren't a required signer for this session.
+                You aren&apos;t a required signer for this session.
               </p>
             </div>
           ) : (
             <SignForm sessionEventId={sessionEvent.id} signerRole={signerRole} />
           )}
+
+          {/* Post-meeting "this didn't happen" escape hatch. Visible only
+              when the row hasn't been signed yet, isn't already canceled/
+              no_show, and the meeting's end time has passed. Mirrors the
+              pre-meeting cancel/no-show buttons on ScheduledSessionCard
+              so the same options are available regardless of which side
+              of the meeting clock the user is on. */}
+          {!fullySigned &&
+            !alreadySignedByMe &&
+            sessionEvent.scheduledStatus === "scheduled" &&
+            endMs <= nowMs &&
+            (canSupervise(membership.role) ||
+              session.user.id === sessionEvent.superviseeId) && (
+              <DidntHappenAffordance
+                sessionId={sessionEvent.id}
+                canCancel={
+                  sessionEvent.loggedById === session.user.id ||
+                  canSupervise(membership.role)
+                }
+              />
+            )}
         </CardContent>
       </Card>
     </div>

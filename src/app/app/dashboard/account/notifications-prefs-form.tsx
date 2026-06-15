@@ -19,6 +19,7 @@ const DEFAULTS: Record<NotificationKind, boolean> = {
   session_reminder_1hour: true,
   session_reminder_15min: false,
   session_no_show: true,
+  session_sign_reminder: false,
 };
 
 const KIND_META: Record<
@@ -88,7 +89,12 @@ const KIND_META: Record<
   session_no_show: {
     label: "No-show flagged",
     description:
-      "Sent to supervisors when a scheduled session crosses the 24-hour window without being completed.",
+      "Sent to supervisors when a session is manually marked as a no-show.",
+  },
+  session_sign_reminder: {
+    label: "Time to sign reminder",
+    description:
+      "Sent shortly after a scheduled supervision session ends to remind you to sign it (or mark that it didn't happen).",
   },
 };
 
@@ -99,6 +105,7 @@ const ORDER: NotificationKind[] = [
   "session_rescheduled",
   "session_reminder_1hour",
   "session_reminder_15min",
+  "session_sign_reminder",
   "session_no_show",
   "session_canceled",
   "rule_changed",

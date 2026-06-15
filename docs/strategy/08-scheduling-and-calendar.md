@@ -25,7 +25,10 @@ These are the answers we're treating as settled. Don't re-litigate without expli
 5. **One-tap-to-join inside the app.** Provider join URL opens in browser (web client) or native client (deep link). Same pattern for Teams and Meet.
 6. **Notifications default**: in-app bell + email. SMS skipped until customer asks.
 7. **Calendar UI lives at `/dashboard/calendar`** as a dedicated route. NOT a global header dropdown.
-8. **No-show window: 24 hours.** Scheduled sessions not marked complete within 24h of their end time auto-flag as no-show. The row stays in the DB for audit visibility, but no compliance credit. Supervisor gets a notification to reschedule. (Confirmed 2026-06-11.)
+8. **Sign reminders, manual no-show.** *Revised 2026-06-15.* The original design auto-flipped scheduled sessions to `no_show` 24 hours after their end time. That produced false positives because most "unsigned within 24h" rows actually represented sessions that DID happen but the supervisor hadn't signed yet. The new model:
+   - A poll cron (`/api/cron/sign-reminders`, every ~10 min via GitHub Actions) fires a single `session_sign_reminder` notification when a session's end time passes and it isn't signed/canceled/no-show yet. Dedup column `session_events.sign_reminder_sent_at` prevents repeats; rescheduling nulls it so a new reminder fires after the new end time.
+   - The only path to `scheduledStatus='no_show'` is now a human clicking "This didn't happen → Mark no-show" on the sign screen. Same for `canceled`. The system never makes the claim; the audit log records who did.
+   - Sessions that stay unsigned forever just sit there — they don't auto-no-show. State-board defensibility improves because the row's status is always attributable to a human.
 9. **Recurring series cap: 52 occurrences / 1 year.** Beyond that, HR Admin/supervisor renews. (Confirmed 2026-06-11.)
 10. **Default reminder timing: T-1hr + T-15min, bell + email.** User-customizable in `/dashboard/account#notifications`. (Confirmed 2026-06-11.)
 11. **Conflict detection v1: supervisor's calendar only.** Soft warning, not a block. Supervisee calendar check is a nice-to-have for later. (Confirmed 2026-06-11.)

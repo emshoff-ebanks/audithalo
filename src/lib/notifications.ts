@@ -28,6 +28,10 @@ export const NOTIFICATION_DEFAULTS: Required<NotificationPrefs> = {
     session_reminder_1hour: true,
     session_reminder_15min: false,
     session_no_show: true,
+    // In-app reminder is the primary surface; email default off since the
+    // supervisor is typically already in the app within minutes of the
+    // meeting ending. Users can opt into email via their notification prefs.
+    session_sign_reminder: false,
   },
 };
 
@@ -396,6 +400,25 @@ function renderEmail(
           kind,
         }),
         text: `${greetingText} ${canceledByName} canceled the supervision session scheduled for ${scheduledForLocal}. Reach out to reschedule.`,
+      };
+    }
+    case "session_sign_reminder": {
+      const superviseeName = String(
+        payload.superviseeName ?? "your supervisee"
+      );
+      const scheduledForLocal = String(payload.scheduledForLocal ?? "");
+      const sessionId = String(payload.sessionId ?? "");
+      const url = `${APP_URL}/sign/${sessionId}`;
+      return {
+        subject: `Time to sign — ${superviseeName} (${scheduledForLocal})`,
+        html: shell({
+          heading: "Your supervision session is over.",
+          body: `<p>${greetingHtml} the supervision session with <strong>${esc(superviseeName)}</strong> scheduled for <strong>${esc(scheduledForLocal)}</strong> has ended. If the session happened, please sign it so it counts toward licensure. If it didn't happen, you can mark it from the same screen.</p>`,
+          ctaHref: url,
+          ctaLabel: "Open session",
+          kind,
+        }),
+        text: `${greetingText} the supervision session with ${superviseeName} on ${scheduledForLocal} has ended. Sign or mark it didn't happen: ${url}`,
       };
     }
   }

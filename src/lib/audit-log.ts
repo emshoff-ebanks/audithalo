@@ -56,6 +56,7 @@ export const AUDIT_ACTIONS = {
   SESSION_CANCELED: "session.canceled",
   SESSION_NO_SHOW: "session.no_show",
   SESSION_RESCHEDULED: "session.rescheduled",
+  SESSION_SIGN_REMINDER_SENT: "session.sign_reminder_sent",
   RECURRING_SERIES_CREATED: "session.recurring_series_created",
   // Roles
   MEMBER_ROLE_CHANGED: "member.role_changed",

@@ -74,6 +74,8 @@ function iconFor(kind: NotificationKind) {
       return <CalendarClock className="h-4 w-4 text-secondary" />;
     case "session_no_show":
       return <AlertOctagon className="h-4 w-4 text-[color:var(--color-risk)]" />;
+    case "session_sign_reminder":
+      return <FileSignature className="h-4 w-4 text-[color:var(--color-warning)]" />;
   }
 }
 
@@ -126,6 +128,10 @@ function messageFor(n: NotificationRow): string {
       return `Supervision in 15 minutes — ${n.payload.scheduledForLocal ?? "starting soon"}`;
     case "session_no_show":
       return `No-show flagged — ${sup ?? "a supervisee"}`;
+    case "session_sign_reminder":
+      return sup
+        ? `Sign your session with ${sup}${sessionSuffix ? ` — ${sessionSuffix}` : ""}`
+        : `Sign your supervision session${sessionSuffix ? ` — ${sessionSuffix}` : ""}`;
   }
 }
 
@@ -149,6 +155,7 @@ function destinationFor(n: NotificationRow): string | null {
     case "session_reminder_1hour":
     case "session_reminder_15min":
     case "session_no_show":
+    case "session_sign_reminder":
       return sessionId ? `/sign/${sessionId}` : null;
     case "session_canceled":
       return superviseeId

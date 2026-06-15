@@ -1269,6 +1269,11 @@ export async function rescheduleSessionAction(
       date: newStart,
       durationHours: parsed.data.newDurationMinutes / 60,
       timeZone: parsed.data.timeZone,
+      // Reset the sign-reminder dedupe so the reminder fires again after
+      // the new end time. Without this, a session rescheduled forward
+      // after its original reminder was sent would never get a fresh
+      // nudge for the new time slot.
+      signReminderSentAt: null,
     })
     .where(eq(schema.sessionEvents.id, parsed.data.sessionId));
 

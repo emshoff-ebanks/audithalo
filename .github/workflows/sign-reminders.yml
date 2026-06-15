@@ -1,0 +1,49 @@
+name: Sign reminders cron
+
+# Every 10 minutes, ping the production sign-reminder endpoint. The endpoint
+# scans session_events for rows whose meeting end time just passed and
+# haven't been signed yet, then fires one notification per match.
+#
+# This lives in GitHub Actions instead of Vercel Cron because the Hobby tier
+# caps Vercel Cron at one run per day, which would give us 24-hour latency
+# on "your meeting is over, please sign." A 10-min poll is functionally
+# "right after the meeting" for the user without paying for Pro.
+#
+# Setup checklist (one-time):
+#   1. In GitHub repo settings → Secrets and variables → Actions, add:
+#        AUDITHALO_CRON_URL    = https://app.audithalo.com/api/cron/sign-reminders
+#        AUDITHALO_CRON_SECRET = <same value as Vercel CRON_SECRET env var>
+#   2. Confirm the Vercel CRON_SECRET prod env var matches the GitHub secret.
+#   3. Push the workflow to main. GitHub schedules it after the first push.
+#
+# To disable temporarily: comment out the `schedule:` block. To kill it:
+# delete this file or use the Actions tab to disable the workflow.
+
+on:
+  schedule:
+    # Every 10 minutes. GitHub's cron expression is standard 5-field UTC.
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Hit the sign-reminder endpoint
+        env:
+          URL: ${{ secrets.AUDITHALO_CRON_URL }}
+          SECRET: ${{ secrets.AUDITHALO_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "$URL" ] || [ -z "$SECRET" ]; then
+            echo "::error::AUDITHALO_CRON_URL or AUDITHALO_CRON_SECRET is not set"
+            exit 1
+          fi
+          # `-fSs` fails on any HTTP >=400. The endpoint emits a JSON body
+          # with run stats; print it for the Actions log so a human can
+          # eyeball it while debugging.
+          curl -fSs -X POST "$URL" \
+            -H "Authorization: Bearer $SECRET" \
+            -H "Content-Type: application/json" \
+            --max-time 60
