@@ -16,7 +16,9 @@ function mkSupervisionEvent(opts: {
     superviseeId: "u1",
     orgId: "o1",
     kind: "supervision",
-    date: opts.date ?? new Date(),
+    // Default to a comfortably past time so the end-time filter doesn't
+    // exclude rows that the test didn't explicitly date.
+    date: opts.date ?? new Date(Date.now() - 24 * 60 * 60_000),
     durationHours: 1,
     sessionType: "individual",
     supervisorCredentials: ["LCMHCS"],
@@ -138,6 +140,41 @@ describe("pendingSignaturesForUser", () => {
         signatures: [],
         date: new Date("2026-06-20T12:00:00Z"),
         scheduledStatus: null,
+      }),
+    ];
+    expect(pendingSignaturesForUser(events, "me", now)).toEqual([]);
+  });
+
+  // Regression for the post-no-show-removal bug: a row whose meeting
+  // ended hours ago can carry scheduledStatus='scheduled' forever
+  // (nothing flips it now). The filter must include those — the
+  // supervisee still needs to sign.
+  it("includes past-end sessions still tagged scheduledStatus='scheduled'", () => {
+    const now = new Date("2026-06-12T18:00:00Z");
+    const events = [
+      mkSupervisionEvent({
+        id: "stale-scheduled",
+        signedAt: null,
+        signatures: [],
+        // Started 4 hours ago, 1h long — ended 3 hours ago.
+        date: new Date("2026-06-12T14:00:00Z"),
+        scheduledStatus: "scheduled",
+      }),
+    ];
+    const result = pendingSignaturesForUser(events, "me", now);
+    expect(result.map((e) => e.id)).toEqual(["stale-scheduled"]);
+  });
+
+  it("excludes scheduledStatus='scheduled' rows whose end hasn't passed yet", () => {
+    const now = new Date("2026-06-12T14:30:00Z");
+    const events = [
+      mkSupervisionEvent({
+        id: "in-progress",
+        signedAt: null,
+        signatures: [],
+        // Started 30 min ago, 1h long — ends 30 min from now.
+        date: new Date("2026-06-12T14:00:00Z"),
+        scheduledStatus: "scheduled",
       }),
     ];
     expect(pendingSignaturesForUser(events, "me", now)).toEqual([]);

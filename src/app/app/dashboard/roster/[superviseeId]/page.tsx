@@ -602,7 +602,7 @@ export default async function SuperviseeDetailPage({
               />
 
               {evalResult && evalResult.gaps.length > 0 && (
-                <div>
+                <div id="gaps">
                   <p className="label-overline mb-2">Gaps and warnings</p>
                   <div className="space-y-2">
                     {evalResult.gaps.map((g, i) => (

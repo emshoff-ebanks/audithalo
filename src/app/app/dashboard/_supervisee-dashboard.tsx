@@ -131,48 +131,72 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <p className="label-overline mb-2">Status</p>
-            {evalResult ? (
-              <>
-                <Badge variant={riskBadgeVariant(evalResult.riskLevel)}>
-                  {riskBadgeLabel(evalResult.riskLevel)}
-                </Badge>
-                {evalResult.gaps.length > 0 && (
-                  <p className="mt-3 text-xs text-foreground/60">
-                    {evalResult.gaps.length} gap
-                    {evalResult.gaps.length !== 1 ? "s" : ""} flagged
-                  </p>
-                )}
-              </>
-            ) : (
-              <Badge variant="outline">No rule</Badge>
-            )}
-          </CardContent>
-        </Card>
+        <Link
+          href={`/dashboard/roster/${userId}#gaps`}
+          aria-label="Open compliance gaps"
+        >
+          <Card className="hover:bg-accent/40 transition-colors cursor-pointer h-full">
+            <CardContent className="p-6">
+              <p className="label-overline mb-2">Status</p>
+              {evalResult ? (
+                <>
+                  <Badge variant={riskBadgeVariant(evalResult.riskLevel)}>
+                    {riskBadgeLabel(evalResult.riskLevel)}
+                  </Badge>
+                  {evalResult.gaps.length > 0 && (
+                    <p className="mt-3 text-xs text-foreground/60">
+                      {evalResult.gaps.length} gap
+                      {evalResult.gaps.length !== 1 ? "s" : ""} flagged
+                      &middot; click to review
+                    </p>
+                  )}
+                  {evalResult.gaps.length === 0 && (
+                    <p className="mt-3 text-xs text-foreground/60">
+                      No open gaps
+                    </p>
+                  )}
+                </>
+              ) : (
+                <Badge variant="outline">No rule</Badge>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardContent className="p-6">
-            <p className="label-overline mb-2">Pending signatures</p>
-            <p
-              className={`font-display text-3xl font-bold ${
-                pendingForMe.length > 0
-                  ? "text-[color:var(--color-warning)]"
-                  : "text-foreground"
-              }`}
-            >
-              {pendingForMe.length}
-            </p>
-            <p className="mt-1 text-sm text-foreground/60">
-              {pendingForMe.length === 0 ? "All caught up" : "supervision sessions"}
-            </p>
-          </CardContent>
-        </Card>
+        {pendingForMe.length > 0 ? (
+          <a
+            href="#needs-signature"
+            aria-label="Jump to pending signatures"
+            className="block"
+          >
+            <Card className="hover:bg-accent/40 transition-colors cursor-pointer h-full">
+              <CardContent className="p-6">
+                <p className="label-overline mb-2">Pending signatures</p>
+                <p className="font-display text-3xl font-bold text-[color:var(--color-warning)]">
+                  {pendingForMe.length}
+                </p>
+                <p className="mt-1 text-sm text-foreground/60">
+                  supervision session{pendingForMe.length === 1 ? "" : "s"}
+                  &middot; click to sign
+                </p>
+              </CardContent>
+            </Card>
+          </a>
+        ) : (
+          <Card className="h-full">
+            <CardContent className="p-6">
+              <p className="label-overline mb-2">Pending signatures</p>
+              <p className="font-display text-3xl font-bold text-foreground">
+                0
+              </p>
+              <p className="mt-1 text-sm text-foreground/60">All caught up</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {pendingForMe.length > 0 && (
-        <div className="mt-10">
+        <div className="mt-10" id="needs-signature">
           <h2 className="font-display text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
             <AlertTriangle
               className="h-5 w-5 text-[color:var(--color-warning)]"
