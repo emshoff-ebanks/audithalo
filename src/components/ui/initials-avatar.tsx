@@ -8,16 +8,22 @@ const SIZE_CLASSES: Record<Size, string> = {
   lg: "h-10 w-10 text-sm",
 };
 
-// Picked from the brand palette CSS vars so the avatar color reads as part
-// of the system, not an island. Order matters — the first colors get the
-// most-common name initials.
+// Muted brand-adjacent tones for avatars. Intentionally avoids:
+//   - `secondary` (royal blue #2457ff) — reserved for accent/link hover
+//   - `gold` — reserved for sealed/verified states (CSS comment)
+//   - `success` / `warning` / `risk` — status colors; using them on a
+//     person's avatar would misread as "this person is at risk"
+// Each tone is derived from the existing palette (navy primary, sage
+// surface tone, accent cream) so the row of avatars reads as one
+// system. If a profile-photo upload feature ships later, these stay as
+// the fallback when no photo is set.
 const PALETTE = [
-  "bg-[color:var(--color-secondary)] text-white",
-  "bg-[color:var(--color-gold)] text-foreground",
-  "bg-[color:var(--color-primary)] text-white",
-  "bg-[color:var(--color-success)] text-white",
-  "bg-[color:var(--color-warning)] text-white",
-  "bg-[color:var(--color-risk)] text-white",
+  "bg-[color:var(--color-primary)] text-[color:var(--color-primary-foreground)]", // navy
+  "bg-[#3a5478] text-white",   // slate blue (lighter navy)
+  "bg-[color:var(--color-sage)] text-white",                                       // sage
+  "bg-[#7a6f5a] text-white",   // warm taupe
+  "bg-[#4a5e60] text-white",   // deep teal-gray
+  "bg-[#5d4f3f] text-white",   // earth brown
 ];
 
 /** Sum char codes mod palette length — deterministic per name so a user's

@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { Users, AlertTriangle, FileSignature, CheckCircle2, ArrowRight } from "lucide-react";
-import { getCurrentMembership } from "@/lib/authz";
+import {
+  canSupervise,
+  getCurrentMembership,
+  isHrAdmin,
+} from "@/lib/authz";
 import { getOrgRosterWithCompliance } from "@/lib/db/roster-queries";
 import { db, schema } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { BillingBanner } from "./_billing-banner";
 import { EvidenceExplainer } from "./_evidence-explainer";
 import { PracticePanels, PRACTICE_THRESHOLD } from "./_practice-panel";
+import { TodaysSchedule } from "./_todays-schedule";
+import { RecentActivity } from "./_recent-activity";
 
 type Props = {
   userId: string;
@@ -37,6 +43,26 @@ export async function SupervisorDashboard({
       },
     }),
   ]);
+
+  // The "Today's schedule" widget needs to know which supervisees this
+  // viewer is allowed to see sessions for. Supervisor: their active
+  // assignments. HR Admin: the whole org (pass null and the widget
+  // skips the inArray filter). Done with one query so the widget stays
+  // pure / cache-friendly.
+  let allowedSuperviseeIdsForSchedule: string[] | null = null;
+  if (canSupervise(membership.role) && !isHrAdmin(membership.role)) {
+    const rows = await db
+      .select({ superviseeId: schema.supervisorAssignments.superviseeId })
+      .from(schema.supervisorAssignments)
+      .where(
+        and(
+          eq(schema.supervisorAssignments.supervisorId, userId),
+          eq(schema.supervisorAssignments.orgId, membership.orgId),
+          isNull(schema.supervisorAssignments.endedAt)
+        )
+      );
+    allowedSuperviseeIdsForSchedule = rows.map((r) => r.superviseeId);
+  }
 
   const totalSupervisees = roster.length;
   const atRiskCount = roster.filter(
@@ -135,6 +161,13 @@ export async function SupervisorDashboard({
         </div>
       </div>
 
+      <div className="mt-10">
+        <TodaysSchedule
+          orgId={membership.orgId}
+          allowedSuperviseeIds={allowedSuperviseeIdsForSchedule}
+        />
+      </div>
+
       {roster.length >= PRACTICE_THRESHOLD && <PracticePanels roster={roster} />}
 
       {atRiskCount > 0 && (
@@ -166,6 +199,10 @@ export async function SupervisorDashboard({
           </div>
         </div>
       )}
+
+      <div className="mt-10">
+        <RecentActivity orgId={membership.orgId} />
+      </div>
     </div>
   );
 }
