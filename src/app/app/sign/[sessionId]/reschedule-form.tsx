@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DateTime12h } from "@/components/ui/datetime-12h";
 import {
   rescheduleSessionAction,
   type ActionResult,
@@ -78,15 +79,14 @@ export function RescheduleForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label htmlFor="reschedule-start">New start</Label>
-          <Input
-            id="reschedule-start"
-            name="localStart"
-            type="datetime-local"
-            value={localStart}
-            onChange={(e) => setLocalStart(e.target.value)}
-            required
-            className="mt-1.5"
-          />
+          <div className="mt-1.5">
+            <DateTime12h
+              id="reschedule-start"
+              name="localStart"
+              defaultValue={localStart}
+              onChange={(v) => setLocalStart(v)}
+            />
+          </div>
         </div>
         <div>
           <Label htmlFor="reschedule-duration">Duration (min)</Label>

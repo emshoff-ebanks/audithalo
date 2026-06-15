@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { and, eq, desc } from "drizzle-orm";
-import { ArrowRight, FileSignature, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ArrowRight, AlertTriangle } from "lucide-react";
 import { getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { riskBadgeLabel, riskBadgeVariant } from "@/lib/rules";
@@ -9,8 +9,8 @@ import { resolveEvaluationWithOverrides } from "@/lib/rules/evaluation-context-w
 import { pendingSignaturesForUser } from "@/lib/supervisee";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { LogSessionForm } from "@/app/app/dashboard/roster/[superviseeId]/log-session-form";
+import { SuperviseeThisWeek } from "./_supervisee-this-week";
 
 type Props = {
   userId: string;
@@ -67,7 +67,6 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
   const evalResult = resolved?.evaluation ?? null;
 
   const pendingForMe = pendingSignaturesForUser(events, userId);
-  const recent = events.slice(0, 5);
 
   const practiceRequired = rule?.structured.total_practice_hours_required ?? 0;
   const supervisionRequired = rule?.structured.total_supervision_hours_required ?? 0;
@@ -204,61 +203,13 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
         </div>
       )}
 
-      <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <SuperviseeThisWeek superviseeId={userId} orgId={membership.orgId} />
+
+      <div className="mt-10">
         <Card>
           <CardContent className="p-6">
             <p className="label-overline mb-3">Log practice hours</p>
             <LogSessionForm superviseeId={userId} allowSupervision={false} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <p className="label-overline mb-3">Recent activity</p>
-            {recent.length === 0 ? (
-              <p className="text-sm text-foreground/60 py-2">
-                No sessions yet. Log your first practice hours →
-              </p>
-            ) : (
-              <ul className="space-y-2 text-sm">
-                {recent.map((e) => (
-                  <li
-                    key={e.id}
-                    className="flex items-center justify-between py-2 border-b border-border last:border-b-0"
-                  >
-                    <div className="flex items-center gap-3">
-                      {e.signedAt ? (
-                        <FileSignature className="h-4 w-4 text-[color:var(--color-gold)] shrink-0" />
-                      ) : e.kind === "supervision" ? (
-                        <AlertTriangle className="h-4 w-4 text-[color:var(--color-warning)] shrink-0" />
-                      ) : (
-                        <CheckCircle2 className="h-4 w-4 text-foreground/40 shrink-0" />
-                      )}
-                      <div>
-                        <p className="text-foreground capitalize">
-                          {e.kind === "supervision"
-                            ? `${e.sessionType ?? "supervision"} session`
-                            : "Practice"}
-                        </p>
-                        <p className="text-xs text-foreground/60 font-mono">
-                          {e.date.toISOString().slice(0, 10)}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="font-mono text-xs text-foreground/70">
-                      {e.durationHours.toFixed(1)} hr
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="mt-4 pt-4 border-t border-border">
-              <Button asChild variant="ghost" size="sm" className="-ml-3">
-                <Link href={`/dashboard/roster/${userId}`}>
-                  View full record <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>
