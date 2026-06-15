@@ -14,6 +14,33 @@ import { summarizeOverrideDiff } from "@/lib/rules/diff";
 import { OverrideRowActions } from "./_override-row-actions";
 import { History } from "lucide-react";
 
+/** Customer-visible labels for structured fields. Mirrors the same map in
+ *  override-editor-form.tsx so the diff renderer doesn't expose raw
+ *  developer keys like `total_practice_hours_required` to HR Admins. */
+const STRUCTURED_LABELS: Record<string, string> = {
+  total_practice_hours_required: "Total practice hours",
+  total_supervision_hours_required: "Total supervision hours",
+  min_duration_months: "Min duration (months)",
+  max_duration_months: "Max duration (months)",
+  group_max_attendees: "Group max attendees",
+  min_individual_supervision_fraction: "Min individual supervision fraction",
+};
+
+/** Resolve a canonical rule slug like `nc-lcmhca-v3` to the human label
+ *  format used elsewhere ("NC LCMHCA v3"). Returns null on a malformed
+ *  slug — caller falls back to the raw value. */
+function formatCanonicalRuleLabel(id: string | null | undefined): string | null {
+  if (!id) return null;
+  const m = id.match(/^(.+?)-(.+?)-v(\d+)$/);
+  if (!m) return null;
+  try {
+    const rule = getRule(m[1].toUpperCase(), m[2].toUpperCase(), parseInt(m[3], 10));
+    return `${rule.jurisdiction} ${rule.license_code} v${rule.version}`;
+  } catch {
+    return null;
+  }
+}
+
 export const metadata = { title: "State rules — AuditHalo" };
 export const dynamic = "force-dynamic";
 
@@ -281,6 +308,9 @@ export default async function RulesAdminPage() {
                     removed: diff.checks.filter((d) => d.kind === "removed")
                       .length,
                   };
+                  const checkDescById = new Map<string, string>(
+                    canonical.checks.map((c) => [c.id, c.description])
+                  );
                   diffSlot = diff.isNoOp ? (
                     <p className="text-foreground/60 italic">
                       No effective changes from canonical.
@@ -289,7 +319,9 @@ export default async function RulesAdminPage() {
                     <div className="space-y-1">
                       {diff.structured.map((d) => (
                         <p key={d.field} className="flex flex-wrap gap-2">
-                          <span className="text-foreground/80">{d.field}</span>
+                          <span className="text-foreground/80">
+                            {STRUCTURED_LABELS[d.field] ?? d.field}
+                          </span>
                           <span className="font-mono text-foreground/60">
                             {d.canonicalValue ?? "—"} →{" "}
                             <span className="text-foreground">
@@ -313,8 +345,11 @@ export default async function RulesAdminPage() {
                           key={`${d.kind}-${d.checkId}`}
                           className="flex flex-wrap gap-2"
                         >
-                          <span className="font-mono text-foreground/80">
-                            {d.checkId}
+                          <span
+                            className="text-foreground/80"
+                            title={d.checkId}
+                          >
+                            {checkDescById.get(d.checkId) ?? d.checkId}
                           </span>
                           {d.kind === "severity_changed" ? (
                             <span className="text-foreground/60">
@@ -379,8 +414,14 @@ export default async function RulesAdminPage() {
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-foreground/60 font-mono">
-                            on {row.canonicalRuleId} &middot; last edited by{" "}
+                          <p
+                            className="text-xs text-foreground/60"
+                            title={row.canonicalRuleId ?? undefined}
+                          >
+                            on{" "}
+                            {formatCanonicalRuleLabel(row.canonicalRuleId) ??
+                              row.canonicalRuleId}{" "}
+                            &middot; last edited by{" "}
                             {editorById.get(
                               row.lastEditedBy ?? row.createdBy
                             ) ?? "an HR Admin"}{" "}

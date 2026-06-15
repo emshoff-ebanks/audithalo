@@ -2,6 +2,7 @@ import Link from "next/link";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Card, CardContent } from "@/components/ui/card";
 import { db, schema } from "@/lib/db";
+import { loadAllRules } from "@/lib/rules";
 
 type Props = {
   orgId: string;
@@ -87,6 +88,11 @@ export async function RecentActivity({ orgId }: Props) {
     actors.map((a) => [a.id, a.name ?? a.email ?? "An admin"])
   );
 
+  // Resolve any canonical rule ids to the human label used elsewhere in the
+  // app ("NC LCMHCA v3") instead of leaking the raw slug ("nc-lcmhca-v3")
+  // into customer-visible prose.
+  const rules = loadAllRules();
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -117,7 +123,8 @@ export async function RecentActivity({ orgId }: Props) {
                     r.actorUserId
                       ? actorById.get(r.actorUserId) ?? "an admin"
                       : "the system",
-                    r.details ?? null
+                    r.details ?? null,
+                    rules
                   )}
                 </span>
               </li>
@@ -129,10 +136,27 @@ export async function RecentActivity({ orgId }: Props) {
   );
 }
 
+/** Resolve a rule slug ("nc-lcmhca-v3") to a human label ("NC LCMHCA v3").
+ *  Canonical slugs land in the rule map; custom slugs ("org:<uuid>:custom:...")
+ *  fall back to a generic phrase so customers don't see raw IDs. */
+function formatRuleLabel(
+  id: string | null,
+  rules: ReturnType<typeof loadAllRules>
+): string | null {
+  if (!id) return null;
+  const canonical = rules.get(id.toLowerCase());
+  if (canonical) {
+    return `${canonical.jurisdiction} ${canonical.license_code} v${canonical.version}`;
+  }
+  if (id.startsWith("org:")) return "your org's custom rule";
+  return null;
+}
+
 function describe(
   action: string,
   actor: string,
-  details: Record<string, unknown> | null
+  details: Record<string, unknown> | null,
+  rules: ReturnType<typeof loadAllRules>
 ): string {
   const ruleId =
     details && typeof details.ruleId === "string" ? details.ruleId : null;
@@ -140,11 +164,13 @@ function describe(
     details && typeof details.newRuleId === "string"
       ? (details.newRuleId as string)
       : null;
+  const ruleLabel = formatRuleLabel(ruleId, rules);
+  const newRuleLabel = formatRuleLabel(newRuleId, rules);
   switch (action) {
     case "rule.assigned":
-      return `${actor} assigned ${ruleId ?? "a rule"} to a supervisee.`;
+      return `${actor} assigned ${ruleLabel ?? "a state rule"} to a supervisee.`;
     case "rule.changed":
-      return `${actor} changed a supervisee's rule to ${newRuleId ?? ruleId ?? "a new version"}.`;
+      return `${actor} changed a supervisee's rule to ${newRuleLabel ?? ruleLabel ?? "a new version"}.`;
     case "session.signed":
       return `${actor} signed a supervision session.`;
     case "session.sealed":

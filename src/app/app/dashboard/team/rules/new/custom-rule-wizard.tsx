@@ -294,7 +294,7 @@ export function CustomRuleWizard({ jurisdictions, canonicalPairs }: Props) {
       for (const c of data.checks) {
         const def = TEMPLATE_CATALOG[c.templateKey].subKinds[c.subKind];
         if (seenEvaluatorIds.has(def.evaluatorId)) {
-          return `Two checks both emit '${def.evaluatorId}'. Each sub-kind may only appear once per rule.`;
+          return "You already have a check of this type. Each check can only be used once per rule — remove the duplicate before continuing.";
         }
         seenEvaluatorIds.add(def.evaluatorId);
         for (const p of def.params) {

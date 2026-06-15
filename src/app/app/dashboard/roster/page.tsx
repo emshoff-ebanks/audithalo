@@ -164,6 +164,22 @@ export default async function RosterPage({
         })()
       : null;
 
+  // Pending invites filtered the same way the roster rows are: when an HR
+  // Admin filters by supervisor X, the table must only show invites that
+  // *will* land under X. Without this, the empty-state lies — "Dr. X has
+  // no supervisees" while a list of someone else's pending invites
+  // still renders below.
+  const visiblePendingInvites = pendingInvites.filter((i) => {
+    if (i.acceptedAt) return false;
+    if (
+      supervisorFilterId &&
+      i.pendingAssignmentSupervisorId !== supervisorFilterId
+    ) {
+      return false;
+    }
+    return true;
+  });
+
   const rosterRows = allRosterRows.filter((r) => {
     const matchesSearch =
       searchLower === "" ||
@@ -300,9 +316,7 @@ export default async function RosterPage({
                   </li>
                 );
               })}
-              {pendingInvites
-                .filter((i) => !i.acceptedAt)
-                .map((i) => (
+              {visiblePendingInvites.map((i) => (
                   <li
                     key={i.id}
                     className="px-4 py-3 bg-[color:var(--color-evidence-bg)]/40"
@@ -333,9 +347,11 @@ export default async function RosterPage({
                   </li>
                 ))}
               {rosterRows.length === 0 &&
-                pendingInvites.filter((i) => !i.acceptedAt).length === 0 && (
+                visiblePendingInvites.length === 0 && (
                   <li className="px-4 py-8 text-center text-foreground/50 text-sm">
-                    No supervisees yet. Use the form below to invite one.
+                    {supervisorFilterId
+                      ? "This supervisor has no supervisees assigned yet."
+                      : "No supervisees yet. Use the form below to invite one."}
                   </li>
                 )}
             </ul>
@@ -430,16 +446,16 @@ export default async function RosterPage({
                   );
                 })}
                 {rosterRows.length === 0 &&
-                  pendingInvites.filter((i) => !i.acceptedAt).length === 0 && (
+                  visiblePendingInvites.length === 0 && (
                     <tr>
                       <td colSpan={5} className="px-5 py-8 text-center text-foreground/50 text-sm">
-                        No supervisees yet. Invite one using the form →
+                        {supervisorFilterId
+                          ? "This supervisor has no supervisees assigned yet."
+                          : "No supervisees yet. Invite one using the form →"}
                       </td>
                     </tr>
                   )}
-                {pendingInvites
-                  .filter((i) => !i.acceptedAt)
-                  .map((i) => (
+                {visiblePendingInvites.map((i) => (
                     <tr key={i.id} className="border-t border-border bg-[color:var(--color-evidence-bg)]/40">
                       <td className="px-5 py-3 font-medium">
                         {i.name ?? <span className="text-foreground/50 italic">unnamed</span>}

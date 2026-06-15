@@ -67,8 +67,9 @@ export function OverrideRowActions({ overrideId, diffSlot }: Props) {
       {confirming && (
         <div className="rounded-sm border border-[color:var(--color-risk)]/30 bg-[color:var(--color-risk)]/5 p-3 space-y-2">
           <p className="text-xs text-foreground">
-            Deactivate this override? The evaluator will revert to canonical
-            for this rule across your org. The row stays in the audit trail.
+            Deactivate this override? Your org will go back to the standard
+            board rule for this license, across every supervisee. The history
+            of your customization stays in the audit trail.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button

@@ -186,6 +186,10 @@ export function NotificationsBell({ initialNotifications }: Props) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  // Tracks notification ids the user has locally dismissed (via click or
+  // "Mark all read") so a subsequent 60s poll doesn't re-inflate them while
+  // the server-side mark-read is still in flight. Bounded by session length.
+  const dismissedIdsRef = useRef<Set<string>>(new Set());
 
   const unread = items.length;
 
@@ -219,17 +223,13 @@ export function NotificationsBell({ initialNotifications }: Props) {
       try {
         const rows = await fetchUnreadNotificationsAction();
         if (cancelled) return;
-        // Merge: keep optimistic-removed items removed (don't undo a local
-        // mark-as-read). Only show server rows that we haven't already
-        // marked locally as read.
-        setItems((prev) => {
-          const prevIds = new Set(prev.map((n) => n.id));
-          // Replace with server truth, but if the server is missing items
-          // we already have (e.g. mid-mark-read), drop those.
-          const fresh = rows.filter(
-            (r) => prevIds.has(r.id) || true // accept all unread from server
-          );
-          // Dedup by id, server order wins.
+        // Honor local dismissals — a row the user clicked or "Mark all
+        // read"-ed must not flicker back into the bell while the server
+        // catches up. Once the server has actually marked the row read,
+        // it stops appearing in fetchUnreadNotificationsAction and the
+        // dismissed entry can stay in the ref harmlessly.
+        setItems(() => {
+          const fresh = rows.filter((r) => !dismissedIdsRef.current.has(r.id));
           const byId = new Map<string, NotificationRow>();
           for (const n of fresh) byId.set(n.id, n);
           return Array.from(byId.values());
@@ -268,11 +268,17 @@ export function NotificationsBell({ initialNotifications }: Props) {
   }, []);
 
   function handleMarkAll() {
+    // Snapshot the ids currently shown so the upcoming poll can't undo
+    // the mark-all-read between now and the server commit.
+    const currentIds = items.map((n) => n.id);
     startTransition(async () => {
       const result = await markAllReadAction();
       // Only flush local state when the server confirms — otherwise the bell
       // shows "all caught up" while the DB still has unread rows.
-      if (result.ok) setItems([]);
+      if (result.ok) {
+        for (const id of currentIds) dismissedIdsRef.current.add(id);
+        setItems([]);
+      }
     });
   }
 
@@ -284,6 +290,7 @@ export function NotificationsBell({ initialNotifications }: Props) {
     // the session). Navigate even if mark-read fails so a flaky DB hit
     // doesn't trap the user.
     const dest = destinationFor(n);
+    dismissedIdsRef.current.add(n.id);
     setItems((prev) => prev.filter((m) => m.id !== n.id));
     setOpen(false);
     startTransition(async () => {

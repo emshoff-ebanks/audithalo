@@ -164,7 +164,7 @@ export default async function TeamPage() {
               Import team from CSV
             </Link>
           </Button>
-          <Button asChild variant="destructive" size="sm">
+          <Button asChild variant="default" size="sm">
             <Link href="/dashboard/team/rules">
               <Shield className="h-3.5 w-3.5" />
               Customize state rules

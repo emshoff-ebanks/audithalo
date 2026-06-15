@@ -54,6 +54,11 @@ export function RuleVersionBanner({
       });
       if (result.ok) {
         setApplied(true);
+        // Re-fetch the server components so the page reflects the new
+        // ruleId everywhere (rule label, version-drift banner removal,
+        // re-evaluated compliance). Without this, the banner sticks on
+        // "Applied — refreshing" until the user manually reloads.
+        router.refresh();
       } else {
         setError(result.error);
       }

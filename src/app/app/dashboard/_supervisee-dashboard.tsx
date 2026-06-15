@@ -84,14 +84,20 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
       <p className="mt-2 text-foreground/70">{userEmail}</p>
       {rule && (
         <p className="mt-1 text-foreground/70">
-          Tracking against {rule.jurisdiction} {rule.license_code} v{rule.version} —{" "}
+          Tracking against {rule.jurisdiction} {rule.license_code} v{rule.version}
+        </p>
+      )}
+
+      {rule && (
+        <div className="mt-5">
           <Link
             href={`/dashboard/roster/${userId}`}
-            className="text-secondary hover:underline"
+            className="inline-flex items-center gap-1.5 rounded-sm bg-primary text-primary-foreground hover:bg-primary/90 px-3 h-9 text-sm font-medium shadow-sm"
           >
-            View full record →
+            View full record
+            <ArrowRight className="h-4 w-4" />
           </Link>
-        </p>
+        </div>
       )}
 
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -131,37 +137,56 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
           </CardContent>
         </Card>
 
-        <Link
-          href={`/dashboard/roster/${userId}#gaps`}
-          aria-label="Open compliance gaps"
-        >
-          <Card className="hover:bg-accent/40 transition-colors cursor-pointer h-full">
-            <CardContent className="p-6">
-              <p className="label-overline mb-2">Status</p>
-              {evalResult ? (
-                <>
-                  <Badge variant={riskBadgeVariant(evalResult.riskLevel)}>
-                    {riskBadgeLabel(evalResult.riskLevel)}
-                  </Badge>
-                  {evalResult.gaps.length > 0 && (
-                    <p className="mt-3 text-xs text-foreground/60">
-                      {evalResult.gaps.length} gap
-                      {evalResult.gaps.length !== 1 ? "s" : ""} flagged
-                      &middot; click to review
-                    </p>
-                  )}
-                  {evalResult.gaps.length === 0 && (
-                    <p className="mt-3 text-xs text-foreground/60">
-                      No open gaps
-                    </p>
-                  )}
-                </>
-              ) : (
-                <Badge variant="outline">No rule</Badge>
-              )}
-            </CardContent>
-          </Card>
-        </Link>
+        {(() => {
+          // Only wrap the Status card in a Link when there are gaps to
+          // navigate to — the #gaps anchor on the detail page only
+          // renders when gaps.length > 0, so an unconditional link
+          // would scroll-to-nothing for clean accounts.
+          const hasGaps = !!(evalResult && evalResult.gaps.length > 0);
+          const card = (
+            <Card
+              className={
+                hasGaps
+                  ? "hover:bg-accent/40 transition-colors cursor-pointer h-full"
+                  : "h-full"
+              }
+            >
+              <CardContent className="p-6">
+                <p className="label-overline mb-2">Status</p>
+                {evalResult ? (
+                  <>
+                    <Badge variant={riskBadgeVariant(evalResult.riskLevel)}>
+                      {riskBadgeLabel(evalResult.riskLevel)}
+                    </Badge>
+                    {evalResult.gaps.length > 0 ? (
+                      <p className="mt-3 text-xs text-foreground/60">
+                        {evalResult.gaps.length} gap
+                        {evalResult.gaps.length !== 1 ? "s" : ""} flagged
+                        &middot; click to review
+                      </p>
+                    ) : (
+                      <p className="mt-3 text-xs text-foreground/60">
+                        No open gaps
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <Badge variant="outline">No rule</Badge>
+                )}
+              </CardContent>
+            </Card>
+          );
+          return hasGaps ? (
+            <Link
+              href={`/dashboard/roster/${userId}#gaps`}
+              aria-label="Open compliance gaps"
+            >
+              {card}
+            </Link>
+          ) : (
+            card
+          );
+        })()}
 
         {pendingForMe.length > 0 ? (
           <a

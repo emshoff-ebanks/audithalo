@@ -253,12 +253,16 @@ export function OverrideEditorForm({
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="font-mono text-xs text-foreground/80">{c.id}</p>
+                  <p
+                    className="text-sm font-medium text-foreground"
+                    title={c.id}
+                  >
+                    {c.description}
+                  </p>
                   <Badge variant="outline" className="text-[10px] uppercase">
                     canonical: {c.severity}
                   </Badge>
                 </div>
-                <p className="text-xs text-foreground/70">{c.description}</p>
 
                 <div className="flex flex-wrap items-center gap-3 pt-1">
                   <div className="flex items-center gap-2">
