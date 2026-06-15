@@ -30,7 +30,10 @@
  *   so the values are throwaway-strong but not meant to persist.
  */
 
-import "dotenv/config";
+import { config as dotenvConfig } from "dotenv";
+// Explicit path — repo convention is .env.local, not .env. Falls back
+// to the OS env if .env.local is absent (e.g., running in CI).
+dotenvConfig({ path: ".env.local" });
 import { neon } from "@neondatabase/serverless";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
