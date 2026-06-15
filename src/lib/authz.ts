@@ -69,6 +69,16 @@ export function canExportAuditLog(role: string | undefined | null): boolean {
   return isHrAdmin(role) || isExecutive(role);
 }
 
+/** Invitation management — supervisors (invite supervisees they'll
+ *  supervise) and HR Admins (invite anyone, including supervisors and
+ *  other HR Admins). Executive is intentionally excluded — read-only
+ *  oversight role per docs/strategy/04-enterprise-rbac.md. */
+export function canManageInvitations(
+  role: string | undefined | null
+): boolean {
+  return role === "supervisor" || role === "hr_admin";
+}
+
 export async function requireSession() {
   const session = await auth();
   if (!session?.user) redirect("/login");

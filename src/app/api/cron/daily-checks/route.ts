@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/nextjs";
 import { db, schema } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { latestVersionForState, parseRuleId } from "@/lib/rules";
+import { verifyCronAuth } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,17 +51,8 @@ const THIRTY_DAYS_MS = 30 * ONE_DAY_MS;
  *            gaps that have been open >7 days. Skipped in v1.
  */
 async function handleDailyChecks(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json(
-      { ok: false, reason: "CRON_SECRET not set — refusing to run" },
-      { status: 500 }
-    );
-  }
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ ok: false }, { status: 401 });
-  }
+  const authFail = verifyCronAuth(request);
+  if (authFail) return authFail;
 
   const now = new Date();
   const dayAgo = new Date(now.getTime() - ONE_DAY_MS);

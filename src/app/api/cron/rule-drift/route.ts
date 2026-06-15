@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import * as Sentry from "@sentry/nextjs";
 import { db, schema } from "@/lib/db";
 import { loadAllRules } from "@/lib/rules";
+import { verifyCronAuth } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -144,17 +145,8 @@ async function checkRuleSource(
 }
 
 async function handleRuleDrift(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json(
-      { ok: false, reason: "CRON_SECRET not set" },
-      { status: 500 }
-    );
-  }
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ ok: false }, { status: 401 });
-  }
+  const authFail = verifyCronAuth(request);
+  if (authFail) return authFail;
 
   const now = new Date();
   const rules = [...loadAllRules().values()];

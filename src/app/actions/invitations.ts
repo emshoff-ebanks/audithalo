@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { eq, and, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
-import { isManagerRole, getCurrentMembership } from "@/lib/authz";
+import { canManageInvitations, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import {
   generateInvitationToken,
@@ -79,7 +79,7 @@ export async function inviteSuperviseeAction(
   if (!membership) {
     return { ok: false, error: "Your account has no organization yet." };
   }
-  if (!isManagerRole(membership.role)) {
+  if (!canManageInvitations(membership.role)) {
     return {
       ok: false,
       error: "Only supervisors or HR Admins can invite supervisees.",
@@ -347,7 +347,7 @@ export async function cancelInvitationAction(
   if (!membership) {
     return { ok: false, error: "No organization." };
   }
-  if (!isManagerRole(membership.role)) {
+  if (!canManageInvitations(membership.role)) {
     return {
       ok: false,
       error: "Only supervisors or HR Admins can cancel invitations.",
@@ -357,11 +357,11 @@ export async function cancelInvitationAction(
   const invite = await db.query.invitations.findFirst({
     where: eq(schema.invitations.id, parsed.data.invitationId),
   });
-  if (!invite) {
+  // Collapse "not found" and "wrong org" into the same response so the
+  // distinct error strings can't be used to enumerate valid invitation IDs
+  // across other organizations.
+  if (!invite || invite.orgId !== membership.orgId) {
     return { ok: false, error: "Invitation not found." };
-  }
-  if (invite.orgId !== membership.orgId) {
-    return { ok: false, error: "Invitation belongs to another organization." };
   }
   if (invite.acceptedAt) {
     return {
@@ -413,7 +413,7 @@ export async function resendInvitationAction(
   if (!membership) {
     return { ok: false, error: "No organization." };
   }
-  if (!isManagerRole(membership.role)) {
+  if (!canManageInvitations(membership.role)) {
     return {
       ok: false,
       error: "Only supervisors or HR Admins can resend invitations.",
@@ -423,11 +423,9 @@ export async function resendInvitationAction(
   const invite = await db.query.invitations.findFirst({
     where: eq(schema.invitations.id, parsed.data.invitationId),
   });
-  if (!invite) {
+  // Same enumeration mitigation as cancelInvitationAction above.
+  if (!invite || invite.orgId !== membership.orgId) {
     return { ok: false, error: "Invitation not found." };
-  }
-  if (invite.orgId !== membership.orgId) {
-    return { ok: false, error: "Invitation belongs to another organization." };
   }
   if (invite.acceptedAt) {
     return { ok: false, error: "This invitation has already been accepted." };

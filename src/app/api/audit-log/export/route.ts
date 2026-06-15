@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import { auth } from "@/auth";
+import { getCurrentMembership } from "@/lib/authz";
 import { redeemAuditLogExport } from "@/app/actions/audit-log-export";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 
@@ -24,9 +26,32 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Missing export token.", { status: 400 });
   }
 
+  // Authenticate BEFORE redeeming. A leaked token in a screen-share URL bar
+  // or referer header would otherwise let an anonymous attacker download up
+  // to 10,000 audit rows of org PII within the 60-second TTL.
+  const session = await auth();
+  if (!session?.user) {
+    return new NextResponse("Sign in required.", { status: 401 });
+  }
+  const membership = await getCurrentMembership(session.user.id);
+  if (!membership) {
+    return new NextResponse("No organization.", { status: 403 });
+  }
+
   const redeem = await redeemAuditLogExport(token);
   if (!redeem.ok) {
     return new NextResponse(redeem.error, { status: 410 });
+  }
+
+  // The token must belong to this user AND this user's current org.
+  // Cross-user / cross-org redemption of a leaked token is rejected here.
+  if (
+    session.user.id !== redeem.requestedById ||
+    membership.orgId !== redeem.orgId
+  ) {
+    return new NextResponse("Export token does not match this session.", {
+      status: 403,
+    });
   }
 
   const org = await db.query.organizations.findFirst({
@@ -149,10 +174,19 @@ export async function GET(req: NextRequest) {
   });
 }
 
-/** Escape a CSV cell — quote it if it contains comma, quote, or newline. */
+/**
+ * Escape a CSV cell. Two concerns:
+ *  1. Standard CSV quoting (comma, quote, newline).
+ *  2. CSV/spreadsheet formula injection — a cell starting with =, +, -, @,
+ *     tab, or CR is interpreted as a formula by Excel/Sheets/Numbers when
+ *     the file is opened. Prefix-quote those values so they render as text.
+ *     See OWASP "CSV Injection."
+ */
 function csvCell(value: string): string {
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
+  const needsFormulaGuard = /^[=+\-@\t\r]/.test(value);
+  const guarded = needsFormulaGuard ? `'${value}` : value;
+  if (/[",\n\r]/.test(guarded)) {
+    return `"${guarded.replace(/"/g, '""')}"`;
   }
-  return value;
+  return guarded;
 }

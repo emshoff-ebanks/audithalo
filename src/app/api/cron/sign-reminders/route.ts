@@ -20,6 +20,7 @@ import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
+import { verifyCronAuth } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,17 +32,8 @@ export const dynamic = "force-dynamic";
 const REMINDER_WINDOW_MS = 30 * 60 * 1000;
 
 async function handle(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json(
-      { ok: false, reason: "CRON_SECRET not set — refusing to run" },
-      { status: 500 }
-    );
-  }
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ ok: false }, { status: 401 });
-  }
+  const authFail = verifyCronAuth(request);
+  if (authFail) return authFail;
 
   const now = new Date();
   const windowStart = new Date(now.getTime() - REMINDER_WINDOW_MS);
@@ -110,15 +102,37 @@ async function handle(request: Request) {
     }
 
     // Stamp first so even if the notification write fails we won't
-    // double-fire on the next tick. Reschedule resets this column.
+    // double-fire on the next tick. The (date, durationHours) match is
+    // compare-and-set against the original row shape — if a reschedule
+    // raced between our SELECT and this UPDATE, the WHERE clause
+    // no-matches and the row stays eligible for the next cron tick (the
+    // reschedule action clears signReminderSentAt to null on the new
+    // shape). Without this guard, the cron would stamp a stale snapshot
+    // and the rescheduled session would never get its reminder.
+    let stamped = false;
     try {
-      await db
+      const result = await db
         .update(schema.sessionEvents)
         .set({ signReminderSentAt: now })
-        .where(eq(schema.sessionEvents.id, row.id));
+        .where(
+          and(
+            eq(schema.sessionEvents.id, row.id),
+            eq(schema.sessionEvents.date, row.date),
+            eq(schema.sessionEvents.durationHours, row.durationHours),
+            isNull(schema.sessionEvents.signReminderSentAt)
+          )
+        )
+        .returning({ id: schema.sessionEvents.id });
+      stamped = result.length === 1;
     } catch (err) {
       console.error("[cron sign-reminders] stamp failed:", row.id, err);
       failed += 1;
+      continue;
+    }
+    if (!stamped) {
+      // Row changed (reschedule, cancel, signed) between SELECT and
+      // UPDATE — leave it for the next cron tick, don't notify off the
+      // stale snapshot.
       continue;
     }
 

@@ -28,6 +28,18 @@ const ALLOWED_ROLES = new Set([
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+/**
+ * Defuse CSV / spreadsheet formula injection. Cells that begin with `=`,
+ * `+`, `-`, `@`, tab, or CR are interpreted as formulas by Excel / Sheets /
+ * Numbers when the file is opened. Prefix-quote the value so the cell
+ * renders as text — invisible to downstream UIs, neutralizes the payload
+ * when the data later lands in the audit-log CSV export. See OWASP
+ * "CSV Injection."
+ */
+function neutralizeFormulaPrefix(value: string): string {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+}
+
 const HEADER_ALIASES: Record<string, string> = {
   // canonical → canonical
   email: "email",
@@ -249,12 +261,12 @@ export function parseHrisCsv(text: string): ParseOutcome {
     rows.push({
       rowNumber,
       email,
-      name: name || null,
+      name: name ? neutralizeFormulaPrefix(name) : null,
       role: typedRole,
       primarySupervisorEmail: supEmail || null,
       ruleId: ruleId || null,
       obligationStartedAt: obligation || null,
-      externalId: externalId || null,
+      externalId: externalId ? neutralizeFormulaPrefix(externalId) : null,
     });
   });
 
