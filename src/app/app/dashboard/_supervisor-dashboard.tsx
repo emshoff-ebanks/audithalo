@@ -7,7 +7,6 @@ import { getOrgRosterWithCompliance } from "@/lib/db/roster-queries";
 import { db, schema } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { BillingBanner } from "./_billing-banner";
 import { EvidenceExplainer } from "./_evidence-explainer";
 import { PracticePanels, PRACTICE_THRESHOLD } from "./_practice-panel";
@@ -134,23 +133,6 @@ export async function SupervisorDashboard({
             );
           })}
         </div>
-      </div>
-
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Button asChild>
-          <Link href="/dashboard/roster">
-            <Users className="h-4 w-4" />
-            Manage roster <ArrowRight className="h-4 w-4" />
-          </Link>
-        </Button>
-        {org && org.createdById === userId && (
-          <Button asChild variant="outline">
-            <Link href="/dashboard/team">Team</Link>
-          </Button>
-        )}
-        <Button asChild variant="outline">
-          <Link href="/dashboard/audit-log">Audit log</Link>
-        </Button>
       </div>
 
       {roster.length >= PRACTICE_THRESHOLD && <PracticePanels roster={roster} />}

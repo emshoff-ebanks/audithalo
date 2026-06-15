@@ -105,8 +105,11 @@ export function UserMenu({ name, role }: { name: string; role: string }) {
             <Link
               href={link.href}
               className={
+                // Primary CTA matches the in-app default Button variant
+                // (bg-primary = deep navy #071a3d). The bright royal-blue
+                // `bg-secondary` is reserved for accent/link hover states.
                 link.primary
-                  ? "inline-flex items-center gap-1.5 rounded-sm bg-secondary text-secondary-foreground hover:bg-secondary/90 px-3 h-9 text-sm font-medium"
+                  ? "inline-flex items-center gap-1.5 rounded-sm bg-primary text-primary-foreground hover:bg-primary/90 px-3 h-9 text-sm font-medium shadow-sm"
                   : "inline-flex items-center gap-1.5 rounded-sm hover:bg-accent hover:text-accent-foreground px-3 h-9 text-sm font-medium text-foreground/80 hover:text-foreground"
               }
             >
