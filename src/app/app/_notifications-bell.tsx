@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bell,
@@ -185,8 +185,29 @@ export function NotificationsBell({ initialNotifications }: Props) {
   const [items, setItems] = useState<NotificationRow[]>(initialNotifications);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const unread = items.length;
+
+  // Mirror the avatar dropdown's UX: clicking anywhere outside the bell
+  // popover or pressing Escape closes it. Avoids the trap where a user
+  // has to click the bell again to dismiss.
+  useEffect(() => {
+    if (!open) return;
+    function onDocClick(e: MouseEvent) {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   // Poll for new notifications every 60s while the tab is visible. Pauses
   // when hidden so we don't burn server calls on a background tab.
@@ -276,7 +297,7 @@ export function NotificationsBell({ initialNotifications }: Props) {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <Button
         variant="ghost"
         size="icon"
