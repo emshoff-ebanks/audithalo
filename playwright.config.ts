@@ -20,6 +20,12 @@ const baseURL = process.env.E2E_BASE_URL ?? "https://app.audithalo.com";
 // missing creds. See docs/strategy/07-e2e-testing.md.
 const hasE2ECreds = !!process.env.E2E_HR_ADMIN_EMAIL;
 
+// Demo-readiness specs (2026-06-15+). Use a separate set of creds for
+// the damon-test-* accounts in the Damon Test Org so they don't collide
+// with the existing seeded e2e-* accounts. See
+// docs/strategy/11-demo-readiness-test-plan.md.
+const hasDemoCreds = !!process.env.DEMO_HR_ADMIN_EMAIL;
+
 const STORAGE_HR_ADMIN = "playwright/.auth/hr_admin.json";
 
 export default defineConfig({
@@ -74,6 +80,29 @@ export default defineConfig({
             },
             testMatch: /mutations\/.*\.spec\.ts/,
             dependencies: ["auth-setup"],
+          },
+        ]
+      : []),
+    // Demo-readiness projects. These log in inline using DEMO_* env vars
+    // (the damon-test-* accounts whose passwords are rotated by
+    // scripts/reset-demo-passwords.ts) and don't share storage state
+    // with the e2e-* projects above.
+    ...(hasDemoCreds
+      ? [
+          {
+            name: "demo-smoke",
+            use: { ...devices["Desktop Chrome"] },
+            testMatch: /demo-smoke\/.*\.spec\.ts/,
+          },
+          {
+            name: "hostile",
+            use: { ...devices["Desktop Chrome"] },
+            testMatch: /hostile\/(?!mobile).*\.spec\.ts/,
+          },
+          {
+            name: "hostile-mobile",
+            // Device viewport configured inside the spec via test.use().
+            testMatch: /hostile\/mobile\.spec\.ts/,
           },
         ]
       : []),
