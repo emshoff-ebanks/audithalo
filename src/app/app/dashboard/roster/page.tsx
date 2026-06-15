@@ -18,14 +18,21 @@ import { Button } from "@/components/ui/button";
 import { InviteForm } from "./invite-form";
 import { PendingInviteActions } from "./pending-invite-actions";
 import { FilterBar } from "./_filter-bar";
-import { parseRosterFilter } from "./_roster-filter";
+import { parseRosterFilter, parseSupervisorId } from "./_roster-filter";
 import { ClickableRow } from "@/components/app/clickable-row";
 
 export const metadata = {
   title: "Roster — AuditHalo",
 };
 
-type SearchParams = Promise<{ filter?: string; q?: string }>;
+type SearchParams = Promise<{
+  filter?: string;
+  q?: string;
+  /** HR-Admin-only: restrict the roster to a single supervisor's
+   *  currently-assigned supervisees. Ignored for supervisor viewers (their
+   *  view is already implicitly filtered to themselves) and for invalid IDs. */
+  supervisor?: string;
+}>;
 
 export default async function RosterPage({
   searchParams,
@@ -126,12 +133,49 @@ export default async function RosterPage({
   const filter = parseRosterFilter(params.filter);
   const searchQuery = (params.q ?? "").trim();
   const searchLower = searchQuery.toLowerCase();
+
+  // Supervisor filter — HR Admin only. Resolve the ?supervisor= param to a
+  // Set of currently-assigned supervisee IDs in one batch query. Historical
+  // assignments (those with endedAt set) are intentionally excluded —
+  // "show me everyone Dr. X is currently overseeing", not their lifetime
+  // roster.
+  const supervisorFilterId = viewerIsHrAdmin
+    ? parseSupervisorId(params.supervisor)
+    : null;
+  const supervisorFilterSuperviseeIds: Set<string> | null =
+    supervisorFilterId
+      ? await (async () => {
+          const rows = await db
+            .select({
+              superviseeId: schema.supervisorAssignments.superviseeId,
+            })
+            .from(schema.supervisorAssignments)
+            .where(
+              and(
+                eq(schema.supervisorAssignments.orgId, membership.orgId),
+                eq(
+                  schema.supervisorAssignments.supervisorId,
+                  supervisorFilterId
+                ),
+                isNull(schema.supervisorAssignments.endedAt)
+              )
+            );
+          return new Set(rows.map((r) => r.superviseeId));
+        })()
+      : null;
+
   const rosterRows = allRosterRows.filter((r) => {
     const matchesSearch =
       searchLower === "" ||
       r.name.toLowerCase().includes(searchLower) ||
       r.email.toLowerCase().includes(searchLower);
     if (!matchesSearch) return false;
+    if (
+      supervisorFilterSuperviseeIds &&
+      !supervisorFilterSuperviseeIds.has(r.userId)
+    ) {
+      return false;
+    }
     if (filter === "all") return true;
     if (filter === "at-risk") {
       return (
@@ -174,6 +218,8 @@ export default async function RosterPage({
         filteredCount={rosterRows.length}
         totalCount={allRosterRows.length}
         searchQuery={searchQuery}
+        supervisorOptions={supervisorOptionsForForm ?? null}
+        activeSupervisorId={supervisorFilterId}
       />
 
       {atRiskCount > 0 && (

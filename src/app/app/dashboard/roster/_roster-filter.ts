@@ -22,3 +22,14 @@ export function parseRosterFilter(value: string | undefined): RosterFilter {
   }
   return "all";
 }
+
+/** Parse the `?supervisor=<id>` searchParam. Returns null when missing,
+ *  empty, or not a UUID — narrowing it here keeps the server-side filter
+ *  application from having to re-validate. */
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function parseSupervisorId(value: string | undefined): string | null {
+  if (!value) return null;
+  return UUID_RE.test(value) ? value : null;
+}

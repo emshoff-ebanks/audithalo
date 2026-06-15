@@ -13,40 +13,74 @@ const PILLS: { value: Exclude<RosterFilter, "all">; label: string }[] = [
   { value: "on-track", label: "On track" },
 ];
 
+type SupervisorOption = { id: string; name: string };
+
 export function FilterBar({
   activeFilter,
   filteredCount,
   totalCount,
   searchQuery,
+  supervisorOptions,
+  activeSupervisorId,
 }: {
   activeFilter: RosterFilter;
   filteredCount: number;
   totalCount: number;
   searchQuery: string;
+  /** HR Admin only — list of supervisors in this org. Null for non-HR
+   *  viewers (their roster is already implicitly filtered to themselves). */
+  supervisorOptions: SupervisorOption[] | null;
+  activeSupervisorId: string | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [q, setQ] = useState(searchQuery);
 
+  function buildUrl({
+    filter,
+    query,
+    supervisorId,
+  }: {
+    filter: RosterFilter;
+    query: string;
+    supervisorId: string | null;
+  }) {
+    const params = new URLSearchParams();
+    if (filter !== "all") params.set("filter", filter);
+    if (query.trim()) params.set("q", query.trim());
+    if (supervisorId) params.set("supervisor", supervisorId);
+    return params.toString()
+      ? `/dashboard/roster?${params.toString()}`
+      : "/dashboard/roster";
+  }
+
   function applySearch(next: string) {
     setQ(next);
     startTransition(() => {
-      const params = new URLSearchParams();
-      if (activeFilter !== "all") params.set("filter", activeFilter);
-      if (next.trim()) params.set("q", next.trim());
       router.push(
-        params.toString() ? `/dashboard/roster?${params.toString()}` : "/dashboard/roster"
+        buildUrl({
+          filter: activeFilter,
+          query: next,
+          supervisorId: activeSupervisorId,
+        })
+      );
+    });
+  }
+
+  function applySupervisor(next: string) {
+    startTransition(() => {
+      router.push(
+        buildUrl({
+          filter: activeFilter,
+          query: q,
+          supervisorId: next ? next : null,
+        })
       );
     });
   }
 
   function buildHref(filter: RosterFilter) {
-    const params = new URLSearchParams();
-    if (filter !== "all") params.set("filter", filter);
-    if (q.trim()) params.set("q", q.trim());
-    return params.toString()
-      ? `/dashboard/roster?${params.toString()}`
-      : "/dashboard/roster";
+    return buildUrl({ filter, query: q, supervisorId: activeSupervisorId });
   }
 
   return (
@@ -96,16 +130,36 @@ export function FilterBar({
           )}
         </ul>
 
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/60" />
-          <Input
-            type="search"
-            placeholder="Search by name or email"
-            className="h-8 pl-8 text-xs bg-white/10 border-white/20 placeholder:text-white/60 text-white"
-            value={q}
-            onChange={(e) => applySearch(e.currentTarget.value)}
-            disabled={pending}
-          />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          {supervisorOptions && supervisorOptions.length > 0 && (
+            <select
+              aria-label="Filter by supervisor"
+              className="h-8 rounded-sm bg-white/10 border border-white/20 px-2 text-xs text-white disabled:opacity-50"
+              value={activeSupervisorId ?? ""}
+              onChange={(e) => applySupervisor(e.currentTarget.value)}
+              disabled={pending}
+            >
+              <option value="" className="text-foreground">
+                All supervisors
+              </option>
+              {supervisorOptions.map((s) => (
+                <option key={s.id} value={s.id} className="text-foreground">
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          )}
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/60" />
+            <Input
+              type="search"
+              placeholder="Search by name or email"
+              className="h-8 pl-8 text-xs bg-white/10 border-white/20 placeholder:text-white/60 text-white"
+              value={q}
+              onChange={(e) => applySearch(e.currentTarget.value)}
+              disabled={pending}
+            />
+          </div>
         </div>
       </div>
     </div>
