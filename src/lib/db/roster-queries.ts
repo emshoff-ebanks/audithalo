@@ -49,6 +49,11 @@ export type SessionEventRecord = {
   loggedById: string;
   signatures: SessionSignature[] | null;
   signedAt: Date | null;
+  // Lifecycle state for scheduled sessions: "scheduled" | "completed" |
+  // "canceled" | "no_show"; null = legacy after-the-fact log entry.
+  // Needed by the pendingSignatureCount filter so we can exclude
+  // canceled / no-show rows from the supervisor KPI.
+  scheduledStatus: string | null;
   createdAt: Date;
 };
 
@@ -145,11 +150,27 @@ export function computeRosterCompliance(
     }
   }
 
+  // Captured once per call so each row computes against the same instant
+  // (avoids edge-case drift on a large roster crossing a minute boundary).
+  const nowMs = Date.now();
   return entries.map((entry) => {
-    // Count pending signatures: supervision events where signedAt is null
-    const pendingSignatureCount = entry.rawEvents.filter(
-      (e) => e.kind === "supervision" && e.signedAt === null
-    ).length;
+    // Pending = supervision sessions whose meeting END time has passed,
+    // aren't yet sealed, and weren't canceled or marked no-show. Mirrors
+    // pendingSignaturesForUser in src/lib/supervisee.ts; previously this
+    // count just checked `signedAt === null`, which inflated the value
+    // with future-scheduled, canceled, and no-show rows on every
+    // supervisor's "Pending signatures" KPI card and the at-risk list.
+    const pendingSignatureCount = entry.rawEvents.filter((e) => {
+      if (e.kind !== "supervision") return false;
+      if (e.signedAt !== null) return false;
+      if (e.scheduledStatus === "canceled") return false;
+      if (e.scheduledStatus === "no_show") return false;
+      const startMs =
+        e.date instanceof Date ? e.date.getTime() : Date.parse(String(e.date));
+      if (!Number.isFinite(startMs)) return false;
+      const endMs = startMs + (e.durationHours ?? 0) * 60 * 60_000;
+      return endMs <= nowMs;
+    }).length;
 
     // Cannot evaluate without a rule assignment and obligation start date
     if (!entry.ruleId || !entry.obligationStartedAt) {

@@ -45,6 +45,23 @@ export async function signSessionAction(
   });
   if (!sessionEvent) return { ok: false, error: "Session not found." };
 
+  // Block signing on rows that aren't eligible. The UI hides the sign form
+  // for canceled / no-show rows, but a stale tab or direct action POST
+  // would otherwise sneak past — landing a signature (and potentially a
+  // sealed evidence package) on a meeting that didn't happen.
+  if (sessionEvent.scheduledStatus === "canceled") {
+    return {
+      ok: false,
+      error: "This session was canceled and can't be signed.",
+    };
+  }
+  if (sessionEvent.scheduledStatus === "no_show") {
+    return {
+      ok: false,
+      error: "This session was marked as a no-show and can't be signed.",
+    };
+  }
+
   const membership = await getCurrentMembership(session.user.id);
   if (!membership || membership.orgId !== sessionEvent.orgId) {
     return { ok: false, error: "You can't sign sessions in this organization." };

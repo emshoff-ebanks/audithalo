@@ -150,6 +150,34 @@ export default async function SignSessionPage({
     );
   }
 
+  // No-show branch: mirror the canceled UI. Without this, a row that the
+  // supervisee or supervisor clicked "This didn't happen" on would fall
+  // through to the sign UI and confuse a viewer who navigated here from a
+  // stale notification.
+  if (sessionEvent.scheduledStatus === "no_show") {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-8 sm:py-12">
+        <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
+          <Link href={`/dashboard/roster/${sessionEvent.superviseeId}`}>
+            <ArrowLeft />
+            Back to supervisee
+          </Link>
+        </Button>
+        <Card>
+          <CardContent className="p-6 space-y-3">
+            <Badge variant="outline">No-show</Badge>
+            <h1 className="font-display text-2xl font-semibold text-foreground">
+              This session was a no-show
+            </h1>
+            <p className="text-sm text-foreground/70">
+              No signature is required. The row stays in the audit log.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-6 py-8 sm:py-12">
       <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">

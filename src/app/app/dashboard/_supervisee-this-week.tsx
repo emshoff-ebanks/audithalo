@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { and, asc, eq, gte, inArray, isNull, lt } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNull, lt, ne } from "drizzle-orm";
 import { Video } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,12 @@ export async function SuperviseeThisWeek({ superviseeId, orgId }: Props) {
         eq(schema.sessionEvents.kind, "supervision"),
         gte(schema.sessionEvents.date, startOfWeek),
         lt(schema.sessionEvents.date, endOfWeek),
-        isNull(schema.sessionEvents.canceledAt)
+        isNull(schema.sessionEvents.canceledAt),
+        // Exclude no-show rows — they would otherwise render as yellow
+        // "Needs sign" cards and link to /sign/{id}, which now correctly
+        // refuses to sign no-show sessions but would still confuse the
+        // supervisee.
+        ne(schema.sessionEvents.scheduledStatus, "no_show")
       )
     )
     .orderBy(asc(schema.sessionEvents.date));
