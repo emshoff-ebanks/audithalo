@@ -288,7 +288,7 @@ export default async function RosterPage({
                               />
                             </div>
                             <span className="font-mono text-[10px] text-foreground/60 whitespace-nowrap">
-                              {practiced}h
+                              {practiced.toFixed(1)}h
                             </span>
                           </div>
                         )}
@@ -414,7 +414,7 @@ export default async function RosterPage({
                               />
                             </div>
                             <span className="font-mono text-xs text-foreground/60">
-                              {practiced}h
+                              {practiced.toFixed(1)}h
                             </span>
                           </div>
                         ) : (
