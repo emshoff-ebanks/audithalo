@@ -54,3 +54,6 @@ docs/superpowers/
 /test-results/
 /playwright/.cache/
 /playwright/.auth/
+
+# Local-only dev/run scratch (npm run dev output captured by tooling)
+.dev-log.txt
