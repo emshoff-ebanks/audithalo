@@ -2,10 +2,26 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { isTokenRevoked } from "@/lib/auth-tokens";
 import { findBackupCodeMatch, verifyTotpCode } from "@/lib/totp";
+
+/**
+ * True when the user has at least one active (non-deactivated) org
+ * membership. Used by both `authorize()` (fresh sign-in) and the `jwt`
+ * callback (subsequent requests) so a deactivated member can neither
+ * stay signed in nor sign in fresh. Resolves Wave 1 freshness item F5.
+ */
+async function hasActiveMembership(userId: string): Promise<boolean> {
+  const active = await db.query.orgMemberships.findFirst({
+    where: and(
+      eq(schema.orgMemberships.userId, userId),
+      isNull(schema.orgMemberships.deactivatedAt)
+    ),
+  });
+  return !!active;
+}
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -70,6 +86,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
         }
 
+        // Block sign-in for users with no active org membership. Without
+        // this, a deactivated user could re-login fresh and the JWT
+        // callback's revocation path would never catch them (they get a
+        // brand-new token). The team page also relies on this — a
+        // re-invite is required for a deactivated member to come back.
+        if (!(await hasActiveMembership(user.id))) return null;
+
         return {
           id: user.id,
           email: user.email,
@@ -105,6 +128,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // sessionsValidFrom, but check deletedAt directly as belt-and-
           // suspenders.
           if (dbUser.deletedAt) return null;
+          // Deactivated everywhere: invalidate the token so subsequent
+          // navigation bounces to login. Without this, deactivating a
+          // member only takes effect when their JWT naturally expires —
+          // the team page UI gives the impression of immediate access
+          // revocation, but the deactivated user keeps browsing the
+          // dashboard until the next refresh-token cycle.
+          if (!(await hasActiveMembership(token.id as string))) return null;
           if (isTokenRevoked(token.iat, dbUser.sessionsValidFrom ?? null)) {
             return null;
           }
