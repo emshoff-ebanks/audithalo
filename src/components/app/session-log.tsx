@@ -99,6 +99,20 @@ export function SessionLog({
     return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
   }, [filteredEvents]);
 
+  // Per-month pending count for the month header badge. Replaces the
+  // top-of-page "Needs your attention — N pending" callout on the
+  // supervisee dashboard: temporal context lives next to the month
+  // accordion the user is already scanning.
+  const pendingByMonth = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const e of pendingItems) {
+      const d = typeof e.date === "string" ? parseISO(e.date) : e.date;
+      const key = format(d, "yyyy-MM");
+      m.set(key, (m.get(key) ?? 0) + 1);
+    }
+    return m;
+  }, [pendingItems]);
+
   const currentMonthKey = format(new Date(), "yyyy-MM");
   // Month keys for any month that contains a flagged session — those need
   // to auto-open so the highlighted row is actually visible after scroll.
@@ -271,6 +285,11 @@ export function SessionLog({
                     {hasFlagged && !isCurrentMonth && (
                       <Badge variant="outline-warn" className="text-[10px]">
                         Flagged
+                      </Badge>
+                    )}
+                    {(pendingByMonth.get(monthKey) ?? 0) > 0 && (
+                      <Badge variant="outline-warn" className="text-[10px]">
+                        {pendingByMonth.get(monthKey)} pending
                       </Badge>
                     )}
                   </div>

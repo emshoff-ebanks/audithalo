@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { and, eq, desc } from "drizzle-orm";
-import { ArrowRight, AlertTriangle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { riskBadgeLabel, riskBadgeVariant } from "@/lib/rules";
@@ -10,6 +10,7 @@ import { pendingSignaturesForUser } from "@/lib/supervisee";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { LogSessionForm } from "@/app/app/dashboard/roster/[superviseeId]/log-session-form";
+import { SessionLog } from "@/components/app/session-log";
 import { SuperviseeThisWeek } from "./_supervisee-this-week";
 
 type Props = {
@@ -190,7 +191,7 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
 
         {pendingForMe.length > 0 ? (
           <a
-            href="#needs-signature"
+            href="#session-log"
             aria-label="Jump to pending signatures"
             className="block"
           >
@@ -220,39 +221,32 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
         )}
       </div>
 
-      {pendingForMe.length > 0 && (
-        <div className="mt-10" id="needs-signature">
-          <h2 className="font-display text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <AlertTriangle
-              className="h-5 w-5 text-[color:var(--color-warning)]"
-              strokeWidth={1.75}
-            />
-            Needs your signature
+      <SuperviseeThisWeek superviseeId={userId} orgId={membership.orgId} />
+
+      {events.length > 0 && (
+        <div className="mt-10" id="session-log">
+          <h2 className="font-display text-xl font-semibold text-foreground mb-4">
+            Session log
           </h2>
-          <div className="space-y-3">
-            {pendingForMe.map((p) => (
-              <Link
-                key={p.id}
-                href={`/sign/${p.id}`}
-                className="flex items-center justify-between p-4 rounded-sm border-l-[3px] border-l-[color:var(--color-warning)] bg-[color:var(--color-warning)]/5 hover:bg-[color:var(--color-warning)]/10 transition-colors"
-              >
-                <div>
-                  <p className="font-medium text-foreground capitalize">
-                    {p.sessionType ?? "supervision"} session
-                  </p>
-                  <p className="text-xs text-foreground/60 font-mono">
-                    {p.date.toISOString().slice(0, 10)} ·{" "}
-                    {p.durationHours.toFixed(1)} hrs
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-foreground/40 shrink-0" />
-              </Link>
-            ))}
-          </div>
+          <SessionLog
+            events={events.map((e) => ({
+              id: e.id,
+              kind: e.kind,
+              date: e.date,
+              durationHours: e.durationHours,
+              sessionType: e.sessionType,
+              signedAt: e.signedAt,
+              signatures: e.signatures ?? [],
+              scheduledStatus: e.scheduledStatus,
+              practiceState: e.practiceState,
+            }))}
+            viewerIsManager={false}
+            viewerUserId={userId}
+            superviseeId={userId}
+            superviseeState={null}
+          />
         </div>
       )}
-
-      <SuperviseeThisWeek superviseeId={userId} orgId={membership.orgId} />
 
       <div className="mt-10">
         <Card>
