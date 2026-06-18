@@ -177,7 +177,7 @@ export async function SupervisorDashboard({
                   <div>
                     <p className="font-medium text-foreground">{r.name}</p>
                     <p className="text-sm text-foreground/60">
-                      {r.evaluation?.totals.practiceHours.toFixed(0)} practice hours logged
+                      {r.evaluation?.totals.practiceHours.toFixed(1)} practice hours logged
                       {r.pendingSignatureCount > 0
                         ? ` · ${r.pendingSignatureCount} pending signature${r.pendingSignatureCount !== 1 ? "s" : ""}`
                         : ""}

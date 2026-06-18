@@ -263,7 +263,7 @@ export default async function ExecutiveDashboardPage() {
                               : r.state ?? r.licenseType ?? "—"}
                           </td>
                           <td className="px-5 py-3 font-mono">
-                            {practiceHrs.toFixed(0)}h
+                            {practiceHrs.toFixed(1)}h
                           </td>
                           <td className="px-5 py-3">
                             {riskLevel ? (

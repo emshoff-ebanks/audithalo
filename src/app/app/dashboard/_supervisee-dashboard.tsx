@@ -105,7 +105,7 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
           <CardContent className="p-6">
             <p className="label-overline mb-2">Practice hours</p>
             <p className="font-display text-3xl font-bold text-foreground">
-              {practiceHours.toFixed(0)}{" "}
+              {practiceHours.toFixed(1)}{" "}
               <span className="text-base font-normal text-foreground/60">
                 / {practiceRequired}
               </span>
@@ -123,7 +123,7 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
           <CardContent className="p-6">
             <p className="label-overline mb-2">Supervision hours</p>
             <p className="font-display text-3xl font-bold text-foreground">
-              {supervisionHours.toFixed(0)}{" "}
+              {supervisionHours.toFixed(1)}{" "}
               <span className="text-base font-normal text-foreground/60">
                 / {supervisionRequired}
               </span>
