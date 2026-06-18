@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { and, eq, isNull } from "drizzle-orm";
-import { Users, AlertTriangle, FileSignature, CheckCircle2, ArrowRight } from "lucide-react";
+import { Users, AlertTriangle, FileSignature, CheckCircle2, ArrowRight, UserPlus } from "lucide-react";
 import {
   canSupervise,
   getCurrentMembership,
@@ -11,6 +11,7 @@ import { getOrgRosterWithCompliance } from "@/lib/db/roster-queries";
 import { db, schema } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { BillingBanner } from "./_billing-banner";
 import { PracticePanels, PRACTICE_THRESHOLD } from "./_practice-panel";
 import { TodaysSchedule } from "./_todays-schedule";
@@ -129,6 +130,41 @@ export async function SupervisorDashboard({
 
       <div className="mt-8 space-y-8">
         <BillingBanner org={org} />
+        {totalSupervisees === 0 && (
+          <Card>
+            <CardContent className="p-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex gap-3 min-w-0">
+                <UserPlus className="h-6 w-6 shrink-0 text-[color:var(--color-gold)] mt-0.5" />
+                <div className="min-w-0">
+                  <h3 className="font-display text-lg font-semibold text-foreground">
+                    Get started
+                  </h3>
+                  <p className="mt-1 text-sm text-foreground/70 leading-relaxed">
+                    {isHrAdmin(membership.role)
+                      ? "Invite your supervisors first, then your supervisees. Supervisors run their own rosters; HR Admins see the whole org."
+                      : "Invite your first supervisee to begin tracking hours and supervision sessions."}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:shrink-0">
+                {isHrAdmin(membership.role) && (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href="/dashboard/team">
+                      Invite supervisor
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                )}
+                <Button asChild size="sm">
+                  <Link href="/dashboard/roster">
+                    Invite supervisee
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {summaryCards.map((card) => {
             const color = card.warn

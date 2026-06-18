@@ -786,9 +786,9 @@ function StepChecks({
                       }
                       className="mt-1 h-9 w-full rounded-sm border border-input bg-card px-2 text-sm text-foreground"
                     >
-                      <option value="info">info</option>
-                      <option value="warning">warning</option>
-                      <option value="blocker">blocker</option>
+                      <option value="info">Info</option>
+                      <option value="warning">Warning</option>
+                      <option value="blocker">Blocker</option>
                     </select>
                   </div>
                 </div>

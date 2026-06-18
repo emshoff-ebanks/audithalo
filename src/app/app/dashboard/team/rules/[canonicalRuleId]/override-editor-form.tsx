@@ -197,7 +197,7 @@ export function OverrideEditorForm({
       </div>
 
       <div className="space-y-3">
-        <p className="label-overline">Structured</p>
+        <p className="label-overline">Requirements</p>
         <p className="text-xs text-foreground/60">
           Leave a field empty to keep the canonical value. Placeholders show
           what AuditHalo will use if you don&apos;t override.

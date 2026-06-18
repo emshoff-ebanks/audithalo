@@ -59,7 +59,21 @@ export async function SuperviseeThisWeek({ superviseeId, orgId }: Props) {
     )
     .orderBy(asc(schema.sessionEvents.date));
 
-  if (sessions.length === 0) return null;
+  if (sessions.length === 0) {
+    return (
+      <div className="mt-10">
+        <h2 className="font-display text-xl font-semibold text-foreground mb-4">
+          This week
+        </h2>
+        <Card>
+          <CardContent className="p-5 text-sm text-foreground/70">
+            No supervision sessions scheduled this week. Your supervisor adds
+            them to your calendar from their dashboard.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Resolve supervisor display names for any sessions that have a logger.
   // Most supervisees stick with one supervisor; this query is tiny.

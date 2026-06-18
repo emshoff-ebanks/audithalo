@@ -122,13 +122,13 @@ export function DateTime12h({
         min={minDate}
         onChange={(e) => setDate(e.currentTarget.value)}
         disabled={disabled}
-        className="h-10 w-[160px]"
+        className="h-11 w-[160px]"
       />
       <select
         value={hour}
         onChange={(e) => setHour(parseInt(e.currentTarget.value, 10))}
         disabled={disabled}
-        className="h-10 rounded-sm border border-input bg-card px-2 text-sm text-foreground"
+        className="h-11 min-w-[3.25rem] rounded-sm border border-input bg-card px-2 text-sm text-foreground"
         aria-label="Hour"
       >
         {HOURS_12.map((h) => (
@@ -144,7 +144,7 @@ export function DateTime12h({
           setMinute(e.currentTarget.value as (typeof MINUTES)[number])
         }
         disabled={disabled}
-        className="h-10 rounded-sm border border-input bg-card px-2 text-sm text-foreground"
+        className="h-11 min-w-[3.25rem] rounded-sm border border-input bg-card px-2 text-sm text-foreground"
         aria-label="Minute"
       >
         {MINUTES.map((m) => (
@@ -157,7 +157,7 @@ export function DateTime12h({
         value={meridiem}
         onChange={(e) => setMeridiem(e.currentTarget.value as "AM" | "PM")}
         disabled={disabled}
-        className="h-10 rounded-sm border border-input bg-card px-2 text-sm text-foreground"
+        className="h-11 min-w-[3.75rem] rounded-sm border border-input bg-card px-2 text-sm text-foreground"
         aria-label="AM or PM"
       >
         <option value="AM">AM</option>

@@ -179,7 +179,7 @@ export default async function CustomRuleDetailPage({
           </div>
 
           <div>
-            <p className="label-overline mb-2">Structured</p>
+            <p className="label-overline mb-2">Requirements</p>
             <dl className="text-sm grid grid-cols-2 gap-y-1.5">
               <StructuredRow
                 label="Total practice hours"
