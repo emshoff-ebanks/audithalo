@@ -12,7 +12,6 @@ import { db, schema } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BillingBanner } from "./_billing-banner";
-import { EvidenceExplainer } from "./_evidence-explainer";
 import { PracticePanels, PRACTICE_THRESHOLD } from "./_practice-panel";
 import { TodaysSchedule } from "./_todays-schedule";
 import { RecentActivity } from "./_recent-activity";
@@ -70,14 +69,6 @@ export async function SupervisorDashboard({
   ).length;
   const totalPendingSigs = roster.reduce((sum, r) => sum + r.pendingSignatureCount, 0);
   const compliantCount = roster.filter((r) => r.evaluation?.riskLevel === "green").length;
-  // Surface the evidence-package explainer once at least one supervisee has
-  // signed sessions — pure heuristic, no extra DB hit. A supervisee with
-  // pendingSignatureCount < their session history typically has at least one
-  // sealed signature, so use signedAt rollup if available; fall back to the
-  // simple "has any signed-flow output" signal.
-  const hasAnySignedFlow = roster.some(
-    (r) => r.pendingSignatureCount === 0 && (r.evaluation?.totals.supervisionHours ?? 0) > 0
-  );
 
   const summaryCards = [
     {
@@ -138,7 +129,6 @@ export async function SupervisorDashboard({
 
       <div className="mt-8 space-y-8">
         <BillingBanner org={org} />
-        {hasAnySignedFlow && <EvidenceExplainer />}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {summaryCards.map((card) => {
             const color = card.warn

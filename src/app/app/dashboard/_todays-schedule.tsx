@@ -181,7 +181,7 @@ export async function TodaysSchedule({ orgId, allowedSuperviseeIds }: Props) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <Link
-                        href={`/dashboard/roster/${row.superviseeId}`}
+                        href={`/sign/${row.id}`}
                         className="font-medium text-foreground hover:underline"
                       >
                         {row.superviseeName ?? row.superviseeEmail}
