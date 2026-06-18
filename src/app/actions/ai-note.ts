@@ -2,12 +2,50 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership } from "@/lib/authz";
+import { signPermissions } from "@/lib/sign-permissions";
 import { db, schema } from "@/lib/db";
 import { generateSessionNote } from "@/lib/ai/session-note";
 import { aiNoteQuotaBlockedReason } from "@/lib/billing/seats";
+
+/**
+ * Resolve relationship facts for the session, then run them through
+ * signPermissions. Both AI-note actions share this — the gate is now
+ * "assigned supervisor OR original logger" instead of "any supervisor
+ * in the org", which prevents a peer supervisor in a multi-supervisor
+ * Practice org from authoring AI notes on another supervisor's
+ * supervisee. HR Admin and supervisee remain blocked (clinical-content
+ * authoring is supervisor-only by design).
+ */
+async function canAuthorAiNote(
+  userId: string,
+  sessionEvent: typeof schema.sessionEvents.$inferSelect,
+  role: string | null | undefined
+): Promise<boolean> {
+  const isOriginalLogger = sessionEvent.loggedById === userId;
+  const isSelfSupervisee = sessionEvent.superviseeId === userId;
+  let isAssignedSupervisor = false;
+  if (canSupervise(role) && !isOriginalLogger && !isSelfSupervisee) {
+    const active = await db.query.supervisorAssignments.findFirst({
+      where: and(
+        eq(schema.supervisorAssignments.superviseeId, sessionEvent.superviseeId),
+        eq(schema.supervisorAssignments.orgId, sessionEvent.orgId),
+        eq(schema.supervisorAssignments.supervisorId, userId),
+        isNull(schema.supervisorAssignments.endedAt)
+      ),
+    });
+    isAssignedSupervisor = !!active;
+  }
+  const perms = signPermissions({
+    role,
+    isSelfSupervisee,
+    isOriginalLogger,
+    isAssignedSupervisor,
+  });
+  return perms.canGenerateAiNote;
+}
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -52,8 +90,11 @@ export async function generateSessionNoteAction(
   if (!membership || membership.orgId !== sessionEvent.orgId) {
     return { ok: false, error: "You can't generate notes for this session." };
   }
-  if (!canSupervise(membership.role)) {
-    return { ok: false, error: "Only supervisors can generate AI notes." };
+  if (!(await canAuthorAiNote(session.user.id, sessionEvent, membership.role))) {
+    return {
+      ok: false,
+      error: "Only the assigned supervisor (or original scheduler) can generate AI notes for this session.",
+    };
   }
 
   // Quota check — Solo plan is capped at 10 notes/month; Practice is unlimited.
@@ -161,8 +202,11 @@ export async function updateSessionNoteAction(
   if (!membership || membership.orgId !== sessionEvent.orgId) {
     return { ok: false, error: "You can't edit notes on this session." };
   }
-  if (!canSupervise(membership.role)) {
-    return { ok: false, error: "Only supervisors can edit AI notes." };
+  if (!(await canAuthorAiNote(session.user.id, sessionEvent, membership.role))) {
+    return {
+      ok: false,
+      error: "Only the assigned supervisor (or original scheduler) can edit AI notes on this session.",
+    };
   }
 
   // Preserve original generation metadata; overwrite content + stamp edit metadata.

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { ArrowLeft, FileSignature } from "lucide-react";
 import { auth } from "@/auth";
-import { canSupervise, getCurrentMembership } from "@/lib/authz";
+import { getCurrentMembership } from "@/lib/authz";
+import { signPermissions } from "@/lib/sign-permissions";
 import { db, schema } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,10 +41,40 @@ export default async function SignSessionPage({
   });
   if (!supervisee) notFound();
 
-  // Who am I as a signer for this session?
-  let signerRole: "supervisee" | "supervisor" | null = null;
-  if (session.user.id === sessionEvent.superviseeId) signerRole = "supervisee";
-  else if (canSupervise(membership.role)) signerRole = "supervisor";
+  // Resolve relationship facts once for the signPermissions helper.
+  // Mirrors the inline lookups inside cancelScheduledSessionAction /
+  // rescheduleSessionAction / markSessionNoShowAction so UI and server
+  // always agree on who can do what.
+  const isSelfSupervisee = session.user.id === sessionEvent.superviseeId;
+  const isOriginalLogger = sessionEvent.loggedById === session.user.id;
+  let isAssignedSupervisor = false;
+  if (membership.role === "supervisor" && !isOriginalLogger && !isSelfSupervisee) {
+    const active = await db.query.supervisorAssignments.findFirst({
+      where: and(
+        eq(schema.supervisorAssignments.superviseeId, sessionEvent.superviseeId),
+        eq(schema.supervisorAssignments.orgId, sessionEvent.orgId),
+        eq(schema.supervisorAssignments.supervisorId, session.user.id),
+        isNull(schema.supervisorAssignments.endedAt)
+      ),
+    });
+    isAssignedSupervisor = !!active;
+  }
+  const perms = signPermissions({
+    role: membership.role,
+    isSelfSupervisee,
+    isOriginalLogger,
+    isAssignedSupervisor,
+  });
+
+  // Pin down the signer's role label for the SignForm. Supervisee takes
+  // precedence — a supervisor who's also flagged as the supervisee on
+  // some other org's row wouldn't be in this branch anyway (orgId guard
+  // above).
+  const signerRole: "supervisee" | "supervisor" | null = isSelfSupervisee
+    ? "supervisee"
+    : perms.canSign
+      ? "supervisor"
+      : null;
 
   const signatures = sessionEvent.signatures ?? [];
   const alreadySignedByMe = signatures.some(
@@ -63,16 +94,8 @@ export default async function SignSessionPage({
   const nowMs = Date.now();
   const isPreMeeting =
     sessionEvent.scheduledStatus === "scheduled" && endMs > nowMs;
-  const canCancelScheduled =
-    isPreMeeting &&
-    (sessionEvent.loggedById === session.user.id ||
-      canSupervise(membership.role));
-  // "Didn't attend" is widened to the supervisee on their own row — they
-  // also need a way to record "the meeting time came and went and the
-  // supervisor never showed" without escalating to email/Slack.
-  const canMarkNoShow =
-    isPreMeeting &&
-    (canCancelScheduled || session.user.id === sessionEvent.superviseeId);
+  const canCancelScheduled = isPreMeeting && perms.canCancel;
+  const canMarkNoShow = isPreMeeting && perms.canMarkNoShow;
 
   if (isPreMeeting) {
     const scheduledForLocal = sessionEvent.timeZone
@@ -261,15 +284,16 @@ export default async function SignSessionPage({
             </div>
           )}
 
-          {/* AI session note — supervisor-only, supervision-only, before sealing */}
-          {sessionEvent.kind === "supervision" &&
-            canSupervise(membership.role) && (
+          {/* AI session note — assigned supervisor or original logger,
+              supervision-only, before sealing. HR Admin is intentionally
+              excluded; clinical content authoring is supervisor-only. */}
+          {sessionEvent.kind === "supervision" && perms.canGenerateAiNote && (
             <div className="pt-4 border-t border-border">
               {sessionEvent.aiNote ? (
                 <SessionNoteDisplay
                   note={sessionEvent.aiNote as never}
                   sessionEventId={sessionEvent.id}
-                  canEdit={canSupervise(membership.role) && !fullySigned}
+                  canEdit={!fullySigned}
                 />
               ) : !fullySigned ? (
                 <>
@@ -322,14 +346,10 @@ export default async function SignSessionPage({
             !alreadySignedByMe &&
             sessionEvent.scheduledStatus === "scheduled" &&
             endMs <= nowMs &&
-            (canSupervise(membership.role) ||
-              session.user.id === sessionEvent.superviseeId) && (
+            (perms.canCancel || perms.canMarkNoShow) && (
               <DidntHappenAffordance
                 sessionId={sessionEvent.id}
-                canCancel={
-                  sessionEvent.loggedById === session.user.id ||
-                  canSupervise(membership.role)
-                }
+                canCancel={perms.canCancel}
               />
             )}
         </CardContent>

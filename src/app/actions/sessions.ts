@@ -12,6 +12,7 @@ import {
   isHrAdmin,
   isManagerRole,
 } from "@/lib/authz";
+import { signPermissions } from "@/lib/sign-permissions";
 import { db, schema } from "@/lib/db";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { createNotification } from "@/lib/notifications";
@@ -512,15 +513,12 @@ export async function cancelScheduledSessionAction(
   if (!myMembership || myMembership.orgId !== sessionEvent.orgId) {
     return { ok: false, error: "You can't cancel this session." };
   }
-  // Only the original supervisor or any HR admin can cancel.
-  // Who can cancel: HR Admin (org-wide); the supervisor currently
-  // assigned to this supervisee; or the original scheduler. Prior gate
-  // used `canSupervise && isManagerRole` which collapses to supervisor-
-  // only AND let any supervisor in the org act on any peer's session.
+  // Authz mirrors src/lib/sign-permissions.signPermissions so the UI
+  // and the server can never drift again — see Wave 1 Pass 4.
   const isOriginalLogger = sessionEvent.loggedById === session.user.id;
-  const isHr = isHrAdmin(myMembership.role);
+  const isSelfSupervisee = sessionEvent.superviseeId === session.user.id;
   let isAssignedSupervisor = false;
-  if (canSupervise(myMembership.role) && !isOriginalLogger && !isHr) {
+  if (canSupervise(myMembership.role) && !isOriginalLogger) {
     const active = await db.query.supervisorAssignments.findFirst({
       where: and(
         eq(schema.supervisorAssignments.superviseeId, sessionEvent.superviseeId),
@@ -531,7 +529,13 @@ export async function cancelScheduledSessionAction(
     });
     isAssignedSupervisor = !!active;
   }
-  if (!isOriginalLogger && !isHr && !isAssignedSupervisor) {
+  const perms = signPermissions({
+    role: myMembership.role,
+    isSelfSupervisee,
+    isOriginalLogger,
+    isAssignedSupervisor,
+  });
+  if (!perms.canCancel) {
     return { ok: false, error: "You can't cancel this session." };
   }
 
@@ -656,16 +660,13 @@ export async function markSessionNoShowAction(
     return { ok: false, error: "You can't update this session." };
   }
 
-  // Authz: supervisee on their own row, HR Admin, original scheduler, or
-  // the supervisee's currently-assigned supervisor.
+  // Authz via signPermissions — see Wave 1 Pass 4.
   const isSelfSupervisee = sessionEvent.superviseeId === session.user.id;
   const isOriginalLogger = sessionEvent.loggedById === session.user.id;
-  const isHr = isHrAdmin(myMembership.role);
   let isAssignedSupervisor = false;
   if (
     canSupervise(myMembership.role) &&
     !isOriginalLogger &&
-    !isHr &&
     !isSelfSupervisee
   ) {
     const active = await db.query.supervisorAssignments.findFirst({
@@ -678,7 +679,13 @@ export async function markSessionNoShowAction(
     });
     isAssignedSupervisor = !!active;
   }
-  if (!isSelfSupervisee && !isOriginalLogger && !isHr && !isAssignedSupervisor) {
+  const noShowPerms = signPermissions({
+    role: myMembership.role,
+    isSelfSupervisee,
+    isOriginalLogger,
+    isAssignedSupervisor,
+  });
+  if (!noShowPerms.canMarkNoShow) {
     return { ok: false, error: "You can't update this session." };
   }
 
@@ -1182,13 +1189,11 @@ export async function rescheduleSessionAction(
   if (!myMembership || myMembership.orgId !== sessionEvent.orgId) {
     return { ok: false, error: "You can't reschedule this session." };
   }
-  // Same gate as cancel: HR Admin org-wide; the supervisor currently
-  // assigned to this supervisee; or the original scheduler. The prior
-  // check let any supervisor in the org act on any peer's session.
+  // Authz via signPermissions — see Wave 1 Pass 4.
   const isOriginalLogger = sessionEvent.loggedById === session.user.id;
-  const isHr = isHrAdmin(myMembership.role);
+  const isSelfSupervisee = sessionEvent.superviseeId === session.user.id;
   let isAssignedSupervisor = false;
-  if (canSupervise(myMembership.role) && !isOriginalLogger && !isHr) {
+  if (canSupervise(myMembership.role) && !isOriginalLogger) {
     const active = await db.query.supervisorAssignments.findFirst({
       where: and(
         eq(schema.supervisorAssignments.superviseeId, sessionEvent.superviseeId),
@@ -1199,7 +1204,13 @@ export async function rescheduleSessionAction(
     });
     isAssignedSupervisor = !!active;
   }
-  if (!isOriginalLogger && !isHr && !isAssignedSupervisor) {
+  const reschedulePerms = signPermissions({
+    role: myMembership.role,
+    isSelfSupervisee,
+    isOriginalLogger,
+    isAssignedSupervisor,
+  });
+  if (!reschedulePerms.canReschedule) {
     return { ok: false, error: "You can't reschedule this session." };
   }
 
