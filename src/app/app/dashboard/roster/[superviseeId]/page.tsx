@@ -25,7 +25,8 @@ import { AssignRuleForm } from "./assign-rule-form";
 import { SessionsPanel } from "./sessions-panel";
 import { RuleSummaryCard } from "./rule-summary-card";
 import { SessionLog } from "@/components/app/session-log";
-import { GapRenderer } from "./_gap-renderer";
+import { GapGroupRenderer } from "./_gap-renderer";
+import { groupGaps } from "@/lib/rules/gap-grouping";
 import { RuleVersionBanner } from "./_rule-version-banner";
 import {
   CompletedAttestations,
@@ -605,10 +606,10 @@ export default async function SuperviseeDetailPage({
                 <div id="gaps">
                   <p className="label-overline mb-2">Gaps and warnings</p>
                   <div className="space-y-2">
-                    {evalResult.gaps.map((g, i) => (
-                      <GapRenderer
-                        key={`${g.code}-${i}`}
-                        gap={g}
+                    {groupGaps(evalResult.gaps).map((group) => (
+                      <GapGroupRenderer
+                        key={group.code}
+                        group={group}
                         assignmentId={assignment!.id}
                         superviseeId={superviseeId}
                         viewerCanSupervise={viewerCanSupervise}

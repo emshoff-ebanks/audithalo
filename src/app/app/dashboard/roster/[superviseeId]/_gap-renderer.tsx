@@ -12,8 +12,11 @@ import {
   Clock,
   TrendingUp,
   ArrowRight,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import type { Gap, RuleSeverity } from "@/lib/rules/types";
+import type { GapGroup } from "@/lib/rules/gap-grouping";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,6 +63,70 @@ export function GapRenderer(props: GapRendererProps) {
     case "time_warning":
       return <TimeWarningGap {...props} />;
   }
+}
+
+type GapGroupRendererProps = {
+  group: GapGroup;
+  assignmentId: string;
+  superviseeId: string;
+  viewerCanSupervise: boolean;
+};
+
+/**
+ * Renders a group of same-`code` gaps. Singletons fall through to the
+ * existing GapRenderer; groups of 2+ render the representative card
+ * followed by an expander that reveals each individual gap's message.
+ * This collapses the cadence-check's N-windows-stack-of-identical-cards
+ * problem into one summary the user can drill into when they want detail.
+ */
+export function GapGroupRenderer(props: GapGroupRendererProps) {
+  const { group, ...rest } = props;
+  if (group.gaps.length <= 1) {
+    return <GapRenderer gap={group.representative} {...rest} />;
+  }
+  return <GroupedGapCard group={group} {...rest} />;
+}
+
+function GroupedGapCard({
+  group,
+  assignmentId,
+  superviseeId,
+  viewerCanSupervise,
+}: GapGroupRendererProps) {
+  const [expanded, setExpanded] = useState(false);
+  const others = group.gaps.filter((g) => g !== group.representative);
+  return (
+    <div className="space-y-1">
+      <GapRenderer
+        gap={group.representative}
+        assignmentId={assignmentId}
+        superviseeId={superviseeId}
+        viewerCanSupervise={viewerCanSupervise}
+      />
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="ml-7 inline-flex items-center gap-1 text-xs text-foreground/60 hover:text-foreground"
+        aria-expanded={expanded}
+      >
+        {expanded ? (
+          <ChevronDown className="h-3 w-3" />
+        ) : (
+          <ChevronRight className="h-3 w-3" />
+        )}
+        {expanded
+          ? `Hide ${others.length} similar window${others.length === 1 ? "" : "s"}`
+          : `Show ${others.length} similar window${others.length === 1 ? "" : "s"}`}
+      </button>
+      {expanded && (
+        <ul className="ml-9 mt-1 space-y-1 text-xs text-foreground/70 list-disc list-inside">
+          {others.map((g, i) => (
+            <li key={i}>{g.message}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 function GapShell({
