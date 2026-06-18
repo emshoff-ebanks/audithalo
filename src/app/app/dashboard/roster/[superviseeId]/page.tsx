@@ -673,6 +673,7 @@ export default async function SuperviseeDetailPage({
                 sessionType: e.sessionType,
                 signedAt: e.signedAt,
                 signatures: e.signatures ?? [],
+                scheduledStatus: e.scheduledStatus,
                 practiceState: e.practiceState,
               }))}
               viewerIsManager={viewerIsManager}

@@ -153,6 +153,59 @@ describe("computeRosterCompliance", () => {
     expect(rows[0].pendingSignatureCount).toBe(2);
   });
 
+  // Regression for Pass 2: no_show and canceled rows must NOT inflate
+  // pendingSignatureCount. Inline filter at roster-queries.ts:163-173 is
+  // the source-of-truth; this test pins it.
+  it("excludes no_show and canceled supervision rows from pendingSignatureCount", () => {
+    // Past-end so the end-time filter doesn't independently exclude them.
+    const past = new Date(Date.now() - 24 * 60 * 60_000);
+    const rawEvents = [
+      {
+        id: "evt-no-show",
+        superviseeId: "user-1",
+        orgId: "org-1",
+        kind: "supervision" as const,
+        date: past,
+        durationHours: 1,
+        sessionType: "individual",
+        supervisorCredentials: ["LCMHCS"],
+        groupAttendees: null,
+        loggedById: "supervisor-1",
+        signatures: [],
+        signedAt: null,
+        scheduledStatus: "no_show",
+        createdAt: past,
+      },
+      {
+        id: "evt-canceled",
+        superviseeId: "user-1",
+        orgId: "org-1",
+        kind: "supervision" as const,
+        date: past,
+        durationHours: 1,
+        sessionType: "individual",
+        supervisorCredentials: ["LCMHCS"],
+        groupAttendees: null,
+        loggedById: "supervisor-1",
+        signatures: [],
+        signedAt: null,
+        scheduledStatus: "canceled",
+        createdAt: past,
+      },
+    ];
+
+    const entries = [
+      makeEntry({
+        ruleId: null,
+        obligationStartedAt: null,
+        rawEvents,
+      }),
+    ];
+
+    const rows = computeRosterCompliance(entries);
+    expect(rows[0].pendingSignatureCount).toBe(0);
+  });
+
   it("does not count sealed (signed) sessions as pending", () => {
     const rawEvents = [
       {

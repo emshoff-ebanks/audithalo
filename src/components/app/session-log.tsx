@@ -11,6 +11,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { isSessionPendingSignature } from "@/lib/session-pending";
 
 type SessionEvent = {
   id: string;
@@ -20,6 +21,7 @@ type SessionEvent = {
   sessionType: string | null;
   signedAt: Date | string | null;
   signatures: unknown[];
+  scheduledStatus?: string | null;
   practiceState?: string | null;
 };
 
@@ -67,24 +69,23 @@ export function SessionLog({
     return d.getTime() > todayStart.getTime();
   }
 
+  // Canonical "row needs somebody's signature" predicate — shared with
+  // pendingSignaturesForUser and roster-queries pendingSignatureCount so
+  // every surface agrees on which rows are pending. Excludes canceled,
+  // no_show, future-end, practice, and already-signed rows.
+  const pendingItems = useMemo(
+    () => events.filter((e) => isSessionPendingSignature(e)),
+    [events]
+  );
+
   const filteredEvents = useMemo(() => {
-    if (filter === "pending") return events.filter((e) => e.signedAt === null);
+    if (filter === "pending") {
+      const pendingIds = new Set(pendingItems.map((e) => e.id));
+      return events.filter((e) => pendingIds.has(e.id));
+    }
     if (filter === "signed") return events.filter((e) => e.signedAt !== null);
     return events;
-  }, [events, filter]);
-
-  // "Needs your attention" pending list — only past-or-today sessions. A
-  // recurring meeting scheduled three weeks out shouldn't show up here:
-  // nobody can sign for a session that hasn't happened yet, and surfacing
-  // it as "pending" clutters the list and trains the user to ignore it.
-  const pendingItems = useMemo(
-    () =>
-      events.filter(
-        (e) =>
-          e.kind === "supervision" && e.signedAt === null && !isFuture(e)
-      ),
-    [events, todayStart]
-  );
+  }, [events, filter, pendingItems]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, SessionEvent[]>();
@@ -290,13 +291,18 @@ export function SessionLog({
                         );
                         const isSelfSupervisee = viewerUserId === superviseeId;
                         const isFutureRow = isFuture(e);
-                        // No signing on future-dated supervision rows — the
-                        // meeting hasn't happened yet. Show "Scheduled" status
-                        // and a neutral "View" link.
+                        const isCanceled = e.scheduledStatus === "canceled";
+                        const isNoShow = e.scheduledStatus === "no_show";
+                        // No signing on future, canceled, or no-show rows.
+                        // The sign page server-rejects canceled / no_show
+                        // anyway; the UI shouldn't be tempting the user to
+                        // click into a dead end.
                         const canSign =
                           !fullySigned &&
                           !myselfHasSigned &&
                           !isFutureRow &&
+                          !isCanceled &&
+                          !isNoShow &&
                           (isSelfSupervisee || viewerIsManager);
                         const isFlagged = flaggedSet.has(e.id);
                         const rowRef =
@@ -355,10 +361,12 @@ export function SessionLog({
                                   <FileSignature className="h-3 w-3" />
                                   Sealed
                                 </Badge>
+                              ) : isCanceled ? (
+                                <Badge variant="outline">Canceled</Badge>
+                              ) : isNoShow ? (
+                                <Badge variant="outline">No-show</Badge>
                               ) : isFutureRow ? (
-                                <Badge variant="outline">
-                                  Scheduled
-                                </Badge>
+                                <Badge variant="outline">Scheduled</Badge>
                               ) : (
                                 <Badge variant="outline-warn">
                                   <AlertTriangle className="h-3 w-3" />
