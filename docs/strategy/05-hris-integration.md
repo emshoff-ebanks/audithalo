@@ -1,15 +1,17 @@
 # HRIS integration — Enterprise tier promise
 
-**Status:** Phase 1 shipped (CSV upload). Phase 2/3 (Merge.dev pull + webhook) deferred until first paying Enterprise customer.
+**Status:** Phase 1 shipped (CSV upload). Phase 2/3 (Merge.dev pull + webhook) **pivoted 2026-06-24** — the lead path is now **direct Paycor integration** per Recovery Innovations' 2026-06-17 sign-off. Merge.dev remains the fallback for non-RI Enterprise customers with non-Paycor HRIS.
+
+**Read first:** `docs/strategy/13-paycor-integration.md` — the Wave 2 spec for the RI Paycor work. This doc covers the broader HRIS strategy and the Merge.dev fallback path.
 
 ## Why HRIS at all
 
-The Enterprise tier card on /pricing promises "HRIS integration (Merge.dev / CSV)". That promise has two operative parts:
+The Enterprise tier card on /pricing promises "HRIS integration (Paycor direct / Merge.dev / CSV)". That promise has two operative parts:
 
-1. **Static promise:** customers using Workday/BambooHR/Rippling/ADP/Gusto can onboard their team without manually typing each email.
+1. **Static promise:** customers using Paycor/Workday/BambooHR/Rippling/ADP/Gusto can onboard their team without manually typing each email.
 2. **Continuous promise:** when HR hires someone or terminates them, that change flows into AuditHalo automatically so the supervisee roster stays in sync.
 
-Phase 1 (this commit) keeps the static promise. Phase 2/3 keep the continuous promise.
+Phase 1 (the CSV upload) keeps the static promise. The Paycor work (`docs/strategy/13-paycor-integration.md`) and the Merge.dev fallback path keep the continuous promise.
 
 ## Phase 1 — CSV upload (DONE)
 
@@ -34,9 +36,20 @@ Files:
 - `src/app/app/dashboard/team/import/page.tsx` — HR Admin UI
 - `tests/lib/hris/csv-parser.test.ts` — parser tests
 
-## Phase 2 — Merge.dev pull-only
+## Direct Paycor path (the new lead path)
 
-**Trigger to start:** first paying Enterprise customer requests it, OR Damon signs a Merge.dev annual contract speculatively.
+Recovery Innovations is the lead paying customer and uses Paycor exclusively. Per the 2026-06-17 call (full spec in `docs/strategy/13-paycor-integration.md`):
+
+- Two-way sync via Paycor's API + outbound SFTP for sealed PDFs.
+- Custom fields on Paycor side carry the AuditHalo role (HR admin / supervisor / supervisee / executive) and an on-leave / PRN flag.
+- Lifecycle state expansion (`leave_status` column on `org_memberships`) handles on-leave + PRN semantics.
+- Auto-provisioning service reuses `commitHrisImportAction` — same downstream commit path as the CSV phase.
+
+Implementation phases (Phase 0 → 4) are detailed in `docs/strategy/13-paycor-integration.md`. The Merge.dev sections below remain valid as the **fallback path** for Enterprise customers on other HRIS systems.
+
+## Phase 2 — Merge.dev pull-only (fallback path)
+
+**Trigger to start:** Enterprise customer on a non-Paycor HRIS (Workday / BambooHR / Rippling / etc.) requests it, OR Damon signs a Merge.dev annual contract speculatively.
 
 **Work estimate:** 1–2 days.
 
@@ -50,9 +63,9 @@ Files:
 
 **Role-mapping problem:** Merge doesn't have an "is_supervisor" field. HR Admin must designate roles at onboarding (one-time mapping spreadsheet) or via HRIS-side tags/groups. For Phase 2 we default everyone to "supervisee" and let HR Admin edit before confirming the import.
 
-## Phase 3 — Merge.dev webhook + auto-invite
+## Phase 3 — Merge.dev webhook + auto-invite (fallback path)
 
-**Trigger to start:** Phase 2 has been live for ≥30 days with no escalations.
+**Trigger to start:** Merge.dev pull phase has been live for ≥30 days with no escalations.
 
 **Work estimate:** 1 week.
 
