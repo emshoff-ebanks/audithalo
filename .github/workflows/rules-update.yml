@@ -1,0 +1,49 @@
+name: Rules update cron
+
+# Weekly check: fetch each canonical rule's citation URL, compare
+# content hash against the stored source_hash from the rule YAML. Logs
+# drift or broken-URL status to the rule_source_snapshots DB table.
+#
+# Email notifications are gated by the RULES_DRIFT_NOTIFY env var on
+# Vercel (default OFF). Set RULES_DRIFT_NOTIFY=1 in Vercel prod env
+# when going live.
+#
+# Schedule is PAUSED by default. Uncomment the `schedule:` block below
+# to activate weekly runs. Manual `workflow_dispatch` is available for
+# testing any time.
+#
+# Setup checklist (one-time — same pattern as sign-reminders.yml):
+#   1. GitHub repo → Settings → Secrets → Actions, confirm:
+#        AUDITHALO_CRON_URL    = https://app.audithalo.com/api/cron/rules-update
+#        AUDITHALO_CRON_SECRET = <same value as Vercel CRON_SECRET env var>
+#   Note: AUDITHALO_CRON_URL for this workflow points at /rules-update,
+#   not /sign-reminders. Either add a separate secret or reuse the
+#   existing one and override the URL inline below.
+
+on:
+  # Schedule paused — uncomment to enable weekly Sunday-morning runs.
+  # schedule:
+  #   - cron: "0 8 * * 0"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Hit the rules-update endpoint
+        env:
+          # Reuses the same CRON_SECRET as sign-reminders. The URL is
+          # overridden here to point at the rules-update route.
+          SECRET: ${{ secrets.AUDITHALO_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          URL="https://app.audithalo.com/api/cron/rules-update"
+          if [ -z "$SECRET" ]; then
+            echo "::error::AUDITHALO_CRON_SECRET is not set"
+            exit 1
+          fi
+          curl -fSs -X POST "$URL" \
+            -H "Authorization: Bearer $SECRET" \
+            -H "Content-Type: application/json" \
+            --max-time 120
