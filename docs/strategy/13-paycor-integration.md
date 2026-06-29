@@ -122,10 +122,11 @@ once unblocked.
 | Workstream | Waiting on |
 |---|---|
 | 2B real auto-provisioning logic | Matt+Nick reply |
-| 2C webhook vs polling architecture decision | RI's real-time SLA + Paycor partner reply |
-| 2D real SFTP destination | Paycor partner reply (creds + folder path) |
+| 2C real Paycor credentials | RI's Paycor admin contact + AppCreator OAuth client + APIM subscription key |
+| 2D real SFTP destination | Paycor SFTP partner spec (separate from Public API) + creds + folder path |
 | 2E RI template render variant | RI template file |
 | 2F JC half | Tricia's standards source list |
+| PRN tracking signal | RI/Bree — how PRN is identified in Paycor today (custom field? job code? employment type?) — Paycor's `EmploymentStatus` enum has no "PRN" value |
 
 ### Phase 4 — Post-Paycor-live
 
@@ -134,6 +135,67 @@ once unblocked.
 | 3G AI transcription + note workflow | Recall.ai (or equivalent) vendor pick; RI pilot team confirmed |
 | 3H AI performance review summaries | 2D + 2E live; RI review-period boundary confirmed |
 | 3I Post-seal correction flow | RI raises it (currently doc-debt, not Wave 2/3 gating) |
+
+## Confirmed Paycor API specs (from swagger 2026-06-29)
+
+Source: Paycor Public API v1 + v2 OpenAPI 3.0 specs (NSwag-generated)
+that Caleb downloaded from Paycor's developer portal. These supersede
+the assumptions in earlier drafts of this doc.
+
+| Spec | Value | Source |
+|---|---|---|
+| Server | `https://apis.paycor.com` | both swaggers, line 11 |
+| Auth | Two-layer: APIM Subscription Key (header `Ocp-Apim-Subscription-Key`) + OAuth Bearer token in `Authorization` header. Both required. | v1 intro |
+| Rate limit | 1000 API calls per minute, total across all Paycor APIs, per customer subscription key | v1 intro |
+| Retry policy | GETs safe to retry. **Do NOT retry POST/PUT on 500** — risks double-posting | v1 intro |
+| Webhooks | **None.** No webhook subscription endpoints in either v1 or v2. Polling-only architecture is the only option — matches Bree's daily-COB choice. | absence in both swaggers |
+| Document push | **No general document upload endpoint** in either v1 or v2. Only pay-stub READ endpoints (`/v1/employees/{employeeId}/PayStubDocument/{documentId}`). Confirms Alicia's call statement that PDF push requires SFTP, not REST. | v1 line 2773 |
+| IDs | `ClientId = LegalEntityId`, `TenantId = CompanyId`, `EmployeeId` is API-only (not visible in Paycor UI) | v1 intro |
+
+**Endpoints AuditHalo will consume** (Phase 3 — real sync):
+
+| Endpoint | Use |
+|---|---|
+| `GET /v1/legalentities/{legalEntityId}/employees` | Daily polling — list all employees for RI's legal entity. v2 alternative at `/v2/legalentities/{legalEntityId}/employees`. |
+| `GET /v1/employees/{employeeId}/positionandstatus` | Per-employee status + position detail when needed |
+| `GET /v1/employees/{employeeId}/status` | Current employment status |
+| `GET /v1/employees/{employeeId}/customfields` | Read the AuditHalo-role + (potentially) PRN custom field values |
+| `GET /v1/legalentities/{legalEntityId}/customfields` | Discover what custom fields RI defined |
+| `GET /v1/employees/{employeeId}/timeoffrequests` | On-demand: fetch period data for accurate "exclude leave" audit reconstruction. Constraint: start/end within 1 year, max 90-day window per call. |
+
+**Paycor's `EmploymentStatus` enum** (v1 swagger schema line 27258):
+
+```
+Active, Deceased, LongTermDisability, ShortTermDisability,
+Fmla, LaidOff, LeaveWithPay, LeaveWithoutPay, ThirdPartyPayable,
+Resigned, Retired, Terminated, WorkersCompensation
+```
+
+**Mapping into AuditHalo's `leaveStatus` + `deactivatedAt`**:
+
+| Paycor `EmploymentStatus` | AuditHalo result |
+|---|---|
+| `Active` | `leaveStatus = 'active'` (+ optional PRN derived from custom field — see open Q) |
+| `LongTermDisability` | `leaveStatus = 'on_leave'` |
+| `ShortTermDisability` | `leaveStatus = 'on_leave'` |
+| `Fmla` | `leaveStatus = 'on_leave'` |
+| `LeaveWithPay` | `leaveStatus = 'on_leave'` |
+| `LeaveWithoutPay` | `leaveStatus = 'on_leave'` |
+| `WorkersCompensation` | `leaveStatus = 'on_leave'` |
+| `ThirdPartyPayable` | `leaveStatus = 'on_leave'` (rare, defensive default) |
+| `LaidOff` / `Resigned` / `Retired` / `Terminated` / `Deceased` | `deactivatedAt = NOW()` on `org_memberships`; lifecycle row leaves AuditHalo's "active roster" entirely |
+
+PRN is not in Paycor's status enum — needs a separate signal (custom
+field or employment-type field). Open question for next email round.
+
+**Still missing — not in Public API docs:**
+
+- Paycor SFTP partner spec (separate channel, separate creds)
+- AppCreator onboarding flow for AuditHalo's OAuth client + APIM key
+- Sandbox / test account access for development without writing real RI data
+
+These come through Paycor partner support once RI's Paycor admin
+loops us in.
 
 ## Per-workstream spec
 
@@ -477,8 +539,22 @@ makes polling the default.)
 
 ## Suggested first action after Phase 0 lands
 
-Start **1.1 — 2A Lifecycle state expansion**. Schema + rule-engine
-pause. Bree's 2026-06-25 reply locked the behavior:
+Start **1.1 — 2A Lifecycle state expansion** with **Option A locked**
+(2026-06-29, after reading the Paycor swagger).
+
+**Why Option A wins given the Paycor docs:**
+
+- Paycor's `timeoffrequests` endpoint returns the period data
+  (start/end) on demand, so Paycor canonically holds the historical
+  audit trail.
+- Local `leave_periods` history (Option B) would be a cache that
+  drifts from Paycor's truth and adds schema complexity for no real
+  benefit.
+- For accurate "exclude-leave" audit reconstruction, we call
+  Paycor's `timeoffrequests` live (same auth scope as our other
+  Paycor reads, capped at 90-day windows per the API constraints).
+
+Bree's 2026-06-25 reply locked the behavior:
 
 - `on_leave` → pause timers + stop reminders
 - `prn` → no behavior change vs `active`, badge only
@@ -487,12 +563,16 @@ pause. Bree's 2026-06-25 reply locked the behavior:
 - No manual flip in AuditHalo UI for v1 (would be overwritten next
   sync anyway)
 
-The only remaining design call is Option A (current-state column
-only) vs Option B (`leave_periods` history table for audit fidelity).
-With Paycor as source of truth, A is more defensible than I'd
-originally framed — auditors can cross-reference Paycor's leave
-history directly. B still has audit-fidelity advantages for
-AuditHalo's own evaluation accuracy but is less urgent.
-
 Generate the migration, show the SQL to Caleb, get "yes," apply
 against dev Neon, ship vitest coverage, push.
+
+## Pricing note — RI is a custom plan
+
+Standard Solo tier caps AI notes at 10/month (`src/lib/billing/seats.ts`).
+**RI is not on the standard Practice tier** — they're paying a custom
+upfront commission for the build, with their own quota model
+(currently undefined; revisit when full pricing is locked
+post-launch). 3G/3H AI quotas for RI bypass the standard caps.
+The `aiNoteQuotaBlockedReason` check should special-case RI's
+billing identity or be gated behind a `unlimited_ai_notes` feature
+flag on `organizations`.
