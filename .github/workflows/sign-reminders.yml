@@ -20,9 +20,14 @@ name: Sign reminders cron
 # delete this file or use the Actions tab to disable the workflow.
 
 on:
-  schedule:
-    # Every 10 minutes. GitHub's cron expression is standard 5-field UTC.
-    - cron: "*/10 * * * *"
+  # Schedule paused 2026-06-29 until Wave 2 lands. The cron path is
+  # validated working (manual `workflow_dispatch` run succeeded on
+  # 2026-06-29 after the CRON_SECRET was rotated end-to-end). Disabled
+  # purely to stop daily GitHub-Actions-failure email noise on a path
+  # that has no real users yet. Re-enable by uncommenting the
+  # schedule block below when paying customers are live.
+  # schedule:
+  #   - cron: "*/10 * * * *"
   workflow_dispatch: {}
 
 jobs:
