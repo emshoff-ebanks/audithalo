@@ -294,7 +294,9 @@ export default async function RosterPage({
                         )}
                       </div>
                       <div className="flex flex-col items-end gap-1.5 shrink-0">
-                        {row.evaluation ? (
+                        {row.leaveStatus === "on_leave" ? (
+                          <Badge variant="warning">On leave</Badge>
+                        ) : row.evaluation ? (
                           <Badge variant={riskBadgeVariant(row.evaluation.riskLevel)}>
                             {row.evaluation.riskLevel === "green" && <Circle className="h-2 w-2 fill-current" />}
                             {row.evaluation.riskLevel === "yellow" && <AlertTriangle className="h-3 w-3" />}
@@ -305,6 +307,9 @@ export default async function RosterPage({
                           <span className="text-foreground/40 italic text-[10px]">
                             No rule
                           </span>
+                        )}
+                        {row.leaveStatus === "prn" && (
+                          <Badge variant="outline">PRN</Badge>
                         )}
                         {row.pendingSignatureCount > 0 && (
                           <Badge variant="warning">
@@ -422,7 +427,9 @@ export default async function RosterPage({
                         )}
                       </td>
                       <td className="px-5 py-3">
-                        {row.evaluation ? (
+                        {row.leaveStatus === "on_leave" ? (
+                          <Badge variant="warning">On leave</Badge>
+                        ) : row.evaluation ? (
                           <Badge variant={riskBadgeVariant(row.evaluation.riskLevel)}>
                             {row.evaluation.riskLevel === "green" && <Circle className="h-2 w-2 fill-current" />}
                             {row.evaluation.riskLevel === "yellow" && <AlertTriangle className="h-3 w-3" />}
@@ -431,6 +438,9 @@ export default async function RosterPage({
                           </Badge>
                         ) : (
                           <span className="text-foreground/40 italic text-xs">No rule</span>
+                        )}
+                        {row.leaveStatus === "prn" && (
+                          <Badge variant="outline" className="ml-1.5">PRN</Badge>
                         )}
                       </td>
                       <td className="px-5 py-3">

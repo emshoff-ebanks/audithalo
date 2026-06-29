@@ -294,6 +294,16 @@ export default async function TeamPage() {
                               Deactivated
                             </Badge>
                           )}
+                          {m.leaveStatus === "on_leave" && (
+                            <Badge variant="warning" className="ml-2">
+                              On leave
+                            </Badge>
+                          )}
+                          {m.leaveStatus === "prn" && (
+                            <Badge variant="outline" className="ml-2">
+                              PRN
+                            </Badge>
+                          )}
                         </td>
                         <td className="px-5 py-3 text-foreground/70 break-all">
                           {u.email}
@@ -473,6 +483,16 @@ function MembersTable({
                         {isDeactivated && (
                           <Badge variant="outline" className="ml-2">
                             Deactivated
+                          </Badge>
+                        )}
+                        {m.leaveStatus === "on_leave" && (
+                          <Badge variant="warning" className="ml-2">
+                            On leave
+                          </Badge>
+                        )}
+                        {m.leaveStatus === "prn" && (
+                          <Badge variant="outline" className="ml-2">
+                            PRN
                           </Badge>
                         )}
                       </div>

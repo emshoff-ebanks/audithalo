@@ -77,6 +77,11 @@ const REPAIR_TARGETS: Array<{
     sentinel: `SELECT 1 FROM pg_indexes
                WHERE indexname='session_events_scheduled_status_date_idx'`,
   },
+  {
+    file: "0029_org_membership_leave_status.sql",
+    sentinel: `SELECT 1 FROM information_schema.columns
+               WHERE table_name='org_memberships' AND column_name='leave_status'`,
+  },
 ];
 
 function sha256(s: string): string {

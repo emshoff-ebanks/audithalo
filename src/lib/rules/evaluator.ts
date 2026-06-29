@@ -10,6 +10,13 @@ import type {
 } from "./types";
 import { ruleId } from "./types";
 
+/** Cadence checks that pause when the supervisee is on_leave. See
+ *  docs/strategy/13-paycor-integration.md §2A. */
+const PAUSED_WHEN_ON_LEAVE = new Set([
+  "individual_supervision_cadence",
+  "weekly_supervision_cadence",
+]);
+
 function computeTotals(sessions: SessionEvent[]): EvaluationTotals {
   let practice = 0;
   let supervision = 0;
@@ -67,8 +74,10 @@ export function evaluate(
       100
   );
 
+  const isPaused = ctx.leaveStatus === "on_leave";
   const gaps: Gap[] = [];
   for (const check of rule.checks) {
+    if (isPaused && PAUSED_WHEN_ON_LEAVE.has(check.id)) continue;
     gaps.push(...runCheck(ctx, rule, check));
   }
 
@@ -85,5 +94,6 @@ export function evaluate(
     compliant,
     riskLevel: computeRisk(gaps, practicePct, supervisionPct),
     gaps,
+    paused: isPaused,
   };
 }

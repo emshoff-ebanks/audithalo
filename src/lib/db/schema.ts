@@ -267,6 +267,26 @@ export const organizations = pgTable("organizations", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/**
+ * Lifecycle status orthogonal to soft-deactivation. Captures Paycor-side
+ * employment state for clinicians who remain on the org's payroll but
+ * aren't actively working (on_leave) or work irregularly (prn). See
+ * docs/strategy/13-paycor-integration.md §2A.
+ *
+ * - 'active'   default. Normal supervision evaluation + reminders.
+ * - 'on_leave' pause cadence checks; suppress sign-reminders + "needs
+ *              supervision this week" widget. Still tracked, just paused.
+ * - 'prn'      no behavior change vs active; UI badge only. Bree's
+ *              2026-06-25 reply locked this — PRN clinicians should
+ *              continue receiving reminders since they may pick up
+ *              shifts at any time.
+ *
+ * Paycor is source of truth (Phase 3 sync writes these); manual flip
+ * from AuditHalo UI is intentionally NOT exposed in v1 to avoid drift.
+ */
+export const LEAVE_STATUS = ["active", "on_leave", "prn"] as const;
+export type LeaveStatus = (typeof LEAVE_STATUS)[number];
+
 export const orgMemberships = pgTable("org_memberships", {
   id: uuid("id").defaultRandom().primaryKey(),
   orgId: uuid("org_id")
@@ -281,6 +301,16 @@ export const orgMemberships = pgTable("org_memberships", {
   // and audit-log entries stay intact (the audit trail is sacred).
   deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
   deactivatedByUserId: uuid("deactivated_by_user_id").references(() => users.id),
+  // Wave 2 / Phase 1.1 — lifecycle state for Paycor sync (see header
+  // comment on LEAVE_STATUS above). All three columns added together;
+  // backfill is the column-level default of 'active'.
+  leaveStatus: text("leave_status", { enum: LEAVE_STATUS })
+    .notNull()
+    .default("active"),
+  leaveStatusChangedAt: timestamp("leave_status_changed_at", {
+    withTimezone: true,
+  }),
+  leaveStatusSource: text("leave_status_source"), // 'manual_hr_admin' | 'paycor_sync'
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

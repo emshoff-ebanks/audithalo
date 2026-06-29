@@ -126,6 +126,18 @@ export const sessionEventSchema = z.discriminatedUnion("kind", [
 ]);
 export type SessionEvent = z.infer<typeof sessionEventSchema>;
 
+/** Lifecycle state — see docs/strategy/13-paycor-integration.md §2A.
+ *  When `on_leave`, cadence checks (individual_supervision_cadence,
+ *  weekly_supervision_cadence) are skipped and the result carries
+ *  `paused: true` so consumers can render a banner. PRN has no
+ *  evaluation effect (badge-only). Optional in the context — callers
+ *  that don't pass it are treated as 'active' by the evaluator.
+ */
+export const leaveStatusSchema = z
+  .enum(["active", "on_leave", "prn"])
+  .optional();
+export type EvaluationLeaveStatus = z.infer<typeof leaveStatusSchema>;
+
 export const evaluationContextSchema = z.object({
   superviseeId: z.string(),
   /** When the supervision obligation began. */
@@ -141,6 +153,8 @@ export const evaluationContextSchema = z.object({
   sessions: z.array(sessionEventSchema),
   /** Evaluation moment ("now") — overridable for testing. Defaults to current time. */
   asOf: z.string().optional(),
+  /** Supervisee's current lifecycle state. Defaults to 'active'. */
+  leaveStatus: leaveStatusSchema,
 });
 export type EvaluationContext = z.infer<typeof evaluationContextSchema>;
 
@@ -230,4 +244,8 @@ export type EvaluationResult = {
   compliant: boolean;
   riskLevel: RiskLevel;
   gaps: Gap[];
+  /** True when leaveStatus === 'on_leave' caused cadence checks to be
+   *  skipped. UI surfaces should render a "Paused — on leave" banner
+   *  and exclude the supervisee from at-risk counts. */
+  paused?: boolean;
 };

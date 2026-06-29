@@ -8,6 +8,10 @@ import { db, schema } from "@/lib/db";
 type Props = {
   superviseeId: string;
   orgId: string;
+  /** Supervisee's own lifecycle state. When 'on_leave', the widget
+   *  shows a "you're on leave" message instead of the empty fallback
+   *  (no sessions are scheduled during leave by design). */
+  leaveStatus?: "active" | "on_leave" | "prn";
 };
 
 /**
@@ -20,7 +24,11 @@ type Props = {
  * Hides entirely when the week has zero scheduled / completed
  * supervision sessions (per UX-principle "no empty widgets").
  */
-export async function SuperviseeThisWeek({ superviseeId, orgId }: Props) {
+export async function SuperviseeThisWeek({
+  superviseeId,
+  orgId,
+  leaveStatus = "active",
+}: Props) {
   const now = new Date();
   const startOfWeek = new Date(now);
   // Snap to Sunday at 00:00 local.
@@ -58,6 +66,22 @@ export async function SuperviseeThisWeek({ superviseeId, orgId }: Props) {
       )
     )
     .orderBy(asc(schema.sessionEvents.date));
+
+  if (leaveStatus === "on_leave") {
+    return (
+      <div className="mt-10">
+        <h2 className="font-display text-xl font-semibold text-foreground mb-4">
+          This week
+        </h2>
+        <Card>
+          <CardContent className="p-5 text-sm text-foreground/70">
+            You&apos;re on leave — supervision is paused until you&apos;re back.
+            Your hour clock and reminders resume when HR flips your status.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (sessions.length === 0) {
     return (

@@ -15,7 +15,7 @@
  * See docs/strategy/08-scheduling-and-calendar.md §"Sign reminders".
  */
 
-import { and, eq, isNull, lte, sql } from "drizzle-orm";
+import { and, eq, isNull, lte, ne, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
@@ -61,12 +61,25 @@ async function handle(request: Request) {
       schema.users,
       eq(schema.users.id, schema.sessionEvents.superviseeId)
     )
+    // Wave 2 / Phase 1.1: skip reminders for supervisees who are
+    // currently on_leave. PRN clinicians DO still receive reminders
+    // (per Bree 2026-06-25 — they need the prompt for whenever they
+    // next pick up shifts). The inner join scopes to the matching
+    // org_memberships row for this org + supervisee.
+    .innerJoin(
+      schema.orgMemberships,
+      and(
+        eq(schema.orgMemberships.userId, schema.sessionEvents.superviseeId),
+        eq(schema.orgMemberships.orgId, schema.sessionEvents.orgId)
+      )
+    )
     .where(
       and(
         eq(schema.sessionEvents.scheduledStatus, "scheduled"),
         isNull(schema.sessionEvents.signedAt),
         isNull(schema.sessionEvents.signReminderSentAt),
         isNull(schema.sessionEvents.canceledAt),
+        ne(schema.orgMemberships.leaveStatus, "on_leave"),
         // Computed "end time" filter: end = date + duration_hours hours.
         // Must be in the past (already ended) AND within the look-back
         // window (cron isn't spamming reminders for ancient stale rows

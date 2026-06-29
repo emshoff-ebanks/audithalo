@@ -76,6 +76,9 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
   const practicePct = evalResult?.progress.practiceProgressPct ?? 0;
   const supervisionPct = evalResult?.progress.supervisionProgressPct ?? 0;
 
+  const isOnLeave = membership.leaveStatus === "on_leave";
+  const isPrn = membership.leaveStatus === "prn";
+
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
       <Badge variant="outline" className="mb-3">Your account</Badge>
@@ -86,6 +89,24 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
       {rule && (
         <p className="mt-1 text-foreground/70">
           Tracking against {rule.jurisdiction} {rule.license_code} v{rule.version}
+        </p>
+      )}
+      {isOnLeave && (
+        <Card className="mt-5 border-[color:var(--color-warning)]/30 bg-[color:var(--color-warning)]/5">
+          <CardContent className="p-4">
+            <Badge variant="warning" className="mb-2">On leave</Badge>
+            <p className="text-sm text-foreground">
+              Your supervision hour clock is paused. Reminders and cadence
+              checks stop until HR flips your status back to active in Paycor.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+      {isPrn && (
+        <p className="mt-3 text-sm text-foreground/70">
+          <Badge variant="outline" className="mr-2">PRN</Badge>
+          You&apos;ll still receive supervision reminders so they happen
+          whenever you next pick up shifts.
         </p>
       )}
 
@@ -221,7 +242,13 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
         )}
       </div>
 
-      <SuperviseeThisWeek superviseeId={userId} orgId={membership.orgId} />
+      <SuperviseeThisWeek
+        superviseeId={userId}
+        orgId={membership.orgId}
+        leaveStatus={
+          membership.leaveStatus as "active" | "on_leave" | "prn" | undefined
+        }
+      />
 
       {events.length > 0 && (
         <div className="mt-10" id="session-log">

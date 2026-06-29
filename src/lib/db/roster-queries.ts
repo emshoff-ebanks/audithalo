@@ -71,6 +71,9 @@ export type RawEntry = {
   obligationStartedAt: Date | null;
   supervisionContractFiledAt: Date | null;
   permitExpiresAt: Date | null;
+  /** Lifecycle state from org_memberships. Defaults to 'active' when
+   *  omitted by older tests that predate the leave_status column. */
+  leaveStatus?: "active" | "on_leave" | "prn";
   rawEvents: SessionEventRecord[];
 };
 
@@ -84,6 +87,10 @@ export type RosterRow = {
   obligationStartedAt: Date | null;
   supervisionContractFiledAt: Date | null;
   permitExpiresAt: Date | null;
+  /** Lifecycle state mirrored from org_memberships.leave_status so
+   *  consumers (badge UI, at-risk filtering) can read it without a
+   *  second query. */
+  leaveStatus: "active" | "on_leave" | "prn";
   evaluation: EvaluationResult | null;
   pendingSignatureCount: number;
 };
@@ -184,6 +191,7 @@ export function computeRosterCompliance(
         obligationStartedAt: entry.obligationStartedAt,
         supervisionContractFiledAt: entry.supervisionContractFiledAt,
         permitExpiresAt: entry.permitExpiresAt,
+        leaveStatus: entry.leaveStatus ?? "active",
         evaluation: null,
         pendingSignatureCount,
       };
@@ -202,6 +210,7 @@ export function computeRosterCompliance(
         obligationStartedAt: entry.obligationStartedAt,
         supervisionContractFiledAt: entry.supervisionContractFiledAt,
         permitExpiresAt: entry.permitExpiresAt,
+        leaveStatus: entry.leaveStatus ?? "active",
         evaluation: null,
         pendingSignatureCount,
       };
@@ -251,6 +260,7 @@ export function computeRosterCompliance(
         entry.supervisionContractFiledAt?.toISOString(),
       permitExpiresAt: entry.permitExpiresAt?.toISOString(),
       sessions,
+      leaveStatus: entry.leaveStatus ?? "active",
     };
 
     const evaluation = evaluate(ctx, rule);
@@ -265,6 +275,7 @@ export function computeRosterCompliance(
       obligationStartedAt: entry.obligationStartedAt,
       supervisionContractFiledAt: entry.supervisionContractFiledAt,
       permitExpiresAt: entry.permitExpiresAt,
+      leaveStatus: entry.leaveStatus ?? "active",
       evaluation,
       pendingSignatureCount,
     };
@@ -353,6 +364,7 @@ export async function getOrgRosterWithCompliance(
       email: schema.users.email,
       state: schema.users.state,
       licenseType: schema.users.licenseType,
+      leaveStatus: schema.orgMemberships.leaveStatus,
     })
     .from(schema.orgMemberships)
     .innerJoin(schema.users, eq(schema.users.id, schema.orgMemberships.userId))
@@ -414,6 +426,7 @@ export async function getOrgRosterWithCompliance(
       supervisionContractFiledAt:
         assignment?.supervisionContractFiledAt ?? null,
       permitExpiresAt: assignment?.permitExpiresAt ?? null,
+      leaveStatus: row.leaveStatus as "active" | "on_leave" | "prn",
       rawEvents: (eventsByUser.get(row.userId) ?? []) as SessionEventRecord[],
     };
   });
