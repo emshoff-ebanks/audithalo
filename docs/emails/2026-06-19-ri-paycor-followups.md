@@ -94,6 +94,36 @@ Christopher Reese, Tricia Lessard
 
 ---
 
+## Email 1a — Reply to Bree's 2026-06-25 partial response
+
+**To:** Bree Wolfgram (reply on existing shared thread, full group still cc'd)
+**Subject:** Re: AuditHalo + Paycor integration — items we need from your team to move forward
+
+> Hi Bree,
+>
+> Thanks — this is super helpful. Locking in:
+>
+> - **On-leave** pauses the supervision hour clock and the reminders until Paycor flips them back. ✓
+> - **PRN** keeps the standard reminders going so a clinician picks up the supervision the next time they work. ✓ (Good catch — I'd had this one slightly different in my head.)
+> - **Return-to-active** flips automatically as soon as Paycor reflects it. Paycor is the source of truth for status; we'll mirror, not override. ✓
+> - **Sync timing** — daily at end-of-business is our v1 default. We'll architect for that and revisit if Alicia or Joy needs something tighter on their side.
+>
+> Three asks from the original list still open — flagging the likely owner for each so it's easy to delegate:
+>
+> 1. **Supervision PDF template** — Bree / Alicia, anything you can share (Word doc, PDF, scanned form) lets us program AuditHalo to match what currently lands in Paycor Documents.
+> 2. **Paycor admin contact** — Alicia, you mentioned the API limitations on the call; whoever your Paycor admin is, that's the person we'd need to coordinate with on the two custom fields (AuditHalo role + on-leave flag) and the SFTP credentials. Once we have that, we can reach Paycor's partner support directly.
+> 3. **Joint Commission source documents** — Tricia, the specific JC standards docs / URLs your team audits against. Section numbers help us scope what we wire into our state-rules auto-update.
+>
+> Two more we'll need eventually but not blocking yet — happy to circle back later:
+> - Performance review period boundary (calendar quarter, anniversary date, etc.)
+> - Pilot team / site for the AI transcription rollout
+>
+> Thanks again — really helpful.
+>
+> — Caleb
+
+---
+
 ## Notes for re-sending
 
 - If RI hasn't replied within ~7-10 days of the initial send, polite

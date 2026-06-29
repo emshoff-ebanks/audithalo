@@ -163,21 +163,35 @@ filter the events array to exclude rows whose date falls between
 the most-recent `on_leave` start and the most-recent `active` flip.
 PRN has NO rule-engine effect — they accrue when they work.
 
-**Notification suppression**:
+**Notification suppression** (locked 2026-06-25 per Bree's reply):
 - Sign-reminders cron skips supervisees whose `leaveStatus === 'on_leave'`
-- "Needs supervision this week" widget filters them out
-- PRN clinicians stay tracked but get a soft "PRN" badge
+- "Needs supervision this week" widget filters out only `on_leave`
+- **PRN supervisees DO continue receiving reminders.** Bree wants
+  "needs supervision" prompts to persist for PRN even if they may
+  not work that week — the supervision can happen on the next shift
+  they pick up. PRN is functionally identical to `active` for
+  notifications; only the badge differs.
+
+**Source of truth = Paycor** (locked 2026-06-25 per Bree). All
+lifecycle state transitions originate in Paycor; AuditHalo reflects
+on the next sync (Phase 3). Return-to-active is automatic when
+Paycor flips back — no HR Admin confirmation step in AuditHalo. RI
+admins are the only ones who change it in Paycor, so the source is
+trusted.
+
+**Team-page UI**: read-only badge in the Supervisees table showing
+current `leaveStatus` + "synced from Paycor" indicator. **No manual
+flip from AuditHalo in v1** — since Paycor is source of truth, a
+manual override here would be overwritten on the next sync and
+confuse HR Admin. Revisit if a customer asks for AuditHalo-side
+flip later.
 
 **Audit log**: `LEAVE_STATUS_CHANGED` action with old → new + source
-in details.
+(`paycor_sync`) in details.
 
-**Team-page UI**: leave-status dropdown next to the deactivate button
-in the Supervisees table. HR Admin only. Badge ("Synced from Paycor"
-vs "Manual override") so HR Admin knows whether a manual flip will
-be overwritten by the next sync (Phase 3).
-
-**Tests**: pure unit tests on the rule-engine pause logic. RBAC test
-that supervisor / supervisee can't change status.
+**Tests**: pure unit tests on the rule-engine pause logic. Assert
+that PRN does NOT suppress reminders (regression-pin for the
+2026-06-25 Bree clarification).
 
 ### 2B — Auto-provisioning
 
@@ -208,34 +222,44 @@ once Matt+Nick reply:
   clinicians need supervisor assignment" notification to HR Admin
   daily.
 
-### 2C — Paycor real-time sync
+### 2C — Paycor sync (daily polling)
 
-Two architectures to choose between (decision needs RI's real-time
-SLA + Paycor partner confirmation):
+**Architecture locked 2026-06-25**: Bree said "close of business
+daily would work fine from my perspective." That answers the
+real-time question — **we do NOT need webhooks for v1**. A single
+daily cron job at COB Eastern is sufficient.
 
-| Architecture | Latency | Cost | Risk |
-|---|---|---|---|
-| Direct Paycor webhooks | sub-minute | low — stand up endpoint | depends on Paycor exposing webhooks |
-| Polling every N minutes | 5-15 min | moderate — cron + dedup | rate limits; missed flips between polls |
+Caveat: Bree noted "others can weigh in here" — if Alicia or
+Joy comes back wanting stricter, we'd revisit. For now we ship the
+simple version.
 
-If Paycor doesn't expose webhooks, polling is the only option.
-Cap "real-time" at "under 10 minutes" in that case.
+| Architecture | Latency | When we'd use it |
+|---|---|---|
+| **Daily cron at COB** | up to 24 hr | **v1 default** per Bree |
+| Polling every 5-15 min | minutes | If a future customer needs intra-day freshness |
+| Direct Paycor webhooks | sub-minute | If a future customer needs near-real-time |
+
+**Implementation**: same pattern as `sign-reminders.yml` GitHub
+Actions cron (or Vercel Cron once we're on a paid plan that allows
+intra-day intervals). Single endpoint:
+
+- `POST /api/cron/paycor-sync` — Cron-Secret gated, daily at 18:00
+  ET (after RI's COB)
+
+No webhook endpoint needed in v1. No Vercel Queues needed for this
+channel (the queue is still used for 2D SFTP delivery, which is
+event-driven on session seal — separate concern).
 
 **Fields synced FROM Paycor**:
 - Employment status (active / terminated)
 - Last paycheck date (Damon's secondary deactivation signal,
   transcript line 360)
 - Custom field: AuditHalo role (added by RI Paycor admin)
-- Custom field: on_leave flag
+- Custom field: on_leave flag (Paycor is source of truth — see 2A)
 - Manager reference (for 2B supervisor-assignment hint)
 
 **Nothing flows back TO Paycor on this channel** — the PDF push
 in 2D is the only outbound, and that's SFTP not API.
-
-**Endpoint shape**:
-- `POST /api/integrations/paycor/webhook` — webhook variant, HMAC
-  signature verified
-- `GET /api/cron/paycor-sync` — poll variant, Cron-Secret gated
 
 ### 2D — SFTP delivery for sealed PDFs
 
@@ -403,30 +427,39 @@ All three are additive, zero-downtime, no backfill required.
 ## Open questions inventory
 
 Grouped by who needs to answer. Each blocks a specific workstream.
+Bree's 2026-06-25 reply closed three lines (lifecycle semantics +
+return-to-active + real-time SLA). Remaining:
 
 **RI (shared email thread)**:
 
-- (2E) PDF template file
-- (2A, 2C) On-leave / PRN / return-to-active semantics in AuditHalo
-- (2C) Real-time SLA target in minutes
-- (2F) JC standards source documents from Tricia
-- (3H) Review-period boundary for AI performance summaries
-- (3G) Pilot team for AI transcription rollout
+- (2E) PDF template file — Bree / Alicia
+- (2D, 2A) Paycor admin contact — Alicia
+- (2F) JC standards source documents — Tricia
+- (3H) Review-period boundary for AI performance summaries —
+  not blocking, ask later
+- (3G) Pilot team for AI transcription rollout — not blocking,
+  ask later
+- Optional: confirm stricter sync SLA isn't needed from Alicia /
+  Joy (Bree noted others can weigh in; daily-COB is our default
+  until they object)
 
 **Matt + Nick (Medipyxis)**:
 
 - (2B) Event payload shape from prior Paycor work
 - (2B) Manager vs clinical-supervisor distinction handling
 - (2B) Idempotency + retry model
-- (2C) Webhook vs polling experience + Paycor rate limits
 - (2D) SSH key-pair management pattern they used
+
+(Webhook-vs-polling question retired — Bree's daily-COB answer
+makes polling the default.)
 
 **Paycor partner support** (sent after RI confirms account contact):
 
 - (2D) SFTP host + auth + file size + connection cap
 - (2D) Documents folder path convention
 - (2D) Post-upload tagging API
-- (2C) Webhook capability or polling-only
+- (2C) Polling-only API endpoints for employee data + their rate
+  limits (we're not using webhooks per Bree)
 - (2A) Custom field setup via API or UI only
 
 ## References
@@ -445,5 +478,21 @@ Grouped by who needs to answer. Each blocks a specific workstream.
 ## Suggested first action after Phase 0 lands
 
 Start **1.1 — 2A Lifecycle state expansion**. Schema + rule-engine
-pause + team-page UI. Generate the migration, show the SQL to Caleb,
-get "yes," apply against dev Neon, ship vitest coverage, push.
+pause. Bree's 2026-06-25 reply locked the behavior:
+
+- `on_leave` → pause timers + stop reminders
+- `prn` → no behavior change vs `active`, badge only
+- Return-to-active → automatic on next sync (no manual confirm step)
+- Source of truth → Paycor; AuditHalo reflects, doesn't write back
+- No manual flip in AuditHalo UI for v1 (would be overwritten next
+  sync anyway)
+
+The only remaining design call is Option A (current-state column
+only) vs Option B (`leave_periods` history table for audit fidelity).
+With Paycor as source of truth, A is more defensible than I'd
+originally framed — auditors can cross-reference Paycor's leave
+history directly. B still has audit-fidelity advantages for
+AuditHalo's own evaluation accuracy but is less urgent.
+
+Generate the migration, show the SQL to Caleb, get "yes," apply
+against dev Neon, ship vitest coverage, push.
