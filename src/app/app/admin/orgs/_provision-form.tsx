@@ -53,7 +53,7 @@ export function ProvisionEnterpriseForm() {
       <CardContent className="p-6">
         <p className="label-overline mb-3">Provision new Enterprise org</p>
         <p className="text-xs text-foreground/70 mb-4 max-w-prose">
-          Creates the customer's account + Enterprise-tier org + HR Admin
+          Creates the customer&apos;s account + Enterprise-tier org + HR Admin
           membership in one step. They receive a welcome email with a
           24-hour password-reset link. Use this after a sales call closes
           — for an existing customer who self-registered on Solo/Practice,

@@ -56,7 +56,7 @@ export function SessionNoteForm({ sessionEventId }: { sessionEventId: string }) 
               </p>
               <p className="mt-1 text-foreground/70 text-xs">
                 The transcript appears to contain client-identifying information. Per
-                AuditHalo's terms, you must remove all PHI before generating a note.
+                AuditHalo&apos;s terms, you must remove all PHI before generating a note.
               </p>
               <ul className="mt-2 space-y-1 text-xs font-mono text-foreground/80">
                 {phiMatches.slice(0, 8).map((m, i) => (

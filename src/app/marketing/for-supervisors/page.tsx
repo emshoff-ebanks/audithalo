@@ -233,12 +233,12 @@ export default function ForSupervisorsPage() {
             />
             <div>
               <h2 className="font-display text-xl font-semibold text-foreground">
-                When a supervisee's audit fails, the board comes to you first.
+                When a supervisee&apos;s audit fails, the board comes to you first.
               </h2>
               <p className="mt-2 text-foreground/70 max-w-3xl">
                 In every state we cover, the supervisor signs attesting to the
-                hours. If those hours don't pass the board's review, your
-                supervisor credential is at risk — not just the supervisee's
+                hours. If those hours don&apos;t pass the board&apos;s review, your
+                supervisor credential is at risk — not just the supervisee&apos;s
                 application. AuditHalo exists to make sure that never happens.
               </p>
             </div>
@@ -303,7 +303,7 @@ export default function ForSupervisorsPage() {
             Supported states
           </Badge>
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground max-w-2xl">
-            Your state's requirements, encoded.
+            Your state&apos;s requirements, encoded.
           </h2>
           <p className="mt-3 text-foreground/70 max-w-2xl">
             Every rule is pulled directly from the state administrative code,
@@ -362,7 +362,7 @@ export default function ForSupervisorsPage() {
             {objections.map((o) => (
               <div key={o.objection}>
                 <h3 className="font-display text-lg font-semibold text-foreground">
-                  "{o.objection}"
+                  &ldquo;{o.objection}&rdquo;
                 </h3>
                 <p className="mt-2 text-foreground/70 leading-relaxed">{o.response}</p>
               </div>
@@ -381,7 +381,7 @@ export default function ForSupervisorsPage() {
             Priced per supervisee. Your account is included.
           </h2>
           <p className="mt-3 text-foreground/70 max-w-xl">
-            The supervisor is the one with board liability. So they're the buyer.
+            The supervisor is the one with board liability. So they&apos;re the buyer.
             The supervisee has the audit on the line — so their account is free.
           </p>
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-px bg-border">

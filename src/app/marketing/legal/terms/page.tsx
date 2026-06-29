@@ -29,7 +29,7 @@ export default function TermsPage() {
             <div>
               <h2 className="font-display text-2xl font-semibold text-foreground mb-4">1. Acceptance</h2>
               <p>
-                By creating an account or using the AuditHalo platform ("Service"), you agree to these Terms. If you're using the Service on behalf of an organization, you represent that you have authority to bind that organization. If you don't agree, don't use the Service.
+                By creating an account or using the AuditHalo platform (&ldquo;Service&rdquo;), you agree to these Terms. If you&apos;re using the Service on behalf of an organization, you represent that you have authority to bind that organization. If you don&apos;t agree, don&apos;t use the Service.
               </p>
             </div>
 
@@ -55,7 +55,7 @@ export default function TermsPage() {
               <ul className="space-y-2 list-disc list-inside text-foreground/70">
                 <li>State licensing rules change. We verify rules quarterly, but a rule may change between verifications.</li>
                 <li>Your specific facts may involve edge cases not captured by our encoding.</li>
-                <li>AuditHalo's evaluation of your hours is not a determination by any licensing board that your supervision is compliant.</li>
+                <li>AuditHalo&apos;s evaluation of your hours is not a determination by any licensing board that your supervision is compliant.</li>
                 <li>You are responsible for verifying requirements with your state licensing board before submitting a licensure application.</li>
               </ul>
               <p className="mt-3">
@@ -79,7 +79,7 @@ export default function TermsPage() {
                 <li>You are responsible for maintaining the security of your account credentials.</li>
                 <li>Supervisors who create an organization are responsible for the accuracy of the roster, rule assignments, and supervision records entered on behalf of their supervisees.</li>
                 <li>Each user must have their own account. Sharing accounts is not permitted.</li>
-                <li>You must provide accurate information when creating your account. Providing false credentials (e.g., false license status) to obtain access you're not entitled to is grounds for termination.</li>
+                <li>You must provide accurate information when creating your account. Providing false credentials (e.g., false license status) to obtain access you&apos;re not entitled to is grounds for termination.</li>
               </ul>
             </div>
 
@@ -101,12 +101,12 @@ export default function TermsPage() {
             <div>
               <h2 className="font-display text-2xl font-semibold text-foreground mb-4">7. Payment and billing</h2>
               <ul className="space-y-2 list-disc list-inside text-foreground/70">
-                <li>Paid plans are billed through Stripe. By subscribing, you agree to Stripe's terms in addition to ours.</li>
+                <li>Paid plans are billed through Stripe. By subscribing, you agree to Stripe&apos;s terms in addition to ours.</li>
                 <li>The 14-day free trial requires no payment information. At the end of the trial, you must subscribe or lose access to paid features.</li>
                 <li>Subscriptions auto-renew. Cancel anytime through the billing portal — cancellation takes effect at the end of the current billing period.</li>
-                <li>Supervisee accounts are free and remain free regardless of the supervisor's plan status.</li>
+                <li>Supervisee accounts are free and remain free regardless of the supervisor&apos;s plan status.</li>
                 <li>We prorate seat additions and removals to the hour.</li>
-                <li>We reserve the right to change pricing with 30 days' notice. Existing subscribers will not see price changes until their next renewal after the notice period.</li>
+                <li>We reserve the right to change pricing with 30 days&apos; notice. Existing subscribers will not see price changes until their next renewal after the notice period.</li>
               </ul>
             </div>
 
@@ -117,7 +117,7 @@ export default function TermsPage() {
                 <li>Submit false supervision records or fabricate hours</li>
                 <li>Forge or misrepresent signatures</li>
                 <li>Use the Service to facilitate fraud against a state licensing board</li>
-                <li>Attempt to reverse-engineer, scrape, or abuse the platform's APIs</li>
+                <li>Attempt to reverse-engineer, scrape, or abuse the platform&apos;s APIs</li>
                 <li>Upload malware, exploits, or content that violates any applicable law</li>
                 <li>Resell or sublicense access to the platform</li>
               </ul>
@@ -136,9 +136,9 @@ export default function TermsPage() {
                 To the fullest extent permitted by law:
               </p>
               <ul className="space-y-2 list-disc list-inside text-foreground/70">
-                <li>AuditHalo is provided "as is." We make no warranty that the Service will be error-free, uninterrupted, or that any state rule encoding is fully accurate at all times.</li>
-                <li>We are not liable for any licensing board decision, denial of licensure, or regulatory action that results from relying on AuditHalo's rule evaluation.</li>
-                <li>In no event will AuditHalo's aggregate liability exceed the amounts you paid us in the 12 months preceding the claim.</li>
+                <li>AuditHalo is provided &ldquo;as is.&rdquo; We make no warranty that the Service will be error-free, uninterrupted, or that any state rule encoding is fully accurate at all times.</li>
+                <li>We are not liable for any licensing board decision, denial of licensure, or regulatory action that results from relying on AuditHalo&apos;s rule evaluation.</li>
+                <li>In no event will AuditHalo&apos;s aggregate liability exceed the amounts you paid us in the 12 months preceding the claim.</li>
                 <li>We are not liable for indirect, incidental, special, consequential, or punitive damages.</li>
               </ul>
             </div>
@@ -146,7 +146,7 @@ export default function TermsPage() {
             <div>
               <h2 className="font-display text-2xl font-semibold text-foreground mb-4">11. Termination</h2>
               <p>
-                You may delete your account at any time. We may suspend or terminate accounts that violate these Terms, particularly the acceptable use policy or e-signature accuracy requirements. On termination, evidence packages previously issued remain in the system for the applicable retention period to protect supervisees' records.
+                You may delete your account at any time. We may suspend or terminate accounts that violate these Terms, particularly the acceptable use policy or e-signature accuracy requirements. On termination, evidence packages previously issued remain in the system for the applicable retention period to protect supervisees&apos; records.
               </p>
             </div>
 
@@ -160,7 +160,7 @@ export default function TermsPage() {
             <div>
               <h2 className="font-display text-2xl font-semibold text-foreground mb-4">13. Changes to these Terms</h2>
               <p>
-                We may update these Terms. For material changes, we'll notify you by email at least 14 days in advance. Continued use after the effective date constitutes acceptance.
+                We may update these Terms. For material changes, we&apos;ll notify you by email at least 14 days in advance. Continued use after the effective date constitutes acceptance.
               </p>
             </div>
 

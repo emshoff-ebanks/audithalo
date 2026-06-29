@@ -109,7 +109,7 @@ export default function MarketingHome() {
             What you get
           </Badge>
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground max-w-2xl">
-            Everything a state board audit requires. Nothing it doesn't.
+            Everything a state board audit requires. Nothing it doesn&apos;t.
           </h2>
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-px bg-border">
             {valuePillars.map((p) => (

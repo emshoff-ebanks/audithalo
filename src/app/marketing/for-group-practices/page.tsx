@@ -81,10 +81,10 @@ export default function ForGroupPracticesPage() {
           just the supervisees who remembered to log their hours.
         </h1>
         <p className="mt-6 text-lg text-foreground/70 max-w-2xl leading-relaxed">
-          Group practices don't have a supervision problem — they have a
+          Group practices don&apos;t have a supervision problem — they have a
           visibility problem. AuditHalo gives practice owners, HR admins, and
           clinical directors a single real-time view of every supervised
-          associate's compliance status, across every supervisor and every state.
+          associate&apos;s compliance status, across every supervisor and every state.
         </p>
         <div className="mt-10 flex flex-wrap items-center gap-3">
           <Button asChild size="lg">
@@ -122,11 +122,11 @@ export default function ForGroupPracticesPage() {
             />
             <div>
               <h2 className="font-display text-xl font-semibold text-foreground">
-                Most practice compliance failures aren't discovered until the
-                board asks — and by then, it's a reconstruction project.
+                Most practice compliance failures aren&apos;t discovered until the
+                board asks — and by then, it&apos;s a reconstruction project.
               </h2>
               <p className="mt-2 text-foreground/70 max-w-3xl">
-                Supervision logs that live in individual supervisors' spreadsheets
+                Supervision logs that live in individual supervisors&apos; spreadsheets
                 and email threads cannot be produced as a coherent, tamper-evident
                 record on short notice. AuditHalo builds that record continuously —
                 every hour logged, every session signed, every evidence package
@@ -198,8 +198,8 @@ export default function ForGroupPracticesPage() {
                 Compliance oversight without chasing supervisors.
               </h2>
               <p className="mt-3 text-foreground/70 mb-6">
-                HR admins get a read-only view of every supervisor's roster and
-                every supervisee's compliance status. No login sharing. No weekly
+                HR admins get a read-only view of every supervisor&apos;s roster and
+                every supervisee&apos;s compliance status. No login sharing. No weekly
                 status emails to supervisors. No surprises.
               </p>
               <ul className="space-y-3">

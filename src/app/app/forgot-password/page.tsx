@@ -13,7 +13,7 @@ export default function ForgotPasswordPage() {
         Reset your password
       </h1>
       <p className="mt-3 text-foreground/70">
-        Enter the email on your AuditHalo account and we'll send you a link to
+        Enter the email on your AuditHalo account and we&apos;ll send you a link to
         choose a new password. The link expires in 1 hour.
       </p>
 

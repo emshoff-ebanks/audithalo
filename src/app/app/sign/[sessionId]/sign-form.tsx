@@ -23,7 +23,7 @@ export function SignForm({
       <input type="hidden" name="sessionEventId" value={sessionEventId} />
 
       <p className="text-sm text-foreground/70">
-        You're signing as a <span className="font-medium capitalize">{signerRole}</span>.
+        You&apos;re signing as a <span className="font-medium capitalize">{signerRole}</span>.
       </p>
 
       <label className="flex gap-3 items-start cursor-pointer text-sm">

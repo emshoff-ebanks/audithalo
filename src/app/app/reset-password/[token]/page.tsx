@@ -63,7 +63,7 @@ export default async function ResetPasswordPage({
         Choose a new password
       </h1>
       <p className="mt-3 text-foreground/70">
-        Pick something at least 8 characters long. You'll sign in with this from
+        Pick something at least 8 characters long. You&apos;ll sign in with this from
         now on.
       </p>
 

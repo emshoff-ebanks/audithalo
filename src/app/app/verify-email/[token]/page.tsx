@@ -29,7 +29,7 @@ export default async function VerifyEmailPage({
           Email verified
         </h1>
         <p className="mt-3 text-foreground/70">
-          Thanks — you'll now receive supervision notifications, evidence
+          Thanks — you&apos;ll now receive supervision notifications, evidence
           packages, and account alerts at this address.
         </p>
         <div className="mt-8">
@@ -49,7 +49,7 @@ export default async function VerifyEmailPage({
         Link unusable
       </Badge>
       <h1 className="font-display text-3xl font-semibold text-foreground">
-        We couldn't verify your email
+        We couldn&apos;t verify your email
       </h1>
       <p className="mt-3 text-foreground/70">{result.error}</p>
 

@@ -34,7 +34,7 @@ export function FoundingApplyForm() {
     return (
       <div className="rounded-lg border border-[color:var(--color-success)]/30 bg-[color:var(--color-success)]/5 p-6">
         <p className="font-display text-xl font-semibold text-foreground">
-          We've got it.
+          We&apos;ve got it.
         </p>
         <p className="mt-2 text-foreground/80 leading-relaxed">
           Damon reads every Founding Supervisor application personally and

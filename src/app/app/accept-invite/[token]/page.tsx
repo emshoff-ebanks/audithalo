@@ -93,7 +93,7 @@ export default async function AcceptInvitePage({
   return (
     <div className="mx-auto max-w-md px-6 py-20">
       <Badge variant="outline" className="mb-4">
-        You're invited
+        You&apos;re invited
       </Badge>
       <h1 className="font-display text-3xl font-semibold text-foreground">
         Join {org?.name ?? "your supervisor's roster"} on AuditHalo
@@ -107,7 +107,7 @@ export default async function AcceptInvitePage({
 
       {pendingRuleLabel && (
         <p className="mt-3 text-sm text-foreground/60 bg-accent/40 rounded-sm px-3 py-2">
-          You'll be enrolled under <strong>{pendingRuleLabel}</strong>.
+          You&apos;ll be enrolled under <strong>{pendingRuleLabel}</strong>.
         </p>
       )}
 
@@ -118,7 +118,7 @@ export default async function AcceptInvitePage({
           ) : isMismatchedSignedIn ? (
             <div className="space-y-3">
               <p className="text-sm text-foreground/80">
-                You're signed in as{" "}
+                You&apos;re signed in as{" "}
                 <strong>{session?.user?.email}</strong>, but this invitation is
                 addressed to <strong>{invite.email}</strong>.
               </p>

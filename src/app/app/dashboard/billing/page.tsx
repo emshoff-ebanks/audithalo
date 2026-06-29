@@ -86,7 +86,7 @@ export default async function BillingPage({
       {params.status === "success" && (
         <div className="mt-6 p-4 rounded-sm border border-[color:var(--color-success)]/20 bg-[color:var(--color-success)]/5 text-sm text-foreground/80">
           Subscription started. It can take a moment for the status below to
-          update — refresh the page if it still says "no active plan".
+          update — refresh the page if it still says &ldquo;no active plan&rdquo;.
         </div>
       )}
       {params.status === "canceled" && (
@@ -161,7 +161,7 @@ export default async function BillingPage({
           <CardContent className="p-6">
             <p className="label-overline mb-2">Current plan</p>
             <p className="text-foreground/70">
-              No active plan. You're in a free read-only state — pick a plan
+              No active plan. You&apos;re in a free read-only state — pick a plan
               below to start your 14-day trial.
             </p>
           </CardContent>

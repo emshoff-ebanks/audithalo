@@ -51,7 +51,7 @@ export function ContactForm() {
         <div>
           <p className="font-medium text-foreground">Message sent.</p>
           <p className="mt-1 text-sm text-foreground/70">
-            We'll get back to you at the email you provided — usually same day.
+            We&apos;ll get back to you at the email you provided — usually same day.
           </p>
         </div>
       </div>
@@ -72,7 +72,7 @@ export function ContactForm() {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="topic">What's this about?</Label>
+        <Label htmlFor="topic">What&apos;s this about?</Label>
         <select
           id="topic"
           name="topic"
@@ -132,7 +132,7 @@ export function NewsletterForm() {
       <div className="flex items-start gap-3">
         <CheckCircle2 className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--color-success)]" />
         <p className="text-sm text-foreground">
-          You're subscribed. We'll notify you when your state's requirements change.
+          You&apos;re subscribed. We&apos;ll notify you when your state&apos;s requirements change.
         </p>
       </div>
     );

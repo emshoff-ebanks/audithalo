@@ -29,7 +29,7 @@ export function UpgradeToPracticeForm({
         <p className="mt-2 text-sm text-foreground/70">
           Practice is <strong>$49/mo base + $25/supervisee/mo</strong>. Unlimited
           supervisees, all 5 supported states, HR + exec dashboards, 7-year
-          audit log retention. Switch is prorated — you'll get credit for the
+          audit log retention. Switch is prorated — you&apos;ll get credit for the
           unused portion of your Solo plan.
         </p>
 

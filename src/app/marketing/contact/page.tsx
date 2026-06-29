@@ -43,7 +43,7 @@ export default function ContactPage() {
                 </h3>
                 <ul className="space-y-2 text-sm text-foreground/70">
                   <li>Setting up your supervisor account</li>
-                  <li>Questions about your state's requirements</li>
+                  <li>Questions about your state&apos;s requirements</li>
                   <li>Enterprise or group practice plans</li>
                   <li>Requesting a new state be added</li>
                   <li>Partnership or press inquiries</li>
@@ -75,7 +75,7 @@ export default function ContactPage() {
               <Badge variant="outline">State law updates</Badge>
             </div>
             <h2 className="font-display text-2xl font-semibold text-foreground">
-              Be the first to know when your state's supervision requirements change.
+              Be the first to know when your state&apos;s supervision requirements change.
             </h2>
             <p className="mt-3 text-foreground/70 text-sm leading-relaxed mb-6">
               State boards update supervision rules — and the changes often come

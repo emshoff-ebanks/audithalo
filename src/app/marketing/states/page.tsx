@@ -24,7 +24,7 @@ export default function StatesIndexPage() {
           Compliance, encoded, citation-grounded.
         </h1>
         <p className="mt-6 text-lg text-foreground/70 max-w-2xl">
-          Each state's supervision rule is encoded from its administrative code and
+          Each state&apos;s supervision rule is encoded from its administrative code and
           re-verified on a published schedule. Click into any state to see hour
           requirements, cadence rules, supervisor qualifications, and the citation
           link to the live source.
@@ -69,10 +69,10 @@ export default function StatesIndexPage() {
       <section className="border-t border-border">
         <div className="mx-auto max-w-3xl px-6 py-20 text-center">
           <h2 className="font-display text-3xl font-semibold text-foreground">
-            Your state isn't here yet?
+            Your state isn&apos;t here yet?
           </h2>
           <p className="mt-4 text-foreground/70">
-            Tell us and we'll prioritize encoding it. Enterprise customers get custom
+            Tell us and we&apos;ll prioritize encoding it. Enterprise customers get custom
             state additions in contract.
           </p>
           <Button asChild size="lg" variant="outline" className="mt-8">

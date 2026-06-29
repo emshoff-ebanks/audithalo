@@ -31,7 +31,7 @@ export function AcceptAsExistingUserForm({ token, email }: Props) {
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="token" value={token} />
       <p className="text-sm text-foreground/70">
-        Accepting will add this supervisor's organization to your account
+        Accepting will add this supervisor&apos;s organization to your account
         ({email}). Your existing data stays unchanged.
       </p>
 

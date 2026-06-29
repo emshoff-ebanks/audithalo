@@ -121,7 +121,7 @@ export default function PrivacyPage() {
           <div>
             <h2 className="font-display text-2xl font-semibold text-foreground mb-4">10. Changes to this policy</h2>
             <p>
-              We update the "Last updated" date when this policy changes. For material changes, we'll notify you by email at least 14 days before the change takes effect.
+              We update the &ldquo;Last updated&rdquo; date when this policy changes. For material changes, we&apos;ll notify you by email at least 14 days before the change takes effect.
             </p>
           </div>
 

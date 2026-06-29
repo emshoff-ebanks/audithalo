@@ -20,7 +20,7 @@ export default async function RegisterPage() {
         Create your supervisor account
       </h1>
       <p className="mt-3 text-foreground/70">
-        Supervisees join later, by invite. They're always free.
+        Supervisees join later, by invite. They&apos;re always free.
       </p>
 
       <RegisterForm />
