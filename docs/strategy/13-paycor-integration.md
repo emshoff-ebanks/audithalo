@@ -505,15 +505,18 @@ return-to-active + real-time SLA). Remaining:
   Joy (Bree noted others can weigh in; daily-COB is our default
   until they object)
 
-**Matt + Nick (Medipyxis)**:
+**Matt + Nick (Medipyxis)** — senior devs, NOT Paycor specialists:
 
-- (2B) Event payload shape from prior Paycor work
-- (2B) Manager vs clinical-supervisor distinction handling
-- (2B) Idempotency + retry model
-- (2D) SSH key-pair management pattern they used
+- Spec review on `docs/strategy/13-paycor-integration.md` for
+  fresh-eyes critique (schema, phasing, missed edges)
+- Code review on Wave 2 PRs as they land
+- General patterns they've shipped for: idempotent daily-cron
+  syncs against external APIs, SFTP file delivery with retry +
+  failure surfacing, audit-log shapes for external-sync events
+- No expectation of Paycor-specific knowledge
 
 (Webhook-vs-polling question retired — Bree's daily-COB answer
-makes polling the default.)
+matches Paycor's webhook-less Public API per the swagger.)
 
 **Paycor partner support** (sent after RI confirms account contact):
 

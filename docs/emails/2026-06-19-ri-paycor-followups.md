@@ -46,21 +46,19 @@ Christopher Reese, Tricia Lessard
 ## Email 2 — To Matt + Nick (Medipyxis internal)
 
 **To:** Matt, Nick (Medipyxis executive devs)
-**Subject:** RI Paycor auto-provisioning — picking your brain
+**Subject:** AuditHalo Wave 2 — fresh eyes wanted
 
 > Matt, Nick —
 >
-> Damon flagged you guys as the experts on auto-provisioning / deep provisioning. We're standing up a Paycor ↔ AuditHalo real-time roster sync for Recovery Innovations (multi-site, JC-accredited customer, ~biweekly hiring classes + daily attrition).
+> Heads up on the next chunk of work at AuditHalo. We're standing up a Paycor ↔ AuditHalo daily roster sync + SFTP-based PDF delivery for our lead customer (Recovery Innovations — multi-site behavioral health, JC-accredited, biweekly hiring classes plus daily attrition). Full spec is in the repo at `docs/strategy/13-paycor-integration.md` (commit `32d21ff`).
 >
-> A few specific asks from your prior work, in priority order:
+> Nothing urgent here — just want a second set of eyes from senior devs as the design takes shape:
 >
-> 1. **Event payload shape** for hire / terminate / leave-status changes — what schema did you normalize to between Paycor and your downstream? Saves us re-deriving it.
-> 2. **Manager vs clinical supervisor** — Paycor surfaces a manager reference, but in healthcare ops the HR manager often isn't the clinical supervisor. How did you handle that distinction for auto-assignment, or did you punt to a human-in-the-loop step?
-> 3. **Idempotency + retry model** — what's your dedupe key for a Paycor change event, and how do you handle replay safety if the webhook fires twice?
-> 4. **Paycor webhook vs polling** — did you go webhook-first, polling-first, or both? Any rate-limit gotchas?
-> 5. **SFTP credential pattern** — if you've done SFTP-to-Paycor anywhere, what's your key-pair management approach (per-customer, per-env, KMS)?
+> 1. **Skim the spec when you've got a minute.** Catch anything that looks off — schema shape, phasing, dependencies, anything I'd benefit from someone with fresh perspective questioning.
+> 2. **Patterns you've shipped** for any of: idempotent daily-cron syncs against external APIs, SFTP file delivery with retry + failure surfacing, audit-log shapes for external-sync events. Doesn't have to be Paycor — anything analogous helps.
+> 3. **Code reviews** on the actual PRs as Wave 2 lands. First one is a small lifecycle-status schema migration (Phase 1.1) — would appreciate a glance before it goes in.
 >
-> No rush — even a 15-min call when you've got time would be huge. We're on the AuditHalo side at `info@audithalo.com`.
+> No rush — reach me at `info@audithalo.com` or on whatever channel works.
 >
 > Thanks,
 > Caleb
