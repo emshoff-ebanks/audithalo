@@ -96,8 +96,8 @@ Detailed history is in `git log`. Recent waves:
 | Wave 2 Phase 0 (planning docs) | DONE 2026-06-24 | `docs/strategy/13-paycor-integration.md` |
 | Wave 2 Phase 1.1 (lifecycle state) | DONE 2026-06-29 | commit `1ef945e` |
 | Wave 2 Phase 1.2 (state-rules auto-update cron) | DONE 2026-06-29 | commit `50146bc` |
-| Wave 2 / 2E (RI Clinical Supervision Form PDF) | CODE COMPLETE | schema + sign-page UI + PDF template + API route branching. Migration `0030` pending prod apply. 441 tests passing. |
-| Wave 2 Phase 2 remainder (SFTP / auto-provisioning scaffolding) | BLOCKED | needs Paycor admin contact |
+| Wave 2 / 2E (RI Clinical Supervision Form PDF) | DONE 2026-07-06 | 7 commits. Schema + sign-page UI + PDF w/ RI logo + evidence integration + Zod validation + E2E specs. Migration `0030` applied. 441 tests. |
+| Wave 2 Phase 2 (Paycor scaffolding) | PLANNED | `docs/strategy/14-wave2-phase2-scaffolding.md` — 4 passes, all in our hands, no RI blockers. |
 | Wave 2 Phase 3 (full Paycor + SFTP integration) | BLOCKED | needs Paycor partner support + Matt+Nick logic |
 | Wave 3 (AI transcription, performance summaries, post-seal correction) | NOT STARTED | depends on Wave 2 live |
 | Wave 4 (HIPAA, SOC 2, SSO, perf at scale) | NOT STARTED | post-launch |
@@ -107,11 +107,11 @@ Detailed history is in `git log`. Recent waves:
 Tables (`src/lib/db/schema.ts`) — abbreviated:
 
 - `users` — credentials + role + name + state + license info + TOTP + `deletedAt` + `sessionsValidFrom` + `isFoundingSupervisor`.
-- `organizations` — Stripe customer / subscription fields + tier + period_end + seatCount.
+- `organizations` — Stripe customer / subscription fields + tier + period_end + seatCount + **pdfTemplateKey**.
 - `org_memberships` — userId, orgId, role, `deactivatedAt`, **`leave_status`** (active/on_leave/prn) + metadata.
 - `supervisor_assignments` — M:N supervisor↔supervisee; primary flag; transferred-from chain.
 - `invitations` — hashed-token invites with pending rule + pending supervisor assignment.
-- `session_events` — the session log. signatures jsonb, signedAt, scheduledStatus, sign_reminder_sent_at, aiNote, calendar metadata.
+- `session_events` — the session log. signatures jsonb, signedAt, scheduledStatus, sign_reminder_sent_at, aiNote, **supervisionType**, **clinicalFormData** jsonb, calendar metadata.
 - `session_attendees` — group-session participants who all must sign.
 - `evidence_packages` — sealed JSON + SHA-256 hash + PDF metadata.
 - `supervisee_rule_assignments` — which supervisee follows which rule version.
