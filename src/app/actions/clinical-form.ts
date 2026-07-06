@@ -92,6 +92,27 @@ export async function updateSupervisionTypeAction(
 // saveClinicalFormData — persists the RI Clinical Supervision Form fields
 // ---------------------------------------------------------------------------
 
+const clinicalFormSchema = z.object({
+  isInitialPlan: z.boolean().optional(),
+  frequencyPlan: z.enum(["weekly", "biweekly", "monthly", "bimonthly", "quarterly", "as_needed"]).optional(),
+  policyReviewed: z.boolean().optional(),
+  contractAgreedUpon: z.boolean().optional(),
+  coreSkillsChecked: z.array(z.string()).optional(),
+  competenciesChecked: z.array(z.string()).optional(),
+  otherCoreSkill: z.string().max(500).optional(),
+  actionSteps: z.array(z.object({ step: z.string().max(1000), targetDate: z.string().max(20) })).max(5).optional(),
+  groupDiscussionTopics: z.string().max(5000).optional(),
+  followUpFromPrevious: z.string().max(5000).optional(),
+  trainingNeeds: z.string().max(5000).optional(),
+  teamBenefit: z.string().max(5000).optional(),
+  caseReviewFindings: z.string().max(5000).optional(),
+  medicationReview: z.string().max(5000).optional(),
+  additionalContext: z.string().max(5000).optional(),
+  superviseeJobTitle: z.string().max(200).optional(),
+  superviseeCredentials: z.string().max(200).optional(),
+  supervisionTypeOther: z.string().max(200).optional(),
+}).strict();
+
 export async function saveClinicalFormDataAction(
   sessionEventId: string,
   data: Partial<ClinicalFormData>
@@ -99,12 +120,17 @@ export async function saveClinicalFormDataAction(
   const session = await auth();
   if (!session?.user) return { ok: false, error: "Not authenticated." };
 
-  if (!sessionEventId || typeof sessionEventId !== "string") {
-    return { ok: false, error: "Invalid session ID." };
-  }
+  const idParsed = z.string().uuid().safeParse(sessionEventId);
+  if (!idParsed.success) return { ok: false, error: "Invalid session ID." };
+
+  const dataParsed = clinicalFormSchema.safeParse(data);
+  if (!dataParsed.success) return { ok: false, error: "Invalid form data." };
+
+  const validId = idParsed.data;
+  const validData = dataParsed.data;
 
   const sessionEvent = await db.query.sessionEvents.findFirst({
-    where: eq(schema.sessionEvents.id, sessionEventId),
+    where: eq(schema.sessionEvents.id, validId),
   });
   if (!sessionEvent) return { ok: false, error: "Session not found." };
 
@@ -126,13 +152,13 @@ export async function saveClinicalFormDataAction(
 
   const existing =
     (sessionEvent.clinicalFormData as ClinicalFormData | null) ?? {};
-  const merged: ClinicalFormData = { ...existing, ...data };
+  const merged: ClinicalFormData = { ...existing, ...validData };
 
   await db
     .update(schema.sessionEvents)
     .set({ clinicalFormData: merged })
-    .where(eq(schema.sessionEvents.id, sessionEventId));
+    .where(eq(schema.sessionEvents.id, validId));
 
-  revalidatePath(`/sign/${sessionEventId}`);
+  revalidatePath(`/sign/${validId}`);
   return { ok: true };
 }

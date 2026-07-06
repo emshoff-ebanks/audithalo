@@ -26,6 +26,11 @@ const hasE2ECreds = !!process.env.E2E_HR_ADMIN_EMAIL;
 // docs/strategy/11-demo-readiness-test-plan.md.
 const hasDemoCreds = !!process.env.DEMO_HR_ADMIN_EMAIL;
 
+// RI Clinical Form specs. Use a separate set of creds for the RI test org
+// (sarah.chen / jordan.williams / bree.martinez). Inline login, no shared
+// storage state.
+const hasRiCreds = !!process.env.RI_SUPERVISOR_PASSWORD;
+
 const STORAGE_HR_ADMIN = "playwright/.auth/hr_admin.json";
 
 export default defineConfig({
@@ -103,6 +108,16 @@ export default defineConfig({
             name: "hostile-mobile",
             // Device viewport configured inside the spec via test.use().
             testMatch: /hostile\/mobile\.spec\.ts/,
+          },
+        ]
+      : []),
+    // RI Clinical Form specs. Inline login with RI_* env vars.
+    ...(hasRiCreds
+      ? [
+          {
+            name: "clinical-form",
+            use: { ...devices["Desktop Chrome"] },
+            testMatch: /clinical-form\/.*\.spec\.ts/,
           },
         ]
       : []),
