@@ -12,6 +12,118 @@ specs yet. This plan covers everything we CAN build without those
 credentials, using mock providers that swap for real ones when creds
 arrive.
 
+## How AuditHalo works today (context for the new session)
+
+A supervisor at RI oversees clinicians. Today's workflow:
+
+1. **HR Admin** manually invites each clinician to AuditHalo. Types
+   their name, email, role — one at a time.
+2. **Supervisor** schedules or logs supervision sessions with their
+   assigned supervisees.
+3. After a session, the supervisor goes to `/sign/{sessionId}` and:
+   - (Optional) Pastes a transcript → AI generates a structured note
+   - (RI only) Fills out the Clinical Supervision Form sections
+     (competency checkboxes, action steps, case review, etc.)
+   - Signs with intent confirmation
+4. **Supervisee** opens the same `/sign/{sessionId}` page and signs.
+5. Both signatures trigger **seal** → evidence package generated
+   (canonical JSON + SHA-256 hash) → PDF available for download.
+6. HR Admin or supervisor manually downloads the PDF and... does
+   what with it? Today, nothing automated. They could email it,
+   print it, or save it to a shared drive. **The gap is getting it
+   into Paycor's employee Documents folder automatically.**
+
+### What this phase changes from the human's perspective
+
+**For the HR Admin (Bree at RI):**
+- Today: manually adds/removes people from AuditHalo when they
+  hire, fire, or put someone on leave. Downloads PDFs and
+  manually files them.
+- After Phase 2: AuditHalo shows a "Paycor Integration" panel
+  on her dashboard. Initially it says "Not connected." Once RI
+  provides credentials (Phase 3), it becomes a live dashboard
+  showing last sync time, recent deliveries, and any failures.
+  She no longer manually manages the roster or files PDFs — both
+  happen automatically.
+
+**For the Supervisor (Dr. Sarah Chen at RI):**
+- Today: fills out the clinical form, signs, and the session is
+  sealed. The PDF sits in AuditHalo.
+- After Phase 2: same workflow — but after seal, the PDF is
+  automatically queued for delivery to Paycor. The supervisor
+  doesn't need to do anything differently. They might see a
+  "Delivered to Paycor" badge on the sealed session eventually,
+  but v1 doesn't surface that to them.
+
+**For the Supervisee (Jordan Williams at RI):**
+- No change. They sign when asked. They don't interact with
+  Paycor integration at all.
+
+**For non-RI orgs (Atlas Counseling, future customers):**
+- Zero change. The Paycor integration is per-org. Orgs without
+  `paycorConfig` set see nothing different. The daily sync cron
+  skips them. The SFTP delivery hook doesn't fire for them.
+
+### Side effects on existing features
+
+| Existing feature | Impact |
+|---|---|
+| **Roster page (`/dashboard/roster`)** | New employees auto-provisioned from Paycor will appear here automatically. HR Admin no longer needs to manually invite them. Existing manual invitation flow still works — Paycor sync doesn't break it, just makes it unnecessary for Paycor-connected orgs. |
+| **Supervisor assignment** | Auto-provisioned employees arrive WITHOUT a supervisor assignment. HR Admin sees "N unassigned supervisees" notification and assigns them manually. This is intentional — Paycor's `managerId` is the HR manager, not the clinical supervisor. |
+| **Leave status badges** | Currently set by the seed data or manually. After daily sync, these update automatically from Paycor's `EmploymentStatus` enum. The team page and supervisor dashboard reflect the change on the next page load. |
+| **Sign-reminders cron** | Already skips `on_leave` supervisees (built in Phase 1.1). No change needed — the daily sync feeds the same `leaveStatus` column. |
+| **Rule-engine evaluation** | Already pauses obligation timers for `on_leave` (built in Phase 1.1). No change needed. |
+| **Evidence package generation** | Modified: adds a post-generation hook that queues SFTP delivery if `paycorConfig` exists. Sealed sessions for non-Paycor orgs are completely unaffected. |
+| **Audit log** | New action codes (`paycor_sync.employee_hired`, `paycor_sync.employee_terminated`, `paycor_sync.leave_changed`, `paycor_sync.delivery_queued`, `paycor_sync.delivery_completed`, `paycor_sync.delivery_failed`). HR Admin sees these in the audit log timeline. |
+| **Billing / seat count** | Auto-provisioned employees consume seats. If the org hits their Practice tier seat cap, the sync logs the failure and notifies HR Admin — it does NOT silently drop the employee. |
+
+### Edge cases a human would encounter
+
+| Scenario | What happens | Is this confusing? |
+|---|---|---|
+| Employee terminated in Paycor but has a pending unsigned session in AuditHalo | Employee is soft-deactivated in AuditHalo. The pending session stays — it's historical record. But the supervisee can no longer sign in. Supervisor should be notified: "Jordan Williams was deactivated — 1 unsigned session remains." | Could be confusing without notification. **Pass 2 must surface this.** |
+| Employee on leave in Paycor, comes back to active | Next daily sync flips `leaveStatus` back to `active`. Sign reminders resume. No manual step in AuditHalo. | Clear — matches Bree's expectation (confirmed 2026-06-25). |
+| New hire in Paycor, AuditHalo seat cap reached | Sync logs the failure. HR Admin sees "1 employee could not be provisioned — seat limit reached. Upgrade your plan or contact support." | Clear if we show the right message. |
+| Sealed PDF fails SFTP delivery 3 times | Delivery marked `failed`. HR Admin notification: "Supervision form for Jordan Williams (2026-07-03) could not be delivered to Paycor. Retry or download manually." Dashboard shows the failure with a retry button. | Clear. |
+| HR Admin manually invites someone who's already in Paycor | The daily sync should recognize the match (by email) and NOT create a duplicate. It links the existing AuditHalo user to the Paycor employee ID instead. | Could cause duplicates if not handled. **Pass 2 must deduplicate by email.** |
+| Paycor API is down during daily sync | Sync retries once. If still down, logs the failure and notifies HR Admin. Next day's sync picks up the delta. | Clear if notification explains it was a Paycor issue, not AuditHalo. |
+
+### How this fits into the bigger product picture
+
+```
+┌───────────────────────────────────────────────────────┐
+│                    PAYCOR (HRIS)                      │
+│  Source of truth for: roster, employment status,      │
+│  job titles, credentials, leave/PRN status            │
+└────────────────────────┬──────────────────────────────┘
+                         │
+              Daily sync (2C) ↓ polls    ↑ SFTP push (2D)
+                         │               │
+┌────────────────────────┴───────────────┴──────────────┐
+│                   AUDITHALO                           │
+│                                                       │
+│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐ │
+│  │ Roster      │  │ Supervision  │  │ Evidence     │ │
+│  │ Management  │←─│ Sessions     │──│ Packages     │ │
+│  │ (auto from  │  │ (sign flow)  │  │ (sealed PDF) │ │
+│  │  Paycor)    │  │              │  │              │ │
+│  └─────────────┘  └──────────────┘  └──────┬───────┘ │
+│                                            │         │
+│  ┌─────────────┐  ┌──────────────┐         │ auto    │
+│  │ Rule Engine │  │ Clinical     │         │ deliver │
+│  │ (state +    │  │ Form (RI     │         │ to      │
+│  │  JC rules)  │  │ template)    │         │ Paycor  │
+│  └─────────────┘  └──────────────┘         ↓         │
+│                                    SFTP to Paycor     │
+│                                    Documents folder   │
+└───────────────────────────────────────────────────────┘
+```
+
+The Paycor integration makes AuditHalo a **closed loop**: roster
+comes IN from Paycor, supervision documentation goes OUT to Paycor.
+No manual data entry, no manual file management. This is the core
+value prop for RI and the reason they're paying for the build.
+
 ## What's done (don't redo)
 
 - Wave 1 Passes 1-6 (all shipped 2026-06-19)
@@ -32,7 +144,7 @@ arrive.
 
 ## Current state
 
-- Branch: `main`, latest commit `59fed21`
+- Branch: `main`, latest commit `42d71d4`
 - Working tree: clean
 - Tests: 441 passing (39 files)
 - Build: green
