@@ -3,6 +3,7 @@ import {
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
 } from "@react-pdf/renderer";
 import type { ClinicalFormData } from "@/lib/clinical-form/types";
@@ -12,277 +13,368 @@ import {
   SUPERVISION_TYPE_LABELS,
   FREQUENCY_PLAN_LABELS,
 } from "@/lib/clinical-form/constants";
+import path from "node:path";
+
+const RI_PURPLE = "#5B2A5E";
+const RI_GOLD = "#B5924C";
+const RI_LIGHT_PURPLE = "#7B4A7E";
+
+const logoPath = path.join(process.cwd(), "public/logos/recovery-innovations.png");
 
 const s = StyleSheet.create({
   page: {
-    padding: 48,
+    padding: 40,
+    paddingBottom: 80,
     fontSize: 9,
     fontFamily: "Helvetica",
-    color: "#08111F",
+    color: "#1a1a1a",
   },
-  title: {
-    fontSize: 18,
+  // Title banner matching RI's purple gradient header
+  titleBanner: {
+    backgroundColor: RI_PURPLE,
+    padding: 12,
+    marginBottom: 14,
+    borderRadius: 2,
+  },
+  titleText: {
+    fontSize: 20,
     fontFamily: "Helvetica-Bold",
+    color: "#FFFFFF",
     textAlign: "center",
-    marginBottom: 16,
-    color: "#071A3D",
+    letterSpacing: 1,
   },
-  headerTable: {
+  // Two-column header table (Employee/Job Position, Credentials/Date)
+  headerRow: {
     flexDirection: "row",
-    borderWidth: 0.5,
-    borderColor: "#08111F",
-    marginBottom: 12,
+    borderWidth: 0.75,
+    borderColor: "#333333",
   },
   headerCell: {
     flex: 1,
-    padding: 6,
-    borderRightWidth: 0.5,
-    borderRightColor: "#08111F",
+    padding: 5,
+    borderRightWidth: 0.75,
+    borderRightColor: "#333333",
   },
   headerCellLast: {
     flex: 1,
-    padding: 6,
+    padding: 5,
   },
   cellLabel: {
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
-    color: "#5F6470",
-    marginBottom: 2,
+    color: "#555555",
+    marginBottom: 1,
   },
   cellValue: {
     fontSize: 9,
-    color: "#08111F",
+    color: "#1a1a1a",
   },
-  sectionTitle: {
+  // Section headers with underline (matching RI's purple underlined sections)
+  sectionHead: {
     fontSize: 10,
     fontFamily: "Helvetica-Bold",
+    color: RI_PURPLE,
     textDecoration: "underline",
-    marginTop: 14,
-    marginBottom: 6,
-    color: "#071A3D",
+    marginTop: 12,
+    marginBottom: 5,
   },
-  sectionSubtitle: {
-    fontSize: 8,
+  subsectionHead: {
+    fontSize: 9,
     fontFamily: "Helvetica-Bold",
+    color: RI_PURPLE,
     marginTop: 8,
     marginBottom: 4,
-    color: "#08111F",
+  },
+  label: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    color: "#555555",
   },
   text: {
     fontSize: 9,
     lineHeight: 1.5,
+    marginBottom: 3,
+  },
+  italic: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Oblique",
+    color: "#666666",
+    lineHeight: 1.4,
     marginBottom: 4,
   },
-  smallText: {
-    fontSize: 8,
-    color: "#5F6470",
-    lineHeight: 1.4,
+  bold: {
+    fontSize: 9,
+    fontFamily: "Helvetica-Bold",
+    lineHeight: 1.5,
   },
+  // Checkbox styles
   checkRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: 3,
+    marginBottom: 2.5,
   },
-  checkbox: {
-    width: 10,
-    height: 10,
-    borderWidth: 0.5,
-    borderColor: "#08111F",
-    marginRight: 6,
+  checkboxEmpty: {
+    width: 9,
+    height: 9,
+    borderWidth: 0.75,
+    borderColor: "#333333",
+    marginRight: 5,
     marginTop: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
-  checked: {
-    width: 10,
-    height: 10,
-    borderWidth: 0.5,
-    borderColor: "#08111F",
-    backgroundColor: "#071A3D",
-    marginRight: 6,
+  checkboxFilled: {
+    width: 9,
+    height: 9,
+    borderWidth: 0.75,
+    borderColor: RI_PURPLE,
+    backgroundColor: RI_PURPLE,
+    marginRight: 5,
     marginTop: 1,
     justifyContent: "center",
     alignItems: "center",
   },
   checkmark: {
-    fontSize: 7,
+    fontSize: 6,
     color: "#FFFFFF",
     fontFamily: "Helvetica-Bold",
   },
   checkLabel: {
     flex: 1,
     fontSize: 8,
-    lineHeight: 1.4,
+    lineHeight: 1.35,
   },
+  // Competency grid (4 columns matching RI form)
   compGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: 4,
   },
   compItem: {
     width: "25%",
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 3,
-    paddingRight: 4,
+    marginBottom: 2.5,
+    paddingRight: 3,
   },
-  compCheckbox: {
-    width: 8,
-    height: 8,
+  compCheck: {
+    width: 7,
+    height: 7,
     borderWidth: 0.5,
-    borderColor: "#08111F",
-    marginRight: 4,
+    borderColor: "#333333",
+    marginRight: 3,
+  },
+  compCheckFilled: {
+    width: 7,
+    height: 7,
+    borderWidth: 0.5,
+    borderColor: RI_PURPLE,
+    backgroundColor: RI_PURPLE,
+    marginRight: 3,
     justifyContent: "center",
     alignItems: "center",
-  },
-  compChecked: {
-    width: 8,
-    height: 8,
-    borderWidth: 0.5,
-    borderColor: "#08111F",
-    backgroundColor: "#071A3D",
-    marginRight: 4,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  compLabel: {
-    fontSize: 7,
-    flex: 1,
   },
   compCheckmark: {
+    fontSize: 4.5,
+    color: "#FFFFFF",
+    fontFamily: "Helvetica-Bold",
+  },
+  compLabel: {
+    fontSize: 6.5,
+    flex: 1,
+  },
+  // Action steps
+  stepRow: {
+    flexDirection: "row",
+    marginBottom: 4,
+    alignItems: "center",
+  },
+  stepLabel: {
+    width: 38,
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    color: "#555555",
+  },
+  stepLine: {
+    flex: 1,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#999999",
+    fontSize: 9,
+    paddingBottom: 2,
+    minHeight: 14,
+  },
+  stepDate: {
+    width: 85,
+    marginLeft: 6,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#999999",
+    fontSize: 8,
+    fontFamily: "Helvetica-Oblique",
+    textAlign: "right",
+    paddingBottom: 2,
+    minHeight: 14,
+  },
+  // Free text areas (underlined blank space)
+  textArea: {
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#999999",
+    minHeight: 32,
+    fontSize: 9,
+    lineHeight: 1.5,
+    paddingBottom: 3,
+    marginBottom: 4,
+  },
+  // Inline row for checkboxes on same line
+  inlineCheck: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 4,
+    flexWrap: "wrap",
+  },
+  inlineItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  miniCheck: {
+    width: 8,
+    height: 8,
+    borderWidth: 0.5,
+    borderColor: "#333333",
+  },
+  miniCheckFilled: {
+    width: 8,
+    height: 8,
+    borderWidth: 0.5,
+    borderColor: RI_PURPLE,
+    backgroundColor: RI_PURPLE,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  miniCheckmark: {
     fontSize: 5,
     color: "#FFFFFF",
     fontFamily: "Helvetica-Bold",
   },
-  stepRow: {
-    flexDirection: "row",
-    marginBottom: 4,
-  },
-  stepLabel: {
-    width: 40,
+  miniLabel: {
     fontSize: 8,
-    fontFamily: "Helvetica-Bold",
-    color: "#5F6470",
   },
-  stepValue: {
-    flex: 1,
-    fontSize: 9,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#E3E0D4",
-    paddingBottom: 2,
-  },
-  stepDate: {
-    width: 90,
-    fontSize: 9,
-    fontFamily: "Courier",
-    textAlign: "right",
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#E3E0D4",
-    paddingBottom: 2,
-    marginLeft: 8,
-  },
-  textBlock: {
-    fontSize: 9,
-    lineHeight: 1.5,
-    minHeight: 36,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#E3E0D4",
-    paddingBottom: 4,
-    marginBottom: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#E3E0D4",
-    marginVertical: 10,
-  },
+  // Signature blocks
   sigBlock: {
-    marginTop: 12,
-    borderTopWidth: 0.5,
-    borderTopColor: "#E3E0D4",
-    paddingTop: 8,
+    marginTop: 10,
+    paddingTop: 6,
   },
   sigRow: {
     flexDirection: "row",
-    marginBottom: 3,
+    marginBottom: 6,
   },
   sigLabel: {
-    width: 130,
+    width: 140,
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
-    color: "#5F6470",
+    color: "#555555",
   },
-  sigValue: {
+  sigLine: {
     flex: 1,
-    fontSize: 9,
     borderBottomWidth: 0.5,
-    borderBottomColor: "#E3E0D4",
+    borderBottomColor: "#333333",
+    fontSize: 9,
     paddingBottom: 2,
+    minHeight: 16,
   },
+  // Footer matching RI's form footer
   footer: {
-    marginTop: 16,
-    paddingTop: 8,
+    position: "absolute",
+    bottom: 20,
+    left: 40,
+    right: 40,
     borderTopWidth: 1,
-    borderTopColor: "#E3E0D4",
-  },
-  footerLabel: {
-    fontSize: 7,
-    letterSpacing: 1.2,
-    color: "#5F6470",
-    textTransform: "uppercase",
-    fontFamily: "Helvetica-Bold",
-    marginBottom: 3,
-  },
-  footerBrand: {
+    borderTopColor: "#cccccc",
+    paddingTop: 8,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    marginTop: 12,
   },
-  brandText: {
-    fontSize: 8,
-    color: "#5F6470",
+  footerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
-  pageNumber: {
-    fontSize: 8,
-    color: "#5F6470",
+  footerLogo: {
+    width: 50,
+    height: 35,
+  },
+  footerMeta: {
+    fontSize: 6.5,
+    color: "#666666",
+    lineHeight: 1.4,
+  },
+  footerMetaBold: {
+    fontSize: 6.5,
+    color: RI_PURPLE,
     fontFamily: "Helvetica-Bold",
+    lineHeight: 1.4,
   },
-  hash: {
+  footerRight: {
+    textAlign: "right",
+  },
+  footerTitle: {
+    fontSize: 12,
+    fontFamily: "Helvetica-Bold",
+    color: "#1a1a1a",
+  },
+  footerPage: {
+    fontSize: 8,
+    color: "#666666",
+    marginTop: 2,
+  },
+  // Divider
+  divider: {
+    height: 0.75,
+    backgroundColor: "#cccccc",
+    marginVertical: 8,
+  },
+  // AuditHalo seal
+  sealBlock: {
+    marginTop: 12,
+    padding: 8,
+    borderWidth: 0.5,
+    borderColor: "#E3E0D4",
+    borderRadius: 2,
+    backgroundColor: "#F9F8F5",
+  },
+  sealLabel: {
+    fontSize: 7,
+    letterSpacing: 1,
+    color: "#5F6470",
+    textTransform: "uppercase",
+    fontFamily: "Helvetica-Bold",
+    marginBottom: 2,
+  },
+  sealHash: {
     fontFamily: "Courier-Bold",
     fontSize: 7,
     color: "#08111F",
     lineHeight: 1.3,
   },
-  fineprint: {
-    fontSize: 7,
+  sealFine: {
+    fontSize: 6.5,
     color: "#5F6470",
-    marginTop: 6,
+    marginTop: 4,
     lineHeight: 1.3,
   },
+  // Boilerplate
   boilerplate: {
-    fontSize: 7,
-    color: "#5F6470",
+    fontSize: 7.5,
+    color: "#444444",
     lineHeight: 1.4,
-    marginTop: 6,
-    marginBottom: 6,
+    marginTop: 4,
+    marginBottom: 4,
   },
   disclaimer: {
     fontSize: 7,
     fontFamily: "Helvetica-Oblique",
-    color: "#5F6470",
+    color: "#666666",
     lineHeight: 1.4,
-    marginTop: 6,
+    marginTop: 4,
     marginBottom: 6,
-  },
-  inlineRow: {
-    flexDirection: "row",
-    gap: 16,
-    marginBottom: 4,
-  },
-  inlineItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
   },
 });
 
@@ -333,13 +425,13 @@ type Props = {
   packageId: string;
 };
 
-function Checkbox({ checked, label }: { checked: boolean; label: string }) {
+function InlineCheckbox({ checked, label }: { checked: boolean; label: string }) {
   return (
-    <View style={s.checkRow}>
-      <View style={checked ? s.checked : s.checkbox}>
-        {checked && <Text style={s.checkmark}>X</Text>}
+    <View style={s.inlineItem}>
+      <View style={checked ? s.miniCheckFilled : s.miniCheck}>
+        {checked && <Text style={s.miniCheckmark}>X</Text>}
       </View>
-      <Text style={s.checkLabel}>{label}</Text>
+      <Text style={s.miniLabel}>{label}</Text>
     </View>
   );
 }
@@ -360,6 +452,30 @@ function formatDuration(hours: number): string {
   return `${h} hr ${m} min`;
 }
 
+function RiFooter({ pageNum, totalPages }: { pageNum: number; totalPages: number }) {
+  return (
+    <View style={s.footer} fixed>
+      <View style={s.footerLeft}>
+        <Image src={logoPath} style={s.footerLogo} />
+        <View>
+          <Text style={s.footerMetaBold}>Original to Human Resources</Text>
+          <Text style={s.footerMetaBold}>Photo Copy to Employee</Text>
+          <Text style={s.footerMetaBold}>Photo Copy to Manager</Text>
+        </View>
+        <View>
+          <Text style={s.footerMeta}>Created On: 06/25/2010</Text>
+          <Text style={s.footerMeta}>Updated 11/11/2024</Text>
+        </View>
+      </View>
+      <View style={s.footerRight}>
+        <Text style={s.footerTitle}>Clinical Supervision</Text>
+        <Text style={s.footerTitle}>Form</Text>
+        <Text style={s.footerPage}>Page {pageNum} of {totalPages}</Text>
+      </View>
+    </View>
+  );
+}
+
 export function RiClinicalSupervisionPdf({
   document: d,
   documentHash,
@@ -368,8 +484,8 @@ export function RiClinicalSupervisionPdf({
   const cf = d.clinicalFormData ?? {};
   const coreChecked = new Set(cf.coreSkillsChecked ?? []);
   const compChecked = new Set(cf.competenciesChecked ?? []);
-  const supervisorSig = d.signatures.find((s) => s.signerRole === "supervisor");
-  const superviseeSig = d.signatures.find((s) => s.signerRole === "supervisee");
+  const supervisorSig = d.signatures.find((sig) => sig.signerRole === "supervisor");
+  const superviseeSig = d.signatures.find((sig) => sig.signerRole === "supervisee");
 
   const startTime = formatTime12h(d.session.date);
   const endDate = new Date(
@@ -379,24 +495,26 @@ export function RiClinicalSupervisionPdf({
   const sessionDate = d.session.date.slice(0, 10);
   const supType = d.session.supervisionType
     ? SUPERVISION_TYPE_LABELS[d.session.supervisionType] ?? d.session.supervisionType
-    : "—";
+    : "";
   const isGroup =
     d.session.sessionType === "group" || d.session.sessionType === "triadic";
+  const totalPages = cf.isInitialPlan ? 4 : 3;
 
   const verifyUrl = `https://audithalo.com/verify/${packageId}?hash=${documentHash}`;
 
   return (
     <Document
-      title={`Clinical Supervision Form — ${d.supervisee.name} — ${sessionDate}`}
-      author="AuditHalo / Recovery Innovations"
+      title={`Clinical Supervision Form - ${d.supervisee.name} - ${sessionDate}`}
+      author="Recovery Innovations / AuditHalo"
     >
-      {/* Page 1 — Initial Plan (if applicable) or start of Ongoing */}
+      {/* PAGE 1: Initial Supervision Plan (conditional) */}
       {cf.isInitialPlan && (
         <Page size="LETTER" style={s.page}>
-          <Text style={s.title}>Clinical Supervision Form</Text>
+          <View style={s.titleBanner}>
+            <Text style={s.titleText}>Clinical Supervision Form</Text>
+          </View>
 
-          {/* Employee identification */}
-          <View style={s.headerTable}>
+          <View style={s.headerRow}>
             <View style={s.headerCell}>
               <Text style={s.cellLabel}>Employee</Text>
               <Text style={s.cellValue}>{d.supervisee.name}</Text>
@@ -406,7 +524,7 @@ export function RiClinicalSupervisionPdf({
               <Text style={s.cellValue}>{cf.superviseeJobTitle ?? ""}</Text>
             </View>
           </View>
-          <View style={s.headerTable}>
+          <View style={[s.headerRow, { borderTopWidth: 0 }]}>
             <View style={s.headerCell}>
               <Text style={s.cellLabel}>Credentials</Text>
               <Text style={s.cellValue}>{cf.superviseeCredentials ?? ""}</Text>
@@ -417,135 +535,147 @@ export function RiClinicalSupervisionPdf({
             </View>
           </View>
 
-          <Text style={s.sectionTitle}>Initial Supervision Plan</Text>
+          <Text style={[s.sectionHead, { marginTop: 14 }]}>
+            Initial Supervision Plan:{"  "}
+            <Text style={s.bold}>{cf.isInitialPlan ? "Yes" : "No"}</Text>
+          </Text>
 
-          <View style={s.inlineRow}>
-            <Text style={s.text}>
-              Date: {sessionDate} Start Time: {startTime} End Time: {endTime} Length:{" "}
-              {formatDuration(d.session.durationHours)}
-            </Text>
-          </View>
+          <Text style={s.text}>
+            Date: {sessionDate}{"    "}Start Time: {startTime}{"    "}End Time: {endTime}{"    "}Length: {formatDuration(d.session.durationHours)}
+          </Text>
+
+          <Text style={s.italic}>
+            *Skip this section if not initial Supervision session (within 30 days of hire date prior to guest care OR first supervision session with a new supervisor)
+          </Text>
 
           <Text style={[s.text, { marginTop: 6 }]}>
-            Agreed Plan of Supervision:{" "}
-            {d.session.sessionType === "individual"
-              ? "Individual"
-              : d.session.sessionType === "group" || d.session.sessionType === "triadic"
-                ? "Team/Group"
-                : "—"}
+            <Text style={s.bold}>Agreed Plan of Supervision:{"  "}</Text>
           </Text>
+          <View style={s.inlineCheck}>
+            <InlineCheckbox checked={d.session.sessionType === "individual"} label="Individual" />
+            <InlineCheckbox checked={isGroup} label="Team/Group" />
+            <InlineCheckbox checked={false} label="Combination of both" />
+          </View>
 
           <Text style={s.text}>
-            Frequency Plan of Supervision:{" "}
-            {cf.frequencyPlan
-              ? FREQUENCY_PLAN_LABELS[cf.frequencyPlan] ?? cf.frequencyPlan
-              : "—"}
+            <Text style={s.bold}>Frequency Plan of Supervision:{"  "}</Text>
           </Text>
+          <View style={s.inlineCheck}>
+            {Object.entries(FREQUENCY_PLAN_LABELS).map(([k, v]) => (
+              <InlineCheckbox key={k} checked={cf.frequencyPlan === k} label={v} />
+            ))}
+          </View>
 
           <Text style={s.text}>
-            Clinical Supervision &amp; Oversight Policy Reviewed:{" "}
-            {cf.policyReviewed ? "Yes" : "No"}
+            <Text style={s.bold}>Clinical Supervision &amp; Oversight Policy Reviewed:{"  "}</Text>
           </Text>
+          <View style={s.inlineCheck}>
+            <InlineCheckbox checked={cf.policyReviewed === true} label="Yes" />
+            <InlineCheckbox checked={cf.policyReviewed === false} label="No" />
+          </View>
 
-          <Text style={s.text}>Type of Supervision: {supType}</Text>
+          <Text style={s.text}>
+            <Text style={s.bold}>Type of Supervision:{"  "}</Text>
+          </Text>
+          <View style={s.inlineCheck}>
+            <InlineCheckbox checked={supType === "Peer"} label="Peer" />
+            <InlineCheckbox checked={supType === "Nursing"} label="Nursing" />
+            <InlineCheckbox checked={supType === "Clinician"} label="Clinician" />
+            <InlineCheckbox checked={supType === "Administrative"} label="Administrative" />
+            <InlineCheckbox checked={supType === "Advance Practice Provider"} label="Advance Practice Provider" />
+            <InlineCheckbox checked={supType === "Other"} label={`Other: ${cf.supervisionTypeOther ?? ""}`} />
+          </View>
 
           <Text style={s.boilerplate}>
-            Purpose, Goals and Objectives of Supervision is to fulfil requirements
-            for training supervision and to promote development of supervisee&apos;s
-            professional identity and competence as agreed upon. The content of
-            supervision will focus on the acquisition of knowledge,
-            conceptualization, and skills within the defined scope of practice. The
-            context will ensure understanding of ethics, codes, rules, regulations,
-            standards, guidelines including but not limited to confidentiality,
-            privacy and applicable legislation as outlined within Recovery
-            Innovations Policies and Procedures.
+            Purpose, Goals and Objectives of Supervision is to fulfil requirements for training supervision and to promote development of supervisee&apos;s professional identity and competence as agreed upon. The content of supervision will focus on the acquisition of knowledge, conceptualization, and skills within the defined scope of practice. The context will ensure understanding of ethics, codes, rules, regulations, standards, guidelines including but not limited to confidentiality, privacy and applicable legislation as outlined within Recovery Innovations Policies and Procedures.
+          </Text>
+          <Text style={s.boilerplate}>
+            Recovery Innovations will ensure that clinical supervision will provide all staff including licensed clinical staff, non-licensed clinical staff, trainees, peer support specialists, providers and nursing staff support to help maintain and develop their individual competencies with a focus on quality and safety of care.
           </Text>
 
           <Text style={s.disclaimer}>
-            *Disclaimer: Recovery Innovations does not provide clinical supervision
-            that counts toward state-approved hours required to obtain independent or
-            full licensure. This supervision is not intended to fulfill the
-            requirements for state licensure but is provided as a professional
-            resource to support and improve guest care and staff development.
+            *Disclaimer: Recovery Innovations does not provide clinical supervision that counts toward state-approved hours required to obtain independent or full licensure. For clarity, Recovery Innovations defines &quot;Clinical Supervision&quot; as: Clinical Oversight of guest care to ensure high-quality services and adherence to best practices; A mode of professional development focused on enhancing the knowledge, skills, and competencies of team members.
           </Text>
 
           <Text style={s.text}>
-            Supervision Plan/Contract Agreed Upon:{" "}
-            {cf.contractAgreedUpon ? "Yes" : "No"}
+            <Text style={s.bold}>Supervision Plan/Contract Agreed Upon:{"  "}</Text>
           </Text>
-
-          <View style={s.footerBrand}>
-            <Text style={s.brandText}>Recovery Innovations</Text>
-            <Text style={s.pageNumber}>Clinical Supervision Form — Page 1</Text>
+          <View style={s.inlineCheck}>
+            <InlineCheckbox checked={cf.contractAgreedUpon === true} label="Yes" />
+            <InlineCheckbox checked={cf.contractAgreedUpon !== true} label="No" />
           </View>
+
+          <RiFooter pageNum={1} totalPages={totalPages} />
         </Page>
       )}
 
-      {/* Page 2 — Ongoing Supervision */}
+      {/* PAGE 2: Ongoing Supervision */}
       <Page size="LETTER" style={s.page}>
-        <Text style={s.title}>Clinical Supervision Form</Text>
+        <View style={s.titleBanner}>
+          <Text style={s.titleText}>Clinical Supervision Form</Text>
+        </View>
 
-        {/* Session logistics */}
-        <View style={s.headerTable}>
-          <View style={s.headerCell}>
-            <Text style={s.cellLabel}>Supervision Date</Text>
-            <Text style={s.cellValue}>{sessionDate}</Text>
-          </View>
-          <View style={s.headerCell}>
-            <Text style={s.cellLabel}>Start Time</Text>
-            <Text style={s.cellValue}>{startTime}</Text>
-          </View>
-          <View style={s.headerCell}>
-            <Text style={s.cellLabel}>End Time</Text>
-            <Text style={s.cellValue}>{endTime}</Text>
-          </View>
-          <View style={s.headerCellLast}>
-            <Text style={s.cellLabel}>Length</Text>
-            <Text style={s.cellValue}>
-              {formatDuration(d.session.durationHours)}
-            </Text>
-          </View>
+        <Text style={[s.sectionHead, { marginTop: 2, textDecoration: "underline" }]}>
+          On-going Supervision
+        </Text>
+
+        <Text style={s.text}>
+          Date: {sessionDate}{"    "}Start Time: {startTime}{"    "}End Time: {endTime}{"    "}Length: {formatDuration(d.session.durationHours)}
+        </Text>
+
+        <Text style={s.text}>
+          <Text style={s.bold}>Type of Coaching:{"  "}</Text>
+        </Text>
+        <View style={s.inlineCheck}>
+          <InlineCheckbox checked={!isGroup} label="Individual" />
+          <InlineCheckbox checked={isGroup} label="Team/Group" />
         </View>
 
         <Text style={s.text}>
-          Type of Coaching: {isGroup ? "Team/Group" : "Individual"}
+          <Text style={s.bold}>Type of Supervision:{"  "}</Text>
         </Text>
-        <Text style={s.text}>Type of Supervision: {supType}</Text>
+        <View style={s.inlineCheck}>
+          <InlineCheckbox checked={supType === "Peer"} label="Peer" />
+          <InlineCheckbox checked={supType === "Nursing"} label="Nursing" />
+          <InlineCheckbox checked={supType === "Clinician"} label="Clinician" />
+          <InlineCheckbox checked={supType === "Administrative"} label="Administrative" />
+          <InlineCheckbox checked={supType === "Advance Practice Provider"} label="Advance Practice Provider" />
+          <InlineCheckbox checked={supType === "Other"} label={`Other: ${cf.supervisionTypeOther ?? ""}`} />
+        </View>
 
-        {/* Follow-up */}
-        <Text style={s.sectionTitle}>
+        <Text style={[s.sectionHead, { marginTop: 8 }]}>
           Follow up from previous supervision session(s):
         </Text>
-        <Text style={s.textBlock}>{cf.followUpFromPrevious ?? ""}</Text>
+        <Text style={s.textArea}>{cf.followUpFromPrevious ?? ""}</Text>
 
-        {/* Section I */}
-        <Text style={s.sectionTitle}>
+        <Text style={s.sectionHead}>
           I. Select one or more key areas/skills/goals discussed:
         </Text>
-        <Text style={s.smallText}>* Required core skills</Text>
+        <Text style={s.italic}>* Required core skills</Text>
 
         {CORE_SKILLS.filter((sk) => sk.key !== "other").map((sk) => (
-          <Checkbox
-            key={sk.key}
-            checked={coreChecked.has(sk.key)}
-            label={sk.label}
-          />
+          <View key={sk.key} style={s.checkRow}>
+            <View style={coreChecked.has(sk.key) ? s.checkboxFilled : s.checkboxEmpty}>
+              {coreChecked.has(sk.key) && <Text style={s.checkmark}>X</Text>}
+            </View>
+            <Text style={s.checkLabel}>{sk.label}</Text>
+          </View>
         ))}
-        <Checkbox
-          checked={coreChecked.has("other")}
-          label={`Other: ${cf.otherCoreSkill ?? ""}`}
-        />
+        <View style={s.checkRow}>
+          <View style={coreChecked.has("other") ? s.checkboxFilled : s.checkboxEmpty}>
+            {coreChecked.has("other") && <Text style={s.checkmark}>X</Text>}
+          </View>
+          <Text style={s.checkLabel}>Other: {cf.otherCoreSkill ?? ""}</Text>
+        </View>
 
-        {/* Competency grid */}
-        <View style={[s.compGrid, { marginTop: 8 }]}>
+        <View style={[s.compGrid, { marginTop: 6 }]}>
           {COMPETENCIES.map((c) => (
             <View key={c.key} style={s.compItem}>
-              <View style={compChecked.has(c.key) ? s.compChecked : s.compCheckbox}>
+              <View style={compChecked.has(c.key) ? s.compCheckFilled : s.compCheck}>
                 {compChecked.has(c.key) && <Text style={s.compCheckmark}>X</Text>}
               </View>
               <Text style={s.compLabel}>
-                {c.label}
-                {c.required ? "*" : ""}
+                {c.label}{c.required ? "*" : ""}
               </Text>
             </View>
           ))}
@@ -554,186 +684,138 @@ export function RiClinicalSupervisionPdf({
         {/* Section II or III */}
         {isGroup ? (
           <>
-            <Text style={s.sectionTitle}>
-              III. Group Supervision: Key areas/skills discussed
+            <Text style={[s.sectionHead, { color: RI_PURPLE }]}>
+              III. Group Supervision: What key areas/skills were discussed in today&apos;s supervision?
             </Text>
-            <Text style={s.textBlock}>
-              {cf.groupDiscussionTopics ?? ""}
-            </Text>
+            <Text style={s.textArea}>{cf.groupDiscussionTopics ?? ""}</Text>
           </>
         ) : (
           <>
-            <Text style={s.sectionTitle}>
-              II. Individual Supervision: Action steps to reach identified goals
+            <Text style={[s.sectionHead, { color: RI_PURPLE }]}>
+              II. Individual Supervision: What action steps do you plan on taking to reach identified goal(s)?
             </Text>
-            {(cf.actionSteps ?? [{ step: "", targetDate: "" }, { step: "", targetDate: "" }])
-              .slice(0, 2)
-              .map((step, i) => (
+            {[0, 1].map((i) => {
+              const step = (cf.actionSteps ?? [])[i] ?? { step: "", targetDate: "" };
+              return (
                 <View key={i} style={s.stepRow}>
                   <Text style={s.stepLabel}>Step {i + 1}:</Text>
-                  <Text style={s.stepValue}>{step.step}</Text>
-                  <Text style={s.stepDate}>
-                    {step.targetDate || "Target Date"}
-                  </Text>
+                  <Text style={s.stepLine}>{step.step}</Text>
+                  <Text style={s.stepDate}>{step.targetDate ? `Target Date: ${step.targetDate}` : "Target Date"}</Text>
                 </View>
-              ))}
+              );
+            })}
           </>
         )}
 
-        <View style={s.footerBrand}>
-          <Text style={s.brandText}>Recovery Innovations</Text>
-          <Text style={s.pageNumber}>
-            Clinical Supervision Form — Page {cf.isInitialPlan ? "2" : "1"}
-          </Text>
-        </View>
+        <RiFooter pageNum={cf.isInitialPlan ? 2 : 1} totalPages={totalPages} />
       </Page>
 
-      {/* Page 3 — Sections IV, V, VI + Signatures */}
+      {/* PAGE 3: Sections IV, V, VI + Signatures */}
       <Page size="LETTER" style={s.page}>
-        <Text style={s.title}>Clinical Supervision Form</Text>
+        <View style={s.titleBanner}>
+          <Text style={s.titleText}>Clinical Supervision Form</Text>
+        </View>
 
-        {/* Section IV */}
-        <Text style={s.sectionTitle}>IV.</Text>
+        <Text style={s.sectionHead}>IV.</Text>
         <Text style={s.text}>
-          Do you need any training, continuing education/CEUs or support to
-          accomplish this goal? If so what?
+          Do you need any training, continuing education/CEUs (document CEU hours) or support to accomplish this goal? If so what?
         </Text>
-        <Text style={s.textBlock}>{cf.trainingNeeds ?? ""}</Text>
+        <Text style={s.textArea}>{cf.trainingNeeds ?? ""}</Text>
 
         <Text style={s.text}>
-          How will your team and the people we work with benefit from achieving
-          this goal?
+          How will your team and the people we work with benefit from achieving this goal?
         </Text>
-        <Text style={s.textBlock}>{cf.teamBenefit ?? ""}</Text>
+        <Text style={s.textArea}>{cf.teamBenefit ?? ""}</Text>
 
-        {/* Section V(a) */}
-        <Text style={s.sectionTitle}>
-          V. (a) Case Review/Chart Reviews Findings
+        <Text style={[s.sectionHead, { color: RI_PURPLE }]}>
+          V. (a) Case Review/Chart Reviews Findings (documentation, assessment, diagnosis, final disposition and risk assessment):
         </Text>
-        <Text style={s.smallText}>
-          Documentation, assessment, diagnosis, final disposition and risk
-          assessment. Identify opportunity areas and/or strengths?
+        <Text style={s.italic}>
+          Identify opportunity areas and/or strengths?
+          {isGroup ? " *Group/Team Supervision Skip this section" : ""}
         </Text>
-        {isGroup && (
-          <Text style={s.smallText}>
-            *Group/Team Supervision — Skip this section
-          </Text>
-        )}
-        <Text style={s.textBlock}>
-          {isGroup ? "N/A — Group/Team Supervision" : (cf.caseReviewFindings ?? "")}
+        <Text style={s.textArea}>
+          {isGroup ? "N/A - Group/Team Supervision" : (cf.caseReviewFindings ?? "")}
         </Text>
 
-        {/* Section V(b) */}
-        <Text style={s.sectionTitle}>
-          V.(b) Case Review/Chart Reviews Findings: Medication review
+        <Text style={[s.sectionHead, { color: RI_PURPLE }]}>
+          V.(b) Case Review/Chart Reviews Findings: Verification of medication orders, checking for potential drug interactions, and ensuring that the medication administration is consistent with treatment plans:
         </Text>
-        <Text style={s.smallText}>
-          Verification of medication orders, checking for potential drug
-          interactions, and ensuring that the medication administration is
-          consistent with treatment plans.
+        <Text style={s.italic}>
+          *If supervisee does not administer/dispense medication(s) and is not applicable please enter &quot;N/A&quot;
         </Text>
-        <Text style={s.textBlock}>{cf.medicationReview ?? ""}</Text>
+        <Text style={s.textArea}>{cf.medicationReview ?? ""}</Text>
 
-        {/* Section VI */}
-        <Text style={s.sectionTitle}>
-          VI. Additional Context of Supervision to Note
+        <Text style={[s.sectionHead, { color: RI_PURPLE }]}>
+          VI. Additional Context of Supervision to Note: Feedback, Strength-based affirmations, additional guidance provided on emergency procedures such as incident reporting, restraints, IVA, or other interventions.
         </Text>
-        <Text style={s.smallText}>
-          Feedback, strength-based affirmations, additional guidance provided on
-          emergency procedures such as incident reporting, restraints, IVA, or
-          other interventions. *Required for Peer Support Specialist.
+        <Text style={s.italic}>
+          *Required for Peer Support Specialist; also utilize this space to document additional context of supervision if needed
         </Text>
-        <Text style={s.textBlock}>{cf.additionalContext ?? ""}</Text>
+        <Text style={s.textArea}>{cf.additionalContext ?? ""}</Text>
 
         <View style={s.divider} />
 
-        {/* Supervisee signature block */}
+        {/* Supervisee signature */}
         <View style={s.sigBlock}>
-          <Text style={s.sectionSubtitle}>Supervisee:</Text>
+          <Text style={s.subsectionHead}>Supervisee:</Text>
           <View style={s.sigRow}>
-            <Text style={s.sigLabel}>Name and Credentials</Text>
-            <Text style={s.sigValue}>
-              {d.supervisee.name}
-              {cf.superviseeCredentials ? `, ${cf.superviseeCredentials}` : ""}
+            <Text style={s.sigLabel}>Name and Credentials:</Text>
+            <Text style={s.sigLine}>
+              {d.supervisee.name}{cf.superviseeCredentials ? `, ${cf.superviseeCredentials}` : ""}
             </Text>
+            <Text style={[s.sigLabel, { width: 70, marginLeft: 10 }]}>Job Title</Text>
+            <Text style={[s.sigLine, { maxWidth: 120 }]}>{cf.superviseeJobTitle ?? ""}</Text>
           </View>
           <View style={s.sigRow}>
-            <Text style={s.sigLabel}>Job Title</Text>
-            <Text style={s.sigValue}>{cf.superviseeJobTitle ?? ""}</Text>
-          </View>
-          <View style={s.sigRow}>
-            <Text style={s.sigLabel}>Signature</Text>
-            <Text style={s.sigValue}>
-              {superviseeSig
-                ? `${superviseeSig.signerName} (e-signed via AuditHalo)`
-                : ""}
+            <Text style={s.sigLabel}>Employee&apos;s Signature</Text>
+            <Text style={s.sigLine}>
+              {superviseeSig ? `${superviseeSig.signerName} (e-signed via AuditHalo)` : ""}
             </Text>
-          </View>
-          <View style={s.sigRow}>
-            <Text style={s.sigLabel}>Date</Text>
-            <Text style={s.sigValue}>
-              {superviseeSig
-                ? superviseeSig.signedAt.replace("T", " ").slice(0, 19) + "Z"
-                : ""}
+            <Text style={[s.sigLabel, { width: 40, marginLeft: 10 }]}>Date</Text>
+            <Text style={[s.sigLine, { maxWidth: 120 }]}>
+              {superviseeSig ? superviseeSig.signedAt.slice(0, 10) : ""}
             </Text>
           </View>
         </View>
 
-        {/* Supervisor signature block */}
+        {/* Supervisor signature */}
         <View style={s.sigBlock}>
-          <Text style={s.sectionSubtitle}>
+          <Text style={s.subsectionHead}>
             Supervision completed by (clinical supervisor or designee):
           </Text>
           <View style={s.sigRow}>
-            <Text style={s.sigLabel}>Name and Credentials</Text>
-            <Text style={s.sigValue}>
-              {supervisorSig?.signerName ?? ""}
-              {d.session.supervisorCredentials
-                ? `, ${d.session.supervisorCredentials.join(", ")}`
-                : ""}
+            <Text style={s.sigLabel}>Name and Credentials:</Text>
+            <Text style={s.sigLine}>
+              {supervisorSig?.signerName ?? ""}{d.session.supervisorCredentials ? `, ${d.session.supervisorCredentials.join(", ")}` : ""}
             </Text>
+            <Text style={[s.sigLabel, { width: 70, marginLeft: 10 }]}>Job Title</Text>
+            <Text style={[s.sigLine, { maxWidth: 120 }]}>{""}</Text>
           </View>
           <View style={s.sigRow}>
             <Text style={s.sigLabel}>Signature</Text>
-            <Text style={s.sigValue}>
-              {supervisorSig
-                ? `${supervisorSig.signerName} (e-signed via AuditHalo)`
-                : ""}
+            <Text style={s.sigLine}>
+              {supervisorSig ? `${supervisorSig.signerName} (e-signed via AuditHalo)` : ""}
             </Text>
-          </View>
-          <View style={s.sigRow}>
-            <Text style={s.sigLabel}>Date</Text>
-            <Text style={s.sigValue}>
-              {supervisorSig
-                ? supervisorSig.signedAt.replace("T", " ").slice(0, 19) + "Z"
-                : ""}
+            <Text style={[s.sigLabel, { width: 40, marginLeft: 10 }]}>Date</Text>
+            <Text style={[s.sigLine, { maxWidth: 120 }]}>
+              {supervisorSig ? supervisorSig.signedAt.slice(0, 10) : ""}
             </Text>
           </View>
         </View>
 
-        {/* AuditHalo audit trail footer */}
-        <View style={s.footer}>
-          <Text style={s.footerLabel}>
-            AuditHalo Evidence Seal (SHA-256)
-          </Text>
-          <Text style={s.hash}>{documentHash}</Text>
-          <Text style={[s.footerLabel, { marginTop: 6 }]}>Verify online</Text>
-          <Text style={s.hash}>{verifyUrl}</Text>
-          <Text style={s.fineprint}>
-            This document was digitally generated and sealed by AuditHalo on{" "}
-            {d.generatedAt.replace("T", " ").slice(0, 19)}Z. The hash above is
-            computed over the canonical JSON of this evidence package. Any
-            tampering produces a different hash, making the record independently
-            verifiable at the URL above — no AuditHalo account required.
+        {/* AuditHalo evidence seal */}
+        <View style={s.sealBlock}>
+          <Text style={s.sealLabel}>AuditHalo Evidence Seal (SHA-256)</Text>
+          <Text style={s.sealHash}>{documentHash}</Text>
+          <Text style={[s.sealLabel, { marginTop: 4 }]}>Verify</Text>
+          <Text style={s.sealHash}>{verifyUrl}</Text>
+          <Text style={s.sealFine}>
+            Digitally sealed by AuditHalo on {d.generatedAt.replace("T", " ").slice(0, 19)}Z. The hash is computed over the canonical JSON of this evidence package. Any tampering produces a different hash. Verify at the URL above — no AuditHalo account required.
           </Text>
         </View>
 
-        <View style={s.footerBrand}>
-          <Text style={s.brandText}>Recovery Innovations</Text>
-          <Text style={s.pageNumber}>
-            Clinical Supervision Form — Page {cf.isInitialPlan ? "3" : "2"}
-          </Text>
-        </View>
+        <RiFooter pageNum={cf.isInitialPlan ? 3 : 2} totalPages={totalPages} />
       </Page>
     </Document>
   );
