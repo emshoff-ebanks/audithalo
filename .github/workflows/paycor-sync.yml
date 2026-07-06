@@ -1,0 +1,42 @@
+name: Paycor daily sync cron
+
+# Daily at 18:00 ET (22:00 UTC or 23:00 UTC depending on DST), pings the
+# production Paycor sync endpoint. The endpoint diffs each Paycor-connected
+# org's roster against AuditHalo and applies changes (hires, terminations,
+# leave status updates).
+#
+# Setup checklist (one-time):
+#   1. In GitHub repo settings > Secrets and variables > Actions, add:
+#        AUDITHALO_PAYCOR_SYNC_URL = https://app.audithalo.com/api/cron/paycor-sync
+#        AUDITHALO_CRON_SECRET     = <same value as Vercel CRON_SECRET env var>
+#   2. Confirm the Vercel CRON_SECRET prod env var matches the GitHub secret.
+#   3. Push the workflow to main. GitHub schedules it after the first push.
+#
+# To disable temporarily: comment out the `schedule:` block.
+
+on:
+  # Schedule paused — no orgs have paycorConfig set yet. Enable when
+  # RI provides Paycor credentials and migration 0031 is applied.
+  # schedule:
+  #   - cron: "0 22 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Hit the Paycor sync endpoint
+        env:
+          URL: ${{ secrets.AUDITHALO_PAYCOR_SYNC_URL }}
+          SECRET: ${{ secrets.AUDITHALO_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "$URL" ] || [ -z "$SECRET" ]; then
+            echo "::error::AUDITHALO_PAYCOR_SYNC_URL or AUDITHALO_CRON_SECRET is not set"
+            exit 1
+          fi
+          curl -fSs -X POST "$URL" \
+            -H "Authorization: Bearer $SECRET" \
+            -H "Content-Type: application/json" \
+            --max-time 120

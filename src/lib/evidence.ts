@@ -117,7 +117,7 @@ export async function generateEvidencePackage(sessionEventId: string): Promise<v
   const canonical = canonicalJson(document);
   const hash = sha256Hex(canonical);
 
-  await db.insert(schema.evidencePackages).values({
+  const [pkg] = await db.insert(schema.evidencePackages).values({
     sessionEventId: event.id,
     orgId: event.orgId,
     superviseeId: event.superviseeId,
@@ -125,5 +125,16 @@ export async function generateEvidencePackage(sessionEventId: string): Promise<v
     signatures: event.signatures ?? [],
     documentHash: hash,
     documentContent: document,
-  });
+  }).returning({ id: schema.evidencePackages.id });
+
+  // Wave 2 Phase 2: if the org is Paycor-connected, queue the sealed
+  // PDF for SFTP delivery to the employee's Paycor Documents folder.
+  if (org.paycorConfig) {
+    try {
+      const { enqueueDelivery } = await import("@/lib/hris/sftp-delivery");
+      await enqueueDelivery(event.orgId, pkg.id, null);
+    } catch (err) {
+      console.error("[evidence] Failed to enqueue SFTP delivery:", err);
+    }
+  }
 }

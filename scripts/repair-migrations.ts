@@ -82,6 +82,11 @@ const REPAIR_TARGETS: Array<{
     sentinel: `SELECT 1 FROM information_schema.columns
                WHERE table_name='org_memberships' AND column_name='leave_status'`,
   },
+  {
+    file: "0031_paycor_config_and_delivery_queue.sql",
+    sentinel: `SELECT 1 FROM information_schema.tables
+               WHERE table_name='paycor_delivery_queue'`,
+  },
 ];
 
 function sha256(s: string): string {

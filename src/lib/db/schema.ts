@@ -269,11 +269,22 @@ export const organizations = pgTable("organizations", {
   // RI's 3-page Clinical Supervision Form layout. See plan at
   // nimbalyst-local/plans/2e-ri-clinical-supervision-form.md.
   pdfTemplateKey: text("pdf_template_key").notNull().default("audithalo_generic"),
+  // Wave 2 Phase 2 — per-org Paycor connection config. null = not connected.
+  // Set by an admin (Phase 3 setup UI). Contains legalEntityId, SFTP creds.
+  // Migration 0031 adds the column; schema defined here so cron route compiles.
+  paycorConfig: jsonb("paycor_config").$type<PaycorConfig>(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const PDF_TEMPLATE_KEYS = ["audithalo_generic", "recovery_innovations_v1"] as const;
 export type PdfTemplateKey = (typeof PDF_TEMPLATE_KEYS)[number];
+
+export type PaycorConfig = {
+  legalEntityId: string;
+  sftpHost?: string;
+  sftpUser?: string;
+  sftpBasePath?: string;
+};
 
 /**
  * Lifecycle status orthogonal to soft-deactivation. Captures Paycor-side
@@ -861,4 +872,34 @@ export const orgRuleOverrides = pgTable("org_rule_overrides", {
     .notNull()
     .references(() => users.id),
   lastEditedBy: uuid("last_edited_by").references(() => users.id),
+});
+
+// ===========================================================================
+// Paycor SFTP delivery queue (Wave 2 Phase 2, Pass 3)
+// Sealed evidence packages for Paycor-connected orgs are queued here.
+// A cron worker picks up pending rows and pushes the PDF to Paycor's
+// employee Documents folder via SFTP. Migration 0031.
+// ===========================================================================
+
+export const DELIVERY_STATUSES = ["pending", "delivered", "failed"] as const;
+export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
+
+export const paycorDeliveryQueue = pgTable("paycor_delivery_queue", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orgId: uuid("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  evidencePackageId: uuid("evidence_package_id")
+    .notNull()
+    .references(() => evidencePackages.id, { onDelete: "cascade" }),
+  paycorEmployeeId: text("paycor_employee_id"),
+  status: text("status", { enum: DELIVERY_STATUSES })
+    .notNull()
+    .default("pending"),
+  attempts: integer("attempts").notNull().default(0),
+  lastError: text("last_error"),
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });

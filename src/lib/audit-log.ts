@@ -76,4 +76,12 @@ export const AUDIT_ACTIONS = {
   AUDIT_LOG_EXPORTED: "audit_log.exported",
   // Org settings updates (E3 — Enterprise)
   ORG_SETTINGS_UPDATED: "org_settings.updated",
+  // Paycor sync (Wave 2 Phase 2)
+  PAYCOR_SYNC_EMPLOYEE_HIRED: "paycor_sync.employee_hired",
+  PAYCOR_SYNC_EMPLOYEE_TERMINATED: "paycor_sync.employee_terminated",
+  PAYCOR_SYNC_LEAVE_CHANGED: "paycor_sync.leave_changed",
+  PAYCOR_SYNC_ROLE_CHANGED: "paycor_sync.role_changed",
+  PAYCOR_SYNC_DELIVERY_QUEUED: "paycor_sync.delivery_queued",
+  PAYCOR_SYNC_DELIVERY_COMPLETED: "paycor_sync.delivery_completed",
+  PAYCOR_SYNC_DELIVERY_FAILED: "paycor_sync.delivery_failed",
 } as const;
