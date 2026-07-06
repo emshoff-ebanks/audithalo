@@ -2,7 +2,7 @@
 
 **Purpose.** Long-form orientation for a new chat picking up AuditHalo work. The minimum runtime contract lives in `AGENTS.md` (auto-loaded by Claude Code). This doc covers what AGENTS.md doesn't: phase history, schema overview, brand reference, the rule engine, and common traps. Read AGENTS.md first, then come here.
 
-**Last updated**: 2026-06-29 (Wave 2 / Phase 1.1 just shipped; lint baseline cleaned).
+**Last updated**: 2026-07-06 (Wave 2 / 2E RI Clinical Supervision Form — schema + UI + PDF template).
 
 ---
 
@@ -95,8 +95,9 @@ Detailed history is in `git log`. Recent waves:
 | Wave 1 — UI cleanup + RI prep (7 passes) | DONE 2026-06-19 | `docs/strategy/12-wave-1-implementation-plan.md` |
 | Wave 2 Phase 0 (planning docs) | DONE 2026-06-24 | `docs/strategy/13-paycor-integration.md` |
 | Wave 2 Phase 1.1 (lifecycle state) | DONE 2026-06-29 | commit `1ef945e` |
-| Wave 2 Phase 1.2 (state-rules auto-update cron) | NOT STARTED | spec in `docs/strategy/13`, state half unblocked |
-| Wave 2 Phase 2 (SFTP / template / auto-provisioning scaffolding) | BLOCKED | needs RI's PDF template + Paycor admin contact |
+| Wave 2 Phase 1.2 (state-rules auto-update cron) | DONE 2026-06-29 | commit `50146bc` |
+| Wave 2 / 2E (RI Clinical Supervision Form PDF) | CODE COMPLETE | schema + sign-page UI + PDF template + API route branching. Migration `0030` pending prod apply. 441 tests passing. |
+| Wave 2 Phase 2 remainder (SFTP / auto-provisioning scaffolding) | BLOCKED | needs Paycor admin contact |
 | Wave 2 Phase 3 (full Paycor + SFTP integration) | BLOCKED | needs Paycor partner support + Matt+Nick logic |
 | Wave 3 (AI transcription, performance summaries, post-seal correction) | NOT STARTED | depends on Wave 2 live |
 | Wave 4 (HIPAA, SOC 2, SSO, perf at scale) | NOT STARTED | post-launch |

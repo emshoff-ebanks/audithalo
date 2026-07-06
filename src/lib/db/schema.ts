@@ -264,8 +264,16 @@ export const organizations = pgTable("organizations", {
   // either Solo tier or a legacy Practice org from before pre-commit seats —
   // seats.ts treats null as unlimited.
   seatCount: integer("seat_count"),
+  // Wave 2 / 2E — which PDF template to render for sealed evidence packages.
+  // 'audithalo_generic' = existing EvidencePdf.tsx; 'recovery_innovations_v1' =
+  // RI's 3-page Clinical Supervision Form layout. See plan at
+  // nimbalyst-local/plans/2e-ri-clinical-supervision-form.md.
+  pdfTemplateKey: text("pdf_template_key").notNull().default("audithalo_generic"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const PDF_TEMPLATE_KEYS = ["audithalo_generic", "recovery_innovations_v1"] as const;
+export type PdfTemplateKey = (typeof PDF_TEMPLATE_KEYS)[number];
 
 /**
  * Lifecycle status orthogonal to soft-deactivation. Captures Paycor-side
@@ -286,6 +294,11 @@ export const organizations = pgTable("organizations", {
  */
 export const LEAVE_STATUS = ["active", "on_leave", "prn"] as const;
 export type LeaveStatus = (typeof LEAVE_STATUS)[number];
+
+export const SUPERVISION_TYPES = [
+  "peer", "nursing", "clinician", "administrative", "app", "other",
+] as const;
+export type SupervisionType = (typeof SUPERVISION_TYPES)[number];
 
 export const orgMemberships = pgTable("org_memberships", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -568,6 +581,13 @@ export const sessionEvents = pgTable("session_events", {
     /** MS Graph onlineMeeting id when source === "teams". */
     teamsMeetingId?: string;
   }>(),
+  // Wave 2 / 2E — type of clinical oversight provided. Orthogonal to sessionType
+  // (which is individual/triadic/group format). Used by all orgs; required for RI.
+  supervisionType: text("supervision_type"),
+  // Wave 2 / 2E — RI Clinical Supervision Form structured data. Populated by
+  // supervisor on the sign page for RI orgs (gated by org.pdfTemplateKey).
+  // See src/lib/clinical-form/types.ts for the shape.
+  clinicalFormData: jsonb("clinical_form_data").$type<import("@/lib/clinical-form/types").ClinicalFormData>(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

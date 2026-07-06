@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { db, schema } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/authz";
 import { EvidencePdf } from "@/components/pdf/EvidencePdf";
+import { RiClinicalSupervisionPdf } from "@/components/pdf/RiClinicalSupervisionPdf";
 
 // React-PDF needs Node APIs (Buffer, fs internals via dependencies); not Edge-compatible.
 export const runtime = "nodejs";
@@ -29,9 +30,18 @@ export async function GET(
     return new Response("Forbidden", { status: 403 });
   }
 
+  const docContent = pkg.documentContent as Record<string, unknown>;
+  const templateKey =
+    (docContent.pdfTemplateKey as string | undefined) ?? "audithalo_generic";
+
+  const PdfComponent =
+    templateKey === "recovery_innovations_v1"
+      ? RiClinicalSupervisionPdf
+      : EvidencePdf;
+
   const buffer = await renderToBuffer(
-    <EvidencePdf
-      document={pkg.documentContent as never}
+    <PdfComponent
+      document={docContent as never}
       documentHash={pkg.documentHash}
       packageId={pkg.id}
     />
@@ -43,9 +53,13 @@ export async function GET(
   const fileSafeName =
     (supervisee?.name ?? "supervisee").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
   const dateStr =
-    ((pkg.documentContent as { session?: { date?: string } })?.session?.date ?? "")
-      .slice(0, 10) || "session";
-  const filename = `audithalo-evidence-${fileSafeName}-${dateStr}.pdf`;
+    ((docContent.session as { date?: string })?.date ?? "").slice(0, 10) ||
+    "session";
+  const filenamePrefix =
+    templateKey === "recovery_innovations_v1"
+      ? "ri-clinical-supervision"
+      : "audithalo-evidence";
+  const filename = `${filenamePrefix}-${fileSafeName}-${dateStr}.pdf`;
 
   return new Response(new Uint8Array(buffer), {
     headers: {

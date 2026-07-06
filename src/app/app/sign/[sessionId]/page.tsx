@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, ne, lt, count } from "drizzle-orm";
 import { ArrowLeft, FileSignature } from "lucide-react";
 import { auth } from "@/auth";
 import { getCurrentMembership } from "@/lib/authz";
@@ -14,6 +14,9 @@ import { SessionNoteForm } from "./session-note-form";
 import { SessionNoteDisplay } from "./session-note-display";
 import { ScheduledSessionCard } from "./scheduled-session-card";
 import { DidntHappenAffordance } from "./didnt-happen-affordance";
+import { SupervisionTypeSelect } from "./supervision-type-select";
+import { ClinicalForm } from "./clinical-form";
+import type { ClinicalFormData } from "@/lib/clinical-form/types";
 
 export const metadata = {
   title: "Sign session — AuditHalo",
@@ -40,6 +43,31 @@ export default async function SignSessionPage({
     where: eq(schema.users.id, sessionEvent.superviseeId),
   });
   if (!supervisee) notFound();
+
+  const org = await db.query.organizations.findFirst({
+    where: eq(schema.organizations.id, sessionEvent.orgId),
+    columns: { pdfTemplateKey: true },
+  });
+  const isRiOrg = org?.pdfTemplateKey === "recovery_innovations_v1";
+
+  // Detect if this is the first supervision session for this supervisee
+  // in the org — drives the "Initial Supervision Plan" section on the RI form.
+  let isInitialPlan = false;
+  if (isRiOrg && sessionEvent.kind === "supervision") {
+    const [{ value: priorCount }] = await db
+      .select({ value: count() })
+      .from(schema.sessionEvents)
+      .where(
+        and(
+          eq(schema.sessionEvents.superviseeId, sessionEvent.superviseeId),
+          eq(schema.sessionEvents.orgId, sessionEvent.orgId),
+          eq(schema.sessionEvents.kind, "supervision"),
+          ne(schema.sessionEvents.id, sessionEvent.id),
+          lt(schema.sessionEvents.date, sessionEvent.date)
+        )
+      );
+    isInitialPlan = priorCount === 0;
+  }
 
   // Resolve relationship facts once for the signPermissions helper.
   // Mirrors the inline lookups inside cancelScheduledSessionAction /
@@ -258,6 +286,27 @@ export default async function SignSessionPage({
             )}
           </div>
 
+          {/* Supervision type — visible for all orgs, editable pre-seal by supervisor */}
+          {sessionEvent.kind === "supervision" && (
+            <div className="pt-4 border-t border-border">
+              <p className="label-overline mb-2">Type of supervision</p>
+              {perms.canGenerateAiNote && !fullySigned ? (
+                <SupervisionTypeSelect
+                  sessionEventId={sessionEvent.id}
+                  currentValue={sessionEvent.supervisionType}
+                />
+              ) : (
+                <p className="text-sm text-foreground capitalize">
+                  {sessionEvent.supervisionType
+                    ? sessionEvent.supervisionType === "app"
+                      ? "Advance Practice Provider"
+                      : sessionEvent.supervisionType
+                    : "—"}
+                </p>
+              )}
+            </div>
+          )}
+
           {signatures.length > 0 && (
             <div className="pt-4 border-t border-border">
               <p className="label-overline mb-3">Signatures</p>
@@ -309,6 +358,28 @@ export default async function SignSessionPage({
               ) : null}
             </div>
           )}
+
+          {/* Clinical Supervision Form — RI orgs only, supervisor-only, pre-seal */}
+          {isRiOrg &&
+            sessionEvent.kind === "supervision" &&
+            perms.canGenerateAiNote &&
+            !fullySigned && (
+              <ClinicalForm
+                sessionEventId={sessionEvent.id}
+                initialData={sessionEvent.clinicalFormData as ClinicalFormData | null}
+                sessionType={sessionEvent.sessionType}
+                isInitialPlan={isInitialPlan}
+                aiNote={
+                  sessionEvent.aiNote
+                    ? {
+                        topics: (sessionEvent.aiNote as { topics?: string[] }).topics,
+                        nextSteps: (sessionEvent.aiNote as { nextSteps?: string[] }).nextSteps,
+                        supervisorFeedback: (sessionEvent.aiNote as { supervisorFeedback?: string }).supervisorFeedback,
+                      }
+                    : null
+                }
+              />
+            )}
 
           {fullySigned ? (
             <div className="pt-4 border-t border-border">

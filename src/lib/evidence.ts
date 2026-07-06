@@ -98,6 +98,7 @@ export async function generateEvidencePackage(sessionEventId: string): Promise<v
       durationHours: event.durationHours,
       kind: event.kind,
       sessionType: event.sessionType ?? null,
+      supervisionType: event.supervisionType ?? null,
       supervisorCredentials: event.supervisorCredentials ?? null,
       groupAttendees: event.groupAttendees ?? null,
       signedAt: event.signedAt.toISOString(),
@@ -109,6 +110,8 @@ export async function generateEvidencePackage(sessionEventId: string): Promise<v
     },
     signatures: event.signatures ?? [],
     aiNote: event.aiNote ?? null,
+    clinicalFormData: event.clinicalFormData ?? null,
+    pdfTemplateKey: org.pdfTemplateKey ?? "audithalo_generic",
   };
 
   const canonical = canonicalJson(document);

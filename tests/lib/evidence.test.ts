@@ -58,4 +58,35 @@ describe("canonicalJson + sha256Hex", () => {
     const h2 = sha256Hex(canonicalJson(doc));
     expect(h1).toBe(h2);
   });
+
+  it("clinicalFormData changes the hash", () => {
+    const base = {
+      session: { id: "s1", supervisionType: "clinician" },
+      clinicalFormData: { competenciesChecked: ["technical_knowledge"] },
+      pdfTemplateKey: "recovery_innovations_v1",
+    };
+    const modified = {
+      ...base,
+      clinicalFormData: {
+        competenciesChecked: ["technical_knowledge", "cultural_awareness"],
+      },
+    };
+    expect(sha256Hex(canonicalJson(base))).not.toBe(
+      sha256Hex(canonicalJson(modified))
+    );
+  });
+
+  it("pdfTemplateKey is included in the canonical document hash", () => {
+    const generic = { session: { id: "s1" }, pdfTemplateKey: "audithalo_generic" };
+    const ri = { session: { id: "s1" }, pdfTemplateKey: "recovery_innovations_v1" };
+    expect(sha256Hex(canonicalJson(generic))).not.toBe(
+      sha256Hex(canonicalJson(ri))
+    );
+  });
+
+  it("supervisionType is included in the canonical document hash", () => {
+    const a = { session: { id: "s1", supervisionType: "peer" } };
+    const b = { session: { id: "s1", supervisionType: "clinician" } };
+    expect(sha256Hex(canonicalJson(a))).not.toBe(sha256Hex(canonicalJson(b)));
+  });
 });
