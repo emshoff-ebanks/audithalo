@@ -144,11 +144,11 @@ async function main() {
     // Step 2: Create users (before org, because org.created_by_id is a FK)
     for (const u of Object.values(USERS)) {
       await client.query(
-        `INSERT INTO users (id, email, name, password_hash, email_verified_at, state, license_type)
-         VALUES ($1, $2, $3, $4, NOW(), $5, $6)`,
-        [u.id, u.email, u.name, u.passwordHash, u.state ?? null, u.licenseType ?? null]
+        `INSERT INTO users (id, email, name, password_hash, email_verified_at, state, license_type, role)
+         VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7)`,
+        [u.id, u.email, u.name, u.passwordHash, u.state ?? null, u.licenseType ?? null, u.role]
       );
-      console.log(`Created user: ${u.name} (${u.email})`);
+      console.log(`Created user: ${u.name} (${u.email}) [${u.role}]`);
     }
 
     // Step 3: Create org
