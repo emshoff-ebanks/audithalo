@@ -11,10 +11,12 @@ export function LogSessionForm({
   superviseeId,
   allowSupervision = true,
   supervisorCredentials,
+  contractFiled = true,
 }: {
   superviseeId: string;
   allowSupervision?: boolean;
   supervisorCredentials?: string[] | null;
+  contractFiled?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<
     ActionResult | undefined,
@@ -135,6 +137,19 @@ export function LogSessionForm({
             supervisee&apos;s current licensure state (e.g. before they
             relocated), record it here. Used by the Counseling Compact and
             Social Work Compact when counting hours.
+          </p>
+        </div>
+      )}
+
+      {kind === "supervision" && !contractFiled && (
+        <div className="rounded-sm border border-[color:var(--color-warn-500)] bg-[color:var(--color-warn-50)] p-4">
+          <p className="text-sm font-medium text-[color:var(--color-warn-700)]">
+            Supervision contract not yet filed
+          </p>
+          <p className="mt-1 text-xs text-[color:var(--color-warn-700)]/80">
+            Sessions logged before the contract is filed with the state board
+            won&apos;t count toward licensure. Scroll up to the compliance
+            section and file the contract date first.
           </p>
         </div>
       )}

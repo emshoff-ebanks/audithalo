@@ -659,6 +659,7 @@ export default async function SuperviseeDetailPage({
                 }
                 groupCandidates={groupCandidates}
                 supervisorCredentials={viewerCredentials}
+                contractFiled={!!assignment?.supervisionContractFiledAt}
               />
             </CardContent>
           </Card>

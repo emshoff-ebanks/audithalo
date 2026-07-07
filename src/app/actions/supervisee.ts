@@ -283,6 +283,44 @@ export async function logSessionAction(
   }
   const { session, orgId } = access;
 
+  // Block supervision sessions if the supervisee's rule requires a
+  // pre-registration contract and it hasn't been filed yet. Prevents
+  // the "sessions logged before contract" warning from ever appearing.
+  if (parsed.data.kind === "supervision") {
+    const assignment = await db.query.superviseeRuleAssignments.findFirst({
+      where: eq(
+        schema.superviseeRuleAssignments.superviseeId,
+        parsed.data.superviseeId
+      ),
+    });
+    if (assignment && !assignment.supervisionContractFiledAt) {
+      const { getRule } = await import("@/lib/rules");
+      const [, jur, lic, vRaw] =
+        assignment.ruleId.match(/^(.+?)-(.+?)-v(\d+)$/) ?? [];
+      if (jur && lic && vRaw) {
+        try {
+          const rule = getRule(
+            jur.toUpperCase(),
+            lic.toUpperCase(),
+            parseInt(vRaw, 10)
+          );
+          const needsContract = rule.checks?.some(
+            (c: { id: string }) => c.id === "pre_registration_required"
+          );
+          if (needsContract) {
+            return {
+              ok: false,
+              error:
+                "This supervisee's supervision contract hasn't been filed with the state board yet. File the contract first — sessions logged before the contract date won't count toward licensure.",
+            };
+          }
+        } catch {
+          // Rule not found — allow the session (defensive)
+        }
+      }
+    }
+  }
+
   const credentials = parsed.data.supervisorCredentials
     ? parsed.data.supervisorCredentials
         .split(",")

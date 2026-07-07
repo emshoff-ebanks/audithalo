@@ -22,6 +22,7 @@ type Props = {
   /** Other supervisees the actor can pull into a group session (Phase 5). */
   groupCandidates: { id: string; name: string }[];
   supervisorCredentials?: string[] | null;
+  contractFiled?: boolean;
 };
 
 /**
@@ -44,6 +45,7 @@ export function SessionsPanel({
   hasAssignedSupervisor,
   groupCandidates,
   supervisorCredentials,
+  contractFiled,
 }: Props) {
   const [mode, setMode] = useState<"log_past" | "schedule_new">(
     viewerCanScheduleSession ? "schedule_new" : "log_past"
@@ -109,6 +111,7 @@ export function SessionsPanel({
             superviseeId={superviseeId}
             allowSupervision={viewerCanSupervise}
             supervisorCredentials={supervisorCredentials}
+            contractFiled={contractFiled}
           />
         )}
       </div>
