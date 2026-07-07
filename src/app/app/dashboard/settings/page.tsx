@@ -86,9 +86,8 @@ export default async function OrgSettingsPage() {
         <CardContent className="p-6">
           <p className="label-overline mb-1">Audit log retention</p>
           <p className="text-sm text-foreground/60 mb-4">
-            How many years of audit log entries we keep before purging.
-            The pricing page promises 7 years for Enterprise; you can extend
-            up to 20 if your compliance posture requires it.
+            How long audit log entries are kept before purging.
+            Recommended: 7 years. Maximum: 20 years.
           </p>
           <RetentionSettingForm
             currentValue={settings?.auditLogRetentionYears ?? 7}
