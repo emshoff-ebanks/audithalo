@@ -16,7 +16,6 @@ import { BillingBanner } from "./_billing-banner";
 import { PracticePanels, PRACTICE_THRESHOLD } from "./_practice-panel";
 import { TodaysSchedule } from "./_todays-schedule";
 import { RecentActivity } from "./_recent-activity";
-import { PaycorPanel } from "./_paycor-panel";
 
 type Props = {
   userId: string;
@@ -131,9 +130,6 @@ export async function SupervisorDashboard({
 
       <div className="mt-8 space-y-8">
         <BillingBanner org={org} />
-        {isHrAdmin(membership.role) && (
-          <PaycorPanel orgId={membership.orgId} paycorConfig={org?.paycorConfig ?? null} />
-        )}
         {totalSupervisees === 0 && (
           <Card>
             <CardContent className="p-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
