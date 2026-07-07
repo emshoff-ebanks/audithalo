@@ -268,7 +268,7 @@ export async function scheduleSessionAction(
     }),
     db.query.users.findFirst({
       where: eq(schema.users.id, hostingSupervisorId),
-      columns: { id: true, email: true, name: true },
+      columns: { id: true, email: true, name: true, credentials: true, supervisorTrainingHours: true },
     }),
     additionalIds.length === 0
       ? Promise.resolve([] as { id: string; email: string; name: string | null }[])
@@ -351,6 +351,8 @@ export async function scheduleSessionAction(
       durationHours: parsed.data.durationMinutes / 60,
       sessionType: parsed.data.sessionType,
       loggedById: session.user.id,
+      supervisorCredentials: (supervisor?.credentials as string[]) ?? null,
+      supervisorTrainingHours: supervisor?.supervisorTrainingHours ?? null,
       scheduledStatus: "scheduled",
       meetingProvider,
       meetingJoinUrl,
