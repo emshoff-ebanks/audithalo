@@ -9,29 +9,40 @@
  * workflow `.github/workflows/paycor-sync.yml`, schedule paused
  * initially (same pattern as sign-reminders).
  *
- * See docs/strategy/14-wave2-phase2-scaffolding.md §Pass 2.
+ * See docs/strategy/15-settings-ui-and-api-client.md §Pass 4.
  */
 
 import { eq, and, isNotNull, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
+import type { PaycorConfig } from "@/lib/db/schema";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { decryptToken, encryptToken } from "@/lib/crypto";
 import { diffRoster } from "@/lib/hris/diff-roster";
 import type { CurrentMember } from "@/lib/hris/diff-roster";
 import { applyPaycorChange } from "@/lib/hris/apply-change";
-import { MockPaycorProvider } from "@/lib/hris/paycor-provider";
-import type { PaycorProvider } from "@/lib/hris/paycor-provider";
+import { PaycorApiClient } from "@/lib/hris/paycor-api-client";
 import { SeatCapExceededError } from "@/lib/hris/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function getProvider(): PaycorProvider {
-  // Phase 3: swap for real Paycor API client once credentials arrive.
-  // The mock provider returns empty rosters (no changes) unless
-  // test data is configured — safe for production.
-  return new MockPaycorProvider();
+function decryptPaycorConfig(config: PaycorConfig): PaycorConfig {
+  return {
+    ...config,
+    apimSubscriptionKey: decryptToken(config.apimSubscriptionKey),
+    oauthClientSecret: decryptToken(config.oauthClientSecret),
+    oauthRefreshToken: config.oauthRefreshToken
+      ? decryptToken(config.oauthRefreshToken)
+      : undefined,
+    oauthAccessToken: config.oauthAccessToken
+      ? decryptToken(config.oauthAccessToken)
+      : undefined,
+    sftpPrivateKey: config.sftpPrivateKey
+      ? decryptToken(config.sftpPrivateKey)
+      : undefined,
+  };
 }
 
 async function handle(request: Request) {
@@ -39,7 +50,6 @@ async function handle(request: Request) {
   if (authFail) return authFail;
 
   const now = new Date();
-  const provider = getProvider();
 
   const orgs = await db.query.organizations.findMany({
     where: isNotNull(schema.organizations.paycorConfig),
@@ -49,6 +59,7 @@ async function handle(request: Request) {
   let totalHired = 0;
   let totalTerminated = 0;
   let totalLeaveChanged = 0;
+  let totalRoleChanged = 0;
   let totalSkipped = 0;
   let totalErrors = 0;
   const orgErrors: Array<{ orgId: string; orgName: string; error: string }> = [];
@@ -58,8 +69,27 @@ async function handle(request: Request) {
     const { legalEntityId } = org.paycorConfig;
     if (!legalEntityId) continue;
 
+    let orgChangeCount = 0;
+    let orgSyncStatus: "success" | "partial" | "failed" = "success";
+
     try {
-      const paycorEmployees = await provider.fetchEmployees(legalEntityId);
+      const decrypted = decryptPaycorConfig(org.paycorConfig);
+
+      const client = new PaycorApiClient(decrypted, async (tokens) => {
+        const updatedConfig: PaycorConfig = {
+          ...org.paycorConfig!,
+          oauthAccessToken: encryptToken(tokens.oauthAccessToken),
+          oauthRefreshToken: encryptToken(tokens.oauthRefreshToken),
+          tokenExpiresAt: tokens.tokenExpiresAt,
+        };
+        await db
+          .update(schema.organizations)
+          .set({ paycorConfig: updatedConfig })
+          .where(eq(schema.organizations.id, org.id));
+        org.paycorConfig = updatedConfig;
+      });
+
+      const paycorEmployees = await client.fetchEmployees(legalEntityId);
 
       const memberships = await db
         .select({
@@ -68,6 +98,7 @@ async function handle(request: Request) {
           role: schema.orgMemberships.role,
           deactivatedAt: schema.orgMemberships.deactivatedAt,
           leaveStatus: schema.orgMemberships.leaveStatus,
+          paycorEmployeeId: schema.orgMemberships.paycorEmployeeId,
           email: schema.users.email,
         })
         .from(schema.orgMemberships)
@@ -84,6 +115,7 @@ async function handle(request: Request) {
         role: m.role,
         deactivatedAt: m.deactivatedAt,
         leaveStatus: m.leaveStatus,
+        paycorEmployeeId: m.paycorEmployeeId,
       }));
 
       const diffs = diffRoster(paycorEmployees, currentMembers, org.id);
@@ -94,13 +126,17 @@ async function handle(request: Request) {
           switch (result.action) {
             case "created":
               totalHired++;
+              orgChangeCount++;
               break;
             case "deactivated":
               totalTerminated++;
+              orgChangeCount++;
               break;
             case "updated":
               if (change.kind === "leave_status_changed") totalLeaveChanged++;
               else if (change.kind === "employee_hired") totalHired++;
+              else if (change.kind === "role_changed") totalRoleChanged++;
+              orgChangeCount++;
               break;
             case "skipped":
               totalSkipped++;
@@ -108,6 +144,7 @@ async function handle(request: Request) {
           }
         } catch (err) {
           totalErrors++;
+          orgSyncStatus = "partial";
           if (err instanceof SeatCapExceededError) {
             console.error(
               `[paycor-sync] Seat cap exceeded for org ${org.id}: ${err.message}`,
@@ -126,6 +163,25 @@ async function handle(request: Request) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`[paycor-sync] Failed to sync org ${org.id}:`, err);
       orgErrors.push({ orgId: org.id, orgName: org.name, error: message });
+      orgSyncStatus = "failed";
+    }
+
+    try {
+      const updatedConfig: PaycorConfig = {
+        ...org.paycorConfig!,
+        lastSyncAt: now.toISOString(),
+        lastSyncStatus: orgSyncStatus,
+        lastSyncChanges: orgChangeCount,
+      };
+      await db
+        .update(schema.organizations)
+        .set({ paycorConfig: updatedConfig })
+        .where(eq(schema.organizations.id, org.id));
+    } catch (err) {
+      console.error(
+        `[paycor-sync] Failed to update sync metadata for org ${org.id}:`,
+        err,
+      );
     }
   }
 
@@ -137,6 +193,7 @@ async function handle(request: Request) {
       hired: totalHired,
       terminated: totalTerminated,
       leaveChanged: totalLeaveChanged,
+      roleChanged: totalRoleChanged,
       skipped: totalSkipped,
       errors: totalErrors,
     },

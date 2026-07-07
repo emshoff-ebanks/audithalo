@@ -86,6 +86,7 @@ async function applyHired(
           leaveStatus: initialLeaveStatus,
           leaveStatusChangedAt: new Date(),
           leaveStatusSource: "paycor_sync",
+          paycorEmployeeId: employee.paycorEmployeeId,
         })
         .where(eq(schema.orgMemberships.id, existing.id));
 
@@ -123,6 +124,7 @@ async function applyHired(
       role,
       leaveStatus: initialLeaveStatus,
       leaveStatusSource: "paycor_sync",
+      paycorEmployeeId: employee.paycorEmployeeId,
     })
     .returning({ id: schema.orgMemberships.id });
 
@@ -285,11 +287,6 @@ async function applyRoleChanged(
     .update(schema.orgMemberships)
     .set({ role: change.auditHaloRole })
     .where(eq(schema.orgMemberships.id, ctx.membershipId));
-
-  await db
-    .update(schema.users)
-    .set({ role: change.auditHaloRole })
-    .where(eq(schema.users.id, ctx.userId));
 
   try {
     await logAuditEvent({

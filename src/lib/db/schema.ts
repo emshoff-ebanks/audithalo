@@ -281,9 +281,25 @@ export type PdfTemplateKey = (typeof PDF_TEMPLATE_KEYS)[number];
 
 export type PaycorConfig = {
   legalEntityId: string;
+  environment: "sandbox" | "production";
+
+  apimSubscriptionKey: string;
+  oauthClientId: string;
+  oauthClientSecret: string;
+  oauthAccessToken?: string;
+  oauthRefreshToken?: string;
+  tokenExpiresAt?: string;
+
   sftpHost?: string;
   sftpUser?: string;
+  sftpPrivateKey?: string;
   sftpBasePath?: string;
+
+  connectedAt: string;
+  connectedByUserId: string;
+  lastSyncAt?: string;
+  lastSyncStatus?: "success" | "partial" | "failed";
+  lastSyncChanges?: number;
 };
 
 /**
@@ -335,6 +351,7 @@ export const orgMemberships = pgTable("org_memberships", {
     withTimezone: true,
   }),
   leaveStatusSource: text("leave_status_source"), // 'manual_hr_admin' | 'paycor_sync'
+  paycorEmployeeId: text("paycor_employee_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

@@ -84,4 +84,7 @@ export const AUDIT_ACTIONS = {
   PAYCOR_SYNC_DELIVERY_QUEUED: "paycor_sync.delivery_queued",
   PAYCOR_SYNC_DELIVERY_COMPLETED: "paycor_sync.delivery_completed",
   PAYCOR_SYNC_DELIVERY_FAILED: "paycor_sync.delivery_failed",
+  // Paycor connection management (Wave 2 Phase 3)
+  PAYCOR_CONNECTED: "paycor.connected",
+  PAYCOR_DISCONNECTED: "paycor.disconnected",
 } as const;

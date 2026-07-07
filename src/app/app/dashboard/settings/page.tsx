@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Link2 } from "lucide-react";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getCurrentMembership, isHrAdmin } from "@/lib/authz";
@@ -56,6 +56,31 @@ export default async function OrgSettingsPage() {
           Org-wide preferences. Changes apply to every team member.
         </p>
       </div>
+
+      <Card>
+        <CardContent className="p-6">
+          <Link
+            href="/dashboard/settings/integrations"
+            className="flex items-center justify-between group"
+          >
+            <div className="flex items-center gap-3">
+              <Link2
+                className="h-5 w-5 shrink-0 text-foreground/40"
+                strokeWidth={1.75}
+              />
+              <div>
+                <p className="font-medium text-foreground group-hover:underline">
+                  Integrations
+                </p>
+                <p className="text-sm text-foreground/60">
+                  Connect Paycor for roster sync and document delivery.
+                </p>
+              </div>
+            </div>
+            <ArrowLeft className="h-4 w-4 text-foreground/40 rotate-180" />
+          </Link>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="p-6">

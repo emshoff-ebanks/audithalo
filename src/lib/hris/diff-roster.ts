@@ -9,6 +9,7 @@ export type CurrentMember = {
   role: OrgRole;
   deactivatedAt: Date | null;
   leaveStatus: LeaveStatus;
+  paycorEmployeeId?: string | null;
 };
 
 export type DiffEntry = {
@@ -20,8 +21,8 @@ export type DiffEntry = {
  * Pure function: compare the Paycor roster to the current AuditHalo roster
  * and produce a list of changes to apply.
  *
- * Matching is by email (lowercased). This avoids needing a stored
- * paycorEmployeeId column — deferred to migration 0031.
+ * Matching prefers paycorEmployeeId (reliable, survives email changes)
+ * with email fallback for members not yet linked.
  *
  * Does NOT produce changes for AuditHalo members missing from Paycor.
  * A missing employee could be in a different legal entity or the API
@@ -34,14 +35,20 @@ export function diffRoster(
 ): DiffEntry[] {
   const changes: DiffEntry[] = [];
 
+  const membersByPaycorId = new Map<string, CurrentMember>();
   const membersByEmail = new Map<string, CurrentMember>();
   for (const m of currentMembers) {
+    if (m.paycorEmployeeId) {
+      membersByPaycorId.set(m.paycorEmployeeId, m);
+    }
     membersByEmail.set(m.email.toLowerCase(), m);
   }
 
   for (const emp of paycorEmployees) {
     const email = emp.email.toLowerCase();
-    const existing = membersByEmail.get(email);
+    const existing =
+      membersByPaycorId.get(emp.paycorEmployeeId) ??
+      membersByEmail.get(email);
     const status = mapPaycorStatus(emp.status);
 
     if (!existing) {

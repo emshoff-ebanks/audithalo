@@ -10,6 +10,7 @@ import {
   LogOut,
   ScrollText,
   Settings as SettingsIcon,
+  SlidersHorizontal,
   Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +83,12 @@ const DROPDOWN_LINKS: DropdownLink[] = [
     href: "/dashboard/team/rules",
     label: "State rules",
     icon: ClipboardList,
+    roles: ["hr_admin"],
+  },
+  {
+    href: "/dashboard/settings",
+    label: "Org settings",
+    icon: SlidersHorizontal,
     roles: ["hr_admin"],
   },
 ];

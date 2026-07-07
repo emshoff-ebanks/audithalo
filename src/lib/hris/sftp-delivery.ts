@@ -1,4 +1,4 @@
-import { eq, and, lte } from "drizzle-orm";
+import { eq, and, lt } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 import type { PaycorConfig } from "@/lib/db/schema";
@@ -105,7 +105,7 @@ export async function processPendingDeliveries(
   const pending = await db.query.paycorDeliveryQueue.findMany({
     where: and(
       eq(schema.paycorDeliveryQueue.status, "pending"),
-      lte(schema.paycorDeliveryQueue.attempts, MAX_ATTEMPTS),
+      lt(schema.paycorDeliveryQueue.attempts, MAX_ATTEMPTS),
     ),
   });
 
