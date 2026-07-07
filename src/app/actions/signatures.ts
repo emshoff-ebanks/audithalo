@@ -67,6 +67,31 @@ export async function signSessionAction(
     return { ok: false, error: "You can't sign sessions in this organization." };
   }
 
+  // RI orgs: block supervisor signing if the clinical form hasn't been
+  // filled out. Supervisees can still sign (they don't fill the form).
+  if (
+    sessionEvent.kind === "supervision" &&
+    canSupervise(membership.role)
+  ) {
+    const org = await db.query.organizations.findFirst({
+      where: eq(schema.organizations.id, sessionEvent.orgId),
+      columns: { pdfTemplateKey: true },
+    });
+    if (org?.pdfTemplateKey === "recovery_innovations_v1") {
+      const cf = sessionEvent.clinicalFormData as Record<string, unknown> | null;
+      const hasCompetencies =
+        Array.isArray(cf?.competenciesChecked) &&
+        (cf.competenciesChecked as string[]).length > 0;
+      if (!cf || !hasCompetencies) {
+        return {
+          ok: false,
+          error:
+            "Please fill out the Clinical Supervision Form (at least one competency) before signing.",
+        };
+      }
+    }
+  }
+
   let signerRole: "supervisee" | "supervisor";
   if (session.user.id === sessionEvent.superviseeId) {
     signerRole = "supervisee";
