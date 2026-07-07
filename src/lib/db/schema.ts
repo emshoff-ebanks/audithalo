@@ -73,6 +73,11 @@ export const users = pgTable("users", {
    *  "sign out everywhere", password change, and password reset. Null means no
    *  revocation has ever occurred — all valid tokens are accepted. */
   sessionsValidFrom: timestamp("sessions_valid_from", { withTimezone: true }),
+  /** Professional credentials held by this supervisor (e.g. ["LCMHCS", "NCC"]).
+   *  Used for: auto-populating the credential field when logging sessions,
+   *  validating supervisor-supervisee assignment compatibility, and clearing
+   *  the "sessions lack required credential" rule-engine warning. */
+  credentials: jsonb("credentials").$type<string[]>(),
   /** Self-reported supervisor training hours (e.g., CA 16 CCR §1822 requires 15).
    *  Snapshotted onto each supervision session at log time. */
   supervisorTrainingHours: integer("supervisor_training_hours"),

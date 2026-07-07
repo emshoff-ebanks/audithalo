@@ -576,6 +576,44 @@ export async function updateSupervisorTrainingHoursAction(
 }
 
 // ----------------------------------------------------------------------------
+// Professional credentials
+// ----------------------------------------------------------------------------
+
+export async function updateCredentialsAction(
+  _prev: AccountActionResult | undefined,
+  formData: FormData
+): Promise<AccountActionResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Not authenticated." };
+
+  const membership = await getCurrentMembership(session.user.id);
+  if (!membership || !canSupervise(membership.role)) {
+    return { ok: false, error: "Only supervisors can set credentials." };
+  }
+
+  const raw = (formData.get("credentials") as string) ?? "";
+  const credentials = raw
+    .split(",")
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean);
+
+  if (credentials.length === 0) {
+    return { ok: false, error: "Enter at least one credential." };
+  }
+  if (credentials.length > 20) {
+    return { ok: false, error: "Too many credentials (max 20)." };
+  }
+
+  await db
+    .update(schema.users)
+    .set({ credentials })
+    .where(eq(schema.users.id, session.user.id));
+
+  revalidatePath("/dashboard/account");
+  return { ok: true, message: "Credentials updated." };
+}
+
+// ----------------------------------------------------------------------------
 // Two-factor authentication (TOTP)
 //
 // Three-step flow:

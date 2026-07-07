@@ -304,6 +304,16 @@ export default async function SuperviseeDetailPage({
         )
       : [];
 
+  // Viewer's professional credentials — auto-populate the log-session form.
+  const viewerCredentials = viewerCanSupervise
+    ? (
+        await db.query.users.findFirst({
+          where: eq(schema.users.id, session.user.id),
+          columns: { credentials: true },
+        })
+      )?.credentials as string[] | null
+    : null;
+
   // HR Admin only: fetch current supervisor + active supervisor options for
   // the in-page reassignment dropdown (per spec §7).
   const viewerIsHrAdmin = viewerIsHrAdminEarly;
@@ -648,6 +658,7 @@ export default async function SuperviseeDetailPage({
                   !!hostingSupervisorIdForPage || viewerCanSupervise
                 }
                 groupCandidates={groupCandidates}
+                supervisorCredentials={viewerCredentials}
               />
             </CardContent>
           </Card>

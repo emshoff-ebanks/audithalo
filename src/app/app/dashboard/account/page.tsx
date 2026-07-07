@@ -13,6 +13,7 @@ import { PasswordForm } from "./password-form";
 import { EmailVerificationStatus } from "./email-verification-status";
 import { EmailChangeForm } from "./email-change-form";
 import { SupervisorTrainingForm } from "./supervisor-training-form";
+import { CredentialsForm } from "./credentials-form";
 import { SignOutEverywhereButton } from "./sign-out-everywhere-button";
 import { TotpSetupWizard } from "./totp-setup";
 import { TotpDisableForm } from "./totp-disable-form";
@@ -36,6 +37,7 @@ const NAV_ITEMS: { id: string; label: string; supervisorOnly?: boolean }[] = [
   { id: "notifications", label: "Notifications" },
   { id: "integrations", label: "Integrations" },
   { id: "compliance", label: "Compliance", supervisorOnly: true },
+  { id: "credentials", label: "Credentials", supervisorOnly: true },
   { id: "training", label: "Supervisor training", supervisorOnly: true },
   { id: "profile", label: "Profile" },
   { id: "password", label: "Password" },
@@ -199,7 +201,35 @@ export default async function AccountPage() {
         </Card>
       )}
 
-      {/* 5. Supervisor training — supervisor only.
+      {/* 5. Professional credentials — supervisor only. */}
+      {userCanSupervise && (
+        <Card id="credentials">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between gap-3">
+              <span>Professional credentials</span>
+              {user.credentials && user.credentials.length > 0 ? (
+                <Badge variant="success">
+                  {user.credentials.join(", ")}
+                </Badge>
+              ) : (
+                <Badge variant="outline-warn">Not set</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-foreground/70 mb-4">
+              Your professional licenses and credentials (e.g. LCMHCS, NCC, LPC).
+              These auto-populate when you log supervision sessions and are validated
+              against your supervisees&apos; state requirements.
+            </p>
+            <CredentialsForm
+              initialCredentials={user.credentials as string[] | null}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 6. Supervisor training — supervisor only.
             Moved up from the bottom because it's a real compliance gate
             for CA APCC + a few other states. */}
       {userCanSupervise && (

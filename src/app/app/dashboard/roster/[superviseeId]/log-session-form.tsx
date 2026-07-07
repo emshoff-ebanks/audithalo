@@ -10,9 +10,11 @@ import { US_STATES } from "@/lib/us-states";
 export function LogSessionForm({
   superviseeId,
   allowSupervision = true,
+  supervisorCredentials,
 }: {
   superviseeId: string;
   allowSupervision?: boolean;
+  supervisorCredentials?: string[] | null;
 }) {
   const [state, formAction, pending] = useActionState<
     ActionResult | undefined,
@@ -161,7 +163,7 @@ export function LogSessionForm({
               name="supervisorCredentials"
               type="text"
               placeholder="LCMHCS, LCSW"
-              defaultValue="LCMHCS"
+              defaultValue={supervisorCredentials?.join(", ") ?? ""}
               className="mt-1.5"
             />
           </div>
