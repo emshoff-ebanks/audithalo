@@ -188,6 +188,88 @@ export function createGoogleProvider(
         isAuditHaloEvent: (e.description ?? "").includes(AUDITHALO_EVENT_TAG),
       }));
     },
+
+    async getTranscript(
+      _meetingId: string,
+      _joinUrl: string
+    ): Promise<string | null> {
+      // Google Meet transcripts land in Drive as a Google Doc named
+      // "Meeting transcript - {event title}". We search by mime type
+      // and the AuditHalo event tag to find our transcript.
+
+      // First, get the calendar event to know the meeting title.
+      let eventTitle: string | undefined;
+      if (_meetingId) {
+        try {
+          const eventRes = await calFetch(
+            accessToken,
+            `/calendars/primary/events/${encodeURIComponent(_meetingId)}?fields=summary`
+          );
+          const eventData = (await eventRes.json()) as { summary?: string };
+          eventTitle = eventData.summary;
+        } catch {
+          // Event might have been deleted — fall through to broader search
+        }
+      }
+
+      const DRIVE_BASE = "https://www.googleapis.com/drive/v3";
+      async function driveFetch(path: string, init: RequestInit = {}): Promise<Response> {
+        const res = await fetch(`${DRIVE_BASE}${path}`, {
+          ...init,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            ...(init.headers ?? {}),
+          },
+        });
+        if (!res.ok) {
+          throw new Error(`Google Drive ${res.status}: ${await res.text().catch(() => "")}`);
+        }
+        return res;
+      }
+
+      // Search Drive for transcript docs. Google names them
+      // "Meeting transcript - <title>" or just "Meeting transcript"
+      // for untitled meetings.
+      const queryParts = [
+        "mimeType='application/vnd.google-apps.document'",
+        "name contains 'Meeting transcript'",
+      ];
+      if (eventTitle) {
+        const escaped = eventTitle.replace(/'/g, "\\'");
+        queryParts.push(`name contains '${escaped}'`);
+      }
+      const q = queryParts.join(" and ");
+      const searchParams = new URLSearchParams({
+        q,
+        fields: "files(id,name,createdTime)",
+        orderBy: "createdTime desc",
+        pageSize: "5",
+      });
+
+      let fileId: string | undefined;
+      try {
+        const searchRes = await driveFetch(`/files?${searchParams.toString()}`);
+        const files = (await searchRes.json()) as {
+          files?: Array<{ id: string; name: string }>;
+        };
+        fileId = files.files?.[0]?.id;
+      } catch {
+        return null;
+      }
+
+      if (!fileId) return null;
+
+      // Export the Google Doc as plain text
+      try {
+        const exportRes = await driveFetch(
+          `/files/${encodeURIComponent(fileId)}/export?mimeType=text/plain`
+        );
+        const text = await exportRes.text();
+        return text.trim() || null;
+      } catch {
+        return null;
+      }
+    },
   };
 }
 

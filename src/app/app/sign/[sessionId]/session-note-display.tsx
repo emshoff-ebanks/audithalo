@@ -1,4 +1,5 @@
 import { CheckCircle2, BookOpen, MessageSquare, ListChecks } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { RegenerateNoteSlot } from "./regenerate-note-button";
 import { EditNoteSlot } from "./edit-note-form";
 
@@ -16,20 +17,36 @@ type AiNote = {
   editedByUserId?: string;
 };
 
+const SOURCE_LABELS: Record<string, string> = {
+  teams: "From Teams transcript",
+  google_meet: "From Google Meet transcript",
+};
+
 export function SessionNoteDisplay({
   note,
   sessionEventId,
   canEdit = false,
+  source,
+  meetingProvider,
 }: {
   note: AiNote;
   sessionEventId: string;
   canEdit?: boolean;
+  source?: string | null;
+  meetingProvider?: string | null;
 }) {
   return (
     <div className="space-y-5">
       <div className="flex items-baseline justify-between flex-wrap gap-2">
         <div className="space-y-1">
-          <p className="label-overline">AI session note</p>
+          <div className="flex items-center gap-2">
+            <p className="label-overline">AI session note</p>
+            {source && SOURCE_LABELS[source] && (
+              <Badge variant="outline" className="text-[10px] font-normal">
+                {SOURCE_LABELS[source]}
+              </Badge>
+            )}
+          </div>
           <p className="text-xs text-foreground/50 font-mono">
             {note.transcriptWordCount} words · {note.model} · {note.generatedAt.slice(0, 10)}
             {note.editedAt && (

@@ -608,10 +608,11 @@ export const sessionEvents = pgTable("session_events", {
     transcriptWordCount: number;
     editedAt?: string;          // ISO timestamp — set when a supervisor manually edits after generation
     editedByUserId?: string;    // UUID of the supervisor who edited it
-    /** "manual" = supervisor pasted transcript; "teams" = ingested from MS Teams.
+    /** "manual" = supervisor pasted transcript; "teams" = ingested from
+     *  MS Teams; "google_meet" = fetched from Google Drive.
      *  Absent on legacy rows (treat as "manual"). */
-    source?: "manual" | "teams";
-    /** MS Graph onlineMeeting id when source === "teams". */
+    source?: "manual" | "teams" | "google_meet";
+    /** Provider-specific meeting id for transcript-sourced notes. */
     teamsMeetingId?: string;
   }>(),
   // Wave 2 / 2E — type of clinical oversight provided. Orthogonal to sessionType

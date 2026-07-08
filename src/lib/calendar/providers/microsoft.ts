@@ -14,6 +14,7 @@
  * to provision a Teams meeting in the same call, and the response's
  * `onlineMeeting.joinUrl` is the deep link we surface on the Join button.
  */
+import { parseVttToText } from "../vtt-parser";
 import { AUDITHALO_EVENT_TAG } from "../types";
 import type {
   CalendarEventSummary,
@@ -218,6 +219,52 @@ export function createMicrosoftProvider(
         endUtc: e.end ? graphTimeToUtc(e.end) : endUtc,
         isAuditHaloEvent: (e.bodyPreview ?? "").includes(AUDITHALO_EVENT_TAG),
       }));
+    },
+
+    async getTranscript(
+      _meetingId: string,
+      joinUrl: string
+    ): Promise<string | null> {
+      // Step 1: Resolve the onlineMeetingId from the join URL.
+      // The calendar event ID != the online meeting ID that the
+      // transcript API needs.
+      const meetingRes = await graphFetch(
+        accessToken,
+        `/me/onlineMeetings?$filter=JoinWebUrl eq '${joinUrl.replace(/'/g, "''")}'`
+      );
+      const meetingData = (await meetingRes.json()) as {
+        value: Array<{ id: string }>;
+      };
+      const onlineMeetingId = meetingData.value?.[0]?.id;
+      if (!onlineMeetingId) return null;
+
+      // Step 2: List transcripts for this meeting.
+      let transcriptsRes: Response;
+      try {
+        transcriptsRes = await graphFetch(
+          accessToken,
+          `/me/onlineMeetings/${encodeURIComponent(onlineMeetingId)}/transcripts`
+        );
+      } catch {
+        // 404 or 403 = transcription wasn't enabled or not ready yet
+        return null;
+      }
+      const transcripts = (await transcriptsRes.json()) as {
+        value: Array<{ id: string }>;
+      };
+      const transcriptId = transcripts.value?.[0]?.id;
+      if (!transcriptId) return null;
+
+      // Step 3: Fetch the VTT content.
+      const contentRes = await graphFetch(
+        accessToken,
+        `/me/onlineMeetings/${encodeURIComponent(onlineMeetingId)}/transcripts/${encodeURIComponent(transcriptId)}/content`,
+        { headers: { Accept: "text/vtt" } }
+      );
+      const vtt = await contentRes.text();
+      if (!vtt.trim()) return null;
+
+      return parseVttToText(vtt);
     },
   };
 }

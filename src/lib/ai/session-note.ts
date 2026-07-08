@@ -22,10 +22,11 @@ export type SessionNoteMetadata = {
   transcriptHash: string;
   transcriptWordCount: number;
   /** "manual" = supervisor pasted the transcript. "teams" = ingested
-   *  from a Teams meeting transcript via MS Graph. Defaults to "manual"
-   *  for backward compat with notes generated before this field existed. */
-  source?: "manual" | "teams";
-  /** MS Graph onlineMeeting id for Teams-sourced notes. */
+   *  from a Teams meeting transcript via MS Graph. "google_meet" =
+   *  fetched from Google Drive. Defaults to "manual" for backward compat
+   *  with notes generated before this field existed. */
+  source?: "manual" | "teams" | "google_meet";
+  /** Provider-specific meeting id for transcript-sourced notes. */
   teamsMeetingId?: string;
 };
 
@@ -50,7 +51,7 @@ const MAX_TRANSCRIPT_CHARS = 50_000;
 export async function generateSessionNote(opts: {
   transcript: string;
   generatedByUserId: string;
-  source?: "manual" | "teams";
+  source?: "manual" | "teams" | "google_meet";
   teamsMeetingId?: string;
 }): Promise<{ note: SessionNoteData; metadata: SessionNoteMetadata }> {
   const trimmed = opts.transcript.trim().slice(0, MAX_TRANSCRIPT_CHARS);

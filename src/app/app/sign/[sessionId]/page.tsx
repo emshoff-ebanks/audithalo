@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { SignForm } from "./sign-form";
 import { SessionNoteForm } from "./session-note-form";
 import { SessionNoteDisplay } from "./session-note-display";
+import { TranscriptFetchButton } from "./transcript-fetch-button";
 import { ScheduledSessionCard } from "./scheduled-session-card";
 import { DidntHappenAffordance } from "./didnt-happen-affordance";
 import { SupervisionTypeSelect } from "./supervision-type-select";
@@ -343,17 +344,31 @@ export default async function SignSessionPage({
                   note={sessionEvent.aiNote as never}
                   sessionEventId={sessionEvent.id}
                   canEdit={!fullySigned}
+                  source={(sessionEvent.aiNote as { source?: string }).source}
+                  meetingProvider={sessionEvent.meetingProvider}
                 />
               ) : !fullySigned ? (
                 <>
                   <p className="label-overline mb-3">AI session note</p>
-                  <p className="text-sm text-foreground/70 mb-4">
-                    Paste a transcript of this supervision session to generate a
-                    structured note with topics, competencies, feedback, and next steps.
-                    The transcript is sent to OpenAI but never stored — only the resulting
-                    note is saved with this session.
-                  </p>
-                  <SessionNoteForm sessionEventId={sessionEvent.id} />
+                  {sessionEvent.meetingProvider &&
+                  sessionEvent.meetingJoinUrl &&
+                  (sessionEvent.meetingProvider === "teams" ||
+                    sessionEvent.meetingProvider === "google_meet") ? (
+                    <TranscriptFetchButton
+                      sessionEventId={sessionEvent.id}
+                      meetingProvider={sessionEvent.meetingProvider}
+                    />
+                  ) : (
+                    <>
+                      <p className="text-sm text-foreground/70 mb-4">
+                        Paste a transcript of this supervision session to generate a
+                        structured note with topics, competencies, feedback, and next steps.
+                        The transcript is sent to OpenAI but never stored — only the resulting
+                        note is saved with this session.
+                      </p>
+                      <SessionNoteForm sessionEventId={sessionEvent.id} />
+                    </>
+                  )}
                 </>
               ) : null}
             </div>

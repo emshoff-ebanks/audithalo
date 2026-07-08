@@ -3,13 +3,11 @@
  * Microsoft (Entra ID) and Google. Centralized so both routes — and any
  * future token-refresh helper — pull from one source.
  *
- * Scopes are picked to cover Phase 1 (calendar event + meeting link) and
- * Phase 4 (conflict detection, read scope). Teams transcript scope is
- * deferred to Phase 6 because it needs admin consent and would force a
- * re-consent flow if added later — accepting that trade for now to keep
- * the connect UX a single-click.
- *
- * See docs/strategy/08-scheduling-and-calendar.md.
+ * Scopes cover calendar CRUD, meeting provisioning, conflict detection,
+ * and transcript access (OnlineMeetingTranscript.Read.All for MS,
+ * drive.readonly for Google). Existing users who connected before the
+ * transcript scopes were added need to reconnect — use
+ * hasTranscriptScope() to detect and prompt.
  */
 
 export type CalendarProvider = "microsoft" | "google";
@@ -44,6 +42,7 @@ export const PROVIDERS: Record<CalendarProvider, ProviderOAuthConfig> = {
       "offline_access",
       "Calendars.ReadWrite",
       "OnlineMeetings.ReadWrite",
+      "OnlineMeetingTranscript.Read.All",
     ],
     envClientIdKey: "MS_CLIENT_ID",
     envClientSecretKey: "MS_CLIENT_SECRET",
@@ -59,6 +58,7 @@ export const PROVIDERS: Record<CalendarProvider, ProviderOAuthConfig> = {
       "profile",
       "https://www.googleapis.com/auth/calendar.events",
       "https://www.googleapis.com/auth/calendar.readonly",
+      "https://www.googleapis.com/auth/drive.readonly",
     ],
     envClientIdKey: "GOOGLE_CLIENT_ID",
     envClientSecretKey: "GOOGLE_CLIENT_SECRET",
@@ -67,6 +67,25 @@ export const PROVIDERS: Record<CalendarProvider, ProviderOAuthConfig> = {
 
 export function getProviderConfig(provider: CalendarProvider): ProviderOAuthConfig {
   return PROVIDERS[provider];
+}
+
+const TRANSCRIPT_SCOPES: Record<CalendarProvider, string> = {
+  microsoft: "OnlineMeetingTranscript.Read.All",
+  google: "https://www.googleapis.com/auth/drive.readonly",
+};
+
+export function getTranscriptScope(provider: CalendarProvider): string {
+  return TRANSCRIPT_SCOPES[provider];
+}
+
+export function hasTranscriptScope(
+  provider: CalendarProvider,
+  grantedScopes: string[]
+): boolean {
+  const required = TRANSCRIPT_SCOPES[provider];
+  return grantedScopes.some(
+    (s) => s.toLowerCase() === required.toLowerCase()
+  );
 }
 
 export type ProviderCredentials = {

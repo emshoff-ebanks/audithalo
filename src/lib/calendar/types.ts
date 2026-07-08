@@ -99,6 +99,9 @@ export type CalendarProviderClient = {
     startUtc: Date,
     endUtc: Date
   ): Promise<CalendarEventSummary[]>;
+  /** Fetch the meeting transcript as plain text. Returns null if the
+   *  transcript is not yet available or transcription was not enabled. */
+  getTranscript?(meetingId: string, joinUrl: string): Promise<string | null>;
 };
 
 /**
