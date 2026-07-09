@@ -8,8 +8,6 @@ function makeConfig(overrides: Partial<PaycorConfig> = {}): PaycorConfig {
     legalEntityId: "12345",
     environment: "sandbox",
     apimSubscriptionKey: "sub-key-abc",
-    oauthClientId: "client-id",
-    oauthClientSecret: "client-secret",
     oauthAccessToken: "access-token-valid",
     oauthRefreshToken: "refresh-token",
     tokenExpiresAt: new Date(Date.now() + 3600_000).toISOString(),
@@ -33,10 +31,13 @@ let fetchMock: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   fetchMock = vi.fn();
   vi.stubGlobal("fetch", fetchMock);
+  vi.stubEnv("PAYCOR_CLIENT_ID", "env-client-id");
+  vi.stubEnv("PAYCOR_CLIENT_SECRET", "env-client-secret");
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
 
 // ---------------------------------------------------------------------------
@@ -209,16 +210,15 @@ describe("token refresh", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     const refreshCall = fetchMock.mock.calls[0];
-    expect(refreshCall[0]).toContain(
-      "/v1/authenticationsupport/retrieveAccessTokenWithRefreshToken",
+    expect(refreshCall[0]).toBe(
+      "https://secure-sandbox.paycor.com/connect/token",
     );
     expect(refreshCall[1].method).toBe("POST");
-    const body = JSON.parse(refreshCall[1].body);
-    expect(body).toEqual({
-      refresh_token: "refresh-token",
-      client_id: "client-id",
-      client_secret: "client-secret",
-    });
+    const body = new URLSearchParams(refreshCall[1].body.toString());
+    expect(body.get("grant_type")).toBe("refresh_token");
+    expect(body.get("refresh_token")).toBe("refresh-token");
+    expect(body.get("client_id")).toBe("env-client-id");
+    expect(body.get("client_secret")).toBe("env-client-secret");
 
     expect(onRefresh).toHaveBeenCalledOnce();
     expect(onRefresh.mock.calls[0][0].oauthAccessToken).toBe("new-access-token");

@@ -1,4 +1,8 @@
 import type { PaycorConfig } from "@/lib/db/schema";
+import {
+  getPaycorEndpoints,
+  loadPaycorCredentials,
+} from "@/lib/paycor/oauth-config";
 import type { PaycorEmployee, PaycorEmploymentStatus } from "./types";
 import type { PaycorProvider, PaycorEmployeeStatus } from "./paycor-provider";
 
@@ -6,9 +10,6 @@ const BASE_URLS = {
   sandbox: "https://apis-sandbox.paycor.com",
   production: "https://apis.paycor.com",
 } as const;
-
-const TOKEN_REFRESH_PATH =
-  "/v1/authenticationsupport/retrieveAccessTokenWithRefreshToken";
 
 const HEALTH_PING_PATH = "/api/Health/ping";
 
@@ -137,17 +138,20 @@ export class PaycorApiClient implements PaycorProvider {
       );
     }
 
-    const res = await fetch(`${this.baseUrl}${TOKEN_REFRESH_PATH}`, {
+    const creds = loadPaycorCredentials();
+    const endpoints = getPaycorEndpoints(this.config.environment);
+
+    const body = new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: this.config.oauthRefreshToken,
+      client_id: creds.clientId,
+      client_secret: creds.clientSecret,
+    });
+
+    const res = await fetch(endpoints.tokenUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Ocp-Apim-Subscription-Key": this.config.apimSubscriptionKey,
-      },
-      body: JSON.stringify({
-        refresh_token: this.config.oauthRefreshToken,
-        client_id: this.config.oauthClientId,
-        client_secret: this.config.oauthClientSecret,
-      }),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
     });
 
     if (!res.ok) {

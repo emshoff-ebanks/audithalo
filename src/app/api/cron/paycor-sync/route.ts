@@ -18,7 +18,8 @@ import { db, schema } from "@/lib/db";
 import type { PaycorConfig } from "@/lib/db/schema";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { verifyCronAuth } from "@/lib/cron-auth";
-import { decryptToken, encryptToken } from "@/lib/crypto";
+import { encryptToken } from "@/lib/crypto";
+import { decryptPaycorConfig } from "@/lib/paycor/decrypt-config";
 import { diffRoster } from "@/lib/hris/diff-roster";
 import type { CurrentMember } from "@/lib/hris/diff-roster";
 import { applyPaycorChange } from "@/lib/hris/apply-change";
@@ -27,23 +28,6 @@ import { SeatCapExceededError } from "@/lib/hris/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function decryptPaycorConfig(config: PaycorConfig): PaycorConfig {
-  return {
-    ...config,
-    apimSubscriptionKey: decryptToken(config.apimSubscriptionKey),
-    oauthClientSecret: decryptToken(config.oauthClientSecret),
-    oauthRefreshToken: config.oauthRefreshToken
-      ? decryptToken(config.oauthRefreshToken)
-      : undefined,
-    oauthAccessToken: config.oauthAccessToken
-      ? decryptToken(config.oauthAccessToken)
-      : undefined,
-    sftpPrivateKey: config.sftpPrivateKey
-      ? decryptToken(config.sftpPrivateKey)
-      : undefined,
-  };
-}
 
 async function handle(request: Request) {
   const authFail = verifyCronAuth(request);

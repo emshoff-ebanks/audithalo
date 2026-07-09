@@ -289,8 +289,6 @@ export type PaycorConfig = {
   environment: "sandbox" | "production";
 
   apimSubscriptionKey: string;
-  oauthClientId: string;
-  oauthClientSecret: string;
   oauthAccessToken?: string;
   oauthRefreshToken?: string;
   tokenExpiresAt?: string;

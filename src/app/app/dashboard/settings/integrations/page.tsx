@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Link2, Unplug } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Link2, Unplug, XCircle } from "lucide-react";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getCurrentMembership, isHrAdmin } from "@/lib/authz";
@@ -14,7 +14,9 @@ import { PaycorConnectedCard } from "./paycor-connected-card";
 export const metadata = { title: "Integrations — AuditHalo" };
 export const dynamic = "force-dynamic";
 
-export default async function IntegrationsPage() {
+export default async function IntegrationsPage(props: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -27,7 +29,15 @@ export default async function IntegrationsPage() {
     where: eq(schema.organizations.id, membership.orgId),
   });
 
-  const isConnected = !!org?.paycorConfig;
+  const isConnected = !!org?.paycorConfig?.oauthAccessToken;
+
+  const searchParams = await props.searchParams;
+  const justConnected = searchParams.connected === "paycor";
+  const errorCode = typeof searchParams.error === "string" ? searchParams.error : null;
+  const errorDetail =
+    typeof searchParams.error_detail === "string"
+      ? searchParams.error_detail
+      : null;
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-8 sm:py-12 space-y-6">
@@ -50,6 +60,27 @@ export default async function IntegrationsPage() {
           delivery.
         </p>
       </div>
+
+      {justConnected && (
+        <div className="flex items-start gap-2 rounded-sm border border-[color:var(--color-success)]/30 bg-[color:var(--color-success)]/5 px-4 py-3 text-sm text-[color:var(--color-success)]">
+          <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" strokeWidth={1.75} />
+          <span>Paycor connected successfully. You can now sync your roster.</span>
+        </div>
+      )}
+
+      {errorCode && (
+        <div className="flex items-start gap-2 rounded-sm border border-[color:var(--color-risk)]/30 bg-[color:var(--color-risk)]/5 px-4 py-3 text-sm text-[color:var(--color-risk)]">
+          <XCircle className="h-4 w-4 shrink-0 mt-0.5" strokeWidth={1.75} />
+          <div>
+            <span>Paycor connection failed ({errorCode}).</span>
+            {errorDetail && (
+              <span className="block mt-0.5 text-xs opacity-80">
+                {errorDetail}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       <Card>
         <CardContent className="p-6">
