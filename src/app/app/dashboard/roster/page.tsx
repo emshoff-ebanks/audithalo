@@ -160,7 +160,7 @@ export default async function RosterPage({
                 isNull(schema.supervisorAssignments.endedAt)
               )
             );
-          return new Set(rows.map((r) => r.superviseeId));
+          return new Set(rows.map((r) => r.superviseeId).filter((id): id is string => id !== null));
         })()
       : null;
 

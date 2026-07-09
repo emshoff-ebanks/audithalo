@@ -87,7 +87,7 @@ export default async function CalendarPage({
           isNull(schema.supervisorAssignments.endedAt)
         )
       );
-    allowedSuperviseeIds = rows.map((r) => r.superviseeId);
+    allowedSuperviseeIds = rows.map((r) => r.superviseeId).filter((id): id is string => id !== null);
   } else if (isHrAdmin(role)) {
     const rows = await db
       .select({ userId: schema.orgMemberships.userId })
@@ -174,13 +174,14 @@ export default async function CalendarPage({
           and(
             inArray(
               schema.supervisorAssignments.superviseeId,
-              superviseeIds
+              superviseeIds as string[]
             ),
             eq(schema.supervisorAssignments.orgId, membership.orgId),
             isNull(schema.supervisorAssignments.endedAt)
           )
         );
       for (const a of assignments) {
+        if (!a.superviseeId || !a.supervisorId) continue;
         supervisorMap.set(a.superviseeId, {
           id: a.supervisorId,
           name: a.supervisorName,
@@ -217,10 +218,10 @@ export default async function CalendarPage({
           }
           const startMs = startDate.getTime();
           const endMs = startMs + Math.round(durationHoursRaw * 60 * 60_000);
-          const sup = supervisorMap.get(r.superviseeId) ?? null;
+          const sup = r.superviseeId ? supervisorMap.get(r.superviseeId) ?? null : null;
           const ev: CalendarEvent = {
             id: r.id,
-            superviseeId: r.superviseeId,
+            superviseeId: r.superviseeId ?? "",
             superviseeName: r.superviseeName ?? r.superviseeEmail,
             startIso: startDate.toISOString(),
             endIso: new Date(endMs).toISOString(),

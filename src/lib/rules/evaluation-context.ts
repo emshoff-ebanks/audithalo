@@ -27,6 +27,7 @@ export function resolveEvaluation(
   const [, jur, lic, vRaw] =
     assignment.ruleId.match(/^(.+?)-(.+?)-v(\d+)$/) ?? [];
   if (!jur || !lic || !vRaw) return null;
+  if (!assignment.superviseeId) return null;
 
   let rule: Rule;
   try {
@@ -36,7 +37,7 @@ export function resolveEvaluation(
   }
 
   const ctx: EvaluationContext = {
-    superviseeId: assignment.superviseeId,
+    superviseeId: assignment.superviseeId!,
     startedAt: assignment.obligationStartedAt.toISOString(),
     supervisionContractFiledAt:
       assignment.supervisionContractFiledAt?.toISOString(),
@@ -80,7 +81,7 @@ export function buildEvaluationContext(
   asOf: Date
 ): EvaluationContext {
   return {
-    superviseeId: assignment.superviseeId,
+    superviseeId: assignment.superviseeId!,
     startedAt: assignment.obligationStartedAt.toISOString(),
     supervisionContractFiledAt:
       assignment.supervisionContractFiledAt?.toISOString(),

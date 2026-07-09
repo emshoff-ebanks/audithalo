@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { canManageInvitations, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
@@ -12,7 +12,7 @@ import {
   invitationExpiresAt,
 } from "@/lib/invitations";
 import { sendEmail } from "@/lib/email";
-import { seatCapBlockedReason } from "@/lib/billing/seats";
+import { seatCap, seatCapBlockedReason } from "@/lib/billing/seats";
 import { logAuditEvent, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { capture } from "@/lib/observability/posthog-server";
 
@@ -243,22 +243,38 @@ export async function inviteSuperviseeAction(
   }
 
   const token = generateInvitationToken();
-  const [insertedInvitation] = await db
-    .insert(schema.invitations)
-    .values({
-      orgId: membership.orgId,
-      email: inviteEmail,
-      name: parsed.data.name ?? null,
-      role: "supervisee",
-      tokenHash: hashToken(token),
-      invitedById: session.user.id,
-      expiresAt: invitationExpiresAt(),
-      pendingRuleId,
-      pendingObligationStartedAt,
-      pendingContractFiledAt,
-      pendingAssignmentSupervisorId,
-    })
-    .returning({ id: schema.invitations.id });
+
+  // Atomic insert with seat-cap re-check to prevent TOCTOU race when two
+  // invitations are submitted concurrently. The subquery re-counts at INSERT
+  // time inside Postgres, so concurrent inserts serialize on the row lock.
+  const cap = seatCap(org);
+  const tokenHash = hashToken(token);
+  const expires = invitationExpiresAt();
+
+  const inserted = await db.execute(sql`
+    INSERT INTO invitations (org_id, email, name, role, token_hash, invited_by_id, expires_at,
+      pending_rule_id, pending_obligation_started_at, pending_contract_filed_at, pending_assignment_supervisor_id)
+    SELECT
+      ${membership.orgId}, ${inviteEmail}, ${parsed.data.name ?? null}, 'supervisee',
+      ${tokenHash}, ${session.user.id}, ${expires.toISOString()}::timestamptz,
+      ${pendingRuleId ?? null}, ${pendingObligationStartedAt?.toISOString() ?? null}::timestamptz,
+      ${pendingContractFiledAt?.toISOString() ?? null}::timestamptz, ${pendingAssignmentSupervisorId ?? null}
+    WHERE (
+      (SELECT COUNT(*) FROM org_memberships WHERE org_id = ${membership.orgId} AND role = 'supervisee')
+      + (SELECT COUNT(*) FROM invitations WHERE org_id = ${membership.orgId} AND role = 'supervisee' AND accepted_at IS NULL)
+    ) < ${cap ?? 999999}
+    RETURNING id
+  `);
+
+  const insertedRows = (inserted as unknown as { rows: { id: string }[] }).rows;
+  if (!insertedRows.length) {
+    return {
+      ok: false,
+      error: "Seat limit reached. Upgrade your plan or remove inactive members to invite more supervisees.",
+    };
+  }
+
+  const insertedInvitation = insertedRows[0];
 
   await sendInviteEmail({
     to: inviteEmail,

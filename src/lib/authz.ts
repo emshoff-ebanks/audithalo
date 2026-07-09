@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db, schema } from "@/lib/db";
 
@@ -121,10 +121,15 @@ export async function requireExecutiveOrHrAdmin() {
   return session;
 }
 
-/** First org membership for a given user. v1 assumes one user = one org. */
+/** Active org membership for a given user. Filters out deactivated memberships
+ *  and returns the most recently created one for multi-org users. */
 export async function getCurrentMembership(userId: string) {
   return db.query.orgMemberships.findFirst({
-    where: eq(schema.orgMemberships.userId, userId),
+    where: and(
+      eq(schema.orgMemberships.userId, userId),
+      isNull(schema.orgMemberships.deactivatedAt)
+    ),
+    orderBy: desc(schema.orgMemberships.createdAt),
   });
 }
 

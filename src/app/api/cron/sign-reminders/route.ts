@@ -102,13 +102,15 @@ async function handle(request: Request) {
     // even after Pass 5 is gone.
     let notifyUserId: string | null = row.loggedById;
     try {
-      const assignment = await db.query.supervisorAssignments.findFirst({
-        where: and(
-          eq(schema.supervisorAssignments.superviseeId, row.superviseeId),
-          eq(schema.supervisorAssignments.orgId, row.orgId),
-          isNull(schema.supervisorAssignments.endedAt)
-        ),
-      });
+      const assignment = row.superviseeId
+        ? await db.query.supervisorAssignments.findFirst({
+            where: and(
+              eq(schema.supervisorAssignments.superviseeId, row.superviseeId),
+              eq(schema.supervisorAssignments.orgId, row.orgId),
+              isNull(schema.supervisorAssignments.endedAt)
+            ),
+          })
+        : null;
       if (assignment) notifyUserId = assignment.supervisorId;
     } catch (err) {
       console.error("[cron sign-reminders] assignment lookup failed:", err);
@@ -172,6 +174,16 @@ async function handle(request: Request) {
       notified += 1;
     } catch (err) {
       console.error("[cron sign-reminders] notify failed:", row.id, err);
+      // Un-stamp so the next cron run retries delivery instead of permanently
+      // losing the reminder (P1-10 fix).
+      try {
+        await db
+          .update(schema.sessionEvents)
+          .set({ signReminderSentAt: null })
+          .where(eq(schema.sessionEvents.id, row.id));
+      } catch (unstampErr) {
+        console.error("[cron sign-reminders] un-stamp failed:", row.id, unstampErr);
+      }
       failed += 1;
     }
 

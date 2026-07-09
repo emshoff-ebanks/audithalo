@@ -26,7 +26,7 @@ export function sha256Hex(value: string): string {
  * Safe to call multiple times — if a package already exists for this session, do nothing.
  */
 export async function generateEvidencePackage(sessionEventId: string): Promise<void> {
-  const { eq } = await import("drizzle-orm");
+  const { and, eq } = await import("drizzle-orm");
   const { db, schema } = await import("@/lib/db");
   const { getRule } = await import("@/lib/rules");
 
@@ -38,14 +38,17 @@ export async function generateEvidencePackage(sessionEventId: string): Promise<v
   const event = await db.query.sessionEvents.findFirst({
     where: eq(schema.sessionEvents.id, sessionEventId),
   });
-  if (!event || !event.signedAt) return;
+  if (!event || !event.signedAt || !event.superviseeId) return;
 
   const assignment = await db.query.superviseeRuleAssignments.findFirst({
-    where: eq(schema.superviseeRuleAssignments.superviseeId, event.superviseeId),
+    where: and(
+      eq(schema.superviseeRuleAssignments.superviseeId, event.superviseeId),
+      eq(schema.superviseeRuleAssignments.orgId, event.orgId)
+    ),
   });
   if (!assignment) {
     console.error(
-      `[evidence] session ${sessionEventId} sealed but supervisee ${event.superviseeId} has no superviseeRuleAssignments row — package NOT generated. Assign a rule and re-trigger sealing.`
+      `[evidence] session ${sessionEventId} sealed but supervisee ${event.superviseeId} has no superviseeRuleAssignments row in org ${event.orgId} — package NOT generated. Assign a rule and re-trigger sealing.`
     );
     return;
   }

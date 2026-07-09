@@ -520,7 +520,7 @@ export async function cancelScheduledSessionAction(
   const isOriginalLogger = sessionEvent.loggedById === session.user.id;
   const isSelfSupervisee = sessionEvent.superviseeId === session.user.id;
   let isAssignedSupervisor = false;
-  if (canSupervise(myMembership.role) && !isOriginalLogger) {
+  if (canSupervise(myMembership.role) && !isOriginalLogger && sessionEvent.superviseeId) {
     const active = await db.query.supervisorAssignments.findFirst({
       where: and(
         eq(schema.supervisorAssignments.superviseeId, sessionEvent.superviseeId),
@@ -607,18 +607,20 @@ export async function cancelScheduledSessionAction(
     console.error("[audit-log] failed to record session.canceled:", err);
   }
 
-  try {
-    await createNotification({
-      userId: sessionEvent.superviseeId,
-      kind: "session_canceled",
-      payload: {
-        sessionId: sessionEvent.id,
-        scheduledForLocal,
-        canceledByName: supervisor?.name ?? supervisor?.email ?? "your supervisor",
-      },
-    });
-  } catch (err) {
-    console.error("[notifications] session_canceled failed:", err);
+  if (sessionEvent.superviseeId) {
+    try {
+      await createNotification({
+        userId: sessionEvent.superviseeId,
+        kind: "session_canceled",
+        payload: {
+          sessionId: sessionEvent.id,
+          scheduledForLocal,
+          canceledByName: supervisor?.name ?? supervisor?.email ?? "your supervisor",
+        },
+      });
+    } catch (err) {
+      console.error("[notifications] session_canceled failed:", err);
+    }
   }
 
   revalidatePath(`/dashboard/roster/${sessionEvent.superviseeId}`);
@@ -669,7 +671,8 @@ export async function markSessionNoShowAction(
   if (
     canSupervise(myMembership.role) &&
     !isOriginalLogger &&
-    !isSelfSupervisee
+    !isSelfSupervisee &&
+    sessionEvent.superviseeId
   ) {
     const active = await db.query.supervisorAssignments.findFirst({
       where: and(
@@ -742,7 +745,7 @@ export async function markSessionNoShowAction(
   // Notify the supervisor when the supervisee was the one who flagged.
   // The supervisor still needs to know the meeting didn't take place so
   // hour accrual isn't expected from this row.
-  if (isSelfSupervisee) {
+  if (isSelfSupervisee && sessionEvent.superviseeId) {
     try {
       const active = await db.query.supervisorAssignments.findFirst({
         where: and(
@@ -1195,7 +1198,7 @@ export async function rescheduleSessionAction(
   const isOriginalLogger = sessionEvent.loggedById === session.user.id;
   const isSelfSupervisee = sessionEvent.superviseeId === session.user.id;
   let isAssignedSupervisor = false;
-  if (canSupervise(myMembership.role) && !isOriginalLogger) {
+  if (canSupervise(myMembership.role) && !isOriginalLogger && sessionEvent.superviseeId) {
     const active = await db.query.supervisorAssignments.findFirst({
       where: and(
         eq(schema.supervisorAssignments.superviseeId, sessionEvent.superviseeId),
@@ -1321,19 +1324,21 @@ export async function rescheduleSessionAction(
     sessionEventId: sessionEvent.id,
   });
 
-  try {
-    await createNotification({
-      userId: sessionEvent.superviseeId,
-      kind: "session_rescheduled",
-      payload: {
-        sessionId: sessionEvent.id,
-        oldScheduledForLocal: oldLocal,
-        newScheduledForLocal: newLocal,
-        rescheduledByName: actor?.name ?? actor?.email ?? "your supervisor",
-      },
-    });
-  } catch (err) {
-    console.error("[notifications] session_rescheduled failed:", err);
+  if (sessionEvent.superviseeId) {
+    try {
+      await createNotification({
+        userId: sessionEvent.superviseeId,
+        kind: "session_rescheduled",
+        payload: {
+          sessionId: sessionEvent.id,
+          oldScheduledForLocal: oldLocal,
+          newScheduledForLocal: newLocal,
+          rescheduledByName: actor?.name ?? actor?.email ?? "your supervisor",
+        },
+      });
+    } catch (err) {
+      console.error("[notifications] session_rescheduled failed:", err);
+    }
   }
 
   revalidatePath(`/dashboard/roster/${sessionEvent.superviseeId}`);

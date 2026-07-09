@@ -61,7 +61,7 @@ export async function SupervisorDashboard({
           isNull(schema.supervisorAssignments.endedAt)
         )
       );
-    allowedSuperviseeIdsForSchedule = rows.map((r) => r.superviseeId);
+    allowedSuperviseeIdsForSchedule = rows.map((r) => r.superviseeId).filter((id): id is string => id !== null);
   }
 
   const totalSupervisees = roster.length;

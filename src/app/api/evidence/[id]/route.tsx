@@ -47,9 +47,11 @@ export async function GET(
     />
   );
 
-  const supervisee = await db.query.users.findFirst({
-    where: eq(schema.users.id, pkg.superviseeId),
-  });
+  const supervisee = pkg.superviseeId
+    ? await db.query.users.findFirst({
+        where: eq(schema.users.id, pkg.superviseeId),
+      })
+    : null;
   const fileSafeName =
     (supervisee?.name ?? "supervisee").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
   const dateStr =

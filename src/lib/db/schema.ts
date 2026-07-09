@@ -213,14 +213,13 @@ export const evidencePackages = pgTable("evidence_packages", {
   /** The signed session this package was minted from. */
   sessionEventId: uuid("session_event_id")
     .notNull()
-    .references(() => sessionEvents.id, { onDelete: "cascade" })
+    .references(() => sessionEvents.id, { onDelete: "restrict" })
     .unique(),
   orgId: uuid("org_id")
     .notNull()
     .references(() => organizations.id, { onDelete: "cascade" }),
   superviseeId: uuid("supervisee_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => users.id, { onDelete: "set null" }),
   /** Canonical rule identifier ("nc-lcmhca-v1") so future board reviewers know which rule was in effect. */
   ruleId: text("rule_id").notNull(),
   signatures: jsonb("signatures").$type<SessionSignature[]>().notNull(),
@@ -379,11 +378,9 @@ export const supervisorAssignments = pgTable("supervisor_assignments", {
     .notNull()
     .references(() => organizations.id, { onDelete: "cascade" }),
   supervisorId: uuid("supervisor_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => users.id, { onDelete: "set null" }),
   superviseeId: uuid("supervisee_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => users.id, { onDelete: "set null" }),
   isPrimary: boolean("is_primary").notNull().default(true),
   startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
   endedAt: timestamp("ended_at", { withTimezone: true }),
@@ -472,8 +469,7 @@ export const superviseeRuleAssignments = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     superviseeId: uuid("supervisee_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+      .references(() => users.id, { onDelete: "set null" }),
     orgId: uuid("org_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
@@ -531,8 +527,7 @@ export const processedStripeEvents = pgTable("processed_stripe_events", {
 export const sessionEvents = pgTable("session_events", {
   id: uuid("id").defaultRandom().primaryKey(),
   superviseeId: uuid("supervisee_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => users.id, { onDelete: "set null" }),
   orgId: uuid("org_id")
     .notNull()
     .references(() => organizations.id, { onDelete: "cascade" }),

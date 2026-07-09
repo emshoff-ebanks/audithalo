@@ -407,6 +407,7 @@ export async function getOrgRosterWithCompliance(
   // Group events by superviseeId
   const eventsByUser = new Map<string, typeof events>();
   for (const evt of events) {
+    if (!evt.superviseeId) continue;
     const existing = eventsByUser.get(evt.superviseeId) ?? [];
     existing.push(evt);
     eventsByUser.set(evt.superviseeId, existing);

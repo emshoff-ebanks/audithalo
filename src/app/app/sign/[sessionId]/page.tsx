@@ -36,6 +36,7 @@ export default async function SignSessionPage({
     where: eq(schema.sessionEvents.id, sessionId),
   });
   if (!sessionEvent) notFound();
+  if (!sessionEvent.superviseeId) notFound();
 
   const membership = await getCurrentMembership(session.user.id);
   if (!membership || membership.orgId !== sessionEvent.orgId) notFound();

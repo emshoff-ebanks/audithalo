@@ -29,7 +29,7 @@ async function canAuthorAiNote(
   const isOriginalLogger = sessionEvent.loggedById === userId;
   const isSelfSupervisee = sessionEvent.superviseeId === userId;
   let isAssignedSupervisor = false;
-  if (canSupervise(role) && !isOriginalLogger && !isSelfSupervisee) {
+  if (canSupervise(role) && !isOriginalLogger && !isSelfSupervisee && sessionEvent.superviseeId) {
     const active = await db.query.supervisorAssignments.findFirst({
       where: and(
         eq(schema.supervisorAssignments.superviseeId, sessionEvent.superviseeId),

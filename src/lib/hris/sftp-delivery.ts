@@ -136,9 +136,12 @@ export async function processPendingDeliveries(
         continue;
       }
 
-      const supervisee = await db.query.users.findFirst({
-        where: eq(schema.users.id, pkg.superviseeId),
-      });
+      const pkgSuperviseeId = pkg.superviseeId;
+      const supervisee = pkgSuperviseeId
+        ? await db.query.users.findFirst({
+            where: eq(schema.users.id, pkgSuperviseeId),
+          })
+        : null;
 
       const session = await db.query.sessionEvents.findFirst({
         where: eq(schema.sessionEvents.id, pkg.sessionEventId),

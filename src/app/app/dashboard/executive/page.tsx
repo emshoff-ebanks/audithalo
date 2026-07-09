@@ -99,6 +99,7 @@ export default async function ExecutiveDashboardPage() {
   // For each primary supervisor, sum their supervisees' pending sigs.
   const pendingBySupervisor = new Map<string, number>();
   for (const a of supervisorAssignments) {
+    if (!a.supervisorId || !a.superviseeId) continue;
     const sve = roster.find((r) => r.userId === a.superviseeId);
     if (!sve) continue;
     pendingBySupervisor.set(
@@ -130,6 +131,7 @@ export default async function ExecutiveDashboardPage() {
 
   const superviseeToSupervisorName = new Map<string, string>();
   for (const a of supervisorAssignments) {
+    if (!a.supervisorId || !a.superviseeId) continue;
     const name = supervisorMap.get(a.supervisorId);
     if (name) superviseeToSupervisorName.set(a.superviseeId, name);
   }

@@ -231,6 +231,7 @@ async function handleDailyChecks(request: Request) {
   };
   const stale: StaleEntry[] = [];
   for (const a of assignments) {
+    if (!a.superviseeId) continue;
     const parsed = parseRuleId(a.ruleId);
     if (!parsed) continue;
     const latest = latestVersionForState(parsed.jurisdiction, parsed.licenseCode);

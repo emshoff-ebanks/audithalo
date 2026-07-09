@@ -37,16 +37,17 @@ export async function signupAction(
   }
 
   const { name, email, password } = parsed.data;
-  const emailLower = email.toLowerCase();
+  const emailLower = email.trim().toLowerCase();
+
+  // Always hash to prevent timing side-channel that reveals email existence
+  const passwordHash = await bcrypt.hash(password, 12);
 
   const existing = await db.query.users.findFirst({
     where: eq(schema.users.email, emailLower),
   });
   if (existing) {
-    return { ok: false, error: "An account with this email already exists." };
+    return { ok: false, error: "If this email is available, check your inbox for next steps." };
   }
-
-  const passwordHash = await bcrypt.hash(password, 12);
 
   // Create the user, then create their personal organization, then a membership
   // tying them to it as a supervisor. Default org name uses their first name.

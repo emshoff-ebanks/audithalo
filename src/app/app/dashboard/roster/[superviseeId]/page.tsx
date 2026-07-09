@@ -202,11 +202,11 @@ export default async function SuperviseeDetailPage({
         ),
       });
     if (activeAssignmentForScheduling) {
-      hostingSupervisorIdForPage = activeAssignmentForScheduling.supervisorId;
-      const sup = await db.query.users.findFirst({
+      hostingSupervisorIdForPage = activeAssignmentForScheduling.supervisorId ?? null;
+      const sup = hostingSupervisorIdForPage ? await db.query.users.findFirst({
         where: eq(schema.users.id, hostingSupervisorIdForPage),
         columns: { name: true, email: true },
-      });
+      }) : null;
       hostingSupervisorNameForPage = sup?.name ?? sup?.email ?? null;
     }
   }

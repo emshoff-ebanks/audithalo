@@ -402,6 +402,9 @@ export async function deactivateMemberAction(
   if (target.orgId !== callerMembership.orgId) {
     return { ok: false, error: "Member is not in your org." };
   }
+  if (target.userId === session.user.id) {
+    return { ok: false, error: "You cannot deactivate yourself." };
+  }
   if (target.deactivatedAt) {
     return { ok: false, error: "Already deactivated." };
   }

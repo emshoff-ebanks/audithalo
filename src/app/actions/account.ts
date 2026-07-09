@@ -832,6 +832,23 @@ export async function deleteAccountAction(
   );
   if (!passwordOk) return { ok: false, error: "Incorrect password." };
 
+  const membership = await getCurrentMembership(session.user.id);
+  if (membership && membership.role === "hr_admin") {
+    const activeAdmins = await db.query.orgMemberships.findMany({
+      where: and(
+        eq(schema.orgMemberships.orgId, membership.orgId),
+        eq(schema.orgMemberships.role, "hr_admin"),
+        isNull(schema.orgMemberships.deactivatedAt)
+      ),
+    });
+    if (activeAdmins.length <= 1) {
+      return {
+        ok: false,
+        error: "You are the only HR Admin in your organization. Transfer the role to another member before deleting your account.",
+      };
+    }
+  }
+
   const now = new Date();
   await db
     .update(schema.users)

@@ -288,9 +288,9 @@ export async function logSessionAction(
   // the "sessions logged before contract" warning from ever appearing.
   if (parsed.data.kind === "supervision") {
     const assignment = await db.query.superviseeRuleAssignments.findFirst({
-      where: eq(
-        schema.superviseeRuleAssignments.superviseeId,
-        parsed.data.superviseeId
+      where: and(
+        eq(schema.superviseeRuleAssignments.superviseeId, parsed.data.superviseeId),
+        eq(schema.superviseeRuleAssignments.orgId, orgId)
       ),
     });
     if (assignment && !assignment.supervisionContractFiledAt) {

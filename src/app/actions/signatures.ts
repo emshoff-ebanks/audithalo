@@ -105,7 +105,7 @@ export async function signSessionAction(
     // sealing logic below).
     const isOriginalLogger = sessionEvent.loggedById === session.user.id;
     let isAssignedSupervisor = false;
-    if (!isOriginalLogger) {
+    if (!isOriginalLogger && sessionEvent.superviseeId) {
       const active = await db.query.supervisorAssignments.findFirst({
         where: and(
           eq(
@@ -143,9 +143,14 @@ export async function signSessionAction(
   const decision = decideNextSignature(sessionEvent.signatures ?? [], candidate);
   if (!decision.ok) return decision;
 
+  if (sessionEvent.signedAt) {
+    return { ok: false, error: "This session is already sealed and cannot accept new signatures." };
+  }
+
   // Atomic SQL append — protects against the read-modify-write race when two
   // signers click "Sign" simultaneously. We append to whatever signatures are
-  // CURRENTLY in the row (not the snapshot we read above). signed_at is
+  // CURRENTLY in the row (not the snapshot we read above). The signed_at IS NULL
+  // guard prevents appending to already-sealed sessions (P0-3 fix). signed_at is
   // computed in a second step (below) because the seal condition now depends
   // on session_attendees, not just the two role literals — group sessions
   // require every attendee to sign.
@@ -154,6 +159,7 @@ export async function signSessionAction(
     UPDATE session_events
     SET signatures = signatures || ${newSigJson}::jsonb
     WHERE id = ${sessionEvent.id}
+      AND signed_at IS NULL
       AND NOT EXISTS (
         SELECT 1 FROM jsonb_array_elements(signatures) AS s
         WHERE s->>'signerId' = ${candidate.signerId}
@@ -275,9 +281,11 @@ export async function signSessionAction(
       const pkg = await db.query.evidencePackages.findFirst({
         where: eq(schema.evidencePackages.sessionEventId, sessionEvent.id),
       });
-      const supervisee = await db.query.users.findFirst({
-        where: eq(schema.users.id, sessionEvent.superviseeId),
-      });
+      const supervisee = sessionEvent.superviseeId
+        ? await db.query.users.findFirst({
+            where: eq(schema.users.id, sessionEvent.superviseeId),
+          })
+        : null;
       const superviseeName = supervisee?.name ?? supervisee?.email ?? "supervisee";
       if (pkg) {
         for (const sig of rows[0].signatures) {
@@ -312,7 +320,7 @@ export async function signSessionAction(
       const otherRole: "supervisee" | "supervisor" =
         thisSig.signerRole === "supervisee" ? "supervisor" : "supervisee";
       let recipientEmail: string | undefined;
-      if (otherRole === "supervisee") {
+      if (otherRole === "supervisee" && sessionEvent.superviseeId) {
         const supervisee = await db.query.users.findFirst({
           where: eq(schema.users.id, sessionEvent.superviseeId),
         });

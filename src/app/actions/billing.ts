@@ -82,6 +82,10 @@ export async function startCheckoutAction(formData: FormData): Promise<Result> {
   });
   if (!org) return { ok: false, error: "Organization not found." };
 
+  if (org.stripeSubscriptionId) {
+    return { ok: false, error: "Your organization already has an active subscription. Visit Billing to manage it." };
+  }
+
   let customerId: string;
   try {
     customerId = await getOrCreateCustomer(

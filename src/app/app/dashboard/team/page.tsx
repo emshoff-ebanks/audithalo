@@ -125,7 +125,7 @@ export default async function TeamPage() {
   // Build a lookup of supervisee → primary supervisor for the supervisee section.
   const supervisorByUserId = new Map<string, string>();
   for (const a of supervisorAssignments) {
-    supervisorByUserId.set(a.superviseeId, a.supervisorId);
+    if (a.superviseeId && a.supervisorId) supervisorByUserId.set(a.superviseeId, a.supervisorId);
   }
 
   // Active (non-deactivated) supervisor options for the reassignment dropdown.

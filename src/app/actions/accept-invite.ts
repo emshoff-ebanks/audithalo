@@ -259,22 +259,10 @@ export async function acceptInviteAsExistingUserAction(
     });
   }
 
-  // Mirror the membership role to users.role so JWT-based guards
-  // (requireHrAdmin, etc.) see the new role on next sign-in. The new-account
-  // flow above already gets this right at user creation; the existing-user
-  // path needs the explicit sync since users.role wasn't touched at
-  // insert-time. Bump sessionsValidFrom so the next request re-issues the
-  // JWT instead of carrying the stale role.
-  const currentUser = await db.query.users.findFirst({
-    where: eq(schema.users.id, userId),
-    columns: { role: true },
-  });
-  if (currentUser && currentUser.role !== invite.role) {
-    await db
-      .update(schema.users)
-      .set({ role: invite.role, sessionsValidFrom: new Date() })
-      .where(eq(schema.users.id, userId));
-  }
+  // P0-4 fix: Do NOT overwrite users.role when accepting an invite to a
+  // second org. The per-membership role handles org-specific access.
+  // Overwriting users.role caused supervisors in Org A to lose their role
+  // when accepting a supervisee invite in Org B.
 
   // Apply the pending rule if pinned. The same try/catch protects the
   // membership write from a downstream insert failure.
