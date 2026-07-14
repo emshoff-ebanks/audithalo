@@ -2,19 +2,23 @@ export type PaycorEnvironment = "sandbox" | "production";
 
 const ENDPOINTS = {
   sandbox: {
-    authUrl: "https://secure-sandbox.paycor.com/connect/authorize",
-    tokenUrl: "https://secure-sandbox.paycor.com/connect/token",
+    authUrl: "https://hcm-demo.paycor.com/AppActivation/Authorize",
+    apiBase: "https://apis-sandbox.paycor.com",
   },
   production: {
-    authUrl: "https://secure.paycor.com/connect/authorize",
-    tokenUrl: "https://secure.paycor.com/connect/token",
+    authUrl: "https://hcm.paycor.com/AppActivation/Authorize",
+    apiBase: "https://apis.paycor.com",
   },
 } as const;
 
 export const PAYCOR_SCOPES = ["openid", "profile", "email"];
 
 export function getPaycorEndpoints(environment: PaycorEnvironment) {
-  return ENDPOINTS[environment];
+  const ep = ENDPOINTS[environment];
+  return {
+    ...ep,
+    tokenRefreshUrl: `${ep.apiBase}/v1/authenticationsupport/retrieveAccessTokenWithRefreshToken`,
+  };
 }
 
 export function loadPaycorCredentials(): {

@@ -95,10 +95,19 @@ export async function GET(request: Request) {
       client_secret: creds.clientSecret,
     });
 
-    const res = await fetch(endpoints.tokenUrl, {
+    const res = await fetch(endpoints.tokenRefreshUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
+      headers: {
+        "Content-Type": "application/json",
+        "Ocp-Apim-Subscription-Key": org.paycorConfig.apimSubscriptionKey,
+      },
+      body: JSON.stringify({
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: getPaycorRedirectUri(),
+        client_id: creds.clientId,
+        client_secret: creds.clientSecret,
+      }),
     });
 
     if (!res.ok) {

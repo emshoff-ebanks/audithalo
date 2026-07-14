@@ -211,14 +211,13 @@ describe("token refresh", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     const refreshCall = fetchMock.mock.calls[0];
     expect(refreshCall[0]).toBe(
-      "https://secure-sandbox.paycor.com/connect/token",
+      "https://apis-sandbox.paycor.com/v1/authenticationsupport/retrieveAccessTokenWithRefreshToken",
     );
     expect(refreshCall[1].method).toBe("POST");
-    const body = new URLSearchParams(refreshCall[1].body.toString());
-    expect(body.get("grant_type")).toBe("refresh_token");
-    expect(body.get("refresh_token")).toBe("refresh-token");
-    expect(body.get("client_id")).toBe("env-client-id");
-    expect(body.get("client_secret")).toBe("env-client-secret");
+    const body = JSON.parse(refreshCall[1].body);
+    expect(body.refresh_token).toBe("refresh-token");
+    expect(body.client_id).toBe("env-client-id");
+    expect(body.client_secret).toBe("env-client-secret");
 
     expect(onRefresh).toHaveBeenCalledOnce();
     expect(onRefresh.mock.calls[0][0].oauthAccessToken).toBe("new-access-token");

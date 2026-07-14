@@ -141,17 +141,17 @@ export class PaycorApiClient implements PaycorProvider {
     const creds = loadPaycorCredentials();
     const endpoints = getPaycorEndpoints(this.config.environment);
 
-    const body = new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: this.config.oauthRefreshToken,
-      client_id: creds.clientId,
-      client_secret: creds.clientSecret,
-    });
-
-    const res = await fetch(endpoints.tokenUrl, {
+    const res = await fetch(endpoints.tokenRefreshUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
+      headers: {
+        "Content-Type": "application/json",
+        "Ocp-Apim-Subscription-Key": this.config.apimSubscriptionKey,
+      },
+      body: JSON.stringify({
+        refresh_token: this.config.oauthRefreshToken,
+        client_id: creds.clientId,
+        client_secret: creds.clientSecret,
+      }),
     });
 
     if (!res.ok) {
