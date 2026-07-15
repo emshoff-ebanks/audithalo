@@ -1,7 +1,8 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { z } from "zod";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, lt } from "drizzle-orm";
 import { auth } from "@/auth";
 import {
   canExportAuditLog,
@@ -21,33 +22,16 @@ export type ExportPrepareResult =
   | { ok: true; token: string }
   | { ok: false; error: string };
 
-/**
- * One-time download tokens for audit-log exports.
- *
- * Why an in-memory map: the export is small (we cap at 10k rows server-side
- * below) and the token's TTL is 60 seconds — plenty for the user to
- * follow the download link. Using a DB table would work too but adds a
- * migration for a feature that doesn't need durability. If the function
- * restarts between prepare and download, the user re-clicks Export.
- */
-type PreparedExport = {
-  orgId: string;
-  format: "csv" | "json";
-  requestedById: string;
-  expiresAt: number;
-};
-
-const PREPARED: Map<string, PreparedExport> = (
-  globalThis as unknown as { __auditExports?: Map<string, PreparedExport> }
-).__auditExports ?? new Map<string, PreparedExport>();
-(globalThis as unknown as { __auditExports: Map<string, PreparedExport> }).__auditExports = PREPARED;
-
 const TOKEN_TTL_MS = 60_000;
 
 function newToken(): string {
   return [...crypto.getRandomValues(new Uint8Array(24))]
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+function hashToken(raw: string): string {
+  return createHash("sha256").update(raw).digest("hex");
 }
 
 /**
@@ -141,17 +125,22 @@ export async function prepareAuditLogExport(
   }
 
   const token = newToken();
-  PREPARED.set(token, {
+  const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
+
+  await db.insert(schema.auditExportTokens).values({
+    tokenHash: hashToken(token),
     orgId: membership.orgId,
     format: parsed.data.format,
     requestedById: session.user.id,
-    expiresAt: Date.now() + TOKEN_TTL_MS,
+    expiresAt,
   });
 
   // Sweep expired tokens opportunistically.
-  for (const [k, v] of PREPARED) {
-    if (v.expiresAt < Date.now()) PREPARED.delete(k);
-  }
+  try {
+    await db
+      .delete(schema.auditExportTokens)
+      .where(lt(schema.auditExportTokens.expiresAt, new Date()));
+  } catch { /* non-critical cleanup */ }
 
   return { ok: true, token };
 }
@@ -166,18 +155,22 @@ export async function redeemAuditLogExport(token: string): Promise<
     }
   | { ok: false; error: string }
 > {
-  const prep = PREPARED.get(token);
-  if (!prep) return { ok: false, error: "Export token invalid or expired." };
-  if (prep.expiresAt < Date.now()) {
-    PREPARED.delete(token);
+  const hashed = hashToken(token);
+  const row = await db.query.auditExportTokens.findFirst({
+    where: eq(schema.auditExportTokens.tokenHash, hashed),
+  });
+  if (!row) return { ok: false, error: "Export token invalid or expired." };
+  if (row.expiresAt < new Date()) {
+    await db.delete(schema.auditExportTokens).where(eq(schema.auditExportTokens.id, row.id));
     return { ok: false, error: "Export token expired." };
   }
-  PREPARED.delete(token); // one-time use
+  // One-time use — delete after redeem
+  await db.delete(schema.auditExportTokens).where(eq(schema.auditExportTokens.id, row.id));
   return {
     ok: true,
-    orgId: prep.orgId,
-    format: prep.format,
-    requestedById: prep.requestedById,
+    orgId: row.orgId,
+    format: row.format as "csv" | "json",
+    requestedById: row.requestedById,
   };
 }
 

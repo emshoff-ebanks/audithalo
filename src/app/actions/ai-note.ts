@@ -360,6 +360,19 @@ export async function fetchTranscriptAndGenerateNoteAction(
     };
   }
 
+  // PHI scan — the manual paste path requires the user to confirm "no PHI"
+  // via a checkbox, but auto-fetched transcripts bypass that UI. Run the
+  // automated scanner to catch obvious PHI before sending to OpenAI.
+  const { scanForPhi } = await import("@/lib/ai/phi-scan");
+  const phiHits = scanForPhi(transcript);
+  if (phiHits.length > 0) {
+    const types = [...new Set(phiHits.map((h) => h.kind))].join(", ");
+    return {
+      ok: false,
+      error: `The transcript appears to contain PHI (${types}). Please paste the transcript manually and remove sensitive information before generating an AI note.`,
+    };
+  }
+
   // Generate note
   const source = sessionEvent.meetingProvider === "teams" ? "teams" as const : "google_meet" as const;
   let result;

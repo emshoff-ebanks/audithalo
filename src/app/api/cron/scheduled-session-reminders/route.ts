@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, eq, gte, isNull, lte } from "drizzle-orm";
 import * as Sentry from "@sentry/nextjs";
 import { db, schema } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
@@ -74,6 +74,7 @@ async function fireReminders(now: number): Promise<{
       .where(
         and(
           eq(schema.sessionEvents.scheduledStatus, "scheduled"),
+          isNull(schema.sessionEvents.signedAt),
           gte(schema.sessionEvents.date, start),
           lte(schema.sessionEvents.date, end)
         )

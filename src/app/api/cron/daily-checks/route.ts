@@ -450,18 +450,19 @@ async function handleDailyChecks(request: Request) {
   }
 
   // -------------------------------------------------------------------------
-  // Pass 5 — session_no_show — REMOVED 2026-06-15.
+  // Pass 5 — rate limit cleanup
   //
-  // The automatic 24h-after-end no-show flip lived here. It produced false
-  // positives whenever a session DID happen but the supervisor hadn't
-  // signed within the window (which is most of the time — supervisors sign
-  // when they get to their inbox, not on a 24h clock). Replaced with
-  // /api/cron/sign-reminders, which only nudges and never claims that a
-  // session was a no-show. The only path to scheduledStatus='no_show' is
-  // now a human clicking "This didn't happen" on the sign screen.
-  //
-  // See docs/strategy/08-scheduling-and-calendar.md §"Sign reminders".
+  // Purge rate_limit_attempts rows older than 1 hour. These are only
+  // needed for the sliding-window check; keeping them forever wastes space.
   // -------------------------------------------------------------------------
+  try {
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    await db
+      .delete(schema.rateLimitAttempts)
+      .where(lt(schema.rateLimitAttempts.attemptedAt, oneHourAgo));
+  } catch (err) {
+    console.error("[cron] rate-limit cleanup failed:", err);
+  }
 
   return NextResponse.json(result);
 }
