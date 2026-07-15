@@ -280,6 +280,19 @@ export async function scheduleSessionAction(
   if (!supervisee || !supervisor) {
     return { ok: false, error: "Supervisor or supervisee not found." };
   }
+
+  // Block scheduling if the hosting supervisor has no credentials set.
+  // Without credentials, the session triggers the "lack required credential"
+  // warning which has no fix path from the supervisee's page.
+  const supCreds = supervisor.credentials as string[] | null;
+  if (!supCreds || supCreds.length === 0) {
+    return {
+      ok: false,
+      error:
+        "Set your professional credentials in Account settings before scheduling supervision sessions.",
+    };
+  }
+
   const additionalEmails = additionalAttendees
     .map((a) => a.email)
     .filter((e): e is string => !!e);
