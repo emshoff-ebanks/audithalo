@@ -112,10 +112,12 @@ function DrawerBody({
     month: "long",
     day: "numeric",
     year: "numeric",
+    timeZone: event.timeZone ?? undefined,
   }).format(startDate);
   const timeFmt = new Intl.DateTimeFormat(undefined, {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: event.timeZone ?? undefined,
   });
 
   const providerLabel =

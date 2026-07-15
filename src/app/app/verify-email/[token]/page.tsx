@@ -2,7 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { verifyEmailAction } from "@/app/actions/account";
+import { verifyEmailToken } from "@/lib/verify-email";
 import { ResendVerificationButton } from "./resend-button";
 
 export const metadata = {
@@ -15,7 +15,7 @@ export default async function VerifyEmailPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const result = await verifyEmailAction(token);
+  const result = await verifyEmailToken(token);
   const session = await auth();
   const isSignedIn = !!session?.user;
 

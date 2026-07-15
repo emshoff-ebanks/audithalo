@@ -177,7 +177,10 @@ export default async function AccountPage() {
             always shows every notification — these toggles only control the
             email side-effect.
           </p>
-          <NotificationsPrefsForm initialPrefs={user.notificationPrefs ?? null} />
+          <NotificationsPrefsForm
+            initialPrefs={user.notificationPrefs ?? null}
+            role={membership?.role ?? null}
+          />
         </CardContent>
       </Card>
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { and, eq, desc, isNull } from "drizzle-orm";
 import {
+  AlertTriangle,
   ArrowLeft,
   CheckCircle2,
   Download,
@@ -524,6 +525,30 @@ export default async function SuperviseeDetailPage({
           viewerCanSupervise={viewerCanSupervise}
           currentOverrideId={ruleVersionDrift.currentOverrideId}
         />
+      )}
+
+      {!rule && (
+        <div className="mt-6 rounded-md border border-[color:var(--color-warning)]/30 bg-[color:var(--color-warning)]/5 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--color-warning)]" />
+            <div>
+              <p className="font-medium text-[color:var(--color-warning)]">
+                {viewerCanSupervise
+                  ? "No state rule assigned"
+                  : viewerIsManager
+                    ? "No state rule assigned"
+                    : "No state rule assigned yet"}
+              </p>
+              <p className="mt-1 text-sm text-foreground/70">
+                {viewerCanSupervise
+                  ? "This supervisee’s compliance tracking is paused. Assign a state rule below to start tracking hours and audit readiness."
+                  : viewerIsManager
+                    ? "The assigned supervisor needs to set a state rule before compliance tracking can begin."
+                    : "Your supervisor hasn’t assigned your state rule yet. Reach out to them so your hours can start counting toward your requirements."}
+              </p>
+            </div>
+          </div>
+        </div>
       )}
 
       {!rule ? (

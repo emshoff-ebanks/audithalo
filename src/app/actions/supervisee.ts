@@ -321,12 +321,30 @@ export async function logSessionAction(
     }
   }
 
-  const credentials = parsed.data.supervisorCredentials
-    ? parsed.data.supervisorCredentials
+  let credentials: string[] | null = null;
+  if (parsed.data.supervisorCredentials) {
+    try {
+      const parsed_creds = JSON.parse(parsed.data.supervisorCredentials);
+      credentials = Array.isArray(parsed_creds)
+        ? parsed_creds.filter(Boolean)
+        : null;
+    } catch {
+      credentials = parsed.data.supervisorCredentials
         .split(",")
         .map((c) => c.trim())
-        .filter(Boolean)
-    : null;
+        .filter(Boolean);
+    }
+  }
+  if (credentials && credentials.length === 0) {
+    credentials = null;
+  }
+  if (parsed.data.kind === "supervision" && (!credentials || credentials.length === 0)) {
+    return {
+      ok: false,
+      error:
+        "Supervisor credentials are required. Set them in your profile under Settings > Account.",
+    };
+  }
 
   // Snapshot the supervisor's verified training hours at the moment of logging.
   // Only meaningful for supervision sessions logged by a supervisor — for

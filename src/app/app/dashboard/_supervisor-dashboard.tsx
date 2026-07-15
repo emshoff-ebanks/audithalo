@@ -13,9 +13,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BillingBanner } from "./_billing-banner";
+import { OnboardingChecklist } from "./_onboarding-checklist";
 import { PracticePanels, PRACTICE_THRESHOLD } from "./_practice-panel";
 import { TodaysSchedule } from "./_todays-schedule";
 import { RecentActivity } from "./_recent-activity";
+import { computeOnboardingSteps } from "@/lib/onboarding";
 
 type Props = {
   userId: string;
@@ -40,6 +42,9 @@ export async function SupervisorDashboard({
       where: eq(schema.users.id, userId),
       columns: {
         isFoundingSupervisor: true,
+        emailVerifiedAt: true,
+        supervisorTrainingHours: true,
+        onboardingDismissedAt: true,
       },
     }),
   ]);
@@ -130,6 +135,28 @@ export async function SupervisorDashboard({
 
       <div className="mt-8 space-y-8">
         <BillingBanner org={org} />
+        {!viewer?.onboardingDismissedAt && (() => {
+          const rosterHasTraining = roster.some(
+            (r) => r.ruleId?.startsWith("ca-apcc") || r.ruleId?.startsWith("fl-rmhci")
+          );
+          const onboarding = computeOnboardingSteps({
+            emailVerifiedAt: viewer?.emailVerifiedAt ?? null,
+            subscriptionStatus: org?.subscriptionStatus ?? null,
+            roster: roster.map((r) => ({ evaluation: r.evaluation })),
+            supervisorTrainingHours: viewer?.supervisorTrainingHours ?? null,
+            rosterHasTrainingRequiredRule: rosterHasTraining,
+          });
+          return (
+            <OnboardingChecklist
+              emailDone={onboarding.stepDone[0]}
+              trialDone={onboarding.stepDone[1]}
+              rosterDone={onboarding.stepDone[2]}
+              rulesDone={onboarding.stepDone[3]}
+              trainingRelevant={rosterHasTraining}
+              trainingDone={onboarding.stepDone[4] ?? false}
+            />
+          );
+        })()}
         {totalSupervisees === 0 && (
           <Card>
             <CardContent className="p-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

@@ -1,18 +1,12 @@
 "use server";
 
 import { z } from "zod";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db, schema } from "@/lib/db";
-import type {
-  NotificationKind,
-  NotificationPrefs,
-} from "@/lib/db/schema";
-import {
-  listUnreadNotifications,
-  NOTIFICATION_DEFAULTS,
-} from "@/lib/notifications";
+import type { NotificationKind } from "@/lib/db/schema";
+import { listUnreadNotifications } from "@/lib/notifications";
 
 export type NotificationActionResult =
   | { ok: true }
@@ -54,6 +48,14 @@ const KIND_VALUES = [
   "evidence_sealed",
   "supervisor_rule_not_set",
   "attestation_overdue",
+  "trial_ending_soon",
+  "session_scheduled",
+  "session_canceled",
+  "session_rescheduled",
+  "session_reminder_1hour",
+  "session_reminder_15min",
+  "session_no_show",
+  "session_sign_reminder",
 ] as const satisfies readonly NotificationKind[];
 
 const updatePrefsSchema = z.object({
@@ -111,23 +113,15 @@ export async function updateNotificationPrefsAction(
   const parsed = updatePrefsSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Invalid input." };
 
-  const user = await db.query.users.findFirst({
-    where: eq(schema.users.id, session.user.id),
-    columns: { notificationPrefs: true },
-  });
-  if (!user) return { ok: false, error: "User not found." };
-
-  const current: NotificationPrefs = user.notificationPrefs ?? {
-    email: { ...NOTIFICATION_DEFAULTS.email },
-  };
-  const merged: NotificationPrefs = {
-    email: { ...NOTIFICATION_DEFAULTS.email, ...current.email },
-  };
-  merged.email[parsed.data.kind] = parsed.data.email;
-
   await db
     .update(schema.users)
-    .set({ notificationPrefs: merged })
+    .set({
+      notificationPrefs: sql`jsonb_set(
+        COALESCE(${schema.users.notificationPrefs}, '{"email":{}}'),
+        ${sql.raw(`'{email,${parsed.data.kind}}'`)},
+        ${parsed.data.email ? sql`'true'::jsonb` : sql`'false'::jsonb`}
+      )`,
+    })
     .where(eq(schema.users.id, session.user.id));
   revalidatePath("/dashboard/account");
   return { ok: true };

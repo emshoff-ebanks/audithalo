@@ -104,6 +104,9 @@ export const users = pgTable("users", {
   isFoundingSupervisor: boolean("is_founding_supervisor")
     .notNull()
     .default(false),
+  onboardingDismissedAt: timestamp("onboarding_dismissed_at", {
+    withTimezone: true,
+  }),
 });
 
 /** Discriminated set of notification kinds — keep in sync with notifications kinds in src/lib/notifications.ts */
@@ -915,6 +918,37 @@ export const paycorDeliveryQueue = pgTable("paycor_delivery_queue", {
   attempts: integer("attempts").notNull().default(0),
   lastError: text("last_error"),
   deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ===========================================================================
+// Rate limiting — sliding-window attempt counter for auth endpoints.
+// Rows older than 1 hour are purged by the daily-checks cron.
+// ===========================================================================
+
+export const rateLimitAttempts = pgTable("rate_limit_attempts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  key: text("key").notNull(),
+  action: text("action").notNull(),
+  attemptedAt: timestamp("attempted_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ===========================================================================
+// Audit export tokens — short-lived one-time tokens for audit log download.
+// Replaces the in-memory Map that failed across serverless instances.
+// ===========================================================================
+
+export const auditExportTokens = pgTable("audit_export_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tokenHash: text("token_hash").notNull().unique(),
+  orgId: uuid("org_id").notNull(),
+  format: text("format").notNull(),
+  requestedById: uuid("requested_by_id").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

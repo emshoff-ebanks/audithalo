@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import type { NotificationKind, NotificationPrefs } from "@/lib/db/schema";
 import { updateNotificationPrefsAction } from "@/app/actions/notifications";
+import { ROLE_NOTIFICATION_KINDS } from "@/lib/notifications";
 
 const DEFAULTS: Record<NotificationKind, boolean> = {
   invite_accepted: true,
@@ -117,8 +118,10 @@ const ORDER: NotificationKind[] = [
 
 export function NotificationsPrefsForm({
   initialPrefs,
+  role,
 }: {
   initialPrefs: NotificationPrefs | null;
+  role: string | null;
 }) {
   const [pending, startTransition] = useTransition();
 
@@ -133,13 +136,26 @@ export function NotificationsPrefsForm({
     });
   }
 
+  const roleKinds = role ? ROLE_NOTIFICATION_KINDS[role] : undefined;
+  const visibleKinds = roleKinds
+    ? ORDER.filter((k) => roleKinds.has(k))
+    : ORDER;
+
+  if (visibleKinds.length === 0) {
+    return (
+      <p className="text-sm text-foreground/60">
+        No notification preferences available for your role.
+      </p>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <p className="text-xs text-foreground/60 uppercase tracking-wider font-semibold">
         Email
       </p>
       <ul className="space-y-2">
-        {ORDER.map((kind) => {
+        {visibleKinds.map((kind) => {
           const meta = KIND_META[kind];
           const enabled = effective(kind);
           return (

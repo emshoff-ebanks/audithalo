@@ -118,6 +118,7 @@ export function CalendarMonthView({
                       {new Intl.DateTimeFormat(undefined, {
                         hour: "numeric",
                         minute: "2-digit",
+                        timeZone: e.timeZone ?? undefined,
                       }).format(new Date(e.startIso))}
                     </span>
                     {viewerIsHrAdmin && e.supervisorName

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { logSessionAction, type ActionResult } from "@/app/actions/supervisee";
 import { US_STATES } from "@/lib/us-states";
+import { SUPERVISOR_CREDENTIAL_TYPES } from "@/lib/credentials";
 
 export function LogSessionForm({
   superviseeId,
@@ -23,11 +24,23 @@ export function LogSessionForm({
     FormData
   >(logSessionAction, undefined);
   const [kind, setKind] = useState<"practice" | "supervision">("practice");
+  const [selectedCredentials, setSelectedCredentials] = useState<Set<string>>(
+    new Set(supervisorCredentials ?? [])
+  );
   // Today's date computed on the client only — using `new Date()` in the
   // initial render would mismatch hydration when the server's UTC "today"
   // disagrees with the user's local-timezone "today" (e.g. user in PT after 4PM).
   const [todayLocal, setTodayLocal] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
+
+  function toggleCredential(cred: string) {
+    setSelectedCredentials((prev) => {
+      const next = new Set(prev);
+      if (next.has(cred)) next.delete(cred);
+      else next.add(cred);
+      return next;
+    });
+  }
 
   useEffect(() => {
     if (state?.ok) formRef.current?.reset();
@@ -170,17 +183,37 @@ export function LogSessionForm({
             </select>
           </div>
           <div>
-            <Label htmlFor="supervisorCredentials">
-              Supervisor credentials (comma-separated)
-            </Label>
-            <Input
-              id="supervisorCredentials"
+            <Label>Supervisor credentials</Label>
+            <input
+              type="hidden"
               name="supervisorCredentials"
-              type="text"
-              placeholder="LCMHCS, LCSW"
-              defaultValue={supervisorCredentials?.join(", ") ?? ""}
-              className="mt-1.5"
+              value={JSON.stringify([...selectedCredentials])}
             />
+            {!supervisorCredentials || supervisorCredentials.length === 0 ? (
+              <p className="mt-1.5 text-sm text-[color:var(--color-warning)]">
+                No credentials set in your profile.{" "}
+                <a href="/dashboard/account" className="underline">
+                  Set them in Settings
+                </a>{" "}
+                to auto-populate this field.
+              </p>
+            ) : null}
+            <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+              {SUPERVISOR_CREDENTIAL_TYPES.map((cred) => (
+                <label
+                  key={cred}
+                  className="flex items-center gap-2 rounded-sm border border-input px-2 py-1.5 text-sm cursor-pointer hover:bg-muted/50"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedCredentials.has(cred)}
+                    onChange={() => toggleCredential(cred)}
+                    className="rounded-sm"
+                  />
+                  {cred}
+                </label>
+              ))}
+            </div>
           </div>
           <div>
             <Label htmlFor="groupAttendees">Group attendees (if group)</Label>

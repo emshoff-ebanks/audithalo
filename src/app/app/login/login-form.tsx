@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,10 +13,26 @@ export function LoginForm() {
     FormData
   >(loginAction, undefined);
   const [showTotp, setShowTotp] = useState(false);
+  const totpRef = useRef<HTMLInputElement>(null);
+
+  const needsTotp = state && !state.ok && "needsTotp" in state && state.needsTotp;
+
+  useEffect(() => {
+    if (needsTotp) {
+      setShowTotp(true);
+      setTimeout(() => totpRef.current?.focus(), 0);
+    }
+  }, [needsTotp]);
 
   return (
     <form action={formAction} className="mt-8 space-y-4">
-      <div>
+      {needsTotp && (
+        <p className="text-sm text-foreground/70 bg-secondary/5 px-3 py-2 rounded-sm">
+          Enter the 6-digit code from your authenticator app to continue.
+        </p>
+      )}
+
+      <div className={needsTotp ? "sr-only" : undefined}>
         <Label htmlFor="email">Email</Label>
         <Input
           id="email"
@@ -28,7 +44,7 @@ export function LoginForm() {
           className="mt-2"
         />
       </div>
-      <div>
+      <div className={needsTotp ? "sr-only" : undefined}>
         <div className="flex items-baseline justify-between">
           <Label htmlFor="password">Password</Label>
           <Link
@@ -53,6 +69,7 @@ export function LoginForm() {
         <div>
           <Label htmlFor="totpCode">Two-factor code</Label>
           <Input
+            ref={totpRef}
             id="totpCode"
             name="totpCode"
             type="text"
@@ -60,6 +77,7 @@ export function LoginForm() {
             autoComplete="one-time-code"
             placeholder="123456"
             className="mt-2 font-mono tracking-widest"
+            required={needsTotp || undefined}
           />
           <p className="mt-1.5 text-xs text-foreground/60">
             Enter the 6-digit code from your authenticator app, or one of your
@@ -76,7 +94,7 @@ export function LoginForm() {
         </button>
       )}
 
-      {state && state.ok === false && (
+      {state && state.ok === false && "error" in state && state.error && (
         <p
           role="alert"
           className="text-sm text-[color:var(--color-risk)] bg-[color:var(--color-risk)]/8 px-3 py-2 rounded-sm"
@@ -86,8 +104,21 @@ export function LoginForm() {
       )}
 
       <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Signing in…" : "Sign in"}
+        {pending ? "Signing in…" : needsTotp ? "Verify" : "Sign in"}
       </Button>
+
+      {needsTotp && (
+        <button
+          type="button"
+          onClick={() => {
+            setShowTotp(false);
+            window.location.reload();
+          }}
+          className="block w-full text-center text-xs text-foreground/50 hover:underline"
+        >
+          Use a different account
+        </button>
+      )}
     </form>
   );
 }

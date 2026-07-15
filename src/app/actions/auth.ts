@@ -12,6 +12,7 @@ import {
   hashAuthToken,
 } from "@/lib/auth-tokens";
 import { sendEmailVerificationEmail } from "@/lib/email";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 const APP_URL = process.env.APP_URL ?? "https://app.audithalo.com";
 
@@ -21,7 +22,10 @@ const signupSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
-export type AuthActionResult = { ok: true } | { ok: false; error: string };
+export type AuthActionResult =
+  | { ok: true }
+  | { ok: false; error: string; needsTotp?: undefined }
+  | { ok: false; needsTotp: true; error?: undefined };
 
 export async function signupAction(
   _prev: AuthActionResult | undefined,
@@ -38,6 +42,16 @@ export async function signupAction(
 
   const { name, email, password } = parsed.data;
   const emailLower = email.trim().toLowerCase();
+
+  const rl = await checkRateLimit(
+    emailLower,
+    "signup",
+    RATE_LIMITS.signup.maxAttempts,
+    RATE_LIMITS.signup.windowSeconds
+  );
+  if (!rl.allowed) {
+    return { ok: false, error: "Too many signup attempts. Please try again later." };
+  }
 
   // Always hash to prevent timing side-channel that reveals email existence
   const passwordHash = await bcrypt.hash(password, 12);
@@ -135,9 +149,39 @@ export async function loginAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
+  const rl = await checkRateLimit(
+    parsed.data.email,
+    "login",
+    RATE_LIMITS.login.maxAttempts,
+    RATE_LIMITS.login.windowSeconds
+  );
+  if (!rl.allowed) {
+    return { ok: false, error: "Too many login attempts. Please try again in a few minutes." };
+  }
+
+  const emailLower = parsed.data.email.toLowerCase();
+
+  // Two-step TOTP flow: if no code was provided, pre-check credentials
+  // and signal the client to show the TOTP input rather than returning
+  // the generic "Invalid email or password" error.
+  if (!parsed.data.totpCode) {
+    const user = await db.query.users.findFirst({
+      where: eq(schema.users.email, emailLower),
+    });
+    if (user?.passwordHash && !user.deletedAt) {
+      const credentialsOk = await bcrypt.compare(
+        parsed.data.password,
+        user.passwordHash
+      );
+      if (credentialsOk && user.totpEnabledAt && user.totpSecret) {
+        return { ok: false, needsTotp: true };
+      }
+    }
+  }
+
   try {
     await signIn("credentials", {
-      email: parsed.data.email.toLowerCase(),
+      email: emailLower,
       password: parsed.data.password,
       totpCode: parsed.data.totpCode ?? "",
       redirectTo: "/dashboard",
@@ -145,8 +189,6 @@ export async function loginAction(
     return { ok: true };
   } catch (err) {
     if (err instanceof AuthError) {
-      // Generic message — deliberately doesn't reveal whether email,
-      // password, or 2FA was the failing factor.
       return { ok: false, error: "Invalid email or password." };
     }
     throw err;

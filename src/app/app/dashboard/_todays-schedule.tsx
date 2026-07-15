@@ -25,16 +25,24 @@ export async function TodaysSchedule({ orgId, allowedSuperviseeIds }: Props) {
   if (allowedSuperviseeIds && allowedSuperviseeIds.length === 0) return null;
 
   const now = new Date();
-  const startOfToday = new Date(now);
+  // Compute "today" boundaries in America/New_York so the server (UTC on
+  // Vercel) shows the correct day window for all current accounts.
+  const tz = "America/New_York";
+  const nowInTz = new Date(now.toLocaleString("en-US", { timeZone: tz }));
+  const startOfToday = new Date(nowInTz);
   startOfToday.setHours(0, 0, 0, 0);
   const startOfTomorrow = new Date(startOfToday);
   startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+  // Convert the tz-local boundaries back to UTC for the DB query.
+  const tzOffsetMs = nowInTz.getTime() - now.getTime();
+  const startOfTodayUtc = new Date(startOfToday.getTime() - tzOffsetMs);
+  const startOfTomorrowUtc = new Date(startOfTomorrow.getTime() - tzOffsetMs);
 
   const whereToday = and(
     eq(schema.sessionEvents.orgId, orgId),
     eq(schema.sessionEvents.kind, "supervision"),
-    gte(schema.sessionEvents.date, startOfToday),
-    lt(schema.sessionEvents.date, startOfTomorrow),
+    gte(schema.sessionEvents.date, startOfTodayUtc),
+    lt(schema.sessionEvents.date, startOfTomorrowUtc),
     isNull(schema.sessionEvents.canceledAt),
     allowedSuperviseeIds
       ? inArray(
@@ -55,6 +63,7 @@ export async function TodaysSchedule({ orgId, allowedSuperviseeIds }: Props) {
       signedAt: schema.sessionEvents.signedAt,
       meetingJoinUrl: schema.sessionEvents.meetingJoinUrl,
       meetingProvider: schema.sessionEvents.meetingProvider,
+      timeZone: schema.sessionEvents.timeZone,
       superviseeName: schema.users.name,
       superviseeEmail: schema.users.email,
     })
@@ -82,6 +91,7 @@ export async function TodaysSchedule({ orgId, allowedSuperviseeIds }: Props) {
         signedAt: schema.sessionEvents.signedAt,
         meetingJoinUrl: schema.sessionEvents.meetingJoinUrl,
         meetingProvider: schema.sessionEvents.meetingProvider,
+        timeZone: schema.sessionEvents.timeZone,
         superviseeName: schema.users.name,
         superviseeEmail: schema.users.email,
       })
@@ -94,7 +104,7 @@ export async function TodaysSchedule({ orgId, allowedSuperviseeIds }: Props) {
         and(
           eq(schema.sessionEvents.orgId, orgId),
           eq(schema.sessionEvents.kind, "supervision"),
-          gt(schema.sessionEvents.date, startOfTomorrow),
+          gt(schema.sessionEvents.date, startOfTomorrowUtc),
           eq(schema.sessionEvents.scheduledStatus, "scheduled"),
           isNull(schema.sessionEvents.canceledAt),
           allowedSuperviseeIds
@@ -139,7 +149,7 @@ export async function TodaysSchedule({ orgId, allowedSuperviseeIds }: Props) {
               <p className="text-xs text-foreground/60 mt-0.5">
                 Next: {nextUpcoming.superviseeName ?? nextUpcoming.superviseeEmail}
                 {" · "}
-                {formatDateTime(nextUpcoming.date)}
+                {formatDateTime(nextUpcoming.date, nextUpcoming.timeZone)}
               </p>
             </div>
             <Button asChild variant="outline" size="sm">
@@ -172,7 +182,7 @@ export async function TodaysSchedule({ orgId, allowedSuperviseeIds }: Props) {
                   <CardContent className="p-4 flex flex-wrap items-center gap-3">
                     <div className="flex flex-col items-start min-w-[100px]">
                       <p className="font-mono text-sm text-foreground">
-                        {formatTime(row.date)}
+                        {formatTime(row.date, row.timeZone)}
                       </p>
                       <p className="text-[10px] uppercase tracking-wide text-foreground/50">
                         {row.durationHours}h{" "}
@@ -220,18 +230,20 @@ export async function TodaysSchedule({ orgId, allowedSuperviseeIds }: Props) {
   );
 }
 
-function formatTime(d: Date): string {
-  return new Intl.DateTimeFormat(undefined, {
+function formatTime(d: Date, timeZone?: string | null): string {
+  return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: timeZone ?? "America/New_York",
   }).format(d);
 }
 
-function formatDateTime(d: Date): string {
-  return new Intl.DateTimeFormat(undefined, {
+function formatDateTime(d: Date, timeZone?: string | null): string {
+  return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    timeZone: timeZone ?? "America/New_York",
   }).format(d);
 }

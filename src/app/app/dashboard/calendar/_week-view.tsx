@@ -17,6 +17,27 @@ const DAY_START_HOUR = 7;
 const DAY_END_HOUR = 21; // exclusive — last row label is 8pm
 const ROW_HEIGHT_PX = 36;
 
+function getHourInTz(d: Date, tz?: string | null): number {
+  if (!tz) return d.getHours();
+  const parts = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    hour12: false,
+    timeZone: tz,
+  }).formatToParts(d);
+  return Number(parts.find((p) => p.type === "hour")?.value ?? d.getHours());
+}
+
+function getMinuteInTz(d: Date, tz?: string | null): number {
+  if (!tz) return d.getMinutes();
+  const parts = new Intl.DateTimeFormat("en-US", {
+    minute: "numeric",
+    timeZone: tz,
+  }).formatToParts(d);
+  return Number(
+    parts.find((p) => p.type === "minute")?.value ?? d.getMinutes()
+  );
+}
+
 function startOfWeek(d: Date): Date {
   const out = new Date(d);
   const dow = (out.getDay() + 6) % 7;
@@ -52,10 +73,12 @@ export function CalendarWeekView({
     let maxH = DAY_END_HOUR;
     for (const e of events) {
       const s = new Date(e.startIso);
-      const sh = s.getHours();
+      const sh = getHourInTz(s, e.timeZone);
       if (sh < minH) minH = Math.max(0, sh);
       const endLocal = new Date(e.endIso);
-      const eh = endLocal.getHours() + (endLocal.getMinutes() > 0 ? 1 : 0);
+      const eh =
+        getHourInTz(endLocal, e.timeZone) +
+        (getMinuteInTz(endLocal, e.timeZone) > 0 ? 1 : 0);
       if (eh > maxH) maxH = Math.min(24, eh);
     }
     return { startHour: minH, endHour: maxH };
@@ -145,9 +168,13 @@ export function CalendarWeekView({
                   const s = new Date(e.startIso);
                   const en = new Date(e.endIso);
                   const startMin =
-                    s.getHours() * 60 + s.getMinutes() - startHour * 60;
+                    getHourInTz(s, e.timeZone) * 60 +
+                    getMinuteInTz(s, e.timeZone) -
+                    startHour * 60;
                   const endMin =
-                    en.getHours() * 60 + en.getMinutes() - startHour * 60;
+                    getHourInTz(en, e.timeZone) * 60 +
+                    getMinuteInTz(en, e.timeZone) -
+                    startHour * 60;
                   const top = (startMin / 60) * ROW_HEIGHT_PX;
                   const height = Math.max(
                     18,
@@ -174,6 +201,7 @@ export function CalendarWeekView({
                         {new Intl.DateTimeFormat(undefined, {
                           hour: "numeric",
                           minute: "2-digit",
+                          timeZone: e.timeZone ?? undefined,
                         }).format(s)}
                         {viewerIsHrAdmin && e.supervisorName
                           ? ` · ${initialsOf(e.supervisorName)}`

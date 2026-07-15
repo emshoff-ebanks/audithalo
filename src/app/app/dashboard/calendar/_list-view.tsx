@@ -59,6 +59,7 @@ export function CalendarListView({
               const startFmt = new Intl.DateTimeFormat(undefined, {
                 hour: "numeric",
                 minute: "2-digit",
+                timeZone: e.timeZone ?? undefined,
               }).format(new Date(e.startIso));
               return (
                 <li

@@ -7,6 +7,7 @@ import { and, eq, isNull, ne } from "drizzle-orm";
 import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import {
   emailVerificationExpiresAt,
   generateAuthToken,
@@ -57,9 +58,20 @@ export async function requestPasswordResetAction(
     };
   }
 
+  const emailLower = parsed.data.email.toLowerCase();
+
+  const rl = await checkRateLimit(
+    emailLower,
+    "password_reset",
+    RATE_LIMITS.passwordReset.maxAttempts,
+    RATE_LIMITS.passwordReset.windowSeconds
+  );
+  if (!rl.allowed) {
+    return { ok: false, error: "Too many reset requests. Please try again later." };
+  }
+
   const successMessage =
     "If an account exists for that email, we've sent a reset link.";
-  const emailLower = parsed.data.email.toLowerCase();
 
   const user = await db.query.users.findFirst({
     where: eq(schema.users.email, emailLower),
@@ -706,10 +718,6 @@ export async function enableTotpAction(
       totpSecret: parsed.data.secret,
       totpEnabledAt: new Date(),
       totpBackupCodes: hashedCodes,
-      // Enabling 2FA is a security event — invalidate every prior session
-      // on every device so other devices must re-login (and provide the
-      // newly required TOTP code).
-      sessionsValidFrom: new Date(),
     })
     .where(eq(schema.users.id, session.user.id));
 
@@ -719,6 +727,7 @@ export async function enableTotpAction(
 
 const disableTotpSchema = z.object({
   currentPassword: z.string().min(1, "Enter your current password."),
+  totpCode: z.string().min(1, "Enter your current authenticator code."),
 });
 
 /**
@@ -736,6 +745,7 @@ export async function disableTotpAction(
 
   const parsed = disableTotpSchema.safeParse({
     currentPassword: formData.get("currentPassword"),
+    totpCode: formData.get("totpCode"),
   });
   if (!parsed.success) {
     return {
@@ -760,6 +770,10 @@ export async function disableTotpAction(
   );
   if (!passwordOk) {
     return { ok: false, error: "Current password is incorrect." };
+  }
+
+  if (!user.totpSecret || !verifyTotpCode(parsed.data.totpCode, user.totpSecret)) {
+    return { ok: false, error: "Invalid authenticator code." };
   }
 
   await db
@@ -860,4 +874,17 @@ export async function deleteAccountAction(
     message:
       "Account scheduled for deletion. You'll be signed out; data is permanently purged after 30 days.",
   };
+}
+
+export async function dismissOnboardingAction(): Promise<{ ok: boolean }> {
+  const session = await auth();
+  if (!session?.user) return { ok: false };
+
+  await db
+    .update(schema.users)
+    .set({ onboardingDismissedAt: new Date() })
+    .where(eq(schema.users.id, session.user.id));
+
+  revalidatePath("/dashboard");
+  return { ok: true };
 }

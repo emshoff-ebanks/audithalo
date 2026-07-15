@@ -1,11 +1,11 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Circle, ArrowRight, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, ArrowRight, Loader2, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { requestEmailVerificationAction } from "@/app/actions/account";
+import { requestEmailVerificationAction, dismissOnboardingAction } from "@/app/actions/account";
 
 /**
  * Props are intentionally plain primitives — booleans the parent computed
@@ -91,6 +91,7 @@ export function OnboardingChecklist({
   trainingDone,
 }: Props) {
   const [pending, startTransition] = useTransition();
+  const [dismissed, setDismissed] = useState(false);
 
   const steps: StepDef[] = trainingRelevant
     ? [...BASE_STEPS, TRAINING_STEP]
@@ -100,7 +101,7 @@ export function OnboardingChecklist({
     : [emailDone, trialDone, rosterDone, rulesDone];
   const allDone = stepDone.every(Boolean);
 
-  if (allDone) return null;
+  if (allDone || dismissed) return null;
 
   const doneCount = stepDone.filter(Boolean).length;
   const totalCount = steps.length;
@@ -111,6 +112,13 @@ export function OnboardingChecklist({
     });
   }
 
+  function handleDismiss() {
+    setDismissed(true);
+    startTransition(async () => {
+      await dismissOnboardingAction();
+    });
+  }
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -118,6 +126,14 @@ export function OnboardingChecklist({
           <h2 className="font-display text-lg font-semibold text-foreground">
             Getting started — {doneCount} of {totalCount} complete
           </h2>
+          <button
+            type="button"
+            onClick={handleDismiss}
+            className="text-foreground/40 hover:text-foreground/70 transition-colors"
+            aria-label="Dismiss getting started"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
         <ul className="space-y-4">
           {steps.map((step, i) => {
