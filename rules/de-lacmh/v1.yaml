@@ -1,0 +1,152 @@
+# Delaware LACMH — Licensed Associate Counselor of Mental Health
+# Source: 24 DE Admin. Code 3000, §§ 2.0–3.0 (amended 28 DE Reg. 467, eff. 12/01/2024)
+# Statute: 24 Del. C. Chapter 30, Subchapter II (§§ 3030–3034)
+#
+# This is the live encoding used by the AuditHalo rule engine. Any change here
+# must be paired with a citation reference and a verification timestamp by a
+# licensed clinical supervisor.
+
+jurisdiction: DE
+license_code: LACMH
+license_name: Licensed Associate Counselor of Mental Health
+issuing_board: Delaware Board of Mental Health and Chemical Dependency Professionals
+version: 1
+
+summary: |
+  3,200 supervised practice hours over 2-4 consecutive years, including 1,600+
+  supervised clinical hours and 1,500+ face-to-face direct client contact hours
+  (750+ must be individual). 100 supervision hours total, of which at least 60
+  must be individual (group capped at 40 hours, max 6 per group). Supervisor
+  must be a licensed Professional Counselor of Mental Health (any state) or
+  Board-approved alternative. Supervision plan must be filed and approved by
+  the Board BEFORE hours begin counting.
+
+effective_start: 2024-12-01
+effective_end: null
+
+citation:
+  admincode: 24 DE Admin. Code 3000, §§ 2.0–3.0
+  statute: 24 Del. C. §§ 3030–3034
+  url: https://dpr.delaware.gov/boards/profcounselors/
+
+verification:
+  last_verified_at: 2026-07-21
+  last_verified_by: perplexity_research
+  source_hash: pending
+
+structured:
+  total_practice_hours_required: 3200
+  total_supervision_hours_required: 100
+  min_duration_months: 24
+  max_duration_months: 48
+  group_max_attendees: 6
+  min_individual_supervision_fraction: 0.60
+
+checks:
+  - id: pre_registration_required
+    severity: blocker
+    description: Supervision plan must be submitted to and approved by the Board before acquiring experience (24 Del. C. § 3033(b))
+    params:
+      signal_field: supervisionContractFiledAt
+
+  - id: supervisor_credential_required
+    severity: blocker
+    description: Supervisor must be a licensed Professional Counselor of Mental Health or Board-approved alternative (Admin. Code § 2.5)
+    params:
+      accepted_credentials: [LPCMH, LPC, LCSW, LMFT, Psychologist, Psychiatrist, APRN]
+
+  - id: individual_supervision_minimum_share
+    severity: warning
+    description: At least 60 of 100 supervision hours must be individual; group capped at 40 hours (Admin. Code § 2.4.1.2.2)
+    params:
+      min_individual_fraction: 0.60
+      enforce_after_practice_hours: 200
+
+  - id: group_size_limit
+    severity: blocker
+    description: Group supervision sessions capped at 6 supervisees (Admin. Code § 2.4.1.2.2)
+    params:
+      max_attendees: 6
+
+  - id: total_practice_hours
+    severity: info
+    description: Must accumulate at least 3,200 supervised practice hours (24 Del. C. § 3032(a)(2))
+    params:
+      required: 3200
+
+  - id: total_supervision_hours
+    severity: info
+    description: Must accumulate at least 100 face-to-face professional direct supervision hours (Admin. Code § 2.4.1.2)
+    params:
+      required: 100
+
+  - id: duration_window
+    severity: warning
+    description: Experience must be completed in 2-4 consecutive years (24 Del. C. § 3032(a)(2); Admin. Code § 2.4)
+    params:
+      min_months: 24
+      max_months: 48
+
+evidence_requirements:
+  form_template_key: DE_SUPERVISION_NOTE_V1
+  required_signers:
+    - supervisor
+    - supervisee
+  required_artifacts:
+    - attendance
+    - session_metadata
+  optional_artifacts:
+    - transcript
+  immutability: sha256_signed_json
+
+page_content:
+  intro: |
+    The Licensed Associate Counselor of Mental Health (LACMH) is Delaware's
+    pre-independent counseling credential for mental health professionals working
+    toward full LPCMH licensure. LACMHs must practice under professional direct
+    supervision as defined by the Delaware Board. To earn the LPCMH, candidates
+    must complete 3,200 hours of supervised experience (including 1,600+ supervised
+    clinical hours and 1,500+ direct client contact hours) over 2-4 consecutive years,
+    with a minimum of 100 clinical supervision hours.
+
+    Delaware requires a supervision plan to be filed and approved by the Board BEFORE
+    any hours begin counting — this is a hard prerequisite. The associate license is
+    issued for 2 years and may be renewed up to 2 times (6-year lifetime ceiling).
+    AuditHalo tracks all requirements continuously and alerts your team when any
+    supervisee falls behind.
+
+  supervisor_qualifications:
+    - "Must be a licensed Professional Counselor of Mental Health in any US state or territory (Admin. Code § 2.5)"
+    - "Non-LPCMH supervisors (LMFT, Psychologist, LCSW, physician, APRN) allowed only with Board approval and a compelling clinical reason (Admin. Code § 2.5.1)"
+    - "Out-of-state supervisors must attest familiarity with Delaware statutes and rules (Admin. Code § 2.5.2)"
+    - "Must have at least 2 years post-licensure experience with no disciplinary actions (Admin. Code § 2.5.3.1)"
+    - "Must have 3 CE hours in clinical supervision within 2 years of application, or 12 lifetime hours (Admin. Code § 2.5.3.2)"
+    - "May supervise no more than 10 supervisees at a time (Admin. Code § 2.5.3.3)"
+
+  key_warnings:
+    - "The supervision plan MUST be filed with and approved by the Board BEFORE any hours begin counting — this is statutory (24 Del. C. § 3033(b)), not discretionary"
+    - "The 4-year window is consecutive — experience must be completed within 4 consecutive years from the start date"
+    - "At least 750 of the 1,500 direct client contact hours must be individual face-to-face sessions — group, couple, and family sessions can only fill the other 750"
+    - "Group supervision is capped at 40 of 100 hours — if you use any group supervision, at least 60 hours must be individual"
+    - "Any change in supervisor must be reported to the Board within 30 days on the approved form"
+    - "Supervised clinical work must occur in a HIPAA-covered setting designated for professional mental health counseling (Admin. Code § 2.3)"
+    - "The LACMH license has a 6-year lifetime ceiling (2-year term, renewable up to 2 times)"
+
+  faq:
+    - q: "How many supervised hours does a LACMH need in Delaware?"
+      a: "3,200 total supervised practice hours over 2-4 consecutive years. Within those, at least 1,600 must be supervised clinical experience, at least 1,500 must be face-to-face direct client contact (750+ individual), and at least 100 must be clinical supervision hours (60+ individual, 40 max group)."
+    - q: "What qualifies as an approved supervisor in Delaware?"
+      a: "The default is a Licensed Professional Counselor of Mental Health (LPCMH) licensed in any US state. Other licensed professionals (LMFT, Psychologist, LCSW, physician, APRN) may supervise with Board approval and a compelling clinical reason. All supervisors must have 2+ years post-licensure experience, no disciplinary actions, and clinical supervision CE credits."
+    - q: "Must the supervision plan be filed before I start?"
+      a: "Yes — this is a statutory requirement. The plan must be submitted to and approved by the Board before acquiring any professional mental health counseling experience. Hours logged before plan approval do not count."
+    - q: "Can supervision be done via video in Delaware?"
+      a: "Yes. Delaware defines 'face-to-face' to include both in-person and live video conferencing (Admin. Code § 2.3). This applies to both client contact hours and supervision meetings."
+    - q: "Does AuditHalo generate the documentation Delaware requires?"
+      a: "AuditHalo generates tamper-evident evidence packages for each supervision session including date, duration, session type, supervisor credentials, and intent-confirmed signatures from both parties. The package is SHA-256 hashed and immutable. The Board's end-of-experience Direct Supervision Reference Form is submitted separately by the supervisor when applying for LPCMH."
+
+notes:
+  - Delaware's regulations were last amended at 28 DE Reg. 467, effective 12/01/2024.
+  - Reg. 1.2 warns that the statute controls over the regulations — primary constraints (3,200 total, 1,600 supervised, 2-4 year window, pre-approved plan) are statutory.
+  - The direct client contact sub-requirements (1,500 hours, 750 individual) are tracked by the rule engine through practice event metadata.
+  - Delaware does not specify a per-week or per-practice-hour supervision cadence — only the aggregate 100-hour floor and "regularly scheduled" statutory language.
+  - The LACMH is a full license issued by the Board, not a registration — this distinction matters for reciprocity evaluations.

@@ -1,0 +1,160 @@
+# Washington LMHCA — Licensed Mental Health Counselor Associate
+# Source: Chapter 246-809 WAC (esp. WAC 246-809-230, -234, -020, -210)
+# Statute: RCW 18.225 — Mental Health Counselors, MFTs, and Social Workers
+#
+# This is the live encoding used by the AuditHalo rule engine. Any change here
+# must be paired with a citation reference and a verification timestamp by a
+# licensed clinical supervisor.
+
+jurisdiction: WA
+license_code: LMHCA
+license_name: Licensed Mental Health Counselor Associate
+issuing_board: Washington State Department of Health
+version: 1
+
+summary: |
+  3,000 supervised practice hours over at least 36 months, including 1,200+
+  direct client contact hours. 100 hours of immediate supervision (supervisor
+  with no more than 2 candidates). Cadence: 1 hour of supervision per 80
+  hours of clinical practice. Supervisor must be a licensed LMHC or equally
+  qualified practitioner (LMFT, LICSW, Psychologist, Psychiatrist, Psychiatric
+  NP). Supervisor declaration required before supervision begins.
+
+effective_start: 2025-01-01
+effective_end: null
+
+citation:
+  admincode: WAC 246-809-230, WAC 246-809-234, WAC 246-809-020, WAC 246-809-210
+  statute: RCW 18.225.090
+  url: https://doh.wa.gov/licenses-permits-and-certificates/professions-new-renew-or-update/mental-health-counselor
+
+verification:
+  last_verified_at: 2026-07-21
+  last_verified_by: perplexity_research
+  source_hash: pending
+
+structured:
+  total_practice_hours_required: 3000
+  total_supervision_hours_required: 100
+  min_duration_months: 36
+  max_duration_months: 72
+  group_max_attendees: 6
+  min_individual_supervision_fraction: 0.0
+
+checks:
+  - id: pre_registration_required
+    severity: blocker
+    description: "Approved supervisor must provide a signed declaration to the candidate before supervision begins (WAC 246-809-234(3))"
+    params:
+      signal_field: supervisionContractFiledAt
+
+  - id: supervisor_credential_required
+    severity: blocker
+    description: "Supervisor must be a licensed LMHC or equally qualified practitioner in good standing for past 2 years (WAC 246-809-234(1), WAC 246-809-210(4))"
+    params:
+      accepted_credentials: [LMHC, LMFT, LICSW, Psychologist, Psychiatrist, Psychiatric-NP]
+
+  - id: individual_supervision_cadence
+    severity: warning
+    description: "At least 1 hour of supervision per 80 hours of clinical practice time (WAC 246-809-020(2)(b))"
+    params:
+      max_gap_days: 60
+      min_hours_per_period: 1.0
+
+  - id: supervision_ratio_per_practice_block
+    severity: warning
+    description: "1 hour of supervision per 80 hours of clinical practice (WAC 246-809-020(2)(b))"
+    params:
+      practice_hours_per_block: 80
+      individual_hours_required: 1.0
+      group_hours_required: 1.0
+
+  - id: group_size_limit
+    severity: blocker
+    description: "Group supervision capped at 6 candidates; immediate supervision capped at 2 (WAC 246-809-210(5)-(6))"
+    params:
+      max_attendees: 6
+
+  - id: total_practice_hours
+    severity: info
+    description: "Must accumulate at least 3,000 hours of postgraduate mental health counseling (WAC 246-809-230(3)(a))"
+    params:
+      required: 3000
+
+  - id: total_supervision_hours
+    severity: info
+    description: "Must accumulate at least 100 hours of immediate supervision (WAC 246-809-230(3)(b)(i))"
+    params:
+      required: 100
+
+  - id: duration_window
+    severity: warning
+    description: "Experience must span at least 36 months; LMHCA credential limited to approximately 6 years (WAC 246-809-230(3)(a))"
+    params:
+      min_months: 36
+      max_months: 72
+
+evidence_requirements:
+  form_template_key: WA_SUPERVISION_NOTE_V1
+  required_signers:
+    - supervisor
+    - supervisee
+  required_artifacts:
+    - attendance
+    - session_metadata
+  optional_artifacts:
+    - transcript
+  immutability: sha256_signed_json
+
+page_content:
+  intro: |
+    The Licensed Mental Health Counselor Associate (LMHCA) is Washington State's
+    pre-independent counseling credential for mental health professionals working
+    toward full LMHC licensure. LMHCAs must practice under supervision and cannot
+    provide independent mental health counseling for a fee. To earn the LMHC,
+    candidates must complete 3,000 hours of supervised postgraduate experience
+    (including 1,200+ direct client contact hours) over at least 36 months, with
+    a minimum of 100 hours of immediate supervision.
+
+    Washington uses a cadence-based supervision model: 1 hour of supervision for
+    every 80 hours of clinical practice. The state defines "immediate supervision"
+    as a meeting with no more than 2 candidates (not strictly 1-on-1). Group
+    supervision (up to 6 candidates) does not count toward the 100-hour minimum.
+    AuditHalo tracks the cadence ratio continuously and alerts your team when any
+    supervisee falls behind.
+
+  supervisor_qualifications:
+    - "Must be a licensed LMHC or equally qualified practitioner: LMFT, LICSW, Licensed Psychologist, Licensed Psychiatrist, or Licensed Psychiatric Nurse Practitioner (WAC 246-809-234, WAC 246-809-210(4))"
+    - "Must be licensed without restrictions and in good standing for the previous 2 years (WAC 246-809-234(1))"
+    - "Must have 15+ clock hours of clinical supervision training AND 25 hours of supervision experience (WAC 246-809-234(4))"
+    - "Cannot be a blood/legal relative, cohabitant, peer, or former therapist (within past 2 years) of the candidate (WAC 246-809-234(2))"
+    - "Must provide a signed declaration on DOH form to the candidate before supervision begins (WAC 246-809-234(3))"
+
+  key_warnings:
+    - "The 100-hour supervision minimum must be 'immediate' supervision (1 supervisor with no more than 2 candidates) — group supervision (3-6 candidates) does NOT count toward this minimum"
+    - "Supervisor must provide a signed declaration to the candidate before supervision begins — this is the pre-registration requirement (WAC 246-809-234(3))"
+    - "The experience must span at least 36 months (3 years) — this is longer than most states' minimums"
+    - "CACREP graduates receive credit for 500 practice hours and 50 supervision hours (WAC 246-809-230(4))"
+    - "LMHCAs may not provide independent mental health counseling for a fee"
+    - "6 hours of suicide prevention/intervention training required at least once every 6 years (RCW 43.70.442)"
+    - "Candidates must periodically submit supervision hours documentation to DOH (WAC 246-809-020(3)(c))"
+    - "Effective Oct 1, 2025: applicants may practice under supervision for up to 120 days while their LMHCA application is pending"
+
+  faq:
+    - q: "How many supervised hours does an LMHCA need in Washington?"
+      a: "3,000 hours of supervised postgraduate experience over at least 36 months, including at least 1,200 direct client contact hours and at least 100 hours of immediate supervision (supervisor with no more than 2 candidates). CACREP graduates receive credit for 500 practice hours and 50 supervision hours."
+    - q: "What qualifies as an approved supervisor in Washington?"
+      a: "Your supervisor must be a licensed LMHC, LMFT, LICSW, Licensed Psychologist, Licensed Psychiatrist, or Licensed Psychiatric Nurse Practitioner — licensed without restrictions and in good standing for the past 2 years. They must have 15+ hours of clinical supervision training and 25 hours of supervision experience."
+    - q: "How often must supervision occur in Washington?"
+      a: "At least 1 hour of supervision for every 80 hours of clinical practice time. This is a ratio-based cadence, not a fixed weekly requirement."
+    - q: "Can supervision be done virtually in Washington?"
+      a: "Yes. Both immediate supervision and group supervision definitions explicitly allow face-to-face or virtual meetings (WAC 246-809-210(5)-(6)). No location restriction is stated."
+    - q: "Does AuditHalo generate the documentation Washington requires?"
+      a: "AuditHalo generates tamper-evident evidence packages for each supervision session with date, duration, session type, supervisor credentials, and dual signatures. The system supports periodic submission of supervision hours documentation to DOH as required by WAC 246-809-020(3)(c)."
+
+notes:
+  - "Washington's 'immediate supervision' allows up to 2 candidates (not strictly 1-on-1). AuditHalo treats sessions with 2 candidates as satisfying the immediate supervision requirement."
+  - "Group supervision (3-6 candidates) does NOT count toward the 100-hour immediate supervision minimum. It may count toward overall experience documentation but this should be verified with DOH."
+  - "The LMHCA credential lifespan is uncertain: rule history cites 6 renewals (6 years), but current DOH FAQ says unlimited renewals. The 72-month max_duration is based on the 6-renewal historical rule."
+  - "SUDP practitioners with 3+ years of the previous 10 in practice get a reduced total of 2,700 hours (WAC 246-809-230(2))."
+  - "WAC 246-809-020 supervision cadence (1:80 ratio) originated as an emergency rule in 2025. Verify current enforcement status before go-live."

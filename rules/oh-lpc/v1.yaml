@@ -1,0 +1,151 @@
+# Ohio LPC → LPCC — Licensed Professional Counselor toward Clinical licensure
+# Source: OAC 4757-17-01 (Counseling supervision, eff. 8/18/2025)
+#         OAC 4757-13-03 (LPCC experience requirements)
+# Statute: ORC 4757.22 (LPCC), ORC 4757.23 (LPC)
+#
+# This is the live encoding used by the AuditHalo rule engine. Any change here
+# must be paired with a citation reference and a verification timestamp by a
+# licensed clinical supervisor.
+
+jurisdiction: OH
+license_code: LPC
+license_name: Licensed Professional Counselor
+issuing_board: Ohio Counselor, Social Worker, and Marriage and Family Therapist Board
+version: 1
+
+summary: |
+  3,000 supervised practice hours over at least 24 months (max 1,500 per
+  12-month period), with 1,500+ face-to-face client contact hours involving
+  MED diagnosis/treatment. Supervision ratio: 1 hour per 20 hours of work
+  (~150 hours total). No fixed individual-to-group ratio required. Supervisor
+  must be an LPCC with the Board's training supervision designation. No
+  pre-registration/contract filing required — Ohio uses milestone evaluations
+  at 1,500 and 3,000 hours.
+
+effective_start: 2025-08-18
+effective_end: null
+
+citation:
+  admincode: OAC 4757-17-01, OAC 4757-13-03
+  statute: ORC 4757.22, ORC 4757.23
+  url: https://cswmft.ohio.gov/
+
+verification:
+  last_verified_at: 2026-07-21
+  last_verified_by: perplexity_research
+  source_hash: pending
+
+structured:
+  total_practice_hours_required: 3000
+  total_supervision_hours_required: 150
+  min_duration_months: 24
+  max_duration_months: 120
+  group_max_attendees: 8
+  min_individual_supervision_fraction: 0.0
+
+checks:
+  - id: supervisor_credential_required
+    severity: blocker
+    description: "Training supervisor must be an LPCC with the Board's training supervision designation (OAC 4757-17-01(D)(3), 4757-13-03(A)(4)(b))"
+    params:
+      accepted_credentials: [LPCC, Psychologist, Psychiatrist, IMFT, LISW]
+
+  - id: supervision_ratio_per_practice_block
+    severity: warning
+    description: "1 hour of supervision per 20 hours of work by the supervisee (OAC 4757-17-01(B))"
+    params:
+      practice_hours_per_block: 20
+      individual_hours_required: 1.0
+      group_hours_required: 1.0
+
+  - id: group_size_limit
+    severity: blocker
+    description: "Group supervision capped at 8 supervisees; individual permits up to 2 (OAC 4757-17-01(B)(1)-(2))"
+    params:
+      max_attendees: 8
+
+  - id: total_practice_hours
+    severity: info
+    description: "Must accumulate at least 3,000 hours of supervised experience (OAC 4757-13-03(A)(4))"
+    params:
+      required: 3000
+
+  - id: total_supervision_hours
+    severity: info
+    description: "Approximately 150 supervision hours based on 1:20 ratio across 3,000 practice hours (OAC 4757-17-01(B))"
+    params:
+      required: 150
+
+  - id: duration_window
+    severity: warning
+    description: "Experience must span at least 24 months; max 1,500 hours per 12-month period (OAC 4757-13-03(A)(1), (A)(4)(a))"
+    params:
+      min_months: 24
+      max_months: 120
+
+evidence_requirements:
+  form_template_key: OH_SUPERVISION_NOTE_V1
+  required_signers:
+    - supervisor
+    - supervisee
+  required_artifacts:
+    - attendance
+    - session_metadata
+  optional_artifacts:
+    - transcript
+  immutability: sha256_signed_json
+
+page_content:
+  intro: |
+    Ohio's pre-independent counseling pathway runs from Licensed Professional
+    Counselor (LPC) to Licensed Professional Clinical Counselor (LPCC). LPCs
+    may practice counseling but cannot independently diagnose and treat mental
+    and emotional disorders (MED) without supervision. To earn the LPCC,
+    candidates must complete 3,000 hours of supervised experience (including
+    1,500+ face-to-face client contact hours involving MED) over at least 24
+    months.
+
+    Ohio uses a ratio-based supervision model rather than a fixed total: 1 hour
+    of supervision for every 20 hours of work. There is no required split between
+    individual and group supervision, and no pre-registration contract with the
+    Board. Instead, Ohio requires milestone evaluations at 1,500 and 3,000 hours.
+    AuditHalo tracks the 1:20 ratio continuously and alerts your team when any
+    supervisee falls behind.
+
+  supervisor_qualifications:
+    - "Training supervisor must be an LPCC with the Board's training supervision designation (OAC 4757-17-01(D)(1)(e))"
+    - "For clinical/work supervision of MED work, supervisor may also be a psychologist, psychiatrist, IMFT, or LISW with clinical competence (OAC 4757-17-01(D)(3), (F)(2))"
+    - "Supervisor designation requires: 1 year + 1,500 hours post-LPCC experience, 24 hours of supervision training CE, observation of 5 sessions, and ACA ethics compliance (OAC 4757-17-01(I)(1))"
+    - "Must complete 3 hours of board-approved supervision CPE per renewal cycle (OAC 4757-17-01(I)(2))"
+    - "Family-member supervisors prohibited (OAC 4757-17-01(D)(2))"
+    - "Out-of-state supervisors require written petition to the Board (OAC 4757-17-01(D)(5))"
+
+  key_warnings:
+    - "No more than 1,500 hours of experience may be accrued in any 12-month period — this is a hard annual cap (OAC 4757-13-03(A)(4)(a))"
+    - "At least 50% of hours each year (750+ per 1,500) must be face-to-face client contact involving MED diagnosis/treatment"
+    - "Ohio does NOT require a pre-filed supervision contract — but supervision records must be maintained by the supervisee and acknowledged by the supervisor at least quarterly (OAC 4757-17-01(E)(1))"
+    - "Supervisors must submit online evaluations at 1,500 and 3,000 hours within 30 days of the supervisee's request — failure to submit may result in disciplinary action (OAC 4757-17-01(E)(2))"
+    - "Ohio's 'individual supervision' permits up to 2 supervisees (not strictly 1:1) — this differs from most states"
+    - "LPCs must disclose supervision status to clients on all printed and electronic materials and name the supervisor (OAC 4757-17-01(A))"
+    - "Solo private practice by an LPC is permitted but requires clinical/work supervision (OAC 4757-17-01(F))"
+
+  faq:
+    - q: "How many supervised hours does an LPC need for LPCC in Ohio?"
+      a: "3,000 hours of supervised experience over at least 24 months, with at least 1,500 face-to-face client contact hours involving diagnosis and treatment of mental and emotional disorders. No more than 1,500 hours may be accrued in any 12-month period."
+    - q: "How many supervision hours are required?"
+      a: "Ohio uses a ratio rather than a fixed total: 1 hour of supervision for every 20 hours of work. Across the full 3,000-hour requirement, this yields approximately 150 supervision hours. There is no required split between individual and group supervision."
+    - q: "What qualifies as an approved supervisor in Ohio?"
+      a: "For training supervision toward LPCC, the supervisor must be an LPCC holding the Board's training supervision designation. This requires 1+ years and 1,500+ hours post-LPCC, 24 hours of supervision training, observation of 5 supervision sessions, and ongoing CE. For clinical/work supervision of MED activities, LPCCs, psychologists, psychiatrists, IMFTs, and LISWs also qualify."
+    - q: "Does Ohio require a supervision plan before starting?"
+      a: "No. Ohio does not require a pre-filed supervision contract. Instead, the supervisee maintains supervision records (dates, content, goals) signed by the supervisor at least quarterly, and the supervisor submits evaluations at 1,500 and 3,000 hours."
+    - q: "Can supervision be done remotely in Ohio?"
+      a: "Yes. After an initial face-to-face meeting (which may be via videoconference), ongoing supervision may be in person, via videoconference, or by phone. No in-person-only requirement exists."
+    - q: "Does AuditHalo generate the documentation Ohio requires?"
+      a: "AuditHalo generates tamper-evident evidence packages for each supervision session with date, duration, session type, supervisor credentials, topics, and dual signatures. Records are maintained with quarterly acknowledgment tracking as required by OAC 4757-17-01(E)(1)."
+
+notes:
+  - "Ohio has two pre-independent credentials: Counselor Trainee (CT) for students and LPC for post-master's. This rule file covers the LPC -> LPCC pathway."
+  - "Ohio's 'individual supervision' permits up to 2 supervisees — AuditHalo treats sessions with 2 supervisees as 'triadic' in other states but as 'individual' for Ohio compliance purposes."
+  - "The supervision hours total (150) is derived from the 1:20 ratio across 3,000 hours. Ohio specifies the ratio, not a fixed total."
+  - "Ohio does not specify a maximum overall duration for completing the 3,000 hours. The 120-month max in structured is a practical ceiling."
+  - "OAC 4757-17-01 was effective August 18, 2025 — this is a recently updated rule."

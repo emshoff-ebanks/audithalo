@@ -1,0 +1,149 @@
+# Arizona LAC — Licensed Associate Counselor
+# Source: A.A.C. Title 4, Chapter 6 (R4-6-210, R4-6-211, R4-6-212, R4-6-503, R4-6-504)
+# Statute: A.R.S. Title 32, Chapter 33 (§ 32-3301, § 32-3303)
+#
+# This is the live encoding used by the AuditHalo rule engine. Any change here
+# must be paired with a citation reference and a verification timestamp by a
+# licensed clinical supervisor.
+
+jurisdiction: AZ
+license_code: LAC
+license_name: Licensed Associate Counselor
+issuing_board: Arizona Board of Behavioral Health Examiners
+version: 1
+
+summary: |
+  3,200 supervised practice hours over at least 24 months, including 1,600+
+  direct client contact hours. 100 supervision hours total, of which at least
+  25 must be individual. Up to 75 hours in groups of 2, up to 50 in groups of
+  3-6. At least 1 hour of supervision per month when providing direct client
+  contact. Supervisor must hold an independent-level AZ license (LPC, LCSW,
+  LMFT, Psychologist, or Psychiatrist). No pre-registration requirement for
+  standard supervision (verification form submitted at LPC application).
+
+effective_start: 2024-01-01
+effective_end: null
+
+citation:
+  admincode: A.A.C. R4-6-503, R4-6-504, R4-6-212
+  statute: A.R.S. § 32-3301, § 32-3303
+  url: https://bbhe.az.gov/clinical-supervision
+
+verification:
+  last_verified_at: 2026-07-21
+  last_verified_by: perplexity_research
+  source_hash: pending
+
+structured:
+  total_practice_hours_required: 3200
+  total_supervision_hours_required: 100
+  min_duration_months: 24
+  max_duration_months: 120
+  group_max_attendees: 6
+  min_individual_supervision_fraction: 0.25
+
+checks:
+  - id: supervisor_credential_required
+    severity: blocker
+    description: Every supervision session must have a supervisor with an independent-level AZ behavioral health license
+    params:
+      accepted_credentials: [LPC, LCSW, LMFT, Psychologist, Psychiatrist]
+
+  - id: individual_supervision_cadence
+    severity: warning
+    description: At least 1 hour of clinical supervision per month when providing direct client contact (R4-6-503(B))
+    params:
+      max_gap_days: 31
+      min_hours_per_period: 1.0
+
+  - id: individual_supervision_minimum_share
+    severity: warning
+    description: At least 25 of 100 supervision hours must be individual (R4-6-504(A), R4-6-212(G))
+    params:
+      min_individual_fraction: 0.25
+      enforce_after_practice_hours: 200
+
+  - id: group_size_limit
+    severity: blocker
+    description: Group supervision sessions capped at 6 supervisees (R4-6-212(G))
+    params:
+      max_attendees: 6
+
+  - id: total_practice_hours
+    severity: info
+    description: Must accumulate at least 3,200 supervised practice hours (R4-6-503(A))
+    params:
+      required: 3200
+
+  - id: total_supervision_hours
+    severity: info
+    description: Must accumulate at least 100 clinical supervision hours (R4-6-504(A))
+    params:
+      required: 100
+
+  - id: duration_window
+    severity: warning
+    description: Supervised work experience must span at least 24 months (R4-6-503(A))
+    params:
+      min_months: 24
+      max_months: 120
+
+evidence_requirements:
+  form_template_key: AZ_SUPERVISION_NOTE_V1
+  required_signers:
+    - supervisor
+    - supervisee
+  required_artifacts:
+    - attendance
+    - session_metadata
+  optional_artifacts:
+    - transcript
+  immutability: sha256_signed_json
+
+page_content:
+  intro: |
+    The Licensed Associate Counselor (LAC) is Arizona's pre-independent counseling
+    credential for mental health professionals working toward full LPC licensure. LACs
+    must practice under direct supervision as prescribed by the Arizona Board of
+    Behavioral Health Examiners (AzBBHE). To earn the LPC, candidates must complete
+    3,200 hours of supervised work experience (including 1,600+ direct client contact
+    hours) over at least 24 months, with a minimum of 100 clinical supervision hours.
+
+    Arizona's supervision model is flexible: at least 25 hours must be individual, up
+    to 75 may be in groups of 2, and up to 50 in groups of 3-6. Supervision must occur
+    at least once per month during active practice. AuditHalo tracks all of these
+    requirements continuously and alerts your team when any supervisee falls behind.
+
+  supervisor_qualifications:
+    - "Must hold an independent-level Arizona behavioral health license: LPC, LCSW, LMFT, Licensed Psychologist, or Psychiatrist (R4-6-504(D))"
+    - "Substance abuse counselors cannot provide clinical supervision hours for LPC licensure (R4-6-504(C))"
+    - "Must complete 12 clock hours of initial supervisor training, then 6 hours per renewal cycle (R4-6-212(J)). Waived if holding NBCC Approved Clinical Supervisor, ICRC Clinical Supervisor, or AAMFT Approved Supervisor designation (R4-6-212(L))"
+    - "May supervise a maximum of 15 supervisees at one time, up to 30 with credentialing committee exemption (R4-6-212(A)-(B))"
+    - "Cannot be an immediate family member or anyone whose objectivity is compromised (R4-6-101(A)(29), R4-6-212(C)(6))"
+
+  key_warnings:
+    - "At least 1,600 of the 3,200 practice hours must be direct client contact involving psychotherapy — indirect hours alone are not sufficient"
+    - "Up to 400 of those 1,600 direct hours may be psychoeducation, but the remainder must be psychotherapy"
+    - "At least 2 hours of face-to-face supervision per 6-month period are required — fully remote supervision is not permitted (R4-6-212(D))"
+    - "At least 10 hours must involve direct observation of the supervisee providing services (R4-6-212(E))"
+    - "Every supervision session must be at least 30 minutes (R4-6-212(D))"
+    - "No more than 15 of the 100 supervision hours may be by telephone (R4-6-212(D))"
+    - "A maximum of 6 supervisors may provide hours toward a single LPC application (R4-6-212(F))"
+    - "Supervisors must maintain contemporaneous written records for at least 7 years (R4-6-212(C)(4))"
+
+  faq:
+    - q: "How many supervised hours does an LAC need in Arizona?"
+      a: "3,200 hours of supervised work experience over at least 24 months, including at least 1,600 hours of direct client contact (psychotherapy). Within those hours, you must accumulate at least 100 clinical supervision hours, of which at least 25 must be individual."
+    - q: "What qualifies as an approved supervisor in Arizona?"
+      a: "Your supervisor must hold an independent-level Arizona behavioral health license — LPC, LCSW, LMFT, Licensed Psychologist, or Psychiatrist. They must also complete 12 hours of initial supervisor training and 6 continuing education hours per renewal cycle. Substance abuse counselors cannot serve as clinical supervisors for LPC licensure."
+    - q: "Does Arizona require a supervision contract to be filed before hours count?"
+      a: "For standard supervision at a behavioral health entity, no — the Board accepts a Verification of Clinical Supervision form when you apply for LPC licensure. However, if you practice in a practice you own or manage (Supervised Private Practice pathway), both supervisor and supervisee must submit a supervision agreement and get Board approval before beginning."
+    - q: "Can supervision be done remotely in Arizona?"
+      a: "Mostly, but with limits. Up to 90 of 100 hours may be via videoconference or telephone combined, but no more than 15 may be by telephone alone. At least 2 hours must be face-to-face per 6-month period, and at least 10 hours must involve direct observation of the supervisee providing services."
+    - q: "Does AuditHalo generate the documentation Arizona requires?"
+      a: "AuditHalo generates tamper-evident evidence packages for each supervision session including date, duration, session type, supervisor credentials, topics discussed, and intent-confirmed signatures from both parties. The package is SHA-256 hashed and immutable, meeting the Board's requirement for contemporaneous written records."
+
+notes:
+  - Arizona has two versions of R4-6-212 circulating on the BBHE site (2008 codification and current superseding version). This rule file follows the current R4-6-212 with updated caps (max 6 supervisors, 90/15 telehealth split, 25/75/50 individual/group breakdown).
+  - The direct client contact hours (1,600) and psychoeducation cap (400) are tracked separately from total practice hours. AuditHalo tracks both via the practice event kind and session metadata.
+  - Arizona does not specify a maximum duration for completing supervised work experience.

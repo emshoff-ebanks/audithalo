@@ -1,0 +1,169 @@
+# Louisiana PLPC — Provisional Licensed Professional Counselor
+# Source: LAC 46:LX (Title 46, Part LX) — Professional Counselors (Rules dated 12.21.21)
+# Statute: R.S. 37:1101–1123 — Louisiana Mental Health Counselor Licensing Act
+#
+# This is the live encoding used by the AuditHalo rule engine. Any change here
+# must be paired with a citation reference and a verification timestamp by a
+# licensed clinical supervisor.
+
+jurisdiction: LA
+license_code: PLPC
+license_name: Provisional Licensed Professional Counselor
+issuing_board: Louisiana Licensed Professional Counselors Board of Examiners
+version: 1
+
+summary: |
+  3,000 supervised practice hours over 2-6 years, including 1,900+ direct
+  counseling hours and 1,000+ indirect hours. 100 face-to-face supervision
+  hours total, of which at least 50 must be individual. Cadence: 1 hour of
+  supervision per 20 direct client contact hours. Supervisor must hold the
+  LPC-S (LPC-Supervisor) designation from the LA LPC Board. Supervision plan
+  must be filed and approved by the Board BEFORE hours begin counting.
+  Retroactive hours are not permitted.
+
+effective_start: 2024-01-01
+effective_end: null
+
+citation:
+  admincode: LAC 46:LX §503, §505, §603, §605, §801, §803
+  statute: R.S. 37:1101–1123
+  url: https://www.lpcboard.org/
+
+verification:
+  last_verified_at: 2026-07-21
+  last_verified_by: perplexity_research
+  source_hash: pending
+
+structured:
+  total_practice_hours_required: 3000
+  total_supervision_hours_required: 100
+  min_duration_months: 24
+  max_duration_months: 72
+  group_max_attendees: 10
+  min_individual_supervision_fraction: 0.50
+
+checks:
+  - id: pre_registration_required
+    severity: blocker
+    description: Supervision plan must be filed and approved by the Board before any hours accrue; retroactive hours not permitted (§603(A)(5)(d), §605(A)(3))
+    params:
+      signal_field: supervisionContractFiledAt
+
+  - id: supervisor_credential_required
+    severity: blocker
+    description: Supervisor must hold the LPC-S (LPC-Supervisor) designation from the LA LPC Board (§603(A)(5)(a), §801(A)(1)(a))
+    params:
+      accepted_credentials: [LPC-S]
+
+  - id: individual_supervision_cadence
+    severity: warning
+    description: At least 1 hour of face-to-face supervision per 20 hours of direct client contact (§503 Active Supervision)
+    params:
+      max_gap_days: 90
+      min_hours_per_period: 1.0
+
+  - id: supervision_ratio_per_practice_block
+    severity: warning
+    description: 1 hour of supervision per 20 direct client contact hours (§503)
+    params:
+      practice_hours_per_block: 20
+      individual_hours_required: 1.0
+      group_hours_required: 1.0
+
+  - id: individual_supervision_minimum_share
+    severity: warning
+    description: At least 50 of 100 supervision hours must be individual (§605(A)(2)(a)(iii)(a))
+    params:
+      min_individual_fraction: 0.50
+      enforce_after_practice_hours: 200
+
+  - id: group_size_limit
+    severity: blocker
+    description: Group supervision sessions must have 2-10 PLPCs (§605(A)(2)(a)(ii)(b))
+    params:
+      max_attendees: 10
+
+  - id: total_practice_hours
+    severity: info
+    description: Must accumulate at least 3,000 supervised practice hours (§605(A)(2))
+    params:
+      required: 3000
+
+  - id: total_supervision_hours
+    severity: info
+    description: Must accumulate at least 100 face-to-face supervision hours (§605(A)(2)(a))
+    params:
+      required: 100
+
+  - id: duration_window
+    severity: warning
+    description: Supervision must span 2-6 years from original approval date (§605(A)(2), §605(A)(4))
+    params:
+      min_months: 24
+      max_months: 72
+
+evidence_requirements:
+  form_template_key: LA_SUPERVISION_NOTE_V1
+  required_signers:
+    - supervisor
+    - supervisee
+  required_artifacts:
+    - attendance
+    - session_metadata
+  optional_artifacts:
+    - transcript
+  immutability: sha256_signed_json
+
+page_content:
+  intro: |
+    The Provisional Licensed Professional Counselor (PLPC) is Louisiana's
+    pre-independent counseling credential for mental health professionals working
+    toward full LPC licensure. PLPCs must practice under active supervision with
+    a Board-approved LPC-Supervisor. To earn the LPC, candidates must complete
+    3,000 hours of supervised experience (including 1,900+ direct counseling hours)
+    over 2-6 years, with a minimum of 100 face-to-face supervision hours.
+
+    Louisiana's supervision cadence is ratio-based: 1 hour of supervision for every
+    20 hours of direct client contact. The Board requires a supervision plan to be
+    filed and approved BEFORE any hours begin — retroactive hours are explicitly
+    prohibited. AuditHalo tracks all requirements continuously and alerts your team
+    when any supervisee falls behind.
+
+  supervisor_qualifications:
+    - "Must hold the LPC-S (LPC-Supervisor) designation issued by the LA LPC Board (§801(A)(1)(a))"
+    - "Must hold a Louisiana LPC license in good standing — not lapsed, expired, probated, suspended, or revoked (§801(A)(3))"
+    - "Must have minimum 3 years post-licensure mental health counseling experience (§801(A)(1)(b))"
+    - "Must have completed supervision training: either a 45+ clock hour graduate course or a 25+ clock hour approved training program, within 5 years of applying for supervisor status (§801(A)(1)(c))"
+    - "Cannot be a relative of the PLPC or employed by a relative (§603(A)(5)(d)(iii))"
+    - "May supervise no more than 10 PLPCs at any given time (§803(A)(2))"
+
+  key_warnings:
+    - "The supervision plan MUST be filed and approved by the Board BEFORE any hours accrue — retroactive supervision hours are explicitly not permitted (§605(A)(3))"
+    - "Practice setting must also be Board-approved before hours accrue there — failure to notify the Board of a new setting within 30 days forfeits ALL hours accrued at that setting (§603(A)(6)(d))"
+    - "PLPCs may not own, operate, or manage the practice; cannot bill directly or under another person's name (§603(A)(6)(e)-(f))"
+    - "An on-site administrative supervisor (licensed LPC, LMFT, or LCSW) must be employed and available at the practice setting (§603(A)(6)(g)-(i))"
+    - "PLPCs may not identify themselves as 'licensed,' 'fully licensed,' 'LPC,' or 'counselor' (§605(B)(1))"
+    - "Each PLPC must give clients a disclosure statement including training status and supervisor's name (§605(B)(2))"
+    - "Adding or changing supervisors requires filing and approval before new hours can accrue (§603(A)(5)(d)(i)-(ii))"
+    - "PLPC must report any status change (employment, arrests, discipline, impairment) to Board and supervisor within 30 days (§605(B)(5))"
+
+  faq:
+    - q: "How many supervised hours does a PLPC need in Louisiana?"
+      a: "3,000 total supervised practice hours over 2-6 years, including at least 1,900 direct counseling hours, 1,000 indirect hours, and 100 face-to-face supervision hours (50+ individual)."
+    - q: "What qualifies as an approved supervisor in Louisiana?"
+      a: "Your supervisor must hold the LPC-S (LPC-Supervisor) designation from the Louisiana LPC Board. This requires a Louisiana LPC in good standing, 3+ years post-licensure experience, and completion of an approved supervision training program. No other license type satisfies the Louisiana requirement."
+    - q: "Must the supervision plan be filed before I start?"
+      a: "Yes — this is mandatory. The supervision plan must be submitted on Board forms and approved before the proposed start date. Retroactive hours are explicitly not permitted. Adding or changing supervisors also requires prior filing and approval."
+    - q: "How often must supervision occur in Louisiana?"
+      a: "Louisiana uses a ratio-based cadence: 1 hour of face-to-face supervision for every 20 hours of direct client contact. Additionally, supervisor and supervisee must meet at least once within any 3-month period."
+    - q: "Can supervision be done via video in Louisiana?"
+      a: "Yes — up to 100% of face-to-face supervision hours may be conducted via synchronous videoconferencing on a HIPAA-compliant platform. Supervision may NOT be conducted via mail, email, or telephone."
+    - q: "Does AuditHalo generate the documentation Louisiana requires?"
+      a: "AuditHalo generates tamper-evident evidence packages for each supervision session including date, duration, session type, supervisor credentials, and intent-confirmed signatures. Records are maintained by employment location and hour type (direct, indirect, face-to-face) as required by §605(B)(6)."
+
+notes:
+  - Louisiana's rules were dated 12.21.21 and remain in effect. The 2024 legislature enacted HB 2024RS formally defining telesupervision; current Board rules already permit full videoconference supervision.
+  - The 1:20 supervision ratio (1 hour per 20 direct hours) is the core cadence — tracked via the supervision_ratio_per_practice_block check.
+  - PLPCs must also work under an on-site administrative supervisor (separate from the clinical LPC-S supervisor). This is a practice-setting requirement, not tracked per-session.
+  - "Out-of-state transfer caps: max 2,500 total transferred hours, 1,600 direct, 815 indirect, 85 supervision."
+  - PLPC renewal is every 2 years by October 31, requires 20 CEHs and $85 fee.
