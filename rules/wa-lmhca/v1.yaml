@@ -39,7 +39,7 @@ structured:
   min_duration_months: 36
   max_duration_months: 72
   group_max_attendees: 6
-  min_individual_supervision_fraction: 0.0
+  min_individual_supervision_fraction: 1.0
 
 checks:
   - id: pre_registration_required
@@ -52,14 +52,14 @@ checks:
     severity: blocker
     description: "Supervisor must be a licensed LMHC or equally qualified practitioner in good standing for past 2 years (WAC 246-809-234(1), WAC 246-809-210(4))"
     params:
-      accepted_credentials: [LMHC, LMFT, LICSW, Psychologist, Psychiatrist, Psychiatric-NP]
+      accepted_credentials: [LMHC, LMFT, LICSW, Psychologist, Psychiatrist, PMHNP]
 
-  - id: individual_supervision_cadence
-    severity: warning
-    description: "At least 1 hour of supervision per 80 hours of clinical practice time (WAC 246-809-020(2)(b))"
+  - id: individual_supervision_minimum_share
+    severity: blocker
+    description: "All 100 supervision hours must be immediate supervision (1 supervisor with no more than 2 candidates); group supervision does not count (WAC 246-809-230(3)(b)(i), WAC 246-809-210(6))"
     params:
-      max_gap_days: 60
-      min_hours_per_period: 1.0
+      min_individual_fraction: 1.0
+      enforce_after_practice_hours: 200
 
   - id: supervision_ratio_per_practice_block
     severity: warning

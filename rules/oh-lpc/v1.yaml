@@ -46,9 +46,9 @@ structured:
 checks:
   - id: supervisor_credential_required
     severity: blocker
-    description: "Training supervisor must be an LPCC with the Board's training supervision designation (OAC 4757-17-01(D)(3), 4757-13-03(A)(4)(b))"
+    description: "Training supervisor must be an LPCC with the Board's training supervision designation. Clinical/work supervisors (Psychologist, Psychiatrist, IMFT, LISW) may oversee MED activities but do NOT satisfy the training supervision requirement (OAC 4757-17-01(D)(3), 4757-13-03(A)(4)(b))"
     params:
-      accepted_credentials: [LPCC, Psychologist, Psychiatrist, IMFT, LISW]
+      accepted_credentials: [LPCC]
 
   - id: supervision_ratio_per_practice_block
     severity: warning

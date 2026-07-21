@@ -57,7 +57,7 @@ checks:
 
   - id: individual_supervision_cadence
     severity: warning
-    description: At least 1 hour of face-to-face supervision per 20 hours of direct client contact (§503 Active Supervision)
+    description: Supervisor and supervisee must meet at least once within any 3-month period (§503)
     params:
       max_gap_days: 90
       min_hours_per_period: 1.0
