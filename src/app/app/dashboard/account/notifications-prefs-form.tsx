@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import type { NotificationKind, NotificationPrefs } from "@/lib/db/schema";
 import { updateNotificationPrefsAction } from "@/app/actions/notifications";
-import { ROLE_NOTIFICATION_KINDS } from "@/lib/notifications";
+import { ROLE_NOTIFICATION_KINDS } from "@/lib/notification-kinds";
 
 const DEFAULTS: Record<NotificationKind, boolean> = {
   invite_accepted: true,

@@ -35,49 +35,7 @@ export const NOTIFICATION_DEFAULTS: Required<NotificationPrefs> = {
   },
 };
 
-/**
- * Which notification kinds are relevant per org role. Used by the
- * notification preferences form to hide kinds that don't apply.
- *
- * - supervisor: everything except rule_changed (that fires for supervisees).
- * - supervisee: signature + rule + evidence + session lifecycle.
- * - hr_admin: admin-oriented alerts (invites, rule gaps, compliance, trial).
- * - executive: read-only role — no email notifications.
- */
-export const ROLE_NOTIFICATION_KINDS: Record<string, Set<NotificationKind>> = {
-  supervisor: new Set<NotificationKind>([
-    "invite_accepted",
-    "signature_needed",
-    "evidence_sealed",
-    "supervisor_rule_not_set",
-    "attestation_overdue",
-    "trial_ending_soon",
-    "session_scheduled",
-    "session_canceled",
-    "session_rescheduled",
-    "session_reminder_1hour",
-    "session_reminder_15min",
-    "session_no_show",
-    "session_sign_reminder",
-  ]),
-  supervisee: new Set<NotificationKind>([
-    "signature_needed",
-    "rule_changed",
-    "evidence_sealed",
-    "session_scheduled",
-    "session_canceled",
-    "session_rescheduled",
-    "session_reminder_1hour",
-    "session_reminder_15min",
-  ]),
-  hr_admin: new Set<NotificationKind>([
-    "invite_accepted",
-    "supervisor_rule_not_set",
-    "attestation_overdue",
-    "trial_ending_soon",
-  ]),
-  executive: new Set<NotificationKind>(),
-};
+export { ROLE_NOTIFICATION_KINDS } from "@/lib/notification-kinds";
 
 /** Resolve effective email pref for a user/kind, falling back to defaults. */
 export function emailEnabled(
