@@ -127,7 +127,7 @@ export default function MarketingLayout({
               audits, not against them.
             </p>
             <p className="text-sm text-foreground/60">
-              Made for LCMHCA · APCC · LPC-A · RMHCI · LMHC
+              Made for LCMHCA · APCC · LPC-A · RMHCI · LP-MHC · LAC · LACMH · LPC · PLPC · LMHCA
             </p>
           </div>
         </div>

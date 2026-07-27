@@ -19,7 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata = {
   title: "For licensed supervisors — AuditHalo mental health supervision software",
   description:
-    "The supervision compliance system for mental health professionals. Track every supervised hour against your state board's requirements, capture intent-confirmed e-signatures, and generate board-ready audit packages. Built for LCMHCS, LPC-S, and qualified mental health supervisors in NC, CA, TX, FL, and NY.",
+    "The supervision compliance system for mental health professionals. Track every supervised hour against your state board's requirements, capture intent-confirmed e-signatures, and generate board-ready audit packages. Built for LCMHCS, LPC-S, and qualified mental health supervisors across 10 states.",
 };
 
 const steps = [
@@ -119,6 +119,51 @@ const stateGrid = [
     cadence: "Regular and consistent",
     slug: "ny-lmhc-lp",
   },
+  {
+    code: "AZ",
+    credential: "LAC",
+    hours: "3,200",
+    supervision: "100 hrs (≥25 individual)",
+    window: "2–10 years",
+    cadence: "1 hr/month during practice",
+    slug: "az-lac",
+  },
+  {
+    code: "DE",
+    credential: "LACMH",
+    hours: "3,200",
+    supervision: "100 hrs (≥60 individual)",
+    window: "2–4 years (consecutive)",
+    cadence: "Aggregate 100-hr floor",
+    slug: "de-lacmh",
+  },
+  {
+    code: "OH",
+    credential: "LPC",
+    hours: "3,000",
+    supervision: "~150 hrs (1:20 ratio)",
+    window: "2–10 years",
+    cadence: "1 hr per 20 practice hrs",
+    slug: "oh-lpc",
+  },
+  {
+    code: "LA",
+    credential: "PLPC",
+    hours: "3,000",
+    supervision: "100 hrs (≥50 individual)",
+    window: "2–6 years",
+    cadence: "1 hr per 20 client hrs",
+    slug: "la-plpc",
+  },
+  {
+    code: "WA",
+    credential: "LMHCA",
+    hours: "3,000",
+    supervision: "100 hrs (individual only)",
+    window: "3–6 years",
+    cadence: "1 hr per 80 clinical hrs",
+    slug: "wa-lmhca",
+  },
 ];
 
 const objections = [
@@ -140,7 +185,7 @@ const objections = [
   {
     objection: "What if my supervisee is in a state you don't support?",
     response:
-      "We launched with NC, CA, TX, FL, and NY because that's where the volume is. Tell us your state — we'll prioritize encoding it. Enterprise customers get custom state additions.",
+      "We cover NC, CA, TX, FL, NY, AZ, DE, OH, LA, and WA — 10 states and growing. Tell us your state if it's not listed — we prioritize encoding new rules by demand. Enterprise customers can also create custom rules for any jurisdiction directly in the app.",
   },
 ];
 
@@ -162,7 +207,7 @@ const faqItems = [
   },
   {
     q: "What if my state isn't listed?",
-    a: "We launched with NC, CA, TX, FL, and NY because that's where the volume is. Tell us your state — we prioritize encoding new rules by demand. Enterprise customers can request custom state additions on a faster timeline.",
+    a: "We cover NC, CA, TX, FL, NY, AZ, DE, OH, LA, and WA — 10 states and growing. Tell us your state if it's not listed — we prioritize encoding new rules by demand. Enterprise customers can also create custom rules for any jurisdiction directly in the app.",
   },
   {
     q: "How long does setup take?",
@@ -192,7 +237,7 @@ export default function ForSupervisorsPage() {
         </p>
         <p className="mt-4 text-lg text-foreground/70 max-w-2xl leading-relaxed">
           AuditHalo is the supervision compliance platform for licensed
-          mental health supervisors in NC, CA, TX, FL, and NY. Track every
+          mental health supervisors across 10 states. Track every
           supervised hour against the live state rule, capture intent-confirmed
           e-signatures, and generate tamper-evident audit packages — without a
           single spreadsheet.

@@ -18,7 +18,7 @@ import {
 export const metadata = {
   title: "AuditHalo — State-board compliance software for mental health supervisors",
   description:
-    "Track pre-licensed mental health counselor hours, signatures, and state-board requirements — then generate audit-ready evidence packages when your board asks. Built for LCMHCA, APCC, LPC-A, RMHCI, and LP-MHC supervisors.",
+    "Track pre-licensed mental health counselor hours, signatures, and state-board requirements — then generate audit-ready evidence packages when your board asks. Built for LCMHCA, APCC, LPC-A, RMHCI, LP-MHC, LAC, LACMH, LPC, PLPC, and LMHCA supervisors across 10 states.",
 };
 
 // The four locked value pillars from the brand voice doc — these are the
@@ -53,6 +53,11 @@ const states = [
   { code: "TX", license: "LPC-A", href: "/states/tx-lpc-associate" },
   { code: "FL", license: "RMHCI", href: "/states/fl-rmhci" },
   { code: "NY", license: "LP-MHC", href: "/states/ny-lmhc-lp" },
+  { code: "AZ", license: "LAC", href: "/states/az-lac" },
+  { code: "DE", license: "LACMH", href: "/states/de-lacmh" },
+  { code: "OH", license: "LPC", href: "/states/oh-lpc" },
+  { code: "LA", license: "PLPC", href: "/states/la-plpc" },
+  { code: "WA", license: "LMHCA", href: "/states/wa-lmhca" },
 ];
 
 export default function MarketingHome() {
@@ -135,11 +140,11 @@ export default function MarketingHome() {
             State board requirements, encoded.
           </h2>
           <p className="mt-3 text-foreground/70 max-w-2xl">
-            Five states at launch — covering the majority of pre-licensed
+            Ten states and growing — covering the majority of pre-licensed
             counselors in the US. Every rule is citation-linked to the state
             administrative code and re-verified quarterly.
           </p>
-          <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-border">
+          <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-px bg-border">
             {states.map((s) => (
               <Link
                 key={s.code}

@@ -15,6 +15,11 @@ const STATE_OPTIONS = [
   { value: "TX", label: "Texas (LPC-A)" },
   { value: "FL", label: "Florida (RMHCI)" },
   { value: "NY", label: "New York (LP-MHC)" },
+  { value: "AZ", label: "Arizona (LAC)" },
+  { value: "DE", label: "Delaware (LACMH)" },
+  { value: "OH", label: "Ohio (LPC)" },
+  { value: "LA", label: "Louisiana (PLPC)" },
+  { value: "WA", label: "Washington (LMHCA)" },
   { value: "other", label: "Other / not listed" },
 ];
 

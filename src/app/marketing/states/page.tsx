@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 export const metadata = {
   title: "Supported states — AuditHalo",
   description:
-    "Encoded state-board supervision rules for clinical mental-health counselor associates. NC LCMHCA, CA APCC, TX LPC-A, FL RMHCI, NY LMHC limited permit.",
+    "Encoded state-board supervision rules for clinical mental-health counselor associates across 10 states: NC, CA, TX, FL, NY, AZ, DE, OH, LA, WA. Citation-linked and quarterly verified.",
 };
 
 export default function StatesIndexPage() {

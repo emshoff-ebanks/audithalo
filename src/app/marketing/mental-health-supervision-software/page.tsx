@@ -17,20 +17,20 @@ const URL = "https://audithalo.com/mental-health-supervision-software";
 
 export const metadata = {
   title:
-    "Mental health supervision software for LCMHCA, APCC, LPC-A, RMHCI, LP-MHC | AuditHalo",
+    "Mental health supervision software for LCMHCA, APCC, LPC-A, RMHCI, LP-MHC, LAC, LACMH, LPC, PLPC, LMHCA | AuditHalo",
   description:
-    "Mental health supervision software for pre-licensed counselor associates. Track hours, capture e-signatures, and seal evidence packages against your exact state-board rule — NC, CA, TX, FL, NY.",
+    "Mental health supervision software for pre-licensed counselor associates. Track hours, capture e-signatures, and seal evidence packages against your exact state-board rule — 10 states including NC, CA, TX, FL, NY, AZ, DE, OH, LA, WA.",
   alternates: { canonical: URL },
 };
 
 const FAQ = [
   {
     q: "What is mental health supervision software?",
-    a: "Mental health supervision software helps pre-licensed counselor associates (LCMHCA, APCC, LPC-A, RMHCI, LP-MHC) and their supervisors track supervised practice hours against state-board licensure rules. The best tools encode each state's exact statute, capture intent-confirmed e-signatures from both signers, and generate sealed PDF evidence packages that survive a state-board audit.",
+    a: "Mental health supervision software helps pre-licensed counselor associates (LCMHCA, APCC, LPC-A, RMHCI, LP-MHC, LAC, LACMH, LPC, PLPC, LMHCA) and their supervisors track supervised practice hours against state-board licensure rules. The best tools encode each state's exact statute, capture intent-confirmed e-signatures from both signers, and generate sealed PDF evidence packages that survive a state-board audit.",
   },
   {
     q: "Which mental-health credentials does AuditHalo support?",
-    a: "LCMHCA (North Carolina), APCC (California), LPC-A (Texas), RMHCI (Florida), and LP-MHC (New York) at launch — covering the majority of pre-licensed mental-health counselors in the US. Each rule is citation-linked to the state administrative code and quarterly re-verified.",
+    a: "Ten states: LCMHCA (North Carolina), APCC (California), LPC-A (Texas), RMHCI (Florida), LP-MHC (New York), LAC (Arizona), LACMH (Delaware), LPC (Ohio), PLPC (Louisiana), and LMHCA (Washington). Each rule is citation-linked to the state administrative code and quarterly re-verified.",
   },
   {
     q: "How is this different from EHR or practice-management software?",
@@ -75,10 +75,11 @@ export default function MentalHealthSupervisionSoftwarePage() {
           Mental health supervision software, built for the supervisor.
         </h1>
         <p className="mt-6 text-lg text-foreground/70 max-w-3xl leading-relaxed">
-          AuditHalo tracks every supervised hour your LCMHCA, APCC, LPC-A,
-          RMHCI, or LP-MHC supervisee logs — against the exact state-board
-          rule, with intent-confirmed e-signatures and SHA-256-hashed evidence
-          packages. Audit-ready from day one.
+          AuditHalo tracks every supervised hour your pre-licensed
+          supervisee logs — across 10 states including NC, CA, TX, FL, NY,
+          AZ, DE, OH, LA, and WA — against the exact state-board rule, with
+          intent-confirmed e-signatures and SHA-256-hashed evidence packages.
+          Audit-ready from day one.
         </p>
         <div className="mt-10 flex flex-wrap items-center gap-3">
           <Button asChild size="lg">

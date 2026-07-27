@@ -38,7 +38,7 @@ const FAQ = [
   },
   {
     q: "Which states does AuditHalo cover?",
-    a: "North Carolina (LCMHCA), California (APCC), Texas (LPC-A), Florida (RMHCI), and New York (LP-MHC) at launch. Each rule is citation-linked to the state administrative code and re-verified quarterly. Additional states are added based on customer demand.",
+    a: "Ten states: North Carolina (LCMHCA), California (APCC), Texas (LPC-A), Florida (RMHCI), New York (LP-MHC), Arizona (LAC), Delaware (LACMH), Ohio (LPC), Louisiana (PLPC), and Washington (LMHCA). Each rule is citation-linked to the state administrative code and re-verified quarterly. Additional states are added based on customer demand.",
   },
   {
     q: "How do evidence packages work?",
@@ -101,7 +101,7 @@ export default function ClinicalSupervisionSoftwarePage() {
           </span>
           <span className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
-            5 states encoded at launch
+            10 states encoded and growing
           </span>
         </div>
       </section>
@@ -158,20 +158,25 @@ export default function ClinicalSupervisionSoftwarePage() {
             Supported states
           </Badge>
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground max-w-2xl">
-            Five states. Citation-linked. Quarterly verified.
+            Ten states. Citation-linked. Quarterly verified.
           </h2>
           <p className="mt-3 text-foreground/70 max-w-2xl">
             Each rule cites the state administrative code, includes the
             supervisor-credential requirement, the practice-to-supervision
             ratio, and the hour totals. New states ship based on customer demand.
           </p>
-          <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-border">
+          <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-px bg-border">
             {[
               { code: "NC", license: "LCMHCA", href: "/states/nc-lcmhca" },
               { code: "CA", license: "APCC", href: "/states/ca-apcc" },
               { code: "TX", license: "LPC-A", href: "/states/tx-lpc-associate" },
               { code: "FL", license: "RMHCI", href: "/states/fl-rmhci" },
               { code: "NY", license: "LP-MHC", href: "/states/ny-lmhc-lp" },
+              { code: "AZ", license: "LAC", href: "/states/az-lac" },
+              { code: "DE", license: "LACMH", href: "/states/de-lacmh" },
+              { code: "OH", license: "LPC", href: "/states/oh-lpc" },
+              { code: "LA", license: "PLPC", href: "/states/la-plpc" },
+              { code: "WA", license: "LMHCA", href: "/states/wa-lmhca" },
             ].map((s) => (
               <Link
                 key={s.code}

@@ -27,7 +27,7 @@ const featureSections = [
     intro:
       "The whole product is built around this. Every supervised hour is evaluated against your state's rule the moment it's logged.",
     bullets: [
-      "Five states at launch: NC LCMHCA, CA APCC, TX LPC-A, FL RMHCI, NY limited permit",
+      "Ten states: NC LCMHCA, CA APCC, TX LPC-A, FL RMHCI, NY LP-MHC, AZ LAC, DE LACMH, OH LPC, LA PLPC, WA LMHCA",
       "Every rule is citation-linked to the state administrative code",
       "Versioned with effective dates — in-flight obligations grandfather under the rule they started under",
       "Re-verified quarterly by licensed clinical supervisors on contract",
@@ -38,7 +38,7 @@ const featureSections = [
     icon: Sparkles,
     title: "AI-assisted session notes",
     intro:
-      "Paste a supervision transcript. Get a structured session note your supervisor can review and sign in minutes.",
+      "Paste a supervision transcript — or auto-fetch it from Teams or Google Meet. Get a structured session note your supervisor can review and sign in minutes.",
     bullets: [
       "7-section structured note: overview, topics covered, competencies addressed, goals, supervisor feedback, and next steps",
       "Prompt is versioned alongside the rule version — auditors can see exactly what the AI was instructed to produce",
@@ -73,14 +73,16 @@ const featureSections = [
   },
   {
     icon: Calendar,
-    title: "Session scheduling + Teams integration",
+    title: "Scheduling + calendar integration",
     intro:
-      "Schedule supervision sessions and link them to Microsoft Teams meetings. (Calendar sync ships in v1.1.)",
+      "Schedule supervision sessions with Google Meet or Microsoft Teams. Calendar events, reminders, and meeting links are handled automatically.",
     bullets: [
       "Individual or group supervision",
-      "Virtual (Teams) or in-person",
+      "Virtual (Teams or Meet) or in-person",
       "Linked to the supervisee's obligation — hours roll up automatically on session completion",
-      "Microsoft Calendar sync (with reminders) ships in v1.1",
+      "Google Calendar + Google Meet and Microsoft Outlook + Teams — connect either or both",
+      "Recurring sessions (weekly, biweekly, monthly) with persistent meeting links",
+      "Auto-fetch meeting transcript from Teams or Meet for one-click AI note generation",
     ],
   },
   {
