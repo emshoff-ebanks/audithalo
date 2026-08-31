@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -312,6 +313,21 @@ export default function ForSupervisorsPage() {
                 <p className="mt-2 text-foreground/70 leading-relaxed">{s.body}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Product screenshot */}
+      <section className="bg-background">
+        <div className="mx-auto max-w-5xl px-6 py-12 lg:py-16">
+          <div className="rounded-xl border border-border overflow-hidden shadow-lg">
+            <Image
+              src="/images/feature-roster.png"
+              alt="AuditHalo supervisor roster showing five supervisees across multiple states with progress bars and risk indicators"
+              width={1440}
+              height={900}
+              className="w-full h-auto"
+            />
           </div>
         </div>
       </section>

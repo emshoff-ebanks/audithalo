@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   BarChart3,
@@ -109,6 +110,21 @@ export default function ForGroupPracticesPage() {
             <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
             Supervisee accounts always free
           </span>
+        </div>
+      </section>
+
+      {/* Product screenshot */}
+      <section className="bg-background">
+        <div className="mx-auto max-w-5xl px-6 py-12 lg:py-16">
+          <div className="rounded-xl border border-border overflow-hidden shadow-lg">
+            <Image
+              src="/images/feature-dashboard.png"
+              alt="AuditHalo HR Admin dashboard with compliance score, risk distribution, and at-risk supervisee alerts"
+              width={1440}
+              height={900}
+              className="w-full h-auto"
+            />
+          </div>
         </div>
       </section>
 

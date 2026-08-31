@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -20,7 +21,13 @@ export const metadata = {
     "Multi-state rules engine, AI session notes, tamper-evident e-signatures, role-based dashboards, audit packages.",
 };
 
-const featureSections = [
+const featureSections: Array<{
+  icon: React.ElementType;
+  title: string;
+  intro: string;
+  bullets: string[];
+  image?: { src: string; alt: string };
+}> = [
   {
     icon: ShieldCheck,
     title: "Multi-state rules engine",
@@ -33,6 +40,10 @@ const featureSections = [
       "Re-verified quarterly by licensed clinical supervisors on contract",
       "Detects edge cases (telehealth carve-outs, supervisor-qualification mismatches, pre-registration gaps) before they cost you hours",
     ],
+    image: {
+      src: "/images/feature-rules-engine.png",
+      alt: "AuditHalo rules engine showing canonical state rules with citation links to AZ, CA, FL, and NC admin codes",
+    },
   },
   {
     icon: Sparkles,
@@ -108,6 +119,10 @@ const featureSections = [
       "Rule version a supervisee was operating under is preserved with each package",
       "Independently verifiable: hand the board the JSON + hash and they can reproduce verification",
     ],
+    image: {
+      src: "/images/feature-audit-log.png",
+      alt: "AuditHalo audit log with 2FA-gated CSV export and immutable event history",
+    },
   },
   {
     icon: Lock,
@@ -166,6 +181,17 @@ export default function FeaturesPage() {
                     </li>
                   ))}
                 </ul>
+                {section.image && (
+                  <div className="mt-8 rounded-lg border border-border overflow-hidden shadow-sm">
+                    <Image
+                      src={section.image.src}
+                      alt={section.image.alt}
+                      width={1440}
+                      height={900}
+                      className="w-full h-auto"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           ))}
