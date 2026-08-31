@@ -87,6 +87,11 @@ const REPAIR_TARGETS: Array<{
     sentinel: `SELECT 1 FROM information_schema.tables
                WHERE table_name='paycor_delivery_queue'`,
   },
+  {
+    file: "0036_practice_hour_approval.sql",
+    sentinel: `SELECT 1 FROM information_schema.columns
+               WHERE table_name='session_events' AND column_name='approved_at'`,
+  },
 ];
 
 function sha256(s: string): string {
