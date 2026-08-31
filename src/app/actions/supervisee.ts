@@ -408,34 +408,13 @@ export async function logSessionAction(
     sessionType: parsed.data.sessionType ?? null,
   });
 
-  // Notify supervisee if this is a supervision event (practice events don't
-  // need signatures). createNotification writes the bell row and (when the
-  // supervisee opts in for signature_needed — default true) sends the email.
-  // Failure must never block the action — wrapped in try/catch.
-  //
-  // Guard: don't ping the supervisee for a session that hasn't happened yet.
-  // The scheduling path (Phase 5 group/recurring sessions) creates rows with
-  // future dates that the user shouldn't be asked to sign until the meeting
-  // is actually over. A scheduled-session reminder fires through
-  // session_reminder_1hour/_15min instead.
+  // Supervisor signs first, then the supervisee countersigns. The supervisee
+  // is notified via the countersignature email AFTER the supervisor signs
+  // (handled in signSessionAction). We intentionally do NOT fire a
+  // signature_needed notification to the supervisee at log time — sending
+  // "needs your signature" before they can actually sign is confusing.
   const sessionStart = new Date(parsed.data.date);
   const sessionIsInFuture = sessionStart.getTime() > Date.now();
-  if (parsed.data.kind === "supervision" && !sessionIsInFuture) {
-    try {
-      await createNotification({
-        userId: parsed.data.superviseeId,
-        kind: "signature_needed",
-        payload: {
-          sessionId: insertedId,
-          sessionDate: parsed.data.date,
-          sessionType: parsed.data.sessionType ?? "individual",
-          durationHours: parsed.data.durationHours,
-        },
-      });
-    } catch (err) {
-      console.error("[notifications] signature_needed failed:", err);
-    }
-  }
 
   revalidatePath(`/dashboard/roster/${parsed.data.superviseeId}`);
 

@@ -38,10 +38,15 @@ export function pendingSignaturesForUser(
     if (!Number.isFinite(startMs)) return false;
     const durationHours = e.durationHours ?? 0;
     const endMs = startMs + durationHours * 60 * 60_000;
-    // Meeting hasn't ended yet → not actionable. After end, it's
-    // signable whether the row still says 'scheduled' or has gone to
-    // 'completed' or has a null status (legacy after-the-fact log).
     if (endMs > nowMs) return false;
+    // Supervisor signs first. If this user is the supervisee on this
+    // session, don't show it as pending until the supervisor has signed.
+    if (
+      e.superviseeId === userId &&
+      !(e.signatures ?? []).some((s) => s.signerRole === "supervisor")
+    ) {
+      return false;
+    }
     return true;
   });
 }

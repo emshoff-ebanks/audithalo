@@ -7,17 +7,16 @@ type SessionEvent = typeof schema.sessionEvents.$inferSelect;
 function mkSupervisionEvent(opts: {
   id: string;
   signedAt: Date | null;
-  signatures: Array<{ signerId: string }>;
+  signatures: Array<{ signerId: string; signerRole?: string }>;
   date?: Date;
   scheduledStatus?: string | null;
+  superviseeId?: string;
 }): SessionEvent {
   return {
     id: opts.id,
-    superviseeId: "u1",
+    superviseeId: opts.superviseeId ?? "u1",
     orgId: "o1",
     kind: "supervision",
-    // Default to a comfortably past time so the end-time filter doesn't
-    // exclude rows that the test didn't explicitly date.
     date: opts.date ?? new Date(Date.now() - 24 * 60 * 60_000),
     durationHours: 1,
     sessionType: "individual",
@@ -32,11 +31,13 @@ function mkSupervisionEvent(opts: {
 }
 
 describe("pendingSignaturesForUser", () => {
-  it("returns supervision sessions not signed by the user", () => {
+  // --- Supervisor viewer (userId !== superviseeId) ---
+
+  it("returns unsigned sessions for a supervisor viewer", () => {
     const events = [
       mkSupervisionEvent({ id: "a", signedAt: null, signatures: [] }),
     ];
-    const result = pendingSignaturesForUser(events, "me");
+    const result = pendingSignaturesForUser(events, "supervisor-1");
     expect(result.map((e) => e.id)).toEqual(["a"]);
   });
 
@@ -68,10 +69,6 @@ describe("pendingSignaturesForUser", () => {
     expect(pendingSignaturesForUser(events, "me")).toEqual([]);
   });
 
-  // Cycle 8: future scheduled sessions are not signable yet — they
-  // shouldn't appear under "Needs your signature" on the supervisee
-  // dashboard. The previous behavior was actively misleading because the
-  // supervisee couldn't dismiss them.
   it("excludes future scheduled supervision sessions", () => {
     const now = new Date("2026-06-12T12:00:00Z");
     const events = [
@@ -107,7 +104,7 @@ describe("pendingSignaturesForUser", () => {
     expect(pendingSignaturesForUser(events, "me", now)).toEqual([]);
   });
 
-  it("includes completed-but-unsigned sessions", () => {
+  it("includes completed-but-unsigned sessions for supervisor", () => {
     const now = new Date("2026-06-12T12:00:00Z");
     const events = [
       mkSupervisionEvent({
@@ -117,7 +114,6 @@ describe("pendingSignaturesForUser", () => {
         date: new Date("2026-06-10T12:00:00Z"),
         scheduledStatus: "completed",
       }),
-      // Null status + past date — legacy logged-after-the-fact event.
       mkSupervisionEvent({
         id: "legacy",
         signedAt: null,
@@ -127,7 +123,7 @@ describe("pendingSignaturesForUser", () => {
       }),
     ];
     expect(
-      pendingSignaturesForUser(events, "me", now).map((e) => e.id)
+      pendingSignaturesForUser(events, "supervisor-1", now).map((e) => e.id)
     ).toEqual(["completed", "legacy"]);
   });
 
@@ -145,23 +141,18 @@ describe("pendingSignaturesForUser", () => {
     expect(pendingSignaturesForUser(events, "me", now)).toEqual([]);
   });
 
-  // Regression for the post-no-show-removal bug: a row whose meeting
-  // ended hours ago can carry scheduledStatus='scheduled' forever
-  // (nothing flips it now). The filter must include those — the
-  // supervisee still needs to sign.
-  it("includes past-end sessions still tagged scheduledStatus='scheduled'", () => {
+  it("includes past-end sessions still tagged scheduledStatus='scheduled' for supervisor", () => {
     const now = new Date("2026-06-12T18:00:00Z");
     const events = [
       mkSupervisionEvent({
         id: "stale-scheduled",
         signedAt: null,
         signatures: [],
-        // Started 4 hours ago, 1h long — ended 3 hours ago.
         date: new Date("2026-06-12T14:00:00Z"),
         scheduledStatus: "scheduled",
       }),
     ];
-    const result = pendingSignaturesForUser(events, "me", now);
+    const result = pendingSignaturesForUser(events, "supervisor-1", now);
     expect(result.map((e) => e.id)).toEqual(["stale-scheduled"]);
   });
 
@@ -172,11 +163,55 @@ describe("pendingSignaturesForUser", () => {
         id: "in-progress",
         signedAt: null,
         signatures: [],
-        // Started 30 min ago, 1h long — ends 30 min from now.
         date: new Date("2026-06-12T14:00:00Z"),
         scheduledStatus: "scheduled",
       }),
     ];
     expect(pendingSignaturesForUser(events, "me", now)).toEqual([]);
+  });
+
+  // --- Supervisee viewer (userId === superviseeId) + signing order ---
+
+  it("excludes sessions for the supervisee when supervisor has NOT signed yet", () => {
+    const now = new Date("2026-06-12T12:00:00Z");
+    const events = [
+      mkSupervisionEvent({
+        id: "waiting",
+        signedAt: null,
+        signatures: [],
+        superviseeId: "supervisee-1",
+        date: new Date("2026-06-10T12:00:00Z"),
+      }),
+    ];
+    expect(pendingSignaturesForUser(events, "supervisee-1", now)).toEqual([]);
+  });
+
+  it("includes sessions for the supervisee AFTER supervisor has signed", () => {
+    const now = new Date("2026-06-12T12:00:00Z");
+    const events = [
+      mkSupervisionEvent({
+        id: "ready",
+        signedAt: null,
+        signatures: [{ signerId: "sup-1", signerRole: "supervisor" }],
+        superviseeId: "supervisee-1",
+        date: new Date("2026-06-10T12:00:00Z"),
+      }),
+    ];
+    const result = pendingSignaturesForUser(events, "supervisee-1", now);
+    expect(result.map((e) => e.id)).toEqual(["ready"]);
+  });
+
+  it("excludes sessions for the supervisee when only another supervisee has signed (no supervisor)", () => {
+    const now = new Date("2026-06-12T12:00:00Z");
+    const events = [
+      mkSupervisionEvent({
+        id: "no-sup",
+        signedAt: null,
+        signatures: [{ signerId: "other-supervisee", signerRole: "supervisee" }],
+        superviseeId: "supervisee-1",
+        date: new Date("2026-06-10T12:00:00Z"),
+      }),
+    ];
+    expect(pendingSignaturesForUser(events, "supervisee-1", now)).toEqual([]);
   });
 });

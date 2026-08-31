@@ -13,18 +13,21 @@ const mkSig = (overrides: Partial<SessionSignature>): SessionSignature => ({
 });
 
 describe("decideNextSignature", () => {
-  it("appends a new signature to an empty list and is NOT fully signed", () => {
-    const result = decideNextSignature([], mkSig({}));
+  it("appends a supervisor signature to an empty list and is NOT fully signed", () => {
+    const result = decideNextSignature(
+      [],
+      mkSig({ signerRole: "supervisor" })
+    );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.updated).toHaveLength(1);
     expect(result.fullySigned).toBe(false);
   });
 
-  it("marks fully signed once both supervisee and supervisor have signed", () => {
-    const supervisee = mkSig({ signerId: "u1", signerRole: "supervisee" });
+  it("marks fully signed once supervisor signs first, then supervisee countersigns", () => {
     const supervisor = mkSig({ signerId: "u2", signerRole: "supervisor" });
-    const result = decideNextSignature([supervisee], supervisor);
+    const supervisee = mkSig({ signerId: "u1", signerRole: "supervisee" });
+    const result = decideNextSignature([supervisor], supervisee);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.updated).toHaveLength(2);
@@ -32,8 +35,8 @@ describe("decideNextSignature", () => {
   });
 
   it("rejects when the same signer tries to sign twice", () => {
-    const first = mkSig({ signerId: "u1", signerRole: "supervisee" });
-    const second = mkSig({ signerId: "u1", signerRole: "supervisee" });
+    const first = mkSig({ signerId: "u1", signerRole: "supervisor" });
+    const second = mkSig({ signerId: "u1", signerRole: "supervisor" });
     const result = decideNextSignature([first], second);
     expect(result.ok).toBe(false);
     if (result.ok) return;
@@ -41,18 +44,76 @@ describe("decideNextSignature", () => {
   });
 
   it("rejects when intent is not confirmed", () => {
-    const result = decideNextSignature([], mkSig({ intentConfirmed: false }));
+    const result = decideNextSignature(
+      [],
+      mkSig({ intentConfirmed: false, signerRole: "supervisor" })
+    );
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error).toMatch(/intent/i);
   });
 
-  it("two supervisees alone do NOT mark fully signed (need a supervisor)", () => {
-    const a = mkSig({ signerId: "u1", signerRole: "supervisee" });
-    const b = mkSig({ signerId: "u2", signerRole: "supervisee" });
-    const result = decideNextSignature([a], b);
+  // --- Signing order enforcement ---
+
+  it("rejects supervisee signing on an empty list (supervisor must sign first)", () => {
+    const result = decideNextSignature(
+      [],
+      mkSig({ signerId: "u1", signerRole: "supervisee" })
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatch(/supervisor must sign/i);
+  });
+
+  it("rejects supervisee signing when only another supervisee has signed (no supervisor yet)", () => {
+    const otherSupervisee = mkSig({
+      signerId: "u3",
+      signerRole: "supervisee",
+    });
+    const result = decideNextSignature(
+      [otherSupervisee],
+      mkSig({ signerId: "u1", signerRole: "supervisee" })
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatch(/supervisor must sign/i);
+  });
+
+  it("allows supervisee to sign after supervisor has signed", () => {
+    const supervisor = mkSig({ signerId: "u2", signerRole: "supervisor" });
+    const result = decideNextSignature(
+      [supervisor],
+      mkSig({ signerId: "u1", signerRole: "supervisee" })
+    );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
+    expect(result.updated).toHaveLength(2);
+    expect(result.fullySigned).toBe(true);
+  });
+
+  it("allows supervisor to sign on an empty list", () => {
+    const result = decideNextSignature(
+      [],
+      mkSig({ signerId: "u2", signerRole: "supervisor" })
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.updated).toHaveLength(1);
     expect(result.fullySigned).toBe(false);
+  });
+
+  it("group session: multiple supervisees can sign after supervisor", () => {
+    const supervisor = mkSig({ signerId: "u1", signerRole: "supervisor" });
+    const superviseeA = mkSig({ signerId: "u2", signerRole: "supervisee" });
+    // First supervisee signs after supervisor
+    const r1 = decideNextSignature([supervisor], superviseeA);
+    expect(r1.ok).toBe(true);
+    if (!r1.ok) return;
+    // Second supervisee signs after both
+    const superviseeB = mkSig({ signerId: "u3", signerRole: "supervisee" });
+    const r2 = decideNextSignature(r1.updated, superviseeB);
+    expect(r2.ok).toBe(true);
+    if (!r2.ok) return;
+    expect(r2.updated).toHaveLength(3);
   });
 });

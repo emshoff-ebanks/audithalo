@@ -20,6 +20,18 @@ export function decideNextSignature(
   if (existing.some((s) => s.signerId === candidate.signerId)) {
     return { ok: false, error: "You already signed this session." };
   }
+  // Supervisor signs first. Supervisees cannot sign until a supervisor
+  // signature is present — the supervisor attests to the session before
+  // the supervisee confirms it.
+  if (
+    candidate.signerRole === "supervisee" &&
+    !existing.some((s) => s.signerRole === "supervisor")
+  ) {
+    return {
+      ok: false,
+      error: "Your supervisor must sign this session before you can countersign.",
+    };
+  }
   const updated = [...existing, candidate];
   const fullySigned =
     updated.some((s) => s.signerRole === "supervisee") &&

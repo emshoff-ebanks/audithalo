@@ -248,8 +248,9 @@ export default async function SignSessionPage({
       </h1>
       <p className="mt-2 text-foreground/70">
         Your signature is recorded with your name, role, IP address, timestamp, and
-        explicit intent confirmation. Once both the supervisee and supervisor have
-        signed, the session is sealed and contributes to the evidence package for{" "}
+        explicit intent confirmation. The supervisor signs first, then the supervisee
+        countersigns. Once both have signed, the session is sealed and contributes
+        to the evidence package for{" "}
         {supervisee.name}.
       </p>
 
@@ -417,6 +418,15 @@ export default async function SignSessionPage({
               <Badge variant="outline">View only</Badge>
               <p className="mt-3 text-sm text-foreground/70">
                 You aren&apos;t a required signer for this session.
+              </p>
+            </div>
+          ) : signerRole === "supervisee" &&
+            !signatures.some((s) => s.signerRole === "supervisor") ? (
+            <div className="pt-4 border-t border-border">
+              <Badge variant="outline">Awaiting supervisor</Badge>
+              <p className="mt-3 text-sm text-foreground/70">
+                Your supervisor must sign this session first. Once they sign,
+                you&apos;ll be able to countersign here.
               </p>
             </div>
           ) : (

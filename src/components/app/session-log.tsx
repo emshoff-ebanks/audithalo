@@ -69,13 +69,21 @@ export function SessionLog({
     return d.getTime() > todayStart.getTime();
   }
 
-  // Canonical "row needs somebody's signature" predicate — shared with
-  // pendingSignaturesForUser and roster-queries pendingSignatureCount so
-  // every surface agrees on which rows are pending. Excludes canceled,
-  // no_show, future-end, practice, and already-signed rows.
+  // Canonical "row needs THIS viewer's signature" predicate. For supervisors
+  // (viewerIsManager), all unsigned sessions are actionable. For supervisees,
+  // only sessions where the supervisor has already signed — because the
+  // supervisor signs first.
   const pendingItems = useMemo(
-    () => events.filter((e) => isSessionPendingSignature(e)),
-    [events]
+    () =>
+      events.filter((e) => {
+        if (!isSessionPendingSignature(e)) return false;
+        if (viewerIsManager) return true;
+        // Supervisee viewer: only show if supervisor has signed
+        return (e.signatures as { signerRole?: string }[]).some(
+          (s) => s.signerRole === "supervisor"
+        );
+      }),
+    [events, viewerIsManager]
   );
 
   const filteredEvents = useMemo(() => {
@@ -316,13 +324,19 @@ export function SessionLog({
                         // The sign page server-rejects canceled / no_show
                         // anyway; the UI shouldn't be tempting the user to
                         // click into a dead end.
+                        // Supervisor signs first — supervisees can only
+                        // sign after a supervisor signature exists.
+                        const supervisorHasSigned = (
+                          e.signatures as { signerRole?: string }[]
+                        ).some((s) => s.signerRole === "supervisor");
                         const canSign =
                           !fullySigned &&
                           !myselfHasSigned &&
                           !isFutureRow &&
                           !isCanceled &&
                           !isNoShow &&
-                          (isSelfSupervisee || viewerIsManager);
+                          (viewerIsManager ||
+                            (isSelfSupervisee && supervisorHasSigned));
                         const isFlagged = flaggedSet.has(e.id);
                         const rowRef =
                           isFlagged && !firstFlaggedRowRef.current
