@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -69,40 +70,54 @@ export default function MarketingHome() {
       />
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 py-16 sm:py-24 lg:py-32">
-        <Badge variant="outline" className="mb-6">
-          Clinical supervision compliance software
-        </Badge>
-        <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-3xl leading-[1.05]">
-          State-board compliance software for mental health supervisors.
-        </h1>
-        <p className="mt-6 text-lg text-foreground/70 max-w-2xl leading-relaxed">
-          Track pre-licensed counselor hours, signatures, and state-board
-          requirements — then generate audit-ready evidence packages when your
-          board asks.
-        </p>
-        <div className="mt-10 flex flex-wrap items-center gap-3">
-          <Button asChild size="lg">
-            <a href="https://app.audithalo.com/register">
-              Start your supervisor account <ArrowRight />
-            </a>
-          </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link href="/for-supervisors">See how it works</Link>
-          </Button>
-        </div>
-        <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/60">
-          <span className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
-            14-day free trial
-          </span>
-          <span className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
-            No credit card required
-          </span>
-          <span className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
-            Supervisee accounts always free
-          </span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div>
+            <Badge variant="outline" className="mb-6">
+              Clinical supervision compliance software
+            </Badge>
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.05]">
+              State-board compliance software for mental health supervisors.
+            </h1>
+            <p className="mt-6 text-lg text-foreground/70 max-w-2xl leading-relaxed">
+              Track pre-licensed counselor hours, signatures, and state-board
+              requirements — then generate audit-ready evidence packages when your
+              board asks.
+            </p>
+            <div className="mt-10 flex flex-wrap items-center gap-3">
+              <Button asChild size="lg">
+                <a href="https://app.audithalo.com/register">
+                  Start your supervisor account <ArrowRight />
+                </a>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link href="/for-supervisors">See how it works</Link>
+              </Button>
+            </div>
+            <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/60">
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
+                14-day free trial
+              </span>
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
+                No credit card required
+              </span>
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
+                Supervisee accounts always free
+              </span>
+            </div>
+          </div>
+          <div className="hidden lg:block">
+            <Image
+              src="/images/hero-product.png"
+              alt="AuditHalo supervision compliance dashboard on desktop and mobile"
+              width={1200}
+              height={1000}
+              priority
+              className="w-full h-auto"
+            />
+          </div>
         </div>
       </section>
 
