@@ -23,6 +23,7 @@ type SessionEvent = {
   signatures: unknown[];
   scheduledStatus?: string | null;
   practiceState?: string | null;
+  approvedAt?: Date | string | null;
 };
 
 type Props = {
@@ -398,6 +399,11 @@ export function SessionLog({
                                 <Badge variant="outline">Canceled</Badge>
                               ) : isNoShow ? (
                                 <Badge variant="outline">No-show</Badge>
+                              ) : e.kind === "practice" && !e.approvedAt ? (
+                                <Badge variant="outline-warn">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  Awaiting approval
+                                </Badge>
                               ) : isFutureRow ? (
                                 <Badge variant="outline">Scheduled</Badge>
                               ) : (

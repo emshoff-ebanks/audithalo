@@ -33,6 +33,7 @@ import {
   CompletedAttestations,
   type CompletedAttestation,
 } from "./_completed-attestations";
+import { PracticeReviewQueue } from "./_practice-review-queue";
 
 export const metadata = {
   title: "Supervisee — AuditHalo",
@@ -691,6 +692,29 @@ export default async function SuperviseeDetailPage({
         </div>
       )}
 
+      {/* Practice hour review queue — supervisors only */}
+      {viewerCanSupervise && (() => {
+        const pendingPractice = events.filter(
+          (e) => e.kind === "practice" && !e.approvedAt
+        );
+        if (pendingPractice.length === 0) return null;
+        return (
+          <Card className="mt-6">
+            <CardContent className="p-6">
+              <PracticeReviewQueue
+                entries={pendingPractice.map((e) => ({
+                  id: e.id,
+                  date: e.date.toISOString().slice(0, 10),
+                  durationHours: e.durationHours,
+                  directContactHours: e.directContactHours,
+                  practiceState: e.practiceState,
+                }))}
+              />
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {/* Order on this page: Session log (most-touched) → Evidence packages
           (sealed history) → Completed compliance tasks (rarely-touched
           attestation receipts at the bottom). */}
@@ -713,6 +737,7 @@ export default async function SuperviseeDetailPage({
                 signatures: e.signatures ?? [],
                 scheduledStatus: e.scheduledStatus,
                 practiceState: e.practiceState,
+                approvedAt: e.approvedAt,
               }))}
               viewerIsManager={viewerIsManager}
               viewerUserId={session.user.id}

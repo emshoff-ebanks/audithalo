@@ -87,4 +87,7 @@ export const AUDIT_ACTIONS = {
   // Paycor connection management (Wave 2 Phase 3)
   PAYCOR_CONNECTED: "paycor.connected",
   PAYCOR_DISCONNECTED: "paycor.disconnected",
+  // Practice hour approval (strategy doc 21)
+  PRACTICE_HOURS_APPROVED: "practice_hours.approved",
+  PRACTICE_HOURS_REJECTED: "practice_hours.rejected",
 } as const;

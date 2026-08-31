@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
@@ -408,13 +408,40 @@ export async function logSessionAction(
     sessionType: parsed.data.sessionType ?? null,
   });
 
-  // Supervisor signs first, then the supervisee countersigns. The supervisee
-  // is notified via the countersignature email AFTER the supervisor signs
-  // (handled in signSessionAction). We intentionally do NOT fire a
-  // signature_needed notification to the supervisee at log time — sending
-  // "needs your signature" before they can actually sign is confusing.
   const sessionStart = new Date(parsed.data.date);
   const sessionIsInFuture = sessionStart.getTime() > Date.now();
+
+  // Notify the assigned supervisor when a supervisee logs practice hours
+  // so they know to review and approve them.
+  if (parsed.data.kind === "practice" && !sessionIsInFuture) {
+    try {
+      const assignment = await db.query.supervisorAssignments.findFirst({
+        where: and(
+          eq(schema.supervisorAssignments.superviseeId, parsed.data.superviseeId),
+          eq(schema.supervisorAssignments.orgId, orgId),
+          isNull(schema.supervisorAssignments.endedAt)
+        ),
+      });
+      if (assignment?.supervisorId) {
+        const supervisee = await db.query.users.findFirst({
+          where: eq(schema.users.id, parsed.data.superviseeId),
+        });
+        await createNotification({
+          userId: assignment.supervisorId,
+          kind: "practice_hours_submitted",
+          payload: {
+            sessionId: insertedId,
+            superviseeId: parsed.data.superviseeId,
+            superviseeName: supervisee?.name ?? supervisee?.email ?? "supervisee",
+            date: parsed.data.date,
+            durationHours: parsed.data.durationHours,
+          },
+        });
+      }
+    } catch (err) {
+      console.error("[notifications] practice_hours_submitted failed:", err);
+    }
+  }
 
   revalidatePath(`/dashboard/roster/${parsed.data.superviseeId}`);
 

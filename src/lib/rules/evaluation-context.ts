@@ -42,31 +42,33 @@ export function resolveEvaluation(
     supervisionContractFiledAt:
       assignment.supervisionContractFiledAt?.toISOString(),
     permitExpiresAt: assignment.permitExpiresAt?.toISOString(),
-    sessions: events.map((e) =>
-      e.kind === "practice"
-        ? {
-            kind: "practice" as const,
-            id: e.id,
-            date: e.date.toISOString(),
-            durationHours: e.durationHours,
-            directContactHours: e.directContactHours ?? undefined,
-            practiceState: e.practiceState ?? undefined,
-          }
-        : {
-            kind: "supervision" as const,
-            id: e.id,
-            date: e.date.toISOString(),
-            durationHours: e.durationHours,
-            sessionType:
-              (e.sessionType as "individual" | "triadic" | "group") ??
-              "individual",
-            supervisorCredentials:
-              (e.supervisorCredentials as string[]) ?? [],
-            groupAttendees: e.groupAttendees ?? undefined,
-            supervisorTrainingHours:
-              e.supervisorTrainingHours ?? undefined,
-          }
-    ),
+    sessions: events
+      .filter((e) => e.kind !== "practice" || e.approvedAt !== null)
+      .map((e) =>
+        e.kind === "practice"
+          ? {
+              kind: "practice" as const,
+              id: e.id,
+              date: e.date.toISOString(),
+              durationHours: e.durationHours,
+              directContactHours: e.directContactHours ?? undefined,
+              practiceState: e.practiceState ?? undefined,
+            }
+          : {
+              kind: "supervision" as const,
+              id: e.id,
+              date: e.date.toISOString(),
+              durationHours: e.durationHours,
+              sessionType:
+                (e.sessionType as "individual" | "triadic" | "group") ??
+                "individual",
+              supervisorCredentials:
+                (e.supervisorCredentials as string[]) ?? [],
+              groupAttendees: e.groupAttendees ?? undefined,
+              supervisorTrainingHours:
+                e.supervisorTrainingHours ?? undefined,
+            }
+      ),
     asOf: asOf.toISOString(),
   };
 
@@ -86,31 +88,33 @@ export function buildEvaluationContext(
     supervisionContractFiledAt:
       assignment.supervisionContractFiledAt?.toISOString(),
     permitExpiresAt: assignment.permitExpiresAt?.toISOString(),
-    sessions: events.map((e) =>
-      e.kind === "practice"
-        ? {
-            kind: "practice" as const,
-            id: e.id,
-            date: e.date.toISOString(),
-            durationHours: e.durationHours,
-            directContactHours: e.directContactHours ?? undefined,
-            practiceState: e.practiceState ?? undefined,
-          }
-        : {
-            kind: "supervision" as const,
-            id: e.id,
-            date: e.date.toISOString(),
-            durationHours: e.durationHours,
-            sessionType:
-              (e.sessionType as "individual" | "triadic" | "group") ??
-              "individual",
-            supervisorCredentials:
-              (e.supervisorCredentials as string[]) ?? [],
-            groupAttendees: e.groupAttendees ?? undefined,
-            supervisorTrainingHours:
-              e.supervisorTrainingHours ?? undefined,
-          }
-    ),
+    sessions: events
+      .filter((e) => e.kind !== "practice" || e.approvedAt !== null)
+      .map((e) =>
+        e.kind === "practice"
+          ? {
+              kind: "practice" as const,
+              id: e.id,
+              date: e.date.toISOString(),
+              durationHours: e.durationHours,
+              directContactHours: e.directContactHours ?? undefined,
+              practiceState: e.practiceState ?? undefined,
+            }
+          : {
+              kind: "supervision" as const,
+              id: e.id,
+              date: e.date.toISOString(),
+              durationHours: e.durationHours,
+              sessionType:
+                (e.sessionType as "individual" | "triadic" | "group") ??
+                "individual",
+              supervisorCredentials:
+                (e.supervisorCredentials as string[]) ?? [],
+              groupAttendees: e.groupAttendees ?? undefined,
+              supervisorTrainingHours:
+                e.supervisorTrainingHours ?? undefined,
+            }
+      ),
     asOf: asOf.toISOString(),
   };
 }

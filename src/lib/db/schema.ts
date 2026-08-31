@@ -127,7 +127,10 @@ export type NotificationKind =
   | "session_no_show"
   // Fires when a session's end time has just passed and it isn't signed
   // yet. Replaces the daily auto-no-show flow per docs/strategy/08.
-  | "session_sign_reminder";
+  | "session_sign_reminder"
+  // Practice hour approval (strategy doc 21).
+  | "practice_hours_submitted"
+  | "practice_hours_rejected";
 
 export type NotificationPrefs = {
   email: Partial<Record<NotificationKind, boolean>>;
@@ -618,6 +621,13 @@ export const sessionEvents = pgTable("session_events", {
   // supervisor on the sign page for RI orgs (gated by org.pdfTemplateKey).
   // See src/lib/clinical-form/types.ts for the shape.
   clinicalFormData: jsonb("clinical_form_data").$type<import("@/lib/clinical-form/types").ClinicalFormData>(),
+  // Practice hour approval (strategy doc 21). Supervisee logs practice hours,
+  // supervisor reviews and approves before they count toward rule evaluation.
+  // NULL = pending approval (or N/A for supervision events).
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  approvedByUserId: uuid("approved_by_user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

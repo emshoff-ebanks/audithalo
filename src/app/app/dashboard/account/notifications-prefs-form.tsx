@@ -21,6 +21,8 @@ const DEFAULTS: Record<NotificationKind, boolean> = {
   session_reminder_15min: false,
   session_no_show: true,
   session_sign_reminder: false,
+  practice_hours_submitted: true,
+  practice_hours_rejected: true,
 };
 
 const KIND_META: Record<
@@ -97,6 +99,16 @@ const KIND_META: Record<
     description:
       "Sent shortly after a scheduled supervision session ends to remind you to sign it (or mark that it didn't happen).",
   },
+  practice_hours_submitted: {
+    label: "Practice hours submitted for review",
+    description:
+      "A supervisee logged practice hours that need your approval before they count toward licensure.",
+  },
+  practice_hours_rejected: {
+    label: "Practice hours rejected",
+    description:
+      "Your supervisor rejected a practice hour entry. You'll see the reason and can log a corrected entry.",
+  },
 };
 
 const ORDER: NotificationKind[] = [
@@ -111,6 +123,8 @@ const ORDER: NotificationKind[] = [
   "session_canceled",
   "rule_changed",
   "evidence_sealed",
+  "practice_hours_submitted",
+  "practice_hours_rejected",
   "supervisor_rule_not_set",
   "attestation_overdue",
   "trial_ending_soon",

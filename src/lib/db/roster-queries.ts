@@ -54,6 +54,7 @@ export type SessionEventRecord = {
   // Needed by the pendingSignatureCount filter so we can exclude
   // canceled / no-show rows from the supervisor KPI.
   scheduledStatus: string | null;
+  approvedAt: Date | null;
   createdAt: Date;
 };
 
@@ -222,6 +223,7 @@ export function computeRosterCompliance(
     const sessions: EvaluationContext["sessions"] = [];
     for (const evt of entry.rawEvents) {
       if (evt.kind === "practice") {
+        if (!evt.approvedAt) continue;
         sessions.push({
           kind: "practice",
           id: evt.id,

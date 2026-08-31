@@ -19,6 +19,7 @@ export const ROLE_NOTIFICATION_KINDS: Record<string, Set<NotificationKind>> = {
     "session_reminder_15min",
     "session_no_show",
     "session_sign_reminder",
+    "practice_hours_submitted",
   ]),
   supervisee: new Set<NotificationKind>([
     "signature_needed",
@@ -29,6 +30,7 @@ export const ROLE_NOTIFICATION_KINDS: Record<string, Set<NotificationKind>> = {
     "session_rescheduled",
     "session_reminder_1hour",
     "session_reminder_15min",
+    "practice_hours_rejected",
   ]),
   hr_admin: new Set<NotificationKind>([
     "invite_accepted",

@@ -51,6 +51,8 @@ describe("computeRosterCompliance", () => {
         loggedById: "user-1",
         signatures: [],
         signedAt: new Date("2026-01-02T12:00:00Z"),
+        scheduledStatus: null,
+        approvedAt: new Date("2026-01-02T11:00:00Z"),
         createdAt: new Date("2026-01-02T00:00:00Z"),
       },
       // supervision session (signed)
