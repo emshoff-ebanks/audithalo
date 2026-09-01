@@ -69,14 +69,14 @@ export default function MarketingHome() {
         dangerouslySetInnerHTML={jsonLdScript(softwareApplicationJsonLd())}
       />
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 py-16 sm:py-24 lg:py-32">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <div>
+      <section className="mx-auto max-w-7xl px-6 py-16 sm:py-24 lg:py-32">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-12 lg:gap-8 items-center">
+          <div className="max-w-2xl">
             <Badge variant="outline" className="mb-6">
               Clinical supervision compliance software
             </Badge>
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.05]">
-              State-board compliance software for mental health supervisors.
+            <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground leading-[1.1]">
+              Supervision compliance software for mental health supervisors.
             </h1>
             <p className="mt-6 text-lg text-foreground/70 max-w-2xl leading-relaxed">
               Track pre-licensed counselor hours, signatures, and state-board
@@ -108,14 +108,14 @@ export default function MarketingHome() {
               </span>
             </div>
           </div>
-          <div className="hidden lg:block">
+          <div className="hidden lg:block lg:max-w-[560px]">
             <Image
               src="/images/hero-product.png"
               alt="AuditHalo supervision compliance dashboard on desktop and mobile"
               width={1200}
               height={1000}
               priority
-              className="w-full h-auto"
+              className="w-full h-auto -mr-6"
             />
           </div>
         </div>
