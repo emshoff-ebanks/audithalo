@@ -14,7 +14,7 @@ async function syncSubscription(sub: Stripe.Subscription) {
   const firstItem = sub.items.data[0];
   const priceId = firstItem?.price?.id ?? "";
   const tier = tierFromPriceId(priceId);
-  const periodEnd = sub.current_period_end ?? null;
+  const periodEnd = firstItem?.current_period_end ?? null;
 
   // For Practice tier, the seat-line-item quantity is the source of truth for
   // how many supervisees the org has purchased. Null for Solo / other tiers.

@@ -132,6 +132,14 @@ function messageFor(n: NotificationRow): string {
       return sup
         ? `Sign your session with ${sup}${sessionSuffix ? ` — ${sessionSuffix}` : ""}`
         : `Sign your supervision session${sessionSuffix ? ` — ${sessionSuffix}` : ""}`;
+    case "practice_hours_submitted":
+      return sup
+        ? `${sup} logged practice hours for review${typeof hours === "number" ? ` — ${hours.toFixed(1)} hr` : ""}`
+        : `Practice hours submitted for review`;
+    case "practice_hours_rejected": {
+      const reason = (n.payload.reason as string | undefined) ?? "";
+      return `Practice hours rejected${sessionDate ? ` (${sessionDate})` : ""}${reason ? ` — ${reason}` : ""}`;
+    }
   }
 }
 
@@ -177,6 +185,12 @@ function destinationFor(n: NotificationRow): string | null {
           : "/dashboard";
     case "trial_ending_soon":
       return "/dashboard/billing";
+    case "practice_hours_submitted":
+      return superviseeId
+        ? `/dashboard/roster/${superviseeId}`
+        : "/dashboard/roster";
+    case "practice_hours_rejected":
+      return "/dashboard";
   }
 }
 

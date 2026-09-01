@@ -423,6 +423,39 @@ function renderEmail(
         text: `${greetingText} the supervision session with ${superviseeName} on ${scheduledForLocal} has ended. Sign or mark it didn't happen: ${url}`,
       };
     }
+    case "practice_hours_submitted": {
+      const superviseeName = String(payload.superviseeName ?? "a supervisee");
+      const hours = typeof payload.durationHours === "number" ? (payload.durationHours as number).toFixed(1) : "";
+      const url = payload.superviseeId ? `${APP_URL}/dashboard/roster/${payload.superviseeId}` : `${APP_URL}/dashboard/roster`;
+      return {
+        subject: `${superviseeName} logged practice hours for review`,
+        html: shell({
+          heading: "Practice hours pending your approval.",
+          body: `<p>${greetingHtml} <strong>${esc(superviseeName)}</strong> logged ${hours ? `<strong>${hours} hours</strong> of ` : ""}practice time. Review and approve the hours so they count toward licensure.</p>`,
+          ctaHref: url,
+          ctaLabel: "Review practice hours",
+          kind,
+        }),
+        text: `${greetingText} ${superviseeName} logged ${hours ? `${hours} hours of ` : ""}practice time. Review: ${url}`,
+      };
+    }
+    case "practice_hours_rejected": {
+      const date = String(payload.date ?? "");
+      const reason = String(payload.reason ?? "");
+      const hours = typeof payload.durationHours === "number" ? (payload.durationHours as number).toFixed(1) : "";
+      const url = `${APP_URL}/dashboard`;
+      return {
+        subject: `Practice hours rejected${date ? ` (${date})` : ""}`,
+        html: shell({
+          heading: "Practice hours not approved.",
+          body: `<p>${greetingHtml} your supervisor did not approve the practice hours you logged${date ? ` on <strong>${esc(date)}</strong>` : ""}${hours ? ` (${hours} hr)` : ""}.</p>${reason ? `<p style="margin-top:12px;padding:12px 16px;background:#f8f5f0;border-radius:4px;font-style:italic;">&ldquo;${esc(reason)}&rdquo;</p>` : ""}<p style="margin-top:12px;">Please review the feedback and log a corrected entry if needed.</p>`,
+          ctaHref: url,
+          ctaLabel: "Open dashboard",
+          kind,
+        }),
+        text: `${greetingText} your supervisor rejected practice hours${date ? ` from ${date}` : ""}${hours ? ` (${hours} hr)` : ""}.${reason ? ` Reason: "${reason}".` : ""} Log a corrected entry: ${url}`,
+      };
+    }
   }
   // Exhaustiveness check — if a new NotificationKind is added without a case
   // above, this assignment fails compilation.

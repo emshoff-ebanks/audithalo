@@ -32,6 +32,10 @@
   ],
   "exclude": [
     "node_modules",
-    "scripts/marketing-screenshots.ts"
+    "scripts/marketing-screenshots.ts",
+    "medipyxis-site-vercel",
+    "Medipyxis",
+    "nimbalyst-local",
+    "email-marketing-skill"
   ]
 }
