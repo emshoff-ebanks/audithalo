@@ -182,7 +182,7 @@ export default function FeaturesPage() {
                   ))}
                 </ul>
                 {section.image && (
-                  <div className="mt-8 rounded-lg border border-border overflow-hidden shadow-sm">
+                  <div className="mt-8">
                     <Image
                       src={section.image.src}
                       alt={section.image.alt}

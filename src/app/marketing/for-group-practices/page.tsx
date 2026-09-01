@@ -116,7 +116,7 @@ export default function ForGroupPracticesPage() {
       {/* Product screenshot */}
       <section className="bg-background">
         <div className="mx-auto max-w-5xl px-6 py-12 lg:py-16">
-          <div className="rounded-xl border border-border overflow-hidden shadow-lg">
+          <div>
             <Image
               src="/images/feature-dashboard.png"
               alt="AuditHalo HR Admin dashboard with compliance score, risk distribution, and at-risk supervisee alerts"

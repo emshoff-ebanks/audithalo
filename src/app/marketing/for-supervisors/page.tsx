@@ -320,7 +320,7 @@ export default function ForSupervisorsPage() {
       {/* Product screenshot */}
       <section className="bg-background">
         <div className="mx-auto max-w-5xl px-6 py-12 lg:py-16">
-          <div className="rounded-xl border border-border overflow-hidden shadow-lg">
+          <div>
             <Image
               src="/images/feature-roster.png"
               alt="AuditHalo supervisor roster showing five supervisees across multiple states with progress bars and risk indicators"
