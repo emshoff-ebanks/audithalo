@@ -8,7 +8,7 @@ type RecordingState = "idle" | "consent" | "recording" | "uploading" | "done" | 
 
 interface RecordSessionPanelProps {
   sessionEventId: string;
-  onTranscriptReady: (transcript: string) => void;
+  onTranscriptReady?: (transcript: string) => void;
 }
 
 function getSupportedMimeType(): string | undefined {

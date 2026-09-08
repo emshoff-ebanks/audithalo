@@ -180,7 +180,6 @@ export default async function SignSessionPage({
                 <p className="label-overline mb-3">In-person recording</p>
                 <RecordSessionPanel
                   sessionEventId={sessionEvent.id}
-                  onTranscriptReady={() => {}}
                 />
               </div>
             )}
@@ -359,7 +358,6 @@ export default async function SignSessionPage({
                 <p className="label-overline mb-3">Record session</p>
                 <RecordSessionPanel
                   sessionEventId={sessionEvent.id}
-                  onTranscriptReady={() => {}}
                 />
               </div>
             )}
