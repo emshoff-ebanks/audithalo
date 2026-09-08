@@ -621,6 +621,11 @@ export const sessionEvents = pgTable("session_events", {
   // supervisor on the sign page for RI orgs (gated by org.pdfTemplateKey).
   // See src/lib/clinical-form/types.ts for the shape.
   clinicalFormData: jsonb("clinical_form_data").$type<import("@/lib/clinical-form/types").ClinicalFormData>(),
+  // In-person recording transcript (strategy doc 22). Raw text from Whisper
+  // transcription or manual paste. Separate from aiNote — this is what the
+  // supervisor reads and verifies, the AI note is the structured summary.
+  transcript: text("transcript"),
+  transcriptSource: text("transcript_source"), // 'recording' | 'teams' | 'google_meet' | 'manual'
   // Practice hour approval (strategy doc 21). Supervisee logs practice hours,
   // supervisor reviews and approves before they count toward rule evaluation.
   // NULL = pending approval (or N/A for supervision events).

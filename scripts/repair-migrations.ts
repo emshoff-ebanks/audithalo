@@ -92,6 +92,11 @@ const REPAIR_TARGETS: Array<{
     sentinel: `SELECT 1 FROM information_schema.columns
                WHERE table_name='session_events' AND column_name='approved_at'`,
   },
+  {
+    file: "0037_session_transcript.sql",
+    sentinel: `SELECT 1 FROM information_schema.columns
+               WHERE table_name='session_events' AND column_name='transcript'`,
+  },
 ];
 
 function sha256(s: string): string {

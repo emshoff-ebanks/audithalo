@@ -17,6 +17,7 @@ import { ScheduledSessionCard } from "./scheduled-session-card";
 import { DidntHappenAffordance } from "./didnt-happen-affordance";
 import { SupervisionTypeSelect } from "./supervision-type-select";
 import { ClinicalForm } from "./clinical-form";
+import { RecordSessionPanel } from "@/components/app/record-session-panel";
 import type { ClinicalFormData } from "@/lib/clinical-form/types";
 
 export const metadata = {
@@ -362,11 +363,17 @@ export default async function SignSessionPage({
                     />
                   ) : (
                     <>
+                      <div className="mb-4">
+                        <RecordSessionPanel
+                          sessionEventId={sessionEvent.id}
+                          onTranscriptReady={() => {
+                            // Page will revalidate and show the transcript
+                          }}
+                        />
+                      </div>
                       <p className="text-sm text-foreground/70 mb-4">
-                        Paste a transcript of this supervision session to generate a
+                        Or paste a transcript of this supervision session to generate a
                         structured note with topics, competencies, feedback, and next steps.
-                        The transcript is sent to OpenAI but never stored — only the resulting
-                        note is saved with this session.
                       </p>
                       <SessionNoteForm sessionEventId={sessionEvent.id} />
                     </>
