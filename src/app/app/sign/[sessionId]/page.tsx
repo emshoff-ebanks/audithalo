@@ -125,6 +125,10 @@ export default async function SignSessionPage({
   const nowMs = Date.now();
   const isPreMeeting =
     sessionEvent.scheduledStatus === "scheduled" && endMs > nowMs;
+  const startMs = sessionEvent.date.getTime();
+  const minutesUntilStart = (startMs - nowMs) / 60_000;
+  const canRecord = perms.canGenerateAiNote && !fullySigned;
+  const showRecordPreMeeting = canRecord && isPreMeeting && minutesUntilStart <= 15;
   const canCancelScheduled = isPreMeeting && perms.canCancel;
   const canMarkNoShow = isPreMeeting && perms.canMarkNoShow;
 
@@ -171,6 +175,15 @@ export default async function SignSessionPage({
               canMarkNoShow={canMarkNoShow}
               isRecurring={!!sessionEvent.recurringSeriesId}
             />
+            {showRecordPreMeeting && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <p className="label-overline mb-3">In-person recording</p>
+                <RecordSessionPanel
+                  sessionEventId={sessionEvent.id}
+                  onTranscriptReady={() => {}}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -337,6 +350,20 @@ export default async function SignSessionPage({
             </div>
           )}
 
+          {/* In-person recording — supervisor-only, pre-seal, non-virtual sessions */}
+          {canRecord &&
+            sessionEvent.kind === "supervision" &&
+            (!sessionEvent.meetingProvider ||
+              sessionEvent.meetingProvider === "in_person") && (
+              <div className="pt-4 border-t border-border">
+                <p className="label-overline mb-3">Record session</p>
+                <RecordSessionPanel
+                  sessionEventId={sessionEvent.id}
+                  onTranscriptReady={() => {}}
+                />
+              </div>
+            )}
+
           {/* AI session note — assigned supervisor or original logger,
               supervision-only, before sealing. HR Admin is intentionally
               excluded; clinical content authoring is supervisor-only. */}
@@ -363,16 +390,8 @@ export default async function SignSessionPage({
                     />
                   ) : (
                     <>
-                      <div className="mb-4">
-                        <RecordSessionPanel
-                          sessionEventId={sessionEvent.id}
-                          onTranscriptReady={() => {
-                            // Page will revalidate and show the transcript
-                          }}
-                        />
-                      </div>
                       <p className="text-sm text-foreground/70 mb-4">
-                        Or paste a transcript of this supervision session to generate a
+                        Paste a transcript of this supervision session to generate a
                         structured note with topics, competencies, feedback, and next steps.
                       </p>
                       <SessionNoteForm sessionEventId={sessionEvent.id} />
