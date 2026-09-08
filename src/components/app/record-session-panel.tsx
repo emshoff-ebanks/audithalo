@@ -12,6 +12,7 @@ interface RecordSessionPanelProps {
 }
 
 function getSupportedMimeType(): string | undefined {
+  if (typeof MediaRecorder === "undefined") return undefined;
   const types = [
     "audio/webm;codecs=opus",
     "audio/webm",
