@@ -143,7 +143,7 @@ export function RecordSessionPanel({
             throw new Error("No transcript was returned.");
           }
 
-          onTranscriptReady(transcript);
+          onTranscriptReady?.(transcript);
           setState("done");
         } catch (err) {
           setErrorMessage(
