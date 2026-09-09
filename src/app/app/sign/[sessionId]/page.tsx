@@ -18,6 +18,7 @@ import { DidntHappenAffordance } from "./didnt-happen-affordance";
 import { SupervisionTypeSelect } from "./supervision-type-select";
 import { ClinicalForm } from "./clinical-form";
 import { RecordSessionPanel } from "@/components/app/record-session-panel";
+import { TranscriptDisplay } from "@/components/app/transcript-display";
 import type { ClinicalFormData } from "@/lib/clinical-form/types";
 
 export const metadata = {
@@ -349,9 +350,10 @@ export default async function SignSessionPage({
             </div>
           )}
 
-          {/* In-person recording — supervisor-only, pre-seal, non-virtual sessions */}
+          {/* In-person recording — supervisor-only, pre-seal, no transcript yet */}
           {canRecord &&
             sessionEvent.kind === "supervision" &&
+            !sessionEvent.transcript &&
             (!sessionEvent.meetingProvider ||
               sessionEvent.meetingProvider === "in_person") && (
               <div className="pt-4 border-t border-border">
@@ -361,6 +363,18 @@ export default async function SignSessionPage({
                 />
               </div>
             )}
+
+          {/* Saved transcript — view, edit, generate note from it */}
+          {sessionEvent.kind === "supervision" && sessionEvent.transcript && (
+            <div className="pt-4 border-t border-border">
+              <TranscriptDisplay
+                sessionEventId={sessionEvent.id}
+                transcript={sessionEvent.transcript}
+                canEdit={!fullySigned && perms.canGenerateAiNote}
+                source={sessionEvent.transcriptSource}
+              />
+            </div>
+          )}
 
           {/* AI session note — assigned supervisor or original logger,
               supervision-only, before sealing. HR Admin is intentionally
@@ -375,7 +389,7 @@ export default async function SignSessionPage({
                   source={(sessionEvent.aiNote as { source?: string }).source}
                   meetingProvider={sessionEvent.meetingProvider}
                 />
-              ) : !fullySigned ? (
+              ) : !fullySigned && !sessionEvent.transcript ? (
                 <>
                   <p className="label-overline mb-3">AI session note</p>
                   {sessionEvent.meetingProvider &&

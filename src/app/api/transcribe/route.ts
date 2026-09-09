@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getCurrentMembership, canSupervise } from "@/lib/authz";
+import { db, schema } from "@/lib/db";
 import OpenAI from "openai";
 
 export const runtime = "nodejs";
@@ -32,9 +34,18 @@ export async function POST(req: NextRequest) {
 
   const formData = await req.formData();
   const audioFile = formData.get("audio");
+  const sessionEventId = formData.get("sessionEventId") as string | null;
+
   if (!audioFile || !(audioFile instanceof File)) {
     return NextResponse.json(
       { error: "No audio file provided." },
+      { status: 400 }
+    );
+  }
+
+  if (!sessionEventId) {
+    return NextResponse.json(
+      { error: "Missing session event ID." },
       { status: 400 }
     );
   }
@@ -83,6 +94,19 @@ export async function POST(req: NextRequest) {
           })
           .join("\n")
       : plainText;
+
+    await db
+      .update(schema.sessionEvents)
+      .set({
+        transcript: timestamped,
+        transcriptSource: "recording",
+      })
+      .where(
+        and(
+          eq(schema.sessionEvents.id, sessionEventId),
+          eq(schema.sessionEvents.orgId, membership.orgId)
+        )
+      );
 
     return NextResponse.json({
       text: plainText,

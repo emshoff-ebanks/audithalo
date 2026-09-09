@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Mic, Square, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -8,7 +9,6 @@ type RecordingState = "idle" | "consent" | "recording" | "uploading" | "done" | 
 
 interface RecordSessionPanelProps {
   sessionEventId: string;
-  onTranscriptReady?: (transcript: string) => void;
 }
 
 function getSupportedMimeType(): string | undefined {
@@ -30,8 +30,8 @@ function formatTime(seconds: number): string {
 
 export function RecordSessionPanel({
   sessionEventId,
-  onTranscriptReady,
 }: RecordSessionPanelProps) {
+  const router = useRouter();
   const [state, setState] = useState<RecordingState>("idle");
   const [elapsed, setElapsed] = useState(0);
   const [consentChecked, setConsentChecked] = useState(false);
@@ -143,7 +143,7 @@ export function RecordSessionPanel({
             throw new Error("No transcript was returned.");
           }
 
-          onTranscriptReady?.(transcript);
+          router.refresh();
           setState("done");
         } catch (err) {
           setErrorMessage(
@@ -183,7 +183,7 @@ export function RecordSessionPanel({
       setState("error");
       cleanup();
     }
-  }, [sessionEventId, onTranscriptReady, cleanup]);
+  }, [sessionEventId, router, cleanup]);
 
   const stopRecording = useCallback(() => {
     if (recorderRef.current && recorderRef.current.state === "recording") {

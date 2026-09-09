@@ -148,6 +148,8 @@ export async function generateSessionNoteAction(
         nextSteps: result.note.nextSteps,
         ...result.metadata,
       },
+      transcript: sessionEvent.transcript ?? parsed.data.transcript,
+      transcriptSource: sessionEvent.transcriptSource ?? "manual",
     })
     .where(eq(schema.sessionEvents.id, sessionEvent.id));
 
@@ -398,6 +400,8 @@ export async function fetchTranscriptAndGenerateNoteAction(
         nextSteps: result.note.nextSteps,
         ...result.metadata,
       },
+      transcript: sessionEvent.transcript ?? transcript,
+      transcriptSource: sessionEvent.transcriptSource ?? source,
     })
     .where(eq(schema.sessionEvents.id, sessionEvent.id));
 
