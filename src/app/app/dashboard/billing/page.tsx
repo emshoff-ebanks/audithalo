@@ -22,7 +22,7 @@ export const metadata = {
 const PLAN_FEATURES: Record<string, string[]> = {
   solo: [
     "Up to 3 supervisees",
-    "All 5 supported states (NC, CA, TX, FL, NY)",
+    "All 10 supported states (NC, CA, TX, FL, NY, AZ, DE, OH, LA, WA)",
     "Supervisor dashboard",
     "E-signature with intent confirmation",
     "Audit-ready evidence package PDF",

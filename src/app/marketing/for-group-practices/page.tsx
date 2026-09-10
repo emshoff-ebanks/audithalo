@@ -53,7 +53,7 @@ const practiceFeatures = [
   "All supervisors and supervisees under one organization",
   "HR Admin dashboard with compliance heatmap by state and supervisee",
   "Exception report — who's at risk, by how much, and by when",
-  "All 5 supported states under one subscription",
+  "All 10 supported states under one subscription",
   "Executive risk rollup for clinical directors",
   "7-year audit log retention",
   "Bulk evidence package export",

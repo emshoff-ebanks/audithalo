@@ -144,7 +144,7 @@ export function NCAuditChecklistDocument() {
 
         <Text style={styles.footer}>
           AuditHalo · audithalo.com · The supervision-compliance system for
-          mental health supervisors in NC, CA, TX, FL, NY.
+          mental health supervisors across 10 states.
         </Text>
       </Page>
 

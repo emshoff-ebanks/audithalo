@@ -21,7 +21,7 @@ export function softwareApplicationJsonLd() {
       "@type": "AggregateOffer",
       priceCurrency: "USD",
       lowPrice: "49",
-      highPrice: "199",
+      highPrice: "89",
     },
     publisher: { "@type": "Organization", name: "AuditHalo", url: BASE },
   };
@@ -39,15 +39,15 @@ export function pricingProductJsonLd() {
       {
         "@type": "Offer",
         name: "Solo",
-        price: "49",
+        price: "89",
         priceCurrency: "USD",
         url: `${BASE}/pricing`,
         availability: "https://schema.org/InStock",
       },
       {
         "@type": "Offer",
-        name: "Practice",
-        price: "199",
+        name: "Practice (base, plus $25 per supervisee)",
+        price: "49",
         priceCurrency: "USD",
         url: `${BASE}/pricing`,
         availability: "https://schema.org/InStock",
