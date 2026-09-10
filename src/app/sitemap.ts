@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { listLatestRules, ruleSlug } from "@/lib/rules";
+import { getAllBlogPosts } from "@/lib/mdx";
 
 const BASE = "https://audithalo.com";
 
@@ -12,6 +13,7 @@ const STATIC_PATHS = [
   "/security",
   "/states",
   "/evidence-packages",
+  "/blog",
   // SEO Layer 1 — category pages
   "/clinical-supervision-software",
   "/mental-health-supervision-software",
@@ -55,5 +57,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.85, // state pages are core SEO targets
   }));
 
-  return [...staticEntries, ...stateEntries];
+  const blogEntries: MetadataRoute.Sitemap = getAllBlogPosts().map((post) => ({
+    url: `${BASE}/blog/${post.meta.slug}`,
+    lastModified: new Date(post.meta.dateModified ?? post.meta.datePublished),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  return [...staticEntries, ...stateEntries, ...blogEntries];
 }

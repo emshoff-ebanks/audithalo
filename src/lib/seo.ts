@@ -89,6 +89,37 @@ export function faqPageJsonLd(items: { q: string; a: string }[]) {
   };
 }
 
+export function breadcrumbListJsonLd(items: { name: string; url: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+export function howToJsonLd(input: {
+  name: string;
+  description: string;
+  steps: { name: string; text: string }[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: input.name,
+    description: input.description,
+    step: input.steps.map((step) => ({
+      "@type": "HowToStep",
+      name: step.name,
+      text: step.text,
+    })),
+  };
+}
+
 export function jsonLdScript(payload: object) {
   return {
     __html: JSON.stringify(payload).replace(/</g, "\\u003c"),
