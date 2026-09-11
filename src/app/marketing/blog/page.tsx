@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 const URL = "https://audithalo.com/blog";
 
 export const metadata = {
-  title: "Supervision compliance guides — AuditHalo blog",
+  title: "Supervision compliance guides | AuditHalo blog",
   description:
     "Practical, citation-backed guides on clinical supervision hours, board audits, and documentation for mental health supervisors and pre-licensed counselors.",
   alternates: { canonical: URL },
@@ -28,8 +28,8 @@ export default function BlogIndexPage() {
       </h1>
       <p className="mt-6 text-lg text-foreground/75 leading-relaxed max-w-2xl">
         Citation-backed guides on supervision hours, board audits, and
-        documentation — written for supervisors and supervisees who need the
-        rule, not a summary of the rule.
+        documentation, written for supervisors and supervisees who need the
+        rule itself, not a summary of it.
       </p>
 
       <div className="mt-14 space-y-6">

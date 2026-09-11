@@ -29,7 +29,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Params }) {
   const { slug } = await params;
   const post = getBlogPostBySlug(slug);
-  if (!post) return { title: "Not found — AuditHalo" };
+  if (!post) return { title: "Not found | AuditHalo" };
 
   const url = `${BASE}/blog/${slug}`;
   const title = post.meta.metaTitle ?? `${post.meta.title} | AuditHalo`;
