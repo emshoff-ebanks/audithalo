@@ -15,6 +15,7 @@
     "test:e2e:codegen:app": "playwright codegen https://app.audithalo.com",
     "test:e2e:codegen:marketing": "playwright codegen https://audithalo.com",
     "validate:rules": "tsx scripts/validate-rules.ts",
+    "validate:blog-facts": "tsx scripts/validate-blog-facts.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/lib/db/migrate.ts",
     "db:push": "drizzle-kit push",
