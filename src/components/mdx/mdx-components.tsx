@@ -9,7 +9,7 @@ function MdxAnchor({
 }: AnchorHTMLAttributes<HTMLAnchorElement>) {
   if (href?.startsWith("/")) {
     return (
-      <Link href={href} className="text-secondary hover:underline">
+      <Link href={href} className="text-secondary underline underline-offset-2">
         {children}
       </Link>
     );
@@ -19,7 +19,7 @@ function MdxAnchor({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-secondary hover:underline"
+      className="text-secondary underline underline-offset-2"
       {...rest}
     >
       {children}
