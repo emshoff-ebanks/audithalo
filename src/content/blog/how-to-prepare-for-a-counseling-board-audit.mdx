@@ -1,7 +1,7 @@
 ---
 title: "How to prepare for a counseling board audit"
 metaTitle: "How to prepare for a counseling board audit | AuditHalo"
-metaDescription: "What a state licensing board actually checks in a supervision audit, the three failure modes that reject the most hours, and the sequence to run before the board asks."
+metaDescription: "What a state licensing board actually checks in a supervision audit, the failure modes that reject the most hours, and the sequence to run before the board asks."
 slug: "how-to-prepare-for-a-counseling-board-audit"
 category: "Audit & Compliance"
 tags: ["audit-prep", "supervision-hours", "board-audit"]
@@ -20,9 +20,9 @@ howToSteps:
   - name: "Confirm the supervision plan is approved, not just submitted"
     text: "A pending filing is not an approved filing. Treat any hour logged before written approval as provisionally at-risk."
   - name: "Reconcile total hours against your state's exact requirement"
-    text: "Check total practice hours, total supervision hours, and any minimum direct-client-contact share separately — most states track all three."
+    text: "Check total practice hours, total supervision hours, and any minimum direct-client-contact share separately. Most states track all three."
   - name: "Verify your supervisor's credential is current and of the qualifying type"
-    text: "A general clinical license often isn't enough — check whether your state requires a specific supervisory designation."
+    text: "A general clinical license is often not enough. Check whether your state requires a specific supervisory designation."
   - name: "Check the individual-to-group supervision ratio as a running share"
     text: "Pull the cumulative fraction across the whole log, not just the most recent sessions."
   - name: "Confirm every session has dual signatures and a contemporaneous timestamp"
@@ -33,74 +33,79 @@ howToSteps:
     text: "You should be able to point to the exact admin code section behind every number you report, not just a paraphrase of the requirement."
 faq:
   - q: "How far in advance should I prepare for a counseling board audit?"
-    a: "Start now, not when the board sends the notice. The failure modes that reject hours — an unfiled supervision plan, a supervisor credential that lapsed eight months ago, a setting change nobody reported — are invisible until someone checks, and checking after the notice arrives is usually too late to fix them. Run the audit-prep sequence in this guide at least once a quarter."
+    a: "Start now, not when the board sends the notice. The failure modes that reject hours (an unfiled supervision plan, a supervisor credential that lapsed eight months ago, a setting change nobody reported) are invisible until someone checks, and checking after the notice arrives is usually too late to fix them. Run the audit-prep sequence in this guide at least once a quarter."
   - q: "What do state boards check first in a supervision audit?"
-    a: "Almost universally: the total hours logged against the required total, the individual-to-group supervision ratio, whether the supervisor held a qualifying credential for every session, and whether the supervision plan or contract was approved before the hours started. Boards differ on the exact numbers; they don't differ on checking these four things."
+    a: "Almost universally: the total hours logged against the required total, the individual-to-group supervision ratio, whether the supervisor held a qualifying credential for every session, and whether the supervision plan or contract was approved before the hours started. Boards differ on the exact numbers. They don't differ on checking these four things."
   - q: "Can a state board reject hours that were already logged?"
-    a: "Yes. Logging an hour doesn't make it count — the board's rule does. Common reasons hours get rejected after the fact: the supervisor's credential had lapsed, the practice setting was never approved, the session predates a filed contract, or the individual-supervision share fell below the required minimum for the window in question."
+    a: "Yes. Logging an hour doesn't make it count. The board's rule does. Common reasons hours get rejected after the fact: the supervisor's credential had lapsed, the practice setting was never approved, the session predates a filed contract, or the individual-supervision share fell below the required minimum for the window in question."
   - q: "What happens if my supervisor's license is suspended or lapses?"
-    a: "In most states, hours supervised under a credential that isn't currently valid don't count — even if they were fine at the time they were logged, if the credential has since lapsed and wasn't renewed, some boards will still honor hours logged while it was active, but this varies and is rarely written down clearly. Confirm directly with your board rather than assuming; it's one of the most common gaps a live rule engine catches that a static log can't."
+    a: "In most states, hours supervised under a credential that wasn't valid at the time don't count going forward, even though they were fine when logged. Some boards will still honor hours from before a lapse; others won't, and this varies enough between states that it's worth confirming directly with your board rather than assuming. It's one of the most common gaps a live rule engine catches that a static log can't."
   - q: "Does AuditHalo prepare the audit response for me?"
-    a: "AuditHalo doesn't file anything with a board — that's still your supervisor's and your own responsibility. What it does is keep every hour evaluated against your state's exact rule as you log it, so the evidence package you'd hand to a board is already sealed, signed, and citation-linked well before anyone asks for it."
+    a: "AuditHalo doesn't file anything with a board. That's still your supervisor's and your own responsibility. What it does is keep every hour evaluated against your state's exact rule as you log it, so the evidence package you'd hand to a board is already sealed, signed, and citation-linked well before anyone asks for it."
 ---
 
 ## What a state board audit actually checks
 
-A counseling board audit is not a review of your notes. It's a reconciliation: the
-board takes your logged supervised hours and checks them against a small, specific
-set of requirements — total hours, the individual-to-group supervision ratio, the
-supervisor's credential, the cadence between sessions, and whether the paperwork
-that was supposed to be filed *before* any of it started was actually filed. Every
-state phrases this differently. Almost none of them audit anything else.
+A counseling board audit is not a review of your notes. It's a reconciliation.
+The board takes your logged supervised hours and checks them against a small,
+specific set of requirements: total hours, the individual-to-group supervision
+ratio, the supervisor's credential, the cadence between sessions, and whether
+the paperwork that was supposed to be filed before any of it started was
+actually filed. Every state phrases this differently. Almost none of them
+audit anything else.
 
-That narrowness is good news. It means audit prep isn't a vague, open-ended task —
-it's four or five specific reconciliations you can run against your own log, months
-before a board ever asks for it.
+That narrowness is good news: audit prep comes down to four or five specific
+reconciliations you can run against your own log, months before a board ever
+asks for it.
 
 ## The failure modes that reject the most hours
 
-Across the states we track, the hours that get rejected almost never fail because
-the supervisee did the work badly. They fail because of timing and paperwork —
-things that are fully within your control if you check for them early.
+Across the states we track, the hours that get rejected almost never fail
+because the supervisee did the work badly. They fail because of timing and
+paperwork, things fully within your control if you check for them early.
 
-**The pre-filed contract that wasn't.** [North Carolina](/states/nc-lcmhca) requires
-the LCMHCA supervision contract (Form LCS-100) to be filed with and approved by the
-[NC Board](https://www.ncblcmhc.org/licensure/) before any hour counts — not before
-the *program* starts, before the individual hour is logged (21 NCAC 53). Candidates
-who start seeing clients the week they sign a job offer, and file the contract the
-following month, lose every hour in between. The fix isn't complicated: don't log
-an hour until the filing is confirmed approved, not just submitted.
+**The pre-filed contract that wasn't.** North Carolina requires the LCMHCA
+supervision contract (Form LCS-100) to be filed with and approved by the
+[NC Board](https://www.ncblcmhc.org/licensure/) before any hour counts. The
+requirement applies to each individual hour logged, not just to the start of
+the program overall (21 NCAC 53). Candidates who start seeing clients the week
+they sign a job offer, then file the contract the following month, lose every
+hour logged in between. The fix is simple: don't log an hour until the filing
+is confirmed approved, not just submitted. See the full
+[North Carolina rule](/states/nc-lcmhca) for the exact hour and cadence
+requirements.
 
 **The setting or supervisor that quietly stopped qualifying.**
-[Louisiana](/states/la-plpc) has the sharpest version of this: the practice setting
-must be approved by the [LA LPC Board](https://www.lpcboard.org/), and if you
-change or add a setting, you have 30 days to notify the Board — miss it and you
-forfeit every hour earned at that setting (LAC 46:LX §603(A)(6)(d)). Other states
-are softer but the shape is the same — a supervisor's credential lapses, a setting
-changes, and hours that were fine when logged stop counting because something
-upstream of the session changed.
+[Louisiana](/states/la-plpc) has the sharpest version of this. The practice
+setting must be approved by the [LA LPC Board](https://www.lpcboard.org/), and
+if you change or add a setting, you have 30 days to notify the Board. Miss
+that window and you forfeit every hour earned at that setting (LAC 46:LX
+§603(A)(6)(d)). Other states are softer, but the shape is the same: a
+supervisor's credential lapses, a setting changes, and hours that were fine
+when logged stop counting because something upstream of the session changed.
 
-**The individual-supervision share that drifted below the floor.** Every state
-sets a minimum share of supervision that must be individual (not group), and it's
-usually a *running* fraction across the whole obligation, not a per-session rule.
-Wash too many group sessions into your log for a few months and the running share
-can drop below the floor without a single session looking wrong on its own. North
-Carolina requires 75% individual; [Washington](/states/wa-lmhca) requires 100%
-("immediate" supervision — a supervisor with no more than two candidates — with
-group sessions not counting at all, per the
+**The individual-supervision share that drifted below the floor.** Every
+state sets a minimum share of supervision that must be individual, not group,
+and it's usually a *running* fraction across the whole obligation rather than
+a per-session rule. Log too many group sessions over a few months and the
+running share can drop below the floor without a single session looking
+wrong on its own. North Carolina requires 75% individual.
+[Washington](/states/wa-lmhca) requires 100% ("immediate" supervision,
+meaning a supervisor with no more than two candidates, with group sessions
+not counting toward the total at all), per the
 [Washington DOH](https://doh.wa.gov/licenses-permits-and-certificates/professions-new-renew-or-update/mental-health-counselor)
-rule at WAC 246-809-230(3)(b)(i)). Nobody catches this by skimming a spreadsheet
-once a year.
+rule at WAC 246-809-230(3)(b)(i). Nobody catches this by skimming a
+spreadsheet once a year.
 
-**The accrual cap nobody checked until it was too late.** Some states don't just
-set a total — they cap how fast you're allowed to accumulate it. [Ohio](/states/oh-lpc)
-limits candidates to 1,500 practice hours in any 12-month period; log faster than
-that and the excess doesn't advance your total, it just doesn't count (OAC
-4757-17-01). The same logic shows up as a weekly cap in several other states. It's
-easy to miss because nothing about a fast month looks wrong until someone lines it
-up against the calendar.
+**The accrual cap nobody checked until it was too late.** Some states cap how
+fast you're allowed to accumulate hours, not just the total. [Ohio](/states/oh-lpc)
+limits candidates to 1,500 practice hours in any 12-month period. Log faster
+than that and the excess doesn't advance your total: it simply doesn't count
+(OAC 4757-17-01). The same logic shows up as a weekly cap in several other
+states, and it's easy to miss, because nothing about a fast month looks wrong
+until someone lines it up against the calendar.
 
-## How state boards differ — and why "check your handbook" isn't enough
+## How state boards differ (and why "check your handbook" isn't enough)
 
 The instinct to "just read the state handbook once" undersells how differently
 these rules are actually built. A few real numbers, side by side:
@@ -115,57 +120,59 @@ these rules are actually built. A few real numbers, side by side:
 
 None of these numbers are interchangeable, and a supervisee who trained in one
 state and moves to another is often surprised that the ratio they got used to
-doesn't transfer. [Ohio](/states/oh-lpc), for example, replaces the pre-filed
-contract entirely with milestone evaluations the supervisor submits at 1,500 and
-3,000 hours — a structurally different check than [Arizona's](/states/az-lac)
-monthly cadence and telehealth split. "Read the handbook" is right advice applied
-once; the rule needs to be re-checked every time something about the supervision
-relationship changes — a new setting, a new supervisor, a slow month with more
-group sessions than usual.
+doesn't transfer. Ohio, for example, replaces the pre-filed contract entirely
+with milestone evaluations the supervisor submits at 1,500 and 3,000 hours, a
+structurally different check than [Arizona's](/states/az-lac) monthly cadence
+and telehealth split. Reading the handbook once is right advice, but the rule
+needs to be re-checked every time something about the supervision relationship
+changes: a new setting, a new supervisor, a slow month with more group
+sessions than usual.
 
 ## The audit-prep sequence
 
 Run this before the board asks, not after.
 
-1. **Confirm your supervision plan or contract is filed and approved — not just submitted.** A pending filing is not an approved filing. If your state requires pre-registration (most do), treat every hour logged before approval as provisionally at-risk until you have confirmation in writing.
-2. **Reconcile total hours logged against your state's exact requirement.** Total practice hours and total supervision hours are usually tracked separately, and some states also require a minimum share of direct client contact within the total — check all three numbers, not just one.
-3. **Verify your supervisor's credential is current and of the qualifying type.** "Currently licensed" isn't always enough — several states require a specific supervisory designation (LCMHCS in NC, LPC-S in LA, a training-supervision designation in Ohio) that a general clinical license doesn't satisfy on its own.
+1. **Confirm your supervision plan or contract is filed and approved, not just submitted.** A pending filing is not an approved filing. If your state requires pre-registration (most do), treat every hour logged before approval as provisionally at-risk.
+2. **Reconcile total hours logged against your state's exact requirement.** Total practice hours and total supervision hours are usually tracked separately, and some states also require a minimum share of direct client contact within the total. Check all three numbers, not just one.
+3. **Verify your supervisor's credential is current and of the qualifying type.** "Currently licensed" isn't always enough. Several states require a specific supervisory designation (LCMHCS in NC, LPC-S in LA, a training-supervision designation in Ohio) that a general clinical license doesn't satisfy on its own.
 4. **Check the individual-to-group supervision ratio as a running share, not a single session.** Pull the cumulative fraction across your whole log, not just the last few sessions.
 5. **Confirm every session has dual signatures and a contemporaneous timestamp.** A supervision log reconstructed from memory two months later reads very differently to a board than one signed by both parties the day it happened.
 6. **Check that your practice setting is still the one your board has on file.** If you changed jobs, added a setting, or started seeing clients somewhere new, confirm the notification requirement and deadline for your state.
-7. **Pull your evidence for the period in question and check the citation trail.** You should be able to point to the exact rule — the admin code section, not just "my state's requirements" — behind every number you're reporting.
+7. **Pull your evidence for the period in question and check the citation trail.** You should be able to point to the exact rule (the admin code section, not just "my state's requirements") behind every number you're reporting.
 
 ## What happens if your hours get rejected
 
-The consequences scale with how much of the obligation window is left. Best case,
-a board asks for clarification or a corrected log and you resubmit. Worse case —
-and this is the Louisiana setting-forfeiture scenario specifically — the hours are
-gone permanently, and you're logging replacement hours from zero, which can push
-you past your obligation window (most states cap the total window at somewhere
-between four and six years). The supervisee bears this cost directly; the
-supervisor bears the liability and the conversation.
+The consequences scale with how much of the obligation window is left. Best
+case, a board asks for clarification or a corrected log and you resubmit.
+Worst case, and this is the Louisiana setting-forfeiture scenario
+specifically, the hours are gone permanently. You end up logging replacement
+hours from zero, which can push you past your obligation window (most states
+cap the total window at somewhere between four and six years). The
+supervisee bears this cost directly; the supervisor bears the liability and
+the conversation.
 
-None of this is reversible after the fact. The only real defense is catching the
-gap while there's still time to fix it — which means checking against the rule
-continuously, not retroactively.
+None of this is reversible after the fact. The only real defense is catching
+the gap while there's still time to fix it, which means checking against the
+rule continuously rather than retroactively.
 
 ## How AuditHalo keeps this from becoming a fire drill
 
-This is the part a static spreadsheet can't do: AuditHalo evaluates every
-supervision session against your state's exact rule — the current version, with
-the citation attached — the moment it's logged, not the moment someone decides to
-check. A supervisor credential snapshot is captured and validated at signing, so a
-lapsed credential shows up as a flag immediately, not two years later. The running
-individual-supervision share is tracked live, and an at-risk flag surfaces up to
-60 days before a deadline, not two weeks after. Every signed session seals into a
-SHA-256-hashed evidence package — the citation, the hour, the signature, and the
-timestamp, verifiable independently by anyone the board asks to check it.
+This is the part a static spreadsheet can't do. AuditHalo evaluates every
+supervision session against your state's exact rule, the current version,
+with the citation attached, the moment it's logged, not the moment someone
+decides to check. A supervisor credential snapshot is captured and validated
+at signing, so a lapsed credential shows up as a flag immediately, not two
+years later. The running individual-supervision share is tracked live, and an
+at-risk flag surfaces up to 60 days before a deadline, not two weeks after.
+Every signed session seals into a SHA-256-hashed evidence package: the
+citation, the hour, the signature, and the timestamp, all verifiable
+independently by anyone the board asks to check it.
 
 If you're tracking hours in any of the states we cover, you can see your own
 current rule and where AuditHalo would have flagged a gap on the
 [states page](/states), or start with the
 [counseling supervision audit checklist](/counseling-supervision-audit-checklist)
-for the specific items most boards check first. If you're deciding what belongs
-in a defensible supervision record at all, the
+for the specific items most boards check first. If you're deciding what
+belongs in a defensible supervision record at all, the
 [supervision log template guide](/supervision-log-template) and
 [evidence packages](/evidence-packages) pages cover that in more depth.

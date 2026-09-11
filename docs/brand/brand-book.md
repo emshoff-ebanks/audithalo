@@ -220,9 +220,22 @@ Almost every page should work without a single photograph. Restraint signals con
 - **Sentence case** in headlines and most UI.
 - **Specific over generic.** "Track 100 supervision hours against NC LCMHCA" beats "Track all your hours."
 - **Verbs first.** "Schedule the session." "Sign the evidence package." "Verify the rule version."
-- **Empathy through detail, not platitudes.** Don't say "We get it — supervision is hard." Show that we get it by surfacing the at-risk flag 60 days early.
-- **Em-dashes are encouraged** — they read considered.
+- **Empathy through detail, not platitudes.** Don't say "We get it. Supervision is hard." Show that we get it by surfacing the at-risk flag 60 days early.
+- **No em-dashes.** (Superseded 2026-09-10 — see "No AI writing tells" below. Em-dashes read as AI-written far more than they read as "considered." Use a period, comma, colon, or parentheses instead.)
 - **Plural-pronouns address the buyer.** "Your roster." "Your evidence."
+
+### No AI writing tells
+
+Long-form prose (blog posts, guides, landing-page copy) must not read as
+AI-generated. Specifically:
+
+- **No em-dashes, anywhere.** Humans use them rarely; LLMs default to them constantly. Rewrite with a period, comma, colon, or parentheses.
+- **No GPT-vocabulary.** *Delve, tapestry, underscore, testament, boasts, crucial, pivotal, foster, leverage, robust, vibrant, meticulous, intricate, landscape, realm, navigate, harness, illuminate, facilitate, bolster, showcase, enhance, ensure, align/resonate with.*
+- **No unnecessary intensifiers.** *Genuinely, truly, actually* used as filler rather than for real emphasis.
+- **No copula-avoidance.** Don't replace a plain "is" with "stands as," "serves as," "represents a," "marks," or "functions as." Just say "is."
+- **No contrastive-filler sentences.** The "it's not X, it's Y" / "not just X, but Y" construction is one of the most recognizable AI tells. State the fact plainly instead of setting up a corrected assumption the reader never had.
+- **No promotional throat-clearing.** *"In today's fast-paced world," "it's important to note," "when it comes to."* Cut straight to the specific claim.
+- **Vary sentence length.** AI prose defaults to a monotonous rhythm of similar-length sentences. Mix short declaratives with longer ones the way a person actually talks.
 
 ### Words to use
 
@@ -240,6 +253,8 @@ Almost every page should work without a single photograph. Restraint signals con
 | "Holistic supervisor toolkit" | "One dashboard, every supervisee, every state rule, current." |
 | "AI-powered session notes" | "AI-assisted session notes from your Teams transcripts." |
 | "Frictionless e-signatures" | "Sign with intent. Two clicks. Done." |
+| "...while the rest of the log stands." | "...and the rest of the log is left untouched." |
+| "It's genuinely different state to state." | "It varies a great deal state to state." |
 
 ---
 
