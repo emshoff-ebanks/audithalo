@@ -1,0 +1,146 @@
+---
+title: "MyClinicalSupervisor alternative"
+metaTitle: "MyClinicalSupervisor alternative for supervision tracking | AuditHalo"
+metaDescription: "Comparing supervision-tracking tools? Here's what to check first: state rule awareness, sealed evidence packages, at-risk flags, and credential checks."
+slug: "myclinicalsupervisor-alternative"
+category: "Comparisons"
+tags: ["comparisons", "supervision-tracking", "evidence-packages"]
+datePublished: "2026-09-11"
+dateModified: "2026-09-11"
+author: "AuditHalo"
+primaryKeyword: "MyClinicalSupervisor alternative"
+secondaryKeywords:
+  - "clinical supervision software comparison"
+  - "best supervision tracking app"
+relatedStates: []
+schema: ["Article"]
+---
+
+## Why you're comparing tools in the first place
+
+If you typed "MyClinicalSupervisor alternative" into a search bar, you're
+probably not shopping for a brand name. You're shopping for a way to stop
+reconstructing supervision records under deadline pressure, or a way to
+catch a problem with someone's hours before a state board finds it first.
+That's the right instinct, and it's worth answering directly: the name on
+the login screen matters less than what the tool actually checks.
+
+We looked for current, specific information about MyClinicalSupervisor's
+pricing and feature set before writing this and couldn't verify enough
+detail to make a fair point-by-point comparison. Rather than guess at
+specifics for a product we can't confirm firsthand, this post covers the
+questions worth asking about any supervision-tracking tool you're
+evaluating, and where AuditHalo takes a different approach.
+
+## Four questions to ask before you commit to a tool
+
+Most supervision-tracking software looks similar on a pricing page: log
+sessions, get signatures, export a report. The differences that actually
+matter show up later, usually at renewal or audit time. Ask these before
+you commit to one:
+
+1. Does the tool know your state's specific rule, or does it just add up
+   hours you enter?
+2. What happens to a session record after both people sign it? Can it be
+   edited later, by anyone?
+3. Does it flag a developing problem while there's still time to fix it, or
+   only report a total at the end?
+4. Does it check who was actually allowed to supervise at the time, or just
+   record that supervision happened?
+
+## Generic hour-logging tools don't evaluate what they log
+
+A lot of supervision trackers are, underneath the branding, a timesheet
+with a clinical label on it: date, duration, session type, a signature
+field. That's a reasonable floor, and it beats a spreadsheet. But logging
+that a session happened is a different task from confirming that the
+session actually qualifies under your specific state's rule. A tool that
+only does the first one will happily let you log fifty hours under a
+supervisor whose credential lapsed in month two, or count group sessions
+past the share your state allows for individual supervision. The gap
+doesn't show up until someone checks the log against the rule, which is
+usually the board, at the worst possible time.
+
+## What AuditHalo checks instead: the actual rule, not just the clock
+
+AuditHalo's [rules engine](/features) is built around a different premise:
+every supervised hour gets evaluated against your state's exact
+requirement the moment it's logged, not reconstructed against it years
+later. Ten states are covered today, each rule citation-linked to the
+specific administrative code section and versioned by effective date, so
+an obligation that started under an older rule stays graded against the
+version it began under. The engine is re-verified quarterly by licensed
+clinical supervisors on contract, and it catches the edge cases that
+generic tools miss: telehealth carve-outs, supervisor-qualification
+mismatches, and pre-registration gaps, all before they cost anyone real
+hours.
+
+That's the core difference. A hour-logging tool tells you what was
+entered. A rules engine tells you whether what was entered actually
+counts, in your state, under the rule that applies today.
+
+## Sealed, tamper-evident evidence packages
+
+Logging and signing a session is only half the problem. The other half is
+proving it later, sometimes years later, to a board that has never seen
+your file before. AuditHalo seals every fully signed session into an
+[evidence package](/evidence-packages): supervisor credential snapshot,
+citation to the rule current at the time of signing, both signatures with
+intent confirmation, all SHA-256 hashed. Change a single field afterward
+and the hash no longer matches, which means the board doesn't have to take
+your word for the record's integrity. Anyone with the verify-URL, no
+account needed, can confirm the package still matches its sealed hash.
+That's a meaningfully different guarantee than a PDF export that anyone
+with edit access could quietly alter.
+
+## At-risk flags, before a gap becomes a forfeiture
+
+Some rule violations are fixable if caught early and unfixable once a
+deadline passes. A lapsed supervisor credential can sometimes be resolved
+by re-supervising the affected window. A hard forfeiture rule, once
+triggered, usually can't be undone at all. The dashboard tracks
+setting-approval status and the running individual-supervision share
+continuously, and surfaces an at-risk flag up to 60 days before a deadline
+would turn a fixable gap into a permanent one. Supervisors see this on the
+roster view; nobody has to wait for an annual review or a board letter to
+find out something is off.
+
+## Supervisor credential validation at signing
+
+A session supervised by someone whose credential has lapsed is a session
+at risk, regardless of how good the supervision itself was. AuditHalo
+captures and validates a supervisor credential snapshot at the moment of
+signing, not at renewal. If a credential has expired, was suspended, or
+never qualified as a supervisory designation to begin with, that surfaces
+as a flag immediately, tied to the specific session it affects, instead of
+surfacing as a board finding on someone else's timeline.
+
+## Switching doesn't require you to already be behind
+
+You don't need a board audit already in progress to make a change. Most
+switches happen for a quieter reason: a supervisor notices they can't
+answer a specific question quickly, like which supervisee is closest to an
+individual-supervision floor, or which sessions were signed by a
+supervisor whose credential has since changed. Moving a roster over means
+entering supervisees, their state, and their start dates. Past sessions
+logged elsewhere can be noted for context, but AuditHalo's rule evaluation
+and evidence sealing apply going forward, on sessions logged and signed
+inside the platform. If you're mid-obligation, the earlier you move the
+more of the remaining timeline is actually covered.
+
+## Who this is built for
+
+AuditHalo is built for [supervisors](/for-supervisors) managing one
+supervisee or a full roster across a practice, plus HR admins and
+executives who need a compliance view without digging through individual
+files. The full feature set, including the rules engine, evidence
+packages, and role-based dashboards, is available on the trial. Current
+plan details are on the [pricing page](/pricing).
+
+## Try it against your own roster
+
+The best comparison isn't a features table. It's whether the tool catches
+something real in your own data. Start a 14-day trial, no credit card, and
+run your actual roster through it.
+
+[Start your supervisor account](https://app.audithalo.com/register)

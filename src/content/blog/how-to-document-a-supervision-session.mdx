@@ -1,0 +1,198 @@
+---
+title: "How to document a supervision session"
+metaTitle: "How to document a supervision session (the defensible way) | AuditHalo"
+metaDescription: "What a board needs in a supervision session record: dual signatures, a contemporaneous timestamp, the right artifacts, and how long you must retain it."
+slug: "how-to-document-a-supervision-session"
+category: "Supervision Basics"
+tags: ["supervision-documentation", "evidence-packages", "supervision-hours"]
+datePublished: "2026-09-11"
+dateModified: "2026-09-11"
+author: "AuditHalo"
+primaryKeyword: "how to document supervision sessions"
+secondaryKeywords:
+  - "supervision documentation requirements"
+  - "clinical supervision contract template"
+pillar: "clinical-supervision-hours-the-complete-guide"
+relatedStates: ["nc-lcmhca", "az-lac"]
+schema: ["Article", "FAQPage", "HowTo"]
+howToSteps:
+  - name: "Confirm the session type and duration before you start"
+    text: "Individual, group, or triadic, and the exact length. Boards track these separately, and a session logged as the wrong type can throw off your running individual-to-group ratio without anyone noticing for months."
+  - name: "Capture both identities and the supervisor's credential status"
+    text: "Record the supervisor's and supervisee's names and the supervisor's qualifying credential as it stood on the day of the session, not as it stands today. A credential that later lapses shouldn't retroactively erase a session that was valid when it happened."
+  - name: "Record the specific topics or competencies covered"
+    text: "A one-line note ('checked in') is not a session record. List what was discussed: cases reviewed, skills addressed, any risk or ethics issue that came up."
+  - name: "Attach the required artifacts for your state"
+    text: "Most states expect at minimum an attendance record and session metadata (date, duration, type). Some also accept a transcript or written note as supporting evidence."
+  - name: "Log the session the same day, not weeks later"
+    text: "A timestamp generated at the moment of signing is worth far more to a board than one you type in from memory during a slow week. Contemporaneous beats reconstructed every time."
+  - name: "Both parties sign with an explicit confirmation of intent"
+    text: "A signature that isn't tied to a clear 'I confirm this record is accurate' action is easy for a board to question later. Make the confirmation step unambiguous, not a passive checkbox."
+  - name: "Seal the record so it can't be quietly edited afterward"
+    text: "Once both signatures are in, the record should be locked. If a correction is needed later, it should show up as a new, dated amendment, not a silent edit to the original."
+  - name: "Retain the record for as long as your state requires"
+    text: "Retention windows vary by state and some boards don't publish a fixed number at all. When your state does specify one, treat it as a floor, not a target."
+faq:
+  - q: "What does a state board look for in a supervision session record?"
+    a: "Four things, almost universally: who signed it (both supervisor and supervisee, not just one), when it was signed relative to when the session happened, what type and duration of session it was, and whether the required supporting artifacts are attached. Boards differ on the exact artifact list. They don't differ on wanting proof the record was made at the time, not reconstructed later."
+  - q: "Why does a contemporaneous timestamp matter so much?"
+    a: "Because a board evaluating a stack of session records is implicitly asking which ones were made honestly in the moment and which were filled in later to close a gap. A log where every entry was signed the same day it happened is hard to argue with. A log where forty entries were all signed on the same Sunday afternoon two months after the fact invites exactly the kind of scrutiny you don't want during an audit."
+  - q: "How long do I need to keep supervision records?"
+    a: "It depends on your state, and not every board publishes a specific number. Arizona is explicit: supervisors must maintain contemporaneous written records for at least seven years (R4-6-212(C)(4)). North Carolina's rule doesn't state a fixed retention period in the current encoding, so check directly with the NC Board or keep records for the full length of your supervision window plus a comfortable margin if you're unsure."
+  - q: "Does AuditHalo generate documentation that satisfies these requirements?"
+    a: "Yes. Every session produces a tamper-evident evidence package with the session metadata, the required artifacts, and intent-confirmed signatures from both supervisor and supervisee, all sealed with a SHA-256 hash at the moment of signing. Nothing is added or edited after the fact, which is the exact property a board is checking for when it asks whether a record is contemporaneous."
+---
+
+This post is part of the
+[Clinical supervision hours: the complete guide](/blog/clinical-supervision-hours-the-complete-guide).
+
+## What a board needs to see in a session record
+
+A supervision session record isn't a diary entry. It's evidence, and a state
+board reads it the way an auditor reads a ledger: who signed it, when, and
+what it's attached to. Get those three things right and the rest of the
+record mostly takes care of itself.
+
+Across the states AuditHalo tracks, the pattern is consistent even when the
+exact requirements differ. [North Carolina](/states/nc-lcmhca) and
+[Arizona](/states/az-lac) both require the same two signers on every session:
+supervisor and supervisee. Both require the same baseline artifacts:
+attendance and session metadata. Both require the record to be immutable once
+signed, encoded in each state's rule file as `sha256_signed_json`. That's not
+a coincidence. It's what a defensible record looks like everywhere, even
+where the underlying hour requirements diverge sharply.
+
+## The four things every defensible record has
+
+**Dual signatures.** A session signed only by the supervisor, or only by the
+supervisee, is a note, not a record. Both parties need to attest that the
+session happened as described. This is the first thing NC and AZ list under
+`required_signers` in their rule encodings, and it's the first thing a board
+checks.
+
+**A contemporaneous timestamp.** The record needs to say not just that the
+session happened, but when it was documented relative to when it happened.
+Same day is the standard worth holding yourself to.
+
+**Session type and duration.** Individual, group, or triadic, and how long it
+ran. Arizona's rule is specific enough to matter here: every supervision
+session must run at least 30 minutes, and no more than 15 of the required 100
+hours can be conducted by telephone. A record that doesn't capture type and
+duration can't be checked against rules like these at all.
+
+**The right evidence artifacts.** Both states require at minimum an
+attendance record and session metadata. A transcript is optional in both, but
+where you have one, attaching it strengthens the record rather than weakening
+it.
+
+## Why a reconstructed log reads differently to a board
+
+Imagine two logs sitting side by side. One shows forty sessions, each signed
+by both parties within a day of the session date. The other shows the same
+forty sessions, but the signature timestamps cluster into three batches, each
+a few weeks after the sessions they cover.
+
+Nothing in the second log is necessarily false. The sessions may have
+happened exactly as described. But a board isn't just checking whether the
+content is plausible. It's checking whether the record was built the way
+records are supposed to be built, and a batch-signed log fails that check
+even when every session inside it was real. This is the entire reason
+`immutability` and signature timing show up as their own line items in the
+rule encoding rather than being folded into a general "keep good notes"
+instruction. A board can't verify memory. It can verify a timestamp.
+
+## What "required artifacts" means in practice
+
+The phrase sounds abstract until you look at what it resolves to for a given
+state. For both NC and AZ, `required_artifacts` breaks down to two concrete
+things:
+
+- **Attendance**, meaning a record of who was present, matched against the
+  named supervisor and supervisee (or, for group sessions, the full roster
+  and the group size limit for that state).
+- **Session metadata**, meaning the date, duration, session type, and the
+  supervisor's credential as it stood at the time.
+
+`optional_artifacts` in both states includes a transcript. It's not required,
+but if your supervision practice already produces one (a recorded session,
+an auto-transcribed note), attaching it costs nothing and only strengthens
+the package.
+
+## How NC and AZ compare on paper
+
+The underlying hour requirements for these two states are very different.
+The evidence bar they set for each session is nearly identical. Side by side:
+
+| Requirement | North Carolina (LCMHCA) | Arizona (LAC) |
+|---|---|---|
+| Required signers | Supervisor, supervisee | Supervisor, supervisee |
+| Required artifacts | Attendance, session metadata | Attendance, session metadata |
+| Optional artifact | Transcript | Transcript |
+| Record immutability | SHA-256 signed JSON | SHA-256 signed JSON |
+| Minimum session length | Not separately specified | 30 minutes |
+| Written record retention | Not specified in the current rule encoding | At least 7 years |
+
+That last row is the one worth sitting with. Two states with a similar
+evidence bar can still set very different expectations for how long you're
+required to hold onto the proof.
+
+## How long you have to keep these records
+
+Retention rules are where states diverge the most, and where you shouldn't
+assume a number that isn't written down. Arizona's rule is explicit:
+supervisors must maintain contemporaneous written records for at least seven
+years (R4-6-212(C)(4)), and that requirement sits with the supervisor, not
+just the supervisee.
+
+North Carolina's current rule encoding doesn't specify a fixed retention
+period. That's not the same as "there isn't one." If you're supervising or
+being supervised under the LCMHCA rule, confirm the retention expectation
+directly with the [NC Board](https://www.ncblcmhc.org/licensure/) rather than
+guessing, and in the meantime keep every record at least as long as your
+active supervision window plus a reasonable margin. When a state does state a
+number, as Arizona does, treat it as a floor. Losing a seven-year-old record
+because you deleted it in year five is an unforced error.
+
+## How to document a session, step by step
+
+1. **Confirm the session type and duration before you start.** Individual,
+   group, or triadic, and the exact length. Getting this wrong throws off
+   your running individual-to-group ratio without anyone noticing right away.
+2. **Capture both identities and the supervisor's credential status.**
+   Record it as it stood on the day of the session, not as it stands today.
+3. **Record the specific topics or competencies covered.** A one-line "checked
+   in" note isn't a session record. List the cases, skills, or issues
+   discussed.
+4. **Attach the required artifacts for your state.** At minimum, attendance
+   and session metadata. Add a transcript if you have one.
+5. **Log the session the same day, not weeks later.** A timestamp generated
+   at signing is worth more to a board than one typed in from memory.
+6. **Both parties sign with an explicit confirmation of intent.** A vague
+   checkbox invites doubt. Make the confirmation step unmistakable.
+7. **Seal the record so it can't be quietly edited afterward.** Corrections
+   should show up as new, dated amendments, never silent edits to the
+   original.
+8. **Retain the record for as long as your state requires.** Where a state
+   publishes a number, treat it as a floor, not a target.
+
+## How AuditHalo makes this automatic
+
+This is the part manual logging can't reliably do. When a session is signed
+in AuditHalo, both supervisor and supervisee confirm intent explicitly, not
+by checking a box that could mean anything. The supervisor's credential is
+captured and validated at that exact moment, so a lapsed credential shows up
+as a flag on the session it affects, not two years later during an audit.
+The record is then sealed into a SHA-256-hashed evidence package: session
+type, duration, topics, the required artifacts for your state, and both
+signatures, all timestamped at the moment of signing and not editable after.
+
+If you want a closer look at what belongs in a session record before you
+build your own process around it, the
+[supervision log template](/supervision-log-template) walks through the
+fields directly, and the [evidence packages](/evidence-packages) page covers
+how the sealed package itself is structured. For the specific hour and
+signature requirements in your state, see the
+[North Carolina](/states/nc-lcmhca) and [Arizona](/states/az-lac) rule pages.
+
+Start documenting sessions the way a board wants to see them:
+[create your AuditHalo account](https://app.audithalo.com/register).

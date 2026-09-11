@@ -1,0 +1,164 @@
+---
+title: "AuditHalo vs. a spreadsheet"
+metaTitle: "AuditHalo vs. a spreadsheet for supervision hours | AuditHalo"
+metaDescription: "A spreadsheet records that a supervision session happened. It can't check your state's rule, flag a lapsed credential, or produce audit-ready evidence."
+slug: "audithalo-vs-a-spreadsheet"
+category: "Comparisons"
+tags: ["comparison", "supervision-hours", "evidence-packages"]
+datePublished: "2026-09-11"
+dateModified: "2026-09-11"
+author: "AuditHalo"
+primaryKeyword: "supervision tracking software vs spreadsheet"
+secondaryKeywords:
+  - "best supervision tracking app"
+  - "supervision log template vs software"
+relatedStates: []
+schema: ["Article"]
+---
+
+## The spreadsheet isn't the problem, until it is
+
+A supervision-hours spreadsheet is free, it's flexible, and for a long
+stretch of a supervisee's caseload it works fine. Log the date, the type of
+session, the duration, a running total. Nothing about that is wrong. Most
+supervisors built their first tracking system exactly this way, and plenty of
+solo practitioners get through their whole registration period on a
+well-kept sheet with no issues at all.
+
+The question isn't whether a spreadsheet can hold data. It can hold anything
+you type into it. The question is what happens the first time the data needs
+to be checked against a rule, or shown to someone who wasn't in the room when
+the session happened.
+
+## What a spreadsheet actually does
+
+A spreadsheet is a record. You type in a date, a duration, maybe a note
+about what was covered, and the row sits there. If you want to know your
+running total, you write a formula. If you want to know your individual
+versus group supervision split, you write another formula, and you maintain
+it every time the sheet's structure changes.
+
+That's the whole job description: it stores what you tell it. It doesn't
+know your state's rule. It doesn't know that your supervisor's credential
+expired last month, because nobody entered that fact into a cell. It doesn't
+know that the setting you moved to in March was never approved, because
+approval status isn't a spreadsheet column anyone thinks to add until after
+a board asks about it.
+
+## Where the gap actually shows up
+
+The failure mode is rarely "the spreadsheet lost my data." It's "the
+spreadsheet had the data and nobody connected it to the rule in time."
+
+**Your individual-supervision share drifts below the floor.** Most states
+require a minimum proportion of hours to be one-on-one, not group. That
+ratio moves every time you log a session, and it moves in the wrong
+direction quietly. A spreadsheet will total your hours correctly. It won't
+tell you the moment your individual share crosses below the required
+percentage, because nobody wrote a formula that watches for that, and even
+if someone did, it would need updating every time a state's rule changes.
+
+**Your supervisor's credential lapses mid-relationship.** The sessions
+still happen. They still get logged. Everything in the spreadsheet looks
+identical to last month. What's different is a fact that lives entirely
+outside the sheet: a license renewal, a supervisory-designation expiration,
+something your supervisor may not have flagged to you at all. A spreadsheet
+has no mechanism for noticing that the person signing off on your hours is
+no longer qualified to.
+
+**A session gets logged before the contract was actually approved.**
+Several states treat the gap between "submitted" and "approved" as the
+difference between an hour that counts and one that doesn't. A spreadsheet
+doesn't distinguish between the two dates unless you build a column for
+each and remember to check them against each other, every time, for every
+supervisee, in every state your practice operates in.
+
+None of these are spreadsheet failures in the sense of a broken formula or a
+corrupted file. They're the predictable result of asking a general-purpose
+tool to do rule interpretation it was never built to do. Read more about how
+these gaps surface in [what happens when a board rejects hours after the
+fact](/blog/what-happens-if-supervision-hours-are-rejected).
+
+## The evidence problem
+
+Even when nothing goes wrong with the hours themselves, a spreadsheet has a
+second problem: a board doesn't want a spreadsheet.
+
+What a board wants, when it audits a file, is proof that a specific
+session happened, on a specific date, supervised by someone who was
+qualified that day, and confirmed by both people who were in the room. A
+spreadsheet row confirms none of that. Anyone with edit access can change a
+date after the fact. There's no signature attached to a cell, no way to show
+the row looked the same six months ago as it does today, and no way to prove
+who actually entered the data.
+
+That's the difference between a record and evidence. A record says
+something happened. Evidence proves it, in a form someone outside your
+organization can independently check.
+
+AuditHalo's [evidence packages](/evidence-packages) work the way boards
+actually evaluate proof. Each session requires both supervisor and
+supervisee to sign with an explicit intent confirmation, not a checkbox that
+can be clicked by accident. The signature captures the signer's name and
+credential, their role, a timestamp, and an IP address. Once both required
+signatures are in, the package seals: it's SHA-256 hashed, and the hash
+covers the full signed content, so changing a single field after the fact
+would be detectable. Anyone with the package, board or employer, can paste
+the verify-URL into a browser and confirm the hash still matches, with no
+account and no login. That's what "tamper-evident" means concretely: not
+that nobody could try to change it, but that if they did, the mismatch would
+show.
+
+A spreadsheet reconstructed from memory eight months after the fact is the
+opposite of this. It's asking a board to trust a story instead of checking a
+proof.
+
+## What a rules engine adds that a formula can't
+
+The reason AuditHalo isn't just a fancier spreadsheet is that it evaluates
+each session against a live rule, not a static formula someone wrote once
+and forgot to update. The [multi-state rules engine](/features) checks every
+supervised hour against the current version of your state's requirement the
+moment it's logged: the individual-supervision floor, the supervisor's
+credential status, the setting-approval requirement, the contract-filing
+sequence. Rules are citation-linked to the actual administrative code and
+versioned by effective date, so a supervisee partway through a licensure
+window is evaluated under the rule that was in force when they started, not
+whatever changed since.
+
+When something drifts, an at-risk flag surfaces in the dashboard, often
+months before an audit would ever surface it. That's the practical
+difference: a spreadsheet tells you what happened. AuditHalo tells you what's
+about to go wrong, while there's still time to fix it.
+
+## What AuditHalo doesn't replace
+
+AuditHalo isn't a practice-management system and it isn't an EHR. It doesn't
+handle client scheduling for clinical appointments, billing, or clinical
+documentation of client care. Supervision notes generated in AuditHalo cover
+the supervisory relationship and the supervisee's development, not client
+details. If your practice already runs on an EHR for clinical work, AuditHalo
+sits next to it and handles the one thing most EHRs weren't built for:
+proving, to a board, that a specific supervision requirement was met by a
+specific date under a specific rule.
+
+## When a spreadsheet is fine
+
+If you're a solo supervisor tracking one or two supervisees, in a state with
+a simple rule set, and you're diligent about checking your supervisor's
+credential status yourself, a spreadsheet can get you through. The risk
+scales with the number of people you're responsible for and the number of
+states those rules span. A practice with fifteen supervisees across three
+states isn't managing a bigger spreadsheet. It's managing fifteen separate
+sets of drifting compliance conditions that nobody is checking in real time,
+which is a different problem than the one a spreadsheet was built to solve.
+
+## Where to go from here
+
+If you're a supervisor deciding whether to move a roster off spreadsheets,
+[see how AuditHalo works for supervisors](/for-supervisors) or check
+[pricing](/pricing) for your roster size. If you want to see the full
+feature list before deciding, start with [features](/features).
+
+[Start your supervisor account](https://app.audithalo.com/register). Free
+for supervisees, 14-day trial for supervisors, no credit card.
