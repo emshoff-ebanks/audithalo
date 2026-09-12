@@ -1,10 +1,7 @@
-import Link from "next/link";
-import { format, parseISO } from "date-fns";
-import { ArrowRight } from "lucide-react";
 import readingTime from "reading-time";
 import { getAllBlogPosts } from "@/lib/mdx";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { BlogIndexClient, type BlogIndexPost } from "./blog-index-client";
 
 const URL = "https://audithalo.com/blog";
 
@@ -16,10 +13,27 @@ export const metadata = {
 };
 
 export default function BlogIndexPage() {
-  const posts = getAllBlogPosts();
+  const rawPosts = getAllBlogPosts();
+
+  const pillarSlugs = new Set(
+    rawPosts.map((p) => p.meta.pillar).filter((slug): slug is string => Boolean(slug))
+  );
+
+  const posts: BlogIndexPost[] = rawPosts.map((post) => ({
+    slug: post.meta.slug,
+    title: post.meta.title,
+    metaDescription: post.meta.metaDescription,
+    category: post.meta.category,
+    tags: post.meta.tags,
+    datePublished: post.meta.datePublished,
+    readMinutes: Math.ceil(readingTime(post.content).minutes),
+    isPillar: pillarSlugs.has(post.meta.slug),
+  }));
+
+  const categories = Array.from(new Set(posts.map((p) => p.category))).sort();
 
   return (
-    <section className="mx-auto max-w-4xl px-6 py-20 lg:py-24">
+    <section className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
       <Badge variant="outline" className="mb-6">
         Guides
       </Badge>
@@ -32,39 +46,8 @@ export default function BlogIndexPage() {
         rule itself, not a summary of it.
       </p>
 
-      <div className="mt-14 space-y-6">
-        {posts.map((post) => {
-          const stats = readingTime(post.content);
-          return (
-            <Link
-              key={post.meta.slug}
-              href={`/blog/${post.meta.slug}`}
-              className="block group"
-            >
-              <Card className="transition-colors group-hover:border-secondary/50">
-                <CardContent className="p-6 sm:p-8">
-                  <div className="flex flex-wrap items-center gap-2 mb-3 text-xs text-foreground/60">
-                    <Badge variant="outline">{post.meta.category}</Badge>
-                    <span>
-                      {format(parseISO(post.meta.datePublished), "MMM d, yyyy")}
-                    </span>
-                    <span>·</span>
-                    <span>{Math.ceil(stats.minutes)} min read</span>
-                  </div>
-                  <h2 className="font-display text-xl sm:text-2xl font-semibold text-foreground group-hover:text-secondary transition-colors">
-                    {post.meta.title}
-                  </h2>
-                  <p className="mt-2 text-foreground/70 leading-relaxed">
-                    {post.meta.metaDescription}
-                  </p>
-                  <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-secondary">
-                    Read the guide <ArrowRight className="h-3.5 w-3.5" />
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
+      <div className="mt-14">
+        <BlogIndexClient posts={posts} categories={categories} />
       </div>
     </section>
   );
