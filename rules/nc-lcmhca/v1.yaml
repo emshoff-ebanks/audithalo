@@ -13,7 +13,9 @@ issuing_board: North Carolina Board of Licensed Clinical Mental Health Counselor
 version: 1
 
 summary: |
-  3,000 supervised practice hours over 2-5 years post-master's. 100 supervision
+  3,000 supervised practice hours over 2-5 years post-master's, of which at
+  least 2,000 must be direct client contact (live counseling with individuals,
+  groups, or families, per N.C. Gen. Stat. § 90-330(a)(3)). 100 supervision
   hours total, of which at least 75% must be individual (one-to-one). At least
   1 hour of individual supervision every 2 weeks, and at least 1 hour of
   supervision per 40 practice hours. Supervisor must be NCBLCMHC-approved
@@ -137,6 +139,7 @@ page_content:
     - "Group supervision sessions are capped at 12 supervisees per session"
 
   key_warnings:
+    - "At least 2,000 of the 3,000 total practice hours must be direct client contact (live counseling with individuals, groups, or families); the remainder may be indirect (documentation, case consultation, supervision itself)"
     - "Do not log practice hours before your NC Board supervision contract is filed and approved — this is the most common and most costly mistake LCMHCA candidates make"
     - "The 75% individual supervision requirement is enforced as a rolling fraction across all logged hours, not per session or per month — track it from day one"
     - "The 2-to-5-year window is real: hours logged after 60 months from the start of the LCMHCA period may not count toward a single licensure application"
@@ -145,7 +148,7 @@ page_content:
 
   faq:
     - q: "How many supervised hours does an LCMHCA need in North Carolina?"
-      a: "3,000 hours of supervised professional practice, completed over a minimum of 2 years and no more than 5 years. Within those 3,000 hours, you must accumulate at least 100 supervision hours, of which at least 75 must be individual (one-on-one with your supervisor)."
+      a: "3,000 hours of supervised professional practice, completed over a minimum of 2 years and no more than 5 years, of which at least 2,000 must be direct client contact. Within those 3,000 hours, you must accumulate at least 100 supervision hours, of which at least 75 must be individual (one-on-one with your supervisor)."
     - q: "What qualifies as an approved supervisor in NC?"
       a: "Your supervisor must hold the LCMHCS (Licensed Clinical Mental Health Counselor Supervisor) credential issued by the NC Board. No other license type — LCSW, LPC, LMFT, psychologist — satisfies the NC requirement. Your supervisor must also have a current supervision contract on file with the board for your supervision relationship."
     - q: "What happens if the NC Board changes the supervision rules while I'm mid-licensure?"
@@ -156,6 +159,8 @@ page_content:
       a: "AuditHalo generates a tamper-evident evidence package for each completed supervision session: date, duration, session type, supervisor credentials, session note, and intent-confirmed signatures from both supervisor and supervisee. The package is SHA-256 hashed and immutable — the same standard of proof the board would build themselves."
 
 notes:
+  - "Added 2026-09-11: at least 2,000 of the 3,000 total practice hours must be direct client contact (live counseling with individuals, groups, or families, per G.S. § 90-330(a)(3)a-b). Confirmed directly against the NC Board's own LCMHCA applicant page (https://www.ncblcmhc.org/Licensure/Applying/LCMHCA); this fact was previously missing from this file, surfaced during blog content fact-checking (a blog post had said NC does not specify a direct-hours minimum, which was wrong)."
+  - "Added 2026-09-11, MODERATE CONFIDENCE, NEEDS LICENSED REVIEW: 21 NCAC 53 .0702 appears to permit multiple supervision modalities including direct live observation, co-therapy, and audio/video recording, with video supervision allowed when synchronous. The supervision contract must specify which modality is used. This was surfaced via secondary-source search synthesis, not a directly quoted primary-source fetch (the primary regulations.justia.com and telementalhealthtraining.com pages both returned 403 when fetched directly), so treat this as a lead for licensed-supervisor verification against the actual rule text, not a confirmed fact on the same footing as the direct-hours correction above."
   - The supervisor's certified-supervisor status (LCMHCS) is itself subject to renewal; AuditHalo verifies supervisor credentials at the time each session is signed, not retrospectively.
   - Triadic supervision (one supervisor + two supervisees) is treated as individual in NC if the supervisor attests it provides individual attention; for now AuditHalo treats triadic as group unless overridden by the supervisor's attestation.
   - The 75% individual rule is enforced as a rolling fraction; an early-career supervisee with only group sessions in their first month does not trigger a violation until they accumulate enough hours to fall meaningfully below 75%.
