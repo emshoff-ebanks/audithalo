@@ -1,0 +1,177 @@
+---
+title: "Supervision log template or software: how to decide"
+metaTitle: "Supervision log template vs software | AuditHalo"
+metaDescription: "A template and dedicated software solve different problems. Here's a straight decision framework for when a supervision log template is enough, and when it isn't."
+slug: "supervision-log-template-vs-software"
+category: "Comparisons"
+tags: ["comparison", "supervision-hours", "supervision-log-template"]
+datePublished: "2026-09-11"
+dateModified: "2026-09-11"
+author: "AuditHalo"
+primaryKeyword: "supervision log template vs software"
+secondaryKeywords:
+  - "supervision log template"
+  - "clinical supervision contract template"
+relatedStates: []
+schema: ["Article", "FAQPage"]
+faq:
+  - q: "Is a supervision log template good enough for a state board audit?"
+    a: "Sometimes. A well-kept template that includes date, duration, session type, supervisor credential, and both signatures can satisfy a board that isn't looking closely. It falls short the moment a board wants proof the record wasn't altered after the fact, which a template has no way to provide."
+  - q: "At what point should I switch from a template to software?"
+    a: "The usual triggers are: you're supervising more than two or three people, you're managing supervisees across more than one state, you're within a few months of a licensure deadline or known audit, or you've already had a board ask a question your log couldn't answer cleanly."
+  - q: "Can I start with a template and move to software later?"
+    a: "Yes, and a lot of supervisors do exactly that. The risk is that hours logged only in a template before the switch don't get the tamper-evidence or rule-checking retroactively. Moving earlier rather than later matters more than which tool you started with."
+  - q: "Does AuditHalo replace the need for a supervision contract template?"
+    a: "No. A contract template still frames the supervisory relationship, its scope, and its terms. AuditHalo replaces the log, not the contract, though it also tracks whether the contract itself was filed and approved on time where a state requires that."
+---
+
+## Two different jobs
+
+A supervision log template and supervision software are trying to solve two
+different problems, and confusing them is where most of the frustration
+starts. A template's job is to give a session a place to live: a date, a
+duration, a note about what was covered. Software's job is to check that
+session against a rule, prove who was in the room, and produce something a
+third party can independently verify years later.
+
+Both are legitimate answers. Which one you need depends on where you are,
+not on which one is objectively better. This is a decision framework, not
+an argument that a template is wrong.
+
+If you haven't started tracking yet, the fastest way to see the difference
+in practice is to grab a [free supervision log template](/supervision-log-template)
+and use it for your first few sessions. It's a fine place to begin.
+
+## When a template is the right call
+
+A template earns its keep in a specific set of conditions, and it's worth
+naming them plainly instead of hand-waving past them.
+
+**You're early in a single supervisory relationship.** One supervisor, one
+supervisee, a normal caseload, no unusual circumstances. There isn't much
+for software to check yet, and a clean spreadsheet or printed form does the
+job.
+
+**Your state's rule is simple and you already know it cold.** Some states
+have a short, stable rule set: a total hour count, a ratio requirement, not
+much else. If you've supervised for years under that rule and know it by
+memory, a template's blank spots don't hurt you, because you're mentally
+filling them in yourself.
+
+**Audit risk is low and distant.** If your supervisee is a year or more from
+applying for licensure, there's no immediate proof-of-record moment
+approaching. You have time to migrate later if things get more complex.
+
+**You're diligent about the parts a template can't check.** A template
+doesn't flag a lapsed supervisor credential or a missed filing deadline.
+If you're personally tracking those facts some other way, checking your own
+license renewal date, confirming your contract was filed, then the template
+is doing the one job you're asking of it: holding a record.
+
+None of this is a knock on templates. A supervision log template is free,
+familiar, and requires no account, no login, and no learning curve. For a
+narrow set of circumstances, that's exactly the right trade-off.
+
+## Where a template stops being enough
+
+The same template that worked fine in month one starts to strain under a
+few specific conditions. These are the actual trigger points, not a vague
+"eventually you'll outgrow it."
+
+**More than a couple of supervisees.** A template scales linearly with your
+attention. Two supervisees means checking two sets of hours, two ratios,
+two contract statuses, by hand, every time something changes. Five
+supervisees means five. Nobody catches every drift by eye at that scale,
+and the ones that get missed are usually the ones that mattered.
+
+**More than one state.** Different states define individual versus group
+supervision differently, set different minimum ratios, and treat contract
+filing timelines differently. A template built around one state's rule
+quietly stops matching the rule the moment a supervisee's state, or the
+state a session took place in, is different from the one the template
+assumes.
+
+**An audit or licensure application is approaching.** This is the moment a
+board looks closely at what you've been keeping. A template that's been
+fine for two years can fail in the last month if a credential lapsed
+partway through and nobody flagged it, or if a session in month four was
+logged before the supervision contract was approved. Boards check for
+exactly these gaps.
+
+**You need tamper-evidence, not just a record.** A board doesn't just want
+to know a session happened. It wants proof the record hasn't been edited
+since. A spreadsheet cell or a filled-in PDF form has no mechanism for
+proving that. Anyone with edit access can change a date, and there's no way
+for an outside party to check whether they did.
+
+**You need the log to check itself.** A template stores what you type into
+it. It has no idea what your state's rule currently requires, whether it
+changed since you started, or whether your own supervisor is still
+credentialed to sign off on your hours. Catching that requires something
+that evaluates each entry against a live rule, not a form that just holds
+your entries.
+
+We covered the mechanics of the spreadsheet failure mode in more depth in
+[AuditHalo vs. a spreadsheet](/blog/audithalo-vs-a-spreadsheet). That post
+is about one specific template format. This one is about the broader
+decision: template versus dedicated software, whatever form the template
+takes.
+
+## What software adds
+
+The gap between a template and software isn't about polish. It's about what
+each one is capable of doing with the same information.
+
+AuditHalo's [evidence packages](/evidence-packages) illustrate the concrete
+difference. Each supervision session requires both supervisor and supervisee
+to sign with an explicit intent confirmation, not a checkbox that can be
+clicked by accident or filled in by one party alone. The signature captures
+the signer's name, credential, role, a timestamp, and an IP address. Once
+both signatures are in, the package is sealed: SHA-256 hashed, with the hash
+covering the full signed content, so a change to a single field after the
+fact would be detectable. Anyone holding the package, board, employer, or
+auditor, can paste the verify-URL into a browser and confirm the hash still
+matches. No account, no login, no phone call to you.
+
+Underneath that, AuditHalo checks each session against the current version
+of your state's rule at the moment it's logged: the individual-supervision
+floor, the supervisor's credential status, whether the setting was approved,
+whether the contract was filed and approved before the session happened.
+When something drifts, a flag surfaces in the dashboard, often months
+before an audit would ever surface it on its own.
+
+A template can't do either of these things, not because it's poorly
+designed, but because that was never its job. It's a place to write things
+down. Software is a place where what you write down gets checked and
+proven.
+
+## The contract is a separate decision
+
+It's worth separating two things that get lumped together: the supervision
+log and the supervision contract. A [clinical supervision contract
+template](/blog/clinical-supervision-contract-template) defines the terms
+of the relationship, scope, supervision modality, expected hours, and in a
+growing number of states, has to be filed and approved by the board before
+any hour counts. That's a different document doing a different job than
+the log that records individual sessions after the contract is in place.
+You can use a contract template and log software together, or a log
+template and neither, in almost any combination. Deciding on one doesn't
+automatically decide the other.
+
+## A short way to decide
+
+If you're supervising one person, in one state, with a rule you know well,
+and you're personally checking the things a template can't, a template is a
+reasonable choice today. If you're supervising several people, across more
+than one state, approaching an audit or a licensure deadline, or if you've
+already had a close call where your record couldn't answer a question
+cleanly, that's the point to move to something that checks the rule for you
+and seals the proof.
+
+Neither answer is permanent. Plenty of supervisors start with a template and
+move to software once their roster or their risk changes. The mistake isn't
+picking the "wrong" one at the start. It's staying with a template past the
+point where the conditions that made it adequate have already changed.
+
+[Start your supervisor account](https://app.audithalo.com/register). Free
+for supervisees, 14-day trial for supervisors, no credit card.

@@ -1,0 +1,171 @@
+---
+title: "Time2Track alternative for clinical mental health supervision"
+metaTitle: "Time2Track alternative for clinical supervision | AuditHalo"
+metaDescription: "Time2Track is a general hours-tracking tool across many training fields. Here's what a state-rule-aware supervision platform checks that a hour log can't."
+slug: "time2track-alternative"
+category: "Comparisons"
+tags: ["comparisons", "supervision-tracking", "evidence-packages"]
+datePublished: "2026-09-11"
+dateModified: "2026-09-11"
+author: "AuditHalo"
+primaryKeyword: "Time2Track alternative"
+secondaryKeywords:
+  - "clinical supervision software comparison"
+relatedStates: []
+schema: ["Article"]
+---
+
+## What Time2Track actually is
+
+Before comparing anything, it's worth being precise about what Time2Track is,
+since a lot of people searching "Time2Track alternative" got pointed to it by
+a school or a supervisor and never looked closely at what it was built for.
+
+Time2Track markets itself as a web-based experience management system, and it
+covers a wide range of training fields at once: psychology, marriage and
+family therapy, counseling, teacher education, school psychology, public
+health, and legal internships all show up as named use cases on its site. It
+does have a page aimed at LPC and counseling hours specifically, describing
+itself there as a way for "counseling students, interns, and professionals to
+track LPC hours." So it isn't a tool built for a different profession
+entirely, the way, say, a pure BCBA fieldwork tracker would be. It's a
+cross-discipline hours logger that counseling happens to be one of several
+categories under.
+
+That matters for what it does and doesn't do. A tool built to serve law
+interns, school psychologists, and MFT trainees under one product can't bake
+in any single state's mental-health-counseling licensure rule as a first
+principle, because most of its users aren't operating under that rule at all.
+Reviewing its public feature and pricing pages, we found no mention of
+state-specific licensure citations, a rules engine, sealed evidence packages,
+tamper-evident signatures, or audit-trail security. What it does describe is
+hour and activity logging, custom report generation, progress charts, and
+signature lines for a supervisor to sign a printed report. Individual pricing
+runs $9.99 a month billed monthly, or $5.99 a month billed annually, with a
+30-day free trial.
+
+None of that makes it a bad hour log. It's a reasonable, affordable way to
+keep a running count of training activities across a lot of different fields.
+But an hour log and a compliance system solve different problems, and the gap
+between them is exactly what tends to surface at renewal or audit time.
+
+## What a general hours tracker checks, and what it doesn't
+
+A cross-discipline logging tool is built to answer one question well: how
+many hours of what type have been entered. A second, harder question sits
+underneath it: does this specific hour, under this specific state's
+mental-health-counseling rule, actually count. A general tool built for many
+fields at once has no single rule to check it against.
+
+Those are different jobs. A supervisee can log fifty hours under a supervisor
+whose credential lapsed partway through, and a generic tracker has no reason
+to flag it, because it isn't evaluating supervisor qualification against a
+licensure board's requirement. It can let group supervision hours pile up
+past whatever share a specific state allows for individual supervision,
+because it isn't tracking that ratio against a rule either. The tool did its
+job: it recorded what was entered. Nobody checked whether what was entered
+was actually valid until a board reviewer did, months or years later.
+
+## What AuditHalo checks instead: the rule, not just the clock
+
+AuditHalo's [rules engine](/features) starts from the opposite premise. Every
+supervised hour gets evaluated against your state's exact requirement at the
+moment it's logged, not reconstructed against it after the fact. Ten states
+are covered today, each rule citation-linked to its specific administrative
+code section and versioned by effective date, so an obligation that started
+under an older version of a rule keeps being graded against the version it
+began under, even after the rule changes. The engine is re-verified quarterly
+by licensed clinical supervisors on contract, and it's built to catch the
+cases a generic log has no way to see: telehealth carve-outs, a supervisor
+whose credential doesn't actually qualify as a supervisory designation, or a
+pre-registration gap where hours were logged before a supervisee was
+officially eligible to earn them.
+
+A hour tracker tells you what was entered. A rules engine tells you whether
+what was entered counts, in your state, under the rule that applies right
+now.
+
+## Sealed, tamper-evident evidence packages
+
+Printing a report with a signature line solves the signing problem but not
+the proof problem. A printed PDF with a supervisor's signature can still be
+edited by anyone with access to the file it came from, and a board reviewing
+it years later has no way to know whether it was. AuditHalo seals every fully
+signed session into an [evidence package](/evidence-packages): supervisor
+credential snapshot, citation to the rule in force at the time of signing,
+both signatures with intent confirmation, all hashed with SHA-256. Change one
+field afterward and the hash stops matching. Anyone with the verify link, no
+account required, can confirm a package still matches what was sealed. That's
+a different kind of guarantee than a document someone printed and signed.
+
+## At-risk flags before a gap becomes permanent
+
+Some rule problems are fixable if you catch them early and unrecoverable once
+a deadline passes. A lapsed supervisor credential can sometimes be resolved
+by re-supervising the affected window. A hard forfeiture rule, once
+triggered, usually can't be undone. AuditHalo's dashboard tracks
+setting-approval status and the running individual-supervision share on an
+ongoing basis, and surfaces an at-risk flag up to 60 days before a deadline
+would turn a fixable gap into a permanent one. Supervisors see it on the
+roster view. Nobody has to wait for an annual review, or a report generated
+after the fact, to find out something was off.
+
+## Supervisor credential validation at signing
+
+A session supervised by someone whose credential lapsed is a session at
+risk, no matter how good the supervision itself was. AuditHalo captures and
+validates a supervisor credential snapshot at the moment of signing, not
+later at renewal. If a credential expired, was suspended, or never qualified
+as a supervisory designation in the first place, that surfaces immediately,
+tied to the specific session it affects, rather than showing up as a board
+finding on someone else's timeline.
+
+## Switching from Time2Track
+
+You don't need to already be behind to make a change. Most people move for a
+quieter reason: a supervisor can't quickly answer which supervisee is closest
+to an individual-supervision floor, or which sessions were signed by someone
+whose credential status has since changed, because the tool they're using
+was never built to track either. Moving over means entering supervisees,
+their state, and their start dates. Hours already logged in Time2Track can be
+noted for reference, but AuditHalo's rule evaluation and evidence sealing
+apply to sessions logged and signed inside the platform going forward. The
+earlier in an obligation you switch, the more of the remaining timeline
+actually gets covered by it.
+
+## Who this is built for
+
+AuditHalo is built for [supervisors](/for-supervisors) managing one
+supervisee or a full roster across a practice, along with HR admins and
+executives who need a compliance view without opening individual files one
+at a time. See the full [comparison of supervision tracking
+tools](/blog/myclinicalsupervisor-alternative) for more on what to check
+before picking one, and the [pricing page](/pricing) for current plan
+details.
+
+## FAQ
+
+**Is Time2Track built specifically for mental-health-counseling licensure?**
+No. It's a hours-tracking tool used across several training fields,
+including psychology, MFT, counseling, school psychology, and legal
+internships. Its counseling-focused page describes tracking LPC hours, but
+its features are general-purpose activity logging rather than a rule set
+built around any one state's licensure requirements.
+
+**Does Time2Track check state-specific supervision rules?**
+Based on its public feature and pricing pages, no. It describes hour
+logging, custom reports, and progress graphs, not rule citations, supervisor
+credential checks, or evidence-sealing.
+
+**Do I have to already be behind on hours to switch tools?**
+No. Switching is easiest before a deadline is close, since AuditHalo's rule
+evaluation and evidence sealing apply going forward from the point you start
+logging sessions in it.
+
+## Try it against your own roster
+
+The best comparison is whether a tool catches something real in your own
+data. Start a 14-day trial, no credit card, and run your actual roster
+through it.
+
+[Start your supervisor account](https://app.audithalo.com/register)

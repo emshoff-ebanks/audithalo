@@ -1,0 +1,145 @@
+---
+title: "SimplePractice and supervision hour tracking: where the gap is"
+metaTitle: "SimplePractice supervision tracking: the gap | AuditHalo"
+metaDescription: "SimplePractice helps you document and bill sessions. Here's the gap around state supervision-hour compliance it isn't built to fill, and how to close it."
+slug: "simplepractice-supervision-tracking"
+category: "Comparisons"
+tags: ["comparisons", "supervision-tracking", "evidence-packages"]
+datePublished: "2026-09-11"
+dateModified: "2026-09-11"
+author: "AuditHalo"
+primaryKeyword: "SimplePractice supervision tracking"
+secondaryKeywords:
+  - "clinical supervision software comparison"
+relatedStates: []
+schema: ["Article"]
+---
+
+## SimplePractice is not the problem
+
+If your practice runs on SimplePractice, you already know why. It handles
+scheduling, notes, billing, and client records well enough that most
+clinicians never think about the software at all, which is the point of a
+good EHR. This post isn't a case for switching away from it. It's about a
+narrower question: what happens to your pre-licensed clinicians' supervision
+hours once they're logged, and whether SimplePractice was ever built to
+answer the specific compliance question your state licensing board asks.
+
+## What SimplePractice actually does for supervision
+
+Worth being precise here, since a lot of comparison content guesses at
+competitor features instead of checking them. SimplePractice's supervision
+tools, confirmed on its support site, cover:
+
+- **Supervisor and supervisee designation.** You can mark a team member as a
+  supervisor and assign supervisees to them. A supervisor can have an
+  unlimited number of supervisees; a supervisee is limited to one supervisor
+  at a time.
+- **Note review and co-signing.** A supervisee writes and signs a
+  progress note, sends it to their supervisor, and the supervisor can
+  request edits or add their own signature once it's ready. There's a
+  Supervision tab for finding notes still waiting on a co-sign.
+- **Supervisor info on documents.** Practices can set supervisor
+  information to auto-populate on notes and billing documents for
+  pre-licensed clinicians, and bill insurance under the supervisor's
+  credentials where that's permitted.
+- **Care Aide's Note Checker**, available to pre-licensed supervisees,
+  reviews a progress note's content against general documentation standards
+  and gives feedback before it goes to the supervisor.
+
+That's a real, useful workflow. It answers "was this note reviewed and
+signed by the right person" for an individual session. It's built around
+documentation quality and billing correctness, which is exactly what an EHR
+should be built around.
+
+## What it isn't built to answer
+
+Search SimplePractice's own user community and you'll find clinicians asking
+a different question: whether there's a way to track accumulating direct
+client hours, individual and group supervision hours, and indirect hours
+separately, then sign off on the totals and export them for a licensing
+application. That thread reads like a feature request, not a documented
+capability, which tells you something. Tracking a note's review status and
+tracking a supervisee's progress against a state's specific hour
+requirements are different jobs, and general practice-management platforms
+are mostly built for the first one.
+
+A licensing board doesn't ask "was every note co-signed." It asks things
+like: how many of these hours were individual versus group, does that ratio
+meet the state minimum, was the supervisor's credential valid on every date
+supervision occurred, and can you produce a record that hasn't been altered
+since it was signed. Many general practice-management platforms include
+note co-signing but aren't built to also evaluate every logged hour against
+your state's specific supervision ratio, credential requirements, and
+deadline structure. That's a rules problem, not a documentation problem, and
+it needs a different kind of engine.
+
+## Why the two problems don't merge cleanly
+
+A co-signed note proves supervision happened and that a licensed person
+reviewed the work. It doesn't tell you whether that hour counted toward an
+individual-supervision floor your state sets, or whether the supervising
+clinician's credential was still active and correctly designated on that
+date. Those checks require a system that knows the actual administrative
+code for the state the supervisee is licensed in, not just a signature
+field. Building that into a general EHR would mean maintaining fifty
+different rule sets inside a product meant to serve every kind of practice,
+which isn't its job.
+
+## What AuditHalo adds
+
+AuditHalo's [rules engine](/features) evaluates every supervised hour
+against the specific requirement for the supervisee's state at the moment
+it's logged, not reconstructed later from memory. Ten states are covered
+today, each rule tied to its administrative code citation and versioned by
+effective date. The dashboard tracks the running individual-supervision
+share and flags a developing gap up to 60 days before a deadline turns it
+into something unfixable. Supervisor credentials are captured and validated
+at the moment a session is signed, so a lapsed or misclassified credential
+surfaces immediately instead of showing up as a board finding months later.
+
+Once a session is fully signed, AuditHalo seals it into an
+[evidence package](/evidence-packages): supervisor credential snapshot, the
+rule citation current at signing, both signatures with intent confirmation,
+all hashed with SHA-256. Change a field afterward and the hash breaks,
+which means the record's integrity doesn't rest on anyone's word. Anyone
+with the verify link can confirm a package still matches its seal, no
+account required.
+
+## Using both together
+
+Nothing here requires picking one tool over the other. The practical setup
+most supervisors land on: keep clinical notes, scheduling, and billing in
+SimplePractice, since it's already integrated into daily clinical work and
+your clients' records live there. Log supervision sessions, hour types, and
+supervisor sign-offs in AuditHalo, where each entry gets evaluated against
+the actual state rule and sealed once both parties confirm it. The two
+systems don't need to talk to each other. They cover different halves of the
+same supervisee's record: one proves the clinical work happened and was
+reviewed, the other proves the supervision hours meet the specific
+requirement your board will check.
+
+Think of it by what each system is asked at renewal time. SimplePractice can
+show that a note existed, was reviewed, and carries a supervisor's
+signature. It can't tell a board whether that supervisee's individual hours
+cleared the floor their state sets, whether a given week's group session
+exceeded the share allowed to count, or whether the supervising clinician's
+license was active on the date they signed. Those are the questions
+AuditHalo's evaluation is built to answer, session by session, as hours
+accumulate rather than after the fact.
+
+## Who this is for
+
+AuditHalo is built for [supervisors](/for-supervisors) managing one
+supervisee or a full roster, along with HR admins and executives who need a
+compliance view without opening individual files. The rules engine,
+evidence packages, and role-based dashboards are all available on the
+trial. Current plan details are on the pricing page.
+
+## Try it against your own roster
+
+The clearest way to see the difference is to run your own supervisees
+through it. Start a 14-day trial, no credit card, and check whether your
+current hour logs would hold up against your state's rule today.
+
+[Start your supervisor account](https://app.audithalo.com/register)
