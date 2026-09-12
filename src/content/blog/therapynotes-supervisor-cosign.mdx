@@ -1,0 +1,175 @@
+---
+title: "TherapyNotes supervisor cosign: what it proves and what it doesn't"
+metaTitle: "TherapyNotes supervisor cosign explained | AuditHalo"
+metaDescription: "TherapyNotes lets supervisors co-sign notes from interns and clinicians. Here's exactly what that cosign confirms, what it can't, and how to close the gap for licensing."
+slug: "therapynotes-supervisor-cosign"
+category: "Comparisons"
+tags: ["comparisons", "supervision-tracking", "evidence-packages"]
+datePublished: "2026-09-12"
+dateModified: "2026-09-12"
+author: "AuditHalo"
+primaryKeyword: "TherapyNotes supervisor cosign"
+secondaryKeywords:
+  - "clinical supervision software comparison"
+relatedStates: []
+schema: ["Article", "FAQPage"]
+faq:
+  - q: "Does TherapyNotes track supervision hours for licensure?"
+    a: "Not as a dedicated feature, based on what TherapyNotes documents publicly. Its supervision tools are built around note review and cosigning, plus billing under a supervisor's credentials. Counting individual versus group hours against a state's specific minimums is a separate job that a note-cosign workflow isn't built to do."
+  - q: "Can a supervisor see every note without cosigning it?"
+    a: "Yes. TherapyNotes offers a view-only supervision level where a supervisor is attached to a supervisee's cases and can read notes without being asked to approve or sign them. That's different from the two levels that generate a To-Do item requiring approval or a cosignature."
+  - q: "Does a TherapyNotes cosign satisfy my state board's supervision documentation requirement?"
+    a: "It documents that a licensed supervisor reviewed and signed off on a specific note, which is real and useful. Whether that satisfies your board's requirement depends on what your state specifically asks for. Most boards want hour counts by category, a ratio calculation, and supervisor credential verification for every date supervision occurred. A note cosign alone usually doesn't produce that."
+  - q: "Do I have to choose between TherapyNotes and AuditHalo?"
+    a: "No. They're built for different jobs. TherapyNotes handles the clinical record: notes, scheduling, billing, and the cosign workflow tied to that documentation. AuditHalo tracks supervision hours against your state's specific rule and produces the evidence package your board asks for at renewal. Most supervisors run both."
+---
+
+## TherapyNotes is a real EHR with a real supervision feature
+
+If your supervisee's practice runs on TherapyNotes, you already know it's not a
+toy. It's one of the more established EHRs for behavioral health practices,
+and it has an actual supervision workflow built into user roles, not a
+bolted-on afterthought. This post isn't arguing you should replace it. It's
+about a narrower question: what does a TherapyNotes supervisor cosign
+confirm, and what does your state licensing board need that a note
+cosign was never built to produce.
+
+## What TherapyNotes' supervision feature does
+
+Worth being precise here rather than guessing at a competitor's feature set.
+Based on TherapyNotes' own support documentation and release notes, here's
+what the supervision workflow covers:
+
+- **Supervisor assignment.** Any user can be assigned as a Supervisor over
+  specific Clinicians or Interns, attached at the case level so the
+  supervisor's access lines up with who they oversee.
+- **Three supervision levels.** A practice sets one of three modes per
+  supervisee: "view only," where the supervisor can read notes but isn't
+  asked to sign anything; "must review and approve," which puts a note on the
+  supervisor's To-Do list before it's entered into the client record; and
+  "must review and co-sign," which requires the supervisor's signature
+  before the note is finalized.
+- **Cosigning tied to billing.** When a note requires a cosign, that
+  signature is also what allows the session to be billed under the
+  supervisor's credentials, the incident-to arrangement many practices rely
+  on for pre-licensed clinicians. A 2024 release (version 4.33) extended this
+  further, letting claims list both the clinician's and the supervisor's
+  provider details, or bill entirely under the supervisor, depending on
+  payer rules.
+- **Audit trail on the note itself.** Each cosigned note carries a record of
+  who wrote it, who approved or signed it, and when, inside TherapyNotes'
+  standard documentation history.
+
+That's a real, useful workflow, and it's built around a specific
+question: was this note reviewed, is it accurate, and can it be billed
+correctly. Nothing in TherapyNotes' public documentation describes a
+separate feature for tallying supervision hours by category or checking
+those totals against a state's licensing rule. If that exists as an internal
+report we haven't confirmed, it isn't described anywhere in TherapyNotes'
+support site or release notes, and it isn't the workflow the cosign feature
+is designed around.
+
+## What a note cosign proves, and what it doesn't
+
+A cosigned note is real evidence of something specific: a licensed
+supervisor read a piece of clinical documentation, evaluated it, and put
+their name on it. For clinical quality and billing compliance, that matters
+a lot. Insurance payers who allow incident-to billing generally require
+exactly this kind of sign-off before they'll pay a claim tied to a
+supervisor's credentials.
+
+But a licensing board isn't asking the question TherapyNotes' cosign
+workflow answers. It's asking a different set of questions: how many hours
+of individual supervision did this supervisee accrue against the total, does
+the group-to-individual ratio fall inside what the state allows, was the
+supervising clinician's license active and correctly designated on every
+date supervision took place, and can you produce a record of all of it that
+hasn't been altered after the fact. A stack of cosigned notes doesn't answer
+any of those on its own. It shows review happened at the note level. It
+doesn't show that the hours behind those notes clear a specific state
+minimum, because that was never the job it was built for.
+
+This is the same gap that shows up with [SimplePractice's cosign
+feature](/blog/simplepractice-supervision-tracking): the workflow is
+similar in shape, note gets written, note gets routed to a supervisor, note
+gets signed, but neither product is built to also run every logged hour
+through a state's administrative code and flag when the ratio or the total
+falls short. That's a different engine, closer to a rules system than a
+documentation system, and general EHRs aren't built to maintain fifty
+different state rule sets inside a product serving every kind of practice.
+
+## Why the two jobs don't merge cleanly
+
+Think about what each system would need to track separately. A cosign
+system needs to know: was this note written, is a supervisor attached, did
+they sign it. A licensing-hour system needs to know: what type of hour was
+this (individual, group, or indirect), does the ratio across all hours this
+period meet the state floor, was the supervisor's credential valid and
+correctly classified on this exact date, and is there a tamper-evident
+record of both signatures once the entry is locked. Those aren't variations
+on the same problem. Building the second on top of the first would mean an
+EHR taking on the job of tracking every state board's citation and effective
+date, which isn't what a general practice-management platform is for.
+
+## What AuditHalo adds
+
+AuditHalo's [rules engine](/features) checks every supervised hour against
+the specific requirement for the supervisee's state the moment it's logged,
+not reconstructed later from memory or a spreadsheet. Ten states are covered
+today, each tied to its administrative code citation and versioned by
+effective date, so a rule change doesn't silently invalidate hours logged
+under the old one. The dashboard tracks the running individual-supervision
+share in real time and flags a developing shortfall up to 60 days out,
+before it turns into a problem you can't fix before a renewal deadline.
+Supervisor credentials are captured and checked at the moment a session is
+signed, so a lapsed license or a misclassified credential surfaces that
+week, not during a board audit eight months later.
+
+Once both parties confirm a session, AuditHalo seals it into an [evidence
+package](/evidence-packages): the supervisor's credential snapshot, the rule
+citation that was in effect at signing, both signatures with intent
+confirmation, all hashed with SHA-256. Edit a field after the fact and the
+hash breaks, so the record's integrity doesn't depend on trusting whoever
+filed it. Anyone with the verify link can check that a package still
+matches its seal without needing an account.
+
+## Using TherapyNotes and AuditHalo together
+
+You don't have to choose. Keep clinical notes, scheduling, billing, and the
+cosign workflow in TherapyNotes, since it's already wired into daily
+clinical work and it's what payers expect to see for incident-to claims.
+Log supervision sessions, hour categories, and sign-offs in AuditHalo, where
+each entry gets evaluated against the actual rule for that supervisee's
+state and sealed once it's confirmed. The systems don't need to integrate.
+They answer different questions about the same supervisee: TherapyNotes
+shows the clinical work happened and was reviewed. AuditHalo shows the
+supervision hours behind that work meet the specific requirement the board
+will check.
+
+At renewal, picture what each system gets asked. TherapyNotes can produce a
+note, a supervisor's signature, and a timestamp. It can't tell a board
+whether that supervisee's individual-hour total cleared the state floor,
+whether a given month's group supervision exceeded the share allowed to
+count toward licensure, or whether the supervisor's license was active and
+correctly designated the whole time. Those are the questions AuditHalo is
+built to answer as hours accumulate, not reconstructed under deadline
+pressure. If you want a broader look at how different practice-management
+and compliance tools split this work, the [clinical supervision software
+comparison](/blog/clinical-supervision-software-comparison) covers more of
+it.
+
+## Who this is for
+
+AuditHalo is built for supervisors managing one supervisee or a full
+roster, and for HR admins and executives who need a compliance view without
+opening every individual file. The rules engine, evidence packages, and
+role-based dashboards are all available during the trial. Current plan
+details are on the pricing page.
+
+## Check your own roster against it
+
+The fastest way to see the gap is to run your current supervisees through
+it. Start a 14-day trial, no credit card required, and find out today
+whether your existing hour logs would hold up against your state's rule.
+
+[Start your supervisor account](https://app.audithalo.com/register)
