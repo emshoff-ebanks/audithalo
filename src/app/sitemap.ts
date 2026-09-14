@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { listLatestRules, ruleSlug } from "@/lib/rules";
 import { getAllBlogPosts } from "@/lib/mdx";
+import { getAllDocs } from "@/lib/docs";
+import { DOC_CATEGORIES } from "@/lib/docs-nav";
 
 const BASE = "https://audithalo.com";
 
@@ -14,6 +16,7 @@ const STATIC_PATHS = [
   "/states",
   "/evidence-packages",
   "/blog",
+  "/docs",
   // SEO Layer 1 — category pages
   "/clinical-supervision-software",
   "/mental-health-supervision-software",
@@ -64,5 +67,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticEntries, ...stateEntries, ...blogEntries];
+  const docsCategoryEntries: MetadataRoute.Sitemap = DOC_CATEGORIES.map((c) => ({
+    url: `${BASE}/docs/${c.slug}`,
+    lastModified: now,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
+  const docsArticleEntries: MetadataRoute.Sitemap = getAllDocs().map((d) => ({
+    url: `${BASE}/docs/${d.path}`,
+    lastModified: d.meta.dateUpdated ? new Date(d.meta.dateUpdated) : now,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
+  return [
+    ...staticEntries,
+    ...stateEntries,
+    ...blogEntries,
+    ...docsCategoryEntries,
+    ...docsArticleEntries,
+  ];
 }
