@@ -53,6 +53,18 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
       testMatch: /healthcheck\.spec\.ts/,
     },
+    // Docs help-center screenshot capture. Opt-in only (CAPTURE_DOCS_SHOTS)
+    // so it never runs in CI. Logs in as the seeded Atlas demo roles and
+    // screenshots pages read-only into public/docs-screenshots/.
+    ...(process.env.CAPTURE_DOCS_SHOTS
+      ? [
+          {
+            name: "docs-screenshots",
+            use: { ...devices["Desktop Chrome"] },
+            testMatch: /docs-screenshots\.spec\.ts/,
+          },
+        ]
+      : []),
     // Marketing tests are unauthed and safe in any env.
     {
       name: "marketing",

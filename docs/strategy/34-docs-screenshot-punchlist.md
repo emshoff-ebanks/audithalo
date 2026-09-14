@@ -1,10 +1,21 @@
 # Docs Screenshot Punch-List (P1 articles)
 
-Status: OPEN. Generated 2026-09-14 from `[Screenshot: ...]` markers in the P1
-help-center articles. Grouped by app route so each page is captured once and
-its shots reused. Capture from a seeded demo org (Atlas Counseling Group) so no
-real PHI appears. Once captured, replace the `[Screenshot: ...]` marker line in
-each article with the image.
+Status: DEFERRED (2026-09-14) pending the site/app redesign in progress. Capture
+after the redesign so shots reflect the final UI. Generated from `[Screenshot:
+...]` markers in the help-center articles. Grouped by app route so each page is
+captured once and its shots reused. Capture from a seeded demo org (Atlas
+Counseling Group) so no real PHI appears. Once captured, replace the
+`[Screenshot: ...]` marker line in each article with the image.
+
+**Capture tooling (ready for when the redesign lands):**
+`e2e/docs-screenshots.spec.ts` + the opt-in `docs-screenshots` Playwright
+project. Run with `CAPTURE_DOCS_SHOTS=1 E2E_BASE_URL=http://app.localhost:3000
+npx playwright test e2e/docs-screenshots.spec.ts --project=docs-screenshots`.
+It logs in as the `DEMO_*` roles and stages each shot (navigates to the right
+supervisee, fills forms without submitting). **Data note:** the Atlas demo
+currently renders every supervisee AT RISK with 0.0h practice hours, so the
+compliance-status shots need the demo data refreshed/staged first (a write to
+the shared prod DB). Re-seed or stage before the real capture run.
 
 Recommended: full-width viewport, light theme, warm off-white background, no
 browser chrome, no real client names.
