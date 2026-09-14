@@ -18,7 +18,9 @@ export function DocsBreadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
                 {c.name}
               </Link>
             ) : (
-              <span className="text-foreground/80">{c.name}</span>
+              <span aria-current="page" className="text-foreground/80">
+                {c.name}
+              </span>
             )}
           </li>
         ))}

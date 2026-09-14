@@ -40,6 +40,14 @@ describe("buildSearchIndex", () => {
     expect(entry!.text.toLowerCase()).toContain("placeholder body");
     expect(entry!.categoryLabel).toBe("Getting Started");
   });
+
+  it("keeps hyphenated terms and the category slug searchable", () => {
+    const index = buildSearchIndex(getAllDocs());
+    const entry = index.find((e) => e.path === "getting-started/supervisor");
+    // The slug and path carry hyphens; stripMdx must not split them.
+    expect(entry!.text).toContain("getting-started");
+    expect(entry!.text).toContain("getting-started/supervisor");
+  });
 });
 
 describe("getAdjacentDocs", () => {

@@ -41,6 +41,11 @@ export async function generateMetadata({ params }: { params: Params }) {
       siteName: "AuditHalo",
       type: "article",
     },
+    twitter: {
+      card: "summary_large_image",
+      title: doc.meta.title,
+      description: doc.meta.description,
+    },
   };
 }
 

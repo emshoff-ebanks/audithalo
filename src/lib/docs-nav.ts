@@ -99,11 +99,13 @@ export interface SearchEntry {
   text: string; // lowercased haystack for full-text matching
 }
 
-// Strip MDX/markdown noise so the search haystack is readable prose.
+// Strip MDX/markdown noise so the search haystack is readable prose. Hyphens
+// are preserved so hyphenated terms (e.g. "audit-log", "sign-and-seal") remain
+// searchable.
 function stripMdx(content: string): string {
   return content
     .replace(/```[\s\S]*?```/g, " ")
-    .replace(/[#>*_`|-]/g, " ")
+    .replace(/[#>*_`|]/g, " ")
     .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
     .replace(/\s+/g, " ")
     .trim();
@@ -120,6 +122,8 @@ export function buildSearchIndex(docs: DocArticle[]): SearchEntry[] {
       d.meta.title,
       d.meta.description,
       categoryLabel(d.meta.category),
+      d.meta.category, // slug, so hyphenated category queries match
+      d.path,
       ...(d.meta.keywords ?? []),
       stripMdx(d.content),
     ]
