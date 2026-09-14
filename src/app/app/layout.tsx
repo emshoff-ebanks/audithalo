@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HelpCircle } from "lucide-react";
 import { auth } from "@/auth";
 import { AuditHaloWordmark } from "@/components/brand/AuditHaloMark";
 import { PostHogIdentify } from "@/components/observability/posthog-identify";
@@ -55,6 +56,16 @@ export default async function AppLayout({
           </Link>
           {session?.user ? (
             <div className="flex items-center gap-2">
+              <a
+                href="https://audithalo.com/docs"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Help and documentation"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/70 hover:text-foreground px-2 py-1"
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">Help</span>
+              </a>
               <NotificationsBell initialNotifications={initialNotifications} />
               <UserMenu
                 name={session.user.name ?? session.user.email}

@@ -10,6 +10,7 @@ const navLinks = [
   { href: "/for-supervisors", label: "For Supervisors" },
   { href: "/for-group-practices", label: "For Practices" },
   { href: "/blog", label: "Guides" },
+  { href: "/docs", label: "Docs" },
   { href: "/security", label: "Security" },
 ];
 
@@ -83,6 +84,11 @@ export default function MarketingLayout({
               <li>
                 <Link href="/blog" className="hover:text-foreground">
                   Guides
+                </Link>
+              </li>
+              <li>
+                <Link href="/docs" className="hover:text-foreground">
+                  Docs
                 </Link>
               </li>
             </ul>
