@@ -77,5 +77,10 @@ export function getDocByPath(
 export function getAllDocs(): DocArticle[] {
   return getAllDocPaths()
     .map(({ category, slug }) => getDocByPath(category, slug))
-    .filter((d): d is DocArticle => d !== null);
+    .filter((d): d is DocArticle => d !== null)
+    .sort(
+      (a, b) =>
+        a.meta.category.localeCompare(b.meta.category) ||
+        a.meta.order - b.meta.order
+    );
 }
