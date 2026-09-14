@@ -1,0 +1,54 @@
+---
+title: Reading the audit log
+description: Understand what the organization audit log records, how to read an entry, and how to filter it to find the actions a reviewer asked about.
+category: audit-log
+audience: ["hr_admin", "executive", "supervisor"]
+order: 1
+dateUpdated: "2026-09-14"
+prerequisites: []
+related: ["audit-log/exporting-the-audit-log", "getting-started/hr-admin", "getting-started/executive"]
+keywords: ["audit log", "audit trail", "history", "actions", "filter", "compliance record"]
+schema: ["Article"]
+---
+
+This guide explains the audit log at `/dashboard/audit-log`: the append-only record of every state-changing action in your organization. It is the backbone of an audit response, the answer to "who did what, and when."
+
+Access is by role: HR admins and executives can view and export; supervisors can view as read-only.
+
+## What the log records
+
+The audit log captures sensitive, state-changing actions across the organization, including:
+
+- Invitations sent, canceled, resent, and accepted.
+- Rule assignments and changes.
+- Sessions logged, signed, and sealed.
+- Practice hour approvals and rejections.
+- Member role changes and deactivations.
+
+Each entry records the actor, a timestamp, the action type, the resource affected, and a details payload, along with the IP address.
+
+[Screenshot: the audit log table showing actor, timestamp, action type, and resource columns]
+
+## Read an entry
+
+- **Actor:** who performed the action.
+- **Timestamp:** when it happened.
+- **Action type:** what was done.
+- **Resource:** what it was done to.
+- **Details:** the specifics, as a structured payload.
+
+## Filter to what matters
+
+The log can be long, so filter by action type to focus on the category a reviewer asked about, for example only signatures, or only member changes.
+
+The view shows the most recent entries. Older entries are available through export.
+
+> **Note:** The log is append-only. Entries are never edited or deleted within the retention window, which is what makes it trustworthy as evidence.
+
+## Retention
+
+An HR admin sets how long entries are kept, from 1 to 20 years, in org settings at `/dashboard/settings`. The default retention is suited to board and accreditation timelines.
+
+## What's next
+
+- Export the log for a reviewer. See [Exporting and retaining the audit log](/docs/audit-log/exporting-the-audit-log).

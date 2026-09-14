@@ -24,9 +24,30 @@ describe("buildDocsNav", () => {
     expect(gs!.articles[0].path).toBe("getting-started/supervisor");
   });
 
-  it("omits categories that have no articles yet", () => {
-    const nav = buildDocsNav(getAllDocs());
-    // audit-log has no scaffold article, so it must not appear.
+  it("omits categories that have no articles", () => {
+    // Pass a single doc so only its category survives; every other category
+    // is empty and must be dropped. (Uses a synthetic input so the test does
+    // not depend on which categories currently have content.)
+    const fake = [
+      {
+        meta: {
+          title: "X",
+          description: "",
+          category: "getting-started",
+          audience: [],
+          order: 1,
+          dateUpdated: "2026-01-01",
+          related: [],
+          keywords: [],
+          schema: ["Article"] as ("Article" | "HowTo" | "FAQPage")[],
+        },
+        content: "",
+        path: "getting-started/x",
+      },
+    ];
+    const nav = buildDocsNav(fake);
+    expect(nav).toHaveLength(1);
+    expect(nav[0].slug).toBe("getting-started");
     expect(nav.some((c) => c.slug === "audit-log")).toBe(false);
   });
 });

@@ -1,0 +1,52 @@
+---
+title: Exporting and retaining the audit log
+description: Export the audit log to CSV or JSON, understand the two-factor requirement for HR admins, and set how long entries are retained.
+category: audit-log
+audience: ["hr_admin", "executive"]
+order: 2
+dateUpdated: "2026-09-14"
+prerequisites: ["For HR admins: two-factor authentication enabled"]
+related: ["audit-log/reading-the-audit-log", "account/two-factor-authentication", "getting-started/hr-admin"]
+keywords: ["export audit log", "csv", "json", "retention", "2fa", "download", "compliance"]
+schema: ["Article"]
+---
+
+This guide covers exporting the audit log and setting its retention. An export is what you hand to a board or accreditation reviewer who wants the full record, not just the on-screen view.
+
+## Who can export
+
+- **HR admins** can export, with a two-factor confirmation.
+- **Executives** can export without a two-factor step.
+- Supervisors have read-only access and cannot export.
+
+## Export the log
+
+1. Go to `/dashboard/audit-log`.
+2. Choose the format: CSV or JSON.
+3. If you are an HR admin, enter your two-factor code when prompted.
+4. Download the file.
+
+An export includes up to the most recent entries within your retention window.
+
+[Screenshot: the audit log export controls showing format choice and, for HR admins, the two-factor prompt]
+
+> **Warning:** Exporting the audit log as an HR admin is a two-factor-gated action. Set up 2FA before you need to export. See [Securing your account with two-factor authentication](/docs/account/two-factor-authentication).
+
+## Choose a format
+
+- **CSV** for spreadsheets and reviewers who want a table.
+- **JSON** for programmatic handling or a complete structured record.
+
+## Set retention
+
+An HR admin controls how long entries are kept.
+
+1. Go to org settings at `/dashboard/settings`.
+2. Set the audit-log retention period, from 1 to 20 years.
+
+Set retention to match the longest board or accreditation lookback you need to satisfy.
+
+## What's next
+
+- Learn what the log records and how to read it. See [Reading the audit log](/docs/audit-log/reading-the-audit-log).
+- Enable the 2FA that exporting requires. See [Securing your account with two-factor authentication](/docs/account/two-factor-authentication).

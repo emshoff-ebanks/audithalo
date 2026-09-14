@@ -1,0 +1,56 @@
+---
+title: Assigning and attesting rules
+description: Assign a state rule to a supervisee, set the obligation start date, and record the attestations a rule needs, such as a filed contract or completed training.
+category: rules
+audience: ["supervisor"]
+order: 4
+dateUpdated: "2026-09-14"
+prerequisites: ["A supervisee on your roster", "The supervisee's state, license, and obligation start date"]
+related: ["rules/how-state-rules-work", "rules/compliance-gaps-and-warnings", "getting-started/supervisor"]
+keywords: ["assign rule", "attestation", "obligation start", "contract filed", "training", "permit", "attest"]
+schema: ["Article"]
+---
+
+This guide covers two supervisor tasks: assigning a state rule to a supervisee and recording the attestations that rule requires. The rule sets the targets; attestations record the facts the rule cannot infer from logged hours, such as a filed contract or a completed training.
+
+## Assign a rule
+
+1. Open the supervisee detail page at `/dashboard/roster/[superviseeId]`.
+2. Select **Assign rule**.
+3. Choose the rule for the supervisee's state and license.
+4. Set the **Obligation start** date, the day their supervised-hour clock begins.
+5. Confirm with **Assign rule**.
+
+The detail page now evaluates the supervisee against that rule and shows progress and gaps.
+
+[Screenshot: the Assign rule form showing the rule selection and Obligation start date]
+
+> **Note:** The obligation start date matters. It anchors duration windows and deadlines, so set it to the date the board recognizes, usually when the supervisee's registration took effect.
+
+## Change a rule or its version
+
+To move a supervisee to a corrected rule or a newer version, use **Change rule** on the rule summary. When AuditHalo publishes a newer version of the assigned rule, a banner offers the upgrade directly. See [Rule versions and drift](/docs/rules/rule-versions-and-drift).
+
+## Record attestations
+
+Some requirements are facts only the supervisor can confirm. AuditHalo surfaces these as attestation gaps. Common examples:
+
+- A supervision contract filed with the board, with the filing date.
+- A required supervisor training completed.
+- Permit or registration dates.
+
+To clear one:
+
+1. On the detail page, find the attestation gap.
+2. Record the attestation, entering the date (and hours, where the check asks for them).
+
+The gap clears and the fact becomes part of the evidence record. If you record something in error, undo the attestation to remove it.
+
+[Screenshot: an attestation gap on the detail page with the record-attestation control]
+
+> **Warning:** An attestation is a statement of fact that goes into the audit trail. Record it only when the underlying event has actually happened, and use the correct date.
+
+## What's next
+
+- See how attestations fit among the other gap types. See [Compliance gaps and how to clear them](/docs/rules/compliance-gaps-and-warnings).
+- Understand the rule being applied. See [How state rules work](/docs/rules/how-state-rules-work).

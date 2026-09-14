@@ -1,0 +1,46 @@
+---
+title: Understanding evidence packages
+description: What an evidence package contains, how AuditHalo seals it with a tamper-evident hash when a session is fully signed, and how to download it as a PDF.
+category: evidence
+audience: ["supervisor", "hr_admin", "supervisee"]
+order: 1
+dateUpdated: "2026-09-14"
+prerequisites: []
+related: ["evidence/verifying-a-package", "sessions/log-and-sign-a-session", "evidence/ri-clinical-form"]
+keywords: ["evidence package", "seal", "hash", "sha-256", "pdf", "audit", "tamper-evident"]
+schema: ["Article"]
+---
+
+This guide explains the evidence package: the audit-ready artifact AuditHalo produces when a supervision session is fully signed. It is the thing you hand to a board or accreditation reviewer to show a session happened, who was there, and that the record has not changed since.
+
+## When a package is created
+
+A package is generated automatically the moment every required signer has signed a session. The supervisor signs first, the supervisee countersigns, and for a group session every attendee signs. See [How to log and sign a supervision session](/docs/sessions/log-and-sign-a-session).
+
+## What it contains
+
+- The session metadata: date, duration, type, and the credentials in effect at signing.
+- The assigned rule the session counts toward.
+- Every signature, with signer name, role, timestamp, and IP.
+- A canonical record of the above, plus a SHA-256 hash of that record.
+
+The hash is what makes the package tamper-evident: if any field in the sealed record were altered, the hash would no longer match, and verification would fail.
+
+[Screenshot: a sealed evidence package showing session details, signatures, and the verification hash]
+
+## Download the PDF
+
+Each sealed package is available as a PDF for your records or to attach to a board submission. Download it from the sealed session.
+
+AuditHalo uses one of two PDF templates depending on the organization: a standard AuditHalo template, or the Recovery Innovations Clinical Supervision Form for RI organizations. See [The RI Clinical Supervision Form](/docs/evidence/ri-clinical-form).
+
+> **Note:** For organizations connected to Paycor, sealed evidence packages are queued for delivery to the employee's Documents folder in Paycor. See [Connecting Paycor](/docs/integrations/connecting-paycor).
+
+## Why the hash matters
+
+A signature shows intent. The hash shows integrity. Together they let an outside reviewer trust the record without trusting your database: they can confirm the sealed content is exactly what was signed. See [Verifying an evidence package](/docs/evidence/verifying-a-package).
+
+## What's next
+
+- Verify a package independently. See [Verifying an evidence package](/docs/evidence/verifying-a-package).
+- Understand the signing flow that seals it. See [How to log and sign a supervision session](/docs/sessions/log-and-sign-a-session).

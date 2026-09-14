@@ -1,0 +1,68 @@
+---
+title: Scheduling supervision sessions
+description: Schedule one-off and recurring supervision sessions with meeting links, handle conflicts, and cancel, reschedule, or mark a no-show.
+category: sessions
+audience: ["supervisor", "hr_admin"]
+order: 2
+dateUpdated: "2026-09-14"
+prerequisites: ["A connected calendar (Microsoft or Google) for video links", "A supervisee on your roster"]
+related: ["integrations/connecting-your-calendar", "integrations/using-the-calendar", "sessions/log-and-sign-a-session"]
+keywords: ["schedule", "recurring", "session", "meeting link", "conflict", "cancel", "reschedule", "no-show"]
+schema: ["Article"]
+---
+
+This guide shows how to schedule supervision from inside AuditHalo, as a single session or a recurring series. Scheduling creates the meeting, adds the video link, and writes the event to both calendars, so the session is ready to sign afterward.
+
+Supervisors schedule their own sessions. HR admins can schedule on behalf of a supervisor.
+
+> **Note:** For Teams or Google Meet links, connect a calendar first. See [Connecting your calendar](/docs/integrations/connecting-your-calendar). You can still schedule in-person sessions without a connected calendar.
+
+## Schedule a single session
+
+1. From the supervisee detail page or the calendar at `/dashboard/calendar`, start a new session.
+2. Select **Schedule a session**.
+3. Choose the supervisee, date, start time, and duration.
+4. Choose the meeting provider: Teams, Google Meet, or in person.
+5. For a group session, add the additional supervisees.
+6. Confirm to schedule.
+
+AuditHalo creates the calendar events, adds the meeting link, and notifies the attendees.
+
+[Screenshot: the schedule-a-session form showing date, time, duration, and meeting provider]
+
+## Handle a conflict
+
+If the new session overlaps an existing event on the calendar, AuditHalo warns you before it books.
+
+- Review the conflict.
+- Adjust the time, or confirm anyway if the overlap is intentional.
+
+## Schedule a recurring series
+
+For standing supervision, create a series instead of booking each week by hand.
+
+1. Start a new session and choose the recurring option.
+2. Set the frequency: weekly, biweekly, every three weeks, or monthly.
+3. Set when the series ends: after a number of sessions, on a date, or never.
+4. Confirm.
+
+AuditHalo creates the series and books the individual sessions, up to a one-year horizon.
+
+[Screenshot: the recurring series options showing frequency and end condition]
+
+> **Tip:** A recurring series keeps reminders and sign prompts flowing automatically, so sessions do not slip. Reschedule or cancel individual occurrences without touching the rest of the series.
+
+## Cancel, reschedule, or mark a no-show
+
+From a scheduled session you can:
+
+- **Cancel** the session, and optionally the rest of a recurring series. The calendar events are removed and attendees are notified.
+- **Reschedule** to a new date, time, or duration. The calendar events update and attendees are notified.
+- **Mark a no-show** if the session did not happen. Supervisors, HR admins, and the supervisee can mark a no-show.
+
+> **Note:** Reminders go out 1 hour and 15 minutes before a session. If a session's end time passes without a signature, AuditHalo sends the supervisor a sign reminder.
+
+## What's next
+
+- Move around the calendar views. See [Using the calendar](/docs/integrations/using-the-calendar).
+- Record and sign the session afterward. See [How to log and sign a supervision session](/docs/sessions/log-and-sign-a-session).

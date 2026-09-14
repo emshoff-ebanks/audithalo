@@ -77,4 +77,58 @@ browser chrome, no real client names.
 
 ---
 
-Total: 25 markers across 14 P1 articles, spanning 10 app routes.
+## P2 additions (by route)
+
+### /dashboard/calendar
+- [ ] Calendar in week view showing scheduled supervision sessions.
+  - Used by: `integrations/using-the-calendar.mdx`
+
+### New session / scheduling flow
+- [ ] The schedule-a-session form showing date, time, duration, and meeting provider.
+  - Used by: `sessions/scheduling-sessions.mdx`
+- [ ] The recurring series options showing frequency and end condition.
+  - Used by: `sessions/scheduling-sessions.mdx`
+
+### /sign/[sessionId]
+- [ ] Sign page showing the transcript input and the **Generate note** action.
+  - Used by: `sessions/ai-session-notes.mdx`
+
+### /dashboard/roster
+- [ ] Roster rows showing status badges, progress, and pending-signature counts.
+  - Used by: `team/managing-your-roster.mdx`
+- [ ] A pending invitation row with resend and cancel actions.
+  - Used by: `team/managing-your-roster.mdx`
+
+### /dashboard/roster/[superviseeId]
+- [ ] The **Assign rule** form showing rule selection and **Obligation start** date.
+  - Used by: `rules/assigning-and-attesting-rules.mdx`
+- [ ] An attestation gap with the record-attestation control.
+  - Used by: `rules/assigning-and-attesting-rules.mdx`
+- [ ] Grouped gaps showing severity and next-step actions.
+  - Used by: `rules/compliance-gaps-and-warnings.mdx`
+
+### /dashboard/team
+- [ ] Team page showing **Invite Supervisor**, **Invite HR Admin**, **Invite Executive**.
+  - Used by: `team/inviting-team-members.mdx`
+
+### /dashboard/team/rules
+- [ ] The override editor showing structured fields and checks with a tighter/looser/removed summary.
+  - Used by: `rules/creating-rule-overrides.mdx`
+
+### Sealed session / evidence
+- [ ] A sealed evidence package showing session details, signatures, and the verification hash.
+  - Used by: `evidence/understanding-evidence-packages.mdx`
+
+### /verify/[packageId] (public)
+- [ ] The public verification page confirming a package is authentic, with session and signer details.
+  - Used by: `evidence/verifying-a-package.mdx`
+
+### /dashboard/audit-log
+- [ ] Audit log table showing actor, timestamp, action type, and resource columns.
+  - Used by: `audit-log/reading-the-audit-log.mdx`
+- [ ] Audit log export controls showing format choice and, for HR admins, the two-factor prompt.
+  - Used by: `audit-log/exporting-the-audit-log.mdx`
+
+---
+
+Total: 40 markers across 28 articles (P1 + P2), spanning the app's key routes.

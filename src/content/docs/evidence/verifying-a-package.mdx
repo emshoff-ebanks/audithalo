@@ -1,0 +1,40 @@
+---
+title: Verifying an evidence package
+description: Confirm that a sealed supervision record is authentic and unaltered using AuditHalo's public verification page, no account required.
+category: evidence
+audience: ["supervisor", "hr_admin", "supervisee", "executive"]
+order: 2
+dateUpdated: "2026-09-14"
+prerequisites: []
+related: ["evidence/understanding-evidence-packages", "sessions/log-and-sign-a-session"]
+keywords: ["verify", "verification", "hash", "authentic", "tamper", "public", "audit"]
+schema: ["Article"]
+---
+
+This guide shows how to confirm that a sealed evidence package is authentic and has not been altered. Verification is public: a board reviewer or auditor can check a package without an AuditHalo account, which is what lets them trust the record independently.
+
+## How verification works
+
+When a session seals, AuditHalo stores a canonical record and a SHA-256 hash of it. Verification recomputes the hash from the stored record and confirms it matches. If a single field had changed since signing, the hashes would differ and verification would fail.
+
+## Verify a package
+
+1. Open the package's public verification page at `audithalo.com/verify/[packageId]`.
+2. Confirm the page reports the package as verified.
+3. Check the displayed details: session date, signers, and timestamps.
+
+[Screenshot: the public verification page confirming a package is authentic, with session and signer details]
+
+> **Note:** The verification page shows enough to confirm authenticity, session and signature facts, without exposing clinical note content. It is safe to share the link with a reviewer.
+
+## Sharing with a reviewer
+
+Give a board or accreditation reviewer the verification link, or the PDF plus the link. They can open the page directly and confirm the record for themselves. This is the difference between "trust our export" and "verify it yourself."
+
+## If verification fails
+
+A package that does not verify means the stored record does not match its original hash. Treat this as a serious integrity signal: do not submit the package, and contact AuditHalo support so the cause can be investigated.
+
+## What's next
+
+- Understand what the package contains and how it seals. See [Understanding evidence packages](/docs/evidence/understanding-evidence-packages).

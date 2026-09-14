@@ -1,0 +1,65 @@
+---
+title: Understanding roles and permissions
+description: The four AuditHalo roles, the clinical and administrative firewall between them, and exactly what each role can and cannot do.
+category: getting-started
+audience: ["supervisor", "supervisee", "hr_admin", "executive"]
+order: 5
+dateUpdated: "2026-09-14"
+prerequisites: []
+related: ["getting-started/supervisor", "getting-started/hr-admin", "team/inviting-team-members"]
+keywords: ["roles", "permissions", "access", "supervisor", "supervisee", "hr admin", "executive", "firewall"]
+schema: ["Article"]
+---
+
+This guide explains the four roles in AuditHalo and where the boundaries sit. Roles exist to keep a clean line between clinical work and administration: the person who signs a supervision record is never the same person who manages billing and org settings.
+
+## The four roles
+
+### Supervisee
+
+The pre-licensed clinician accumulating supervised hours.
+
+- Can view their own progress, log practice hours, and countersign sessions.
+- Can view the calendar for their own sessions and mark a session as a no-show.
+- Cannot view the roster, other supervisees, billing, or settings.
+- Cannot assign rules, log supervision sessions, or approve hours.
+
+### Supervisor
+
+The credentialed clinical supervisor. The buyer and the signer.
+
+- Can view their own caseload, invite supervisees, and assign state rules.
+- Can log supervision sessions, schedule, and generate AI-assisted notes.
+- Signs sessions first, approves practice hours, and records attestations.
+- Can view the audit log and team page as read-only, and manage billing.
+- Cannot invite supervisors, HR admins, or executives, deactivate members, or export the audit log.
+
+### HR admin
+
+The organization's compliance owner.
+
+- Full org-wide write access: invite any role, reassign supervisees, deactivate members, bulk-import.
+- Manages state rules, org settings, billing, and audit-log retention and export.
+- Cannot sign sessions or generate notes. This is the clinical firewall.
+
+### Executive
+
+Read-only oversight for board members, auditors, and partners.
+
+- Sees the executive dashboard and the audit log, and can export the audit log.
+- Sees the calendar for their own sessions.
+- Cannot change anything, invite anyone, or access billing. No PHI is shown.
+- Limited to a small number of seats per organization.
+
+## The clinical and administrative firewall
+
+The most important boundary: **only supervisors sign.** HR admins run the organization but cannot sign a session or generate a note. Supervisors handle the clinical record but cannot manage the org's roster-wide administration such as deactivating members or exporting the audit log. This separation is deliberate, and it is why an HR admin and a supervisor sometimes need to act together, for example when onboarding a new supervisee.
+
+## Two-factor-gated actions
+
+Some HR admin actions require a second factor even after sign-in: inviting another HR admin, deactivating a member, and exporting the audit log. See [Securing your account with two-factor authentication](/docs/account/two-factor-authentication).
+
+## What's next
+
+- Set up your own role. See [Getting started as a supervisor](/docs/getting-started/supervisor) or [as an HR admin](/docs/getting-started/hr-admin).
+- Invite and assign your team. See [Inviting your team](/docs/team/inviting-team-members).

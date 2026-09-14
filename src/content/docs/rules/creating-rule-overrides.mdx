@@ -1,0 +1,47 @@
+---
+title: Org rule overrides
+description: As an HR admin, adjust a canonical state rule for your organization by tightening requirements, changing checks, or adjusting severity, within the limits AuditHalo enforces.
+category: rules
+audience: ["hr_admin"]
+order: 5
+dateUpdated: "2026-09-14"
+prerequisites: ["An HR admin account", "A canonical rule your organization already uses"]
+related: ["rules/how-state-rules-work", "rules/creating-custom-rules", "getting-started/hr-admin"]
+keywords: ["override", "rule override", "tighten", "loosen", "checks", "severity", "hr admin"]
+schema: ["Article"]
+---
+
+This guide is for HR admins. An override adjusts a canonical state rule for your organization without changing the rule for everyone else. Use it when your practice holds supervisees to a stricter standard than the board minimum, or when you need to tune a specific check.
+
+Overrides live in the rules admin at `/dashboard/team/rules`.
+
+## When to use an override versus a custom rule
+
+- Use an **override** to modify a rule AuditHalo already provides for a covered state.
+- Use a **custom rule** for a state AuditHalo does not cover. See [Creating custom rules](/docs/rules/creating-custom-rules).
+
+## Create an override
+
+1. Go to `/dashboard/team/rules`.
+2. In the canonical rules section, open the rule you want to adjust.
+3. Edit the structured fields (hours, durations, fractions) or the checks (add a custom check, remove a canonical one, change severity, or replace a check's parameters).
+4. Save the override.
+
+The rules admin shows a summary of what your override changed: how many requirements are tighter, looser, or removed.
+
+[Screenshot: the override editor showing structured fields and checks with a tighter/looser/removed summary]
+
+> **Note:** Severity can only be downgraded within the limits AuditHalo enforces. You cannot quietly weaken a board requirement past what the canonical rule allows, so an override cannot make a non-compliant supervisee appear compliant.
+
+## Manage overrides
+
+- Active overrides appear in their own section of the rules admin.
+- View an override's version history to see past changes.
+- Deactivate an override to return affected supervisees to the canonical rule.
+
+Every override change is recorded in the audit log with its diff, so the organization can show exactly how and when its rules were tuned.
+
+## What's next
+
+- Author a rule for an uncovered state. See [Creating custom rules](/docs/rules/creating-custom-rules).
+- Review how rules are structured and evaluated. See [How state rules work](/docs/rules/how-state-rules-work).

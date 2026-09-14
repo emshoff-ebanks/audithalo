@@ -1,0 +1,57 @@
+---
+title: AI-assisted session notes
+description: Generate a structured supervision note from a session transcript, review and edit it, and sign it in, without ever storing the raw transcript.
+category: sessions
+audience: ["supervisor"]
+order: 3
+dateUpdated: "2026-09-14"
+prerequisites: ["A supervision session to document", "For auto-fetch: a session scheduled with a Teams or Google Meet link"]
+related: ["sessions/log-and-sign-a-session", "integrations/connecting-your-calendar", "billing/plans-and-pricing"]
+keywords: ["ai notes", "session note", "transcript", "whisper", "no phi", "supervision note", "ai-assisted"]
+schema: ["Article"]
+---
+
+This guide covers AI-assisted session notes: how to turn a session transcript into a structured supervision note, review it, and sign it in. Only supervisors generate notes.
+
+The note is a draft you own. AuditHalo generates it, you edit it, and your signature is what makes it part of the record. The raw transcript is never stored: AuditHalo keeps the structured note and a hash of the input for audit, then discards the transcript text.
+
+## Three ways to provide a transcript
+
+1. **Paste a transcript.** Paste the text of the session (at least a short minimum length) directly.
+2. **Auto-fetch from Teams or Google Meet.** For a session scheduled with a meeting provider, fetch the transcript in one step using your calendar connection.
+3. **Record in person.** For an in-person session, record audio in the browser and let AuditHalo transcribe it.
+
+## Generate the note
+
+1. Open the session's sign page at `/sign/[sessionId]`.
+2. Provide the transcript by pasting, fetching, or recording.
+3. Confirm there is no client-identifying PHI where prompted.
+4. Select **Generate note**.
+
+AuditHalo produces a structured note with topics, competencies, supervisor feedback, and next steps.
+
+[Screenshot: the sign page showing the transcript input and the Generate note action]
+
+> **Warning:** Do not paste protected health information. The note is about the supervision of the clinician, not the client. Confirm the no-PHI prompt before generating.
+
+## Review and edit before signing
+
+The generated note is a draft. Edit any section before you sign: adjust the topics, sharpen your feedback, refine next steps. Your edits are saved to the note.
+
+When the note reflects the session, sign it in as part of the session record. See [How to log and sign a supervision session](/docs/sessions/log-and-sign-a-session).
+
+## What is and is not kept
+
+- **Kept:** the structured note, and a one-way hash of the transcript input for audit.
+- **Not kept:** the raw transcript text itself.
+
+This is why the feature is AI-assisted rather than an automatic recorder: you provide the input, review the output, and own the signed result.
+
+## Quotas by plan
+
+AI-assisted transcripts are metered per billing period: 10 per month on Solo, 100 per month for the organization on Practice. Reaching the limit pauses note generation until the next period; logging and signing are unaffected. See [Plans and pricing](/docs/billing/plans-and-pricing).
+
+## What's next
+
+- Sign the note into a sealed evidence package. See [How to log and sign a supervision session](/docs/sessions/log-and-sign-a-session).
+- Connect a calendar to enable auto-fetch. See [Connecting your calendar](/docs/integrations/connecting-your-calendar).

@@ -1,0 +1,61 @@
+---
+title: Inviting your team
+description: Invite supervisees, supervisors, HR admins, and executives, understand who can invite whom, and which invitations require two-factor authentication.
+category: team
+audience: ["hr_admin", "supervisor"]
+order: 2
+dateUpdated: "2026-09-14"
+prerequisites: ["For HR admin invites: two-factor authentication enabled"]
+related: ["team/managing-your-roster", "team/bulk-csv-import", "getting-started/hr-admin"]
+keywords: ["invite", "supervisor", "hr admin", "executive", "supervisee", "team", "seats", "2fa"]
+schema: ["Article"]
+---
+
+This guide covers inviting people into your organization. Who you can invite depends on your role, and one invitation type requires a two-factor code.
+
+## Who can invite whom
+
+- **Supervisors** can invite supervisees to their own caseload.
+- **HR admins** can invite any role: supervisees, supervisors, HR admins, and executives.
+
+Both roles work from the same invitation model: AuditHalo emails a secure link, the recipient accepts and sets a password, and they join the organization.
+
+## Invite a supervisee
+
+A supervisor invites from the roster; an HR admin can invite from the team page.
+
+1. Go to `/dashboard/roster` (supervisor) or `/dashboard/team` (HR admin).
+2. Select **Invite a supervisee**.
+3. Enter their email, and their name if you have it.
+4. Optionally assign the state rule and obligation start date now, so tracking begins on acceptance.
+5. Send the invitation.
+
+## Invite staff roles (HR admin)
+
+From the team page at `/dashboard/team`, an HR admin can invite the other roles.
+
+1. Go to `/dashboard/team`.
+2. Select **Invite Supervisor**, **Invite HR Admin**, or **Invite Executive**.
+3. Enter the person's email and name.
+4. Send the invitation.
+
+[Screenshot: the team page showing the Invite Supervisor, Invite HR Admin, and Invite Executive actions]
+
+> **Warning:** Inviting an HR admin requires a two-factor code, since HR admins have org-wide write access. Set up 2FA first. See [Securing your account with two-factor authentication](/docs/account/two-factor-authentication).
+
+> **Note:** Executive seats are limited per organization. Executives are read-only oversight accounts; they cannot change anything or see PHI.
+
+## What happens on acceptance
+
+When someone accepts, AuditHalo creates their account and membership in one step. If you attached a rule and supervisor to a supervisee invitation, those are applied on acceptance. The inviter is notified.
+
+Invitations can be resent (new link, extended expiry) or canceled from the roster or team page.
+
+## Inviting many people at once
+
+For a large onboarding, import from a CSV instead of inviting individually. See [Bulk CSV import](/docs/team/bulk-csv-import).
+
+## What's next
+
+- Work your roster once people join. See [Managing your roster](/docs/team/managing-your-roster).
+- Onboard a whole team from a spreadsheet. See [Bulk CSV import](/docs/team/bulk-csv-import).
