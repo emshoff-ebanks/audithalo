@@ -1,0 +1,39 @@
+---
+title: Reassigning supervisees
+description: Move a supervisee from one supervisor to another as an HR admin, with transfer history preserved for the audit trail.
+category: team
+audience: ["hr_admin"]
+order: 3
+dateUpdated: "2026-09-14"
+prerequisites: ["An HR admin account", "A destination supervisor on the team"]
+related: ["team/managing-your-roster", "team/inviting-team-members", "audit-log/reading-the-audit-log"]
+keywords: ["reassign", "transfer", "supervisor change", "caseload", "handoff"]
+schema: ["Article"]
+---
+
+This guide is for HR admins. When a supervisee changes supervisors, for example a supervisor leaves or a caseload rebalances, reassign the supervisee so the new supervisor picks up their record without losing history.
+
+## Reassign a supervisee
+
+1. From the team page at `/dashboard/team` or the roster, choose the supervisee.
+2. Reassign them to the new supervisor.
+
+AuditHalo ends the current supervisor assignment and creates a new one. The supervisee's hours, sessions, and evidence stay intact; only the supervising relationship changes.
+
+[Screenshot: the reassign control on the team or roster page showing the supervisor selection]
+
+## History is preserved
+
+Reassignment does not erase the prior relationship. AuditHalo records:
+
+- The end of the previous assignment.
+- The start of the new assignment, marked as transferred from the previous supervisor.
+
+This transfer chain is part of the audit trail, so a reviewer can see who supervised a clinician and when. See [Reading the audit log](/docs/audit-log/reading-the-audit-log).
+
+> **Note:** Sessions already signed by the previous supervisor remain valid and sealed. Reassignment changes who supervises going forward; it does not alter past evidence.
+
+## What's next
+
+- Work the roster after a change. See [Managing your roster](/docs/team/managing-your-roster).
+- Confirm the change in the audit log. See [Reading the audit log](/docs/audit-log/reading-the-audit-log).

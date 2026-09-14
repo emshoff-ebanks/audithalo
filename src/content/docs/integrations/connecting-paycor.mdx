@@ -1,0 +1,51 @@
+---
+title: Connecting Paycor
+description: Connect Paycor so your roster and leave status stay in sync from your HRIS and sealed evidence packages are delivered to employee records.
+category: integrations
+audience: ["hr_admin"]
+order: 3
+dateUpdated: "2026-09-14"
+prerequisites: ["An HR admin account", "Paycor access with the legal entity ID and API subscription key"]
+related: ["team/leave-status", "team/bulk-csv-import", "evidence/understanding-evidence-packages"]
+keywords: ["paycor", "hris", "integration", "sync", "roster", "leave", "sftp", "documents"]
+schema: ["Article"]
+---
+
+This guide is for HR admins connecting Paycor. The connection keeps your roster and leave status in sync from Paycor and delivers sealed evidence packages to the employee's Documents folder in Paycor, so supervision records live alongside the rest of the HR file.
+
+Paycor settings live at `/dashboard/settings/integrations`.
+
+## What the connection does
+
+- **Roster sync:** keeps supervisee records aligned with Paycor.
+- **Leave sync:** flows an HR-recorded leave through to AuditHalo, which pauses cadence checks for on-leave supervisees. See [Leave status](/docs/team/leave-status).
+- **Evidence delivery:** queues each sealed evidence package for delivery to the employee's Documents folder in Paycor.
+
+## Connect Paycor
+
+1. Go to `/dashboard/settings/integrations`.
+2. Start the Paycor connection.
+3. Provide the legal entity ID, the environment, and the API subscription key.
+4. Complete the authorization.
+
+Once connected, the page shows the connection status and the result of the most recent sync.
+
+[Screenshot: the integrations page showing the Paycor connection status]
+
+> **Note:** The legal entity ID, environment, and subscription key come from your Paycor configuration. Have them ready before you start, or ask your Paycor administrator.
+
+## Run a sync and check results
+
+- Trigger a manual sync from the integrations page when you want to pull the latest roster and leave data immediately.
+- Review the last sync result to confirm it completed and see what changed.
+
+## Disconnect
+
+Disconnect Paycor from the same page. Disconnecting clears the Paycor configuration and stops future syncs and evidence delivery. Records already delivered to Paycor remain in Paycor.
+
+> **Warning:** Disconnecting stops leave sync, so a supervisee's on-leave status will no longer update from Paycor. Set leave manually if you disconnect while someone is on leave.
+
+## What's next
+
+- Understand how leave status behaves. See [Leave status](/docs/team/leave-status).
+- Understand the packages being delivered. See [Understanding evidence packages](/docs/evidence/understanding-evidence-packages).

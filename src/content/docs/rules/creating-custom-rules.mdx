@@ -1,0 +1,48 @@
+---
+title: Creating custom rules
+description: As an HR admin, author a full state rule from the board's administrative code when AuditHalo does not yet cover your jurisdiction.
+category: rules
+audience: ["hr_admin"]
+order: 6
+dateUpdated: "2026-09-14"
+prerequisites: ["An HR admin account on a Practice or Enterprise plan", "The state board's administrative code and citation URL"]
+related: ["rules/how-state-rules-work", "rules/creating-rule-overrides", "rules/state-coverage"]
+keywords: ["custom rule", "author rule", "jurisdiction", "citation", "checks", "structured fields", "uncovered state"]
+schema: ["Article"]
+---
+
+This guide is for HR admins who need a rule for a state AuditHalo does not yet cover. A custom rule is one your organization authors from scratch, grounded in the board's administrative code, so a supervisee in an uncovered state can still be tracked.
+
+Custom rules live in the rules admin at `/dashboard/team/rules`.
+
+> **Note:** Use a custom rule only for an uncovered state. To adjust a rule AuditHalo already provides, use an override instead. See [Org rule overrides](/docs/rules/creating-rule-overrides).
+
+## Before you start
+
+Author a rule from the source, not from memory. Have the board's administrative code open, along with the citation URL, so every requirement traces to the text. This matches how AuditHalo builds its own canonical rules.
+
+## Create a custom rule
+
+1. Go to `/dashboard/team/rules`.
+2. Start a new custom rule at `/dashboard/team/rules/new`.
+3. Enter the jurisdiction, license code, version, and a label.
+4. Add the citation URL for the board's administrative code.
+5. Enter the structured requirements: practice hours, supervision hours, durations, ratios, and group limits.
+6. Add the checks that enforce those requirements, each with a severity.
+7. Save the rule.
+
+Once saved, the custom rule is available to assign to supervisees like any canonical rule.
+
+[Screenshot: the create-custom-rule form showing jurisdiction, citation, structured fields, and checks]
+
+> **Warning:** A custom rule drives real compliance decisions for a supervisee's license. Get the numbers and citation right from the administrative code, and consider a licensed-supervisor review before you rely on it.
+
+## Assign and maintain
+
+- Assign the custom rule to a supervisee the same way you assign a canonical rule. See [Assigning and attesting rules](/docs/rules/assigning-and-attesting-rules).
+- Keep it current. When the board changes a requirement, update the custom rule so it stays accurate.
+
+## What's next
+
+- Understand how rules are structured and evaluated. See [How state rules work](/docs/rules/how-state-rules-work).
+- Check whether your state is already covered. See [State coverage](/docs/rules/state-coverage).

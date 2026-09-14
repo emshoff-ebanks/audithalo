@@ -1,0 +1,44 @@
+---
+title: Bulk CSV import
+description: Onboard a whole team at once by importing a CSV from any HRIS, previewing and validating the rows, then sending invitations in a batch.
+category: team
+audience: ["hr_admin"]
+order: 5
+dateUpdated: "2026-09-14"
+prerequisites: ["An HR admin account", "A CSV export from your HRIS or a spreadsheet"]
+related: ["team/inviting-team-members", "team/managing-your-roster", "integrations/connecting-paycor"]
+keywords: ["csv import", "bulk", "onboarding", "hris", "batch invite", "preview"]
+schema: ["Article"]
+---
+
+This guide is for HR admins onboarding many people at once. Instead of inviting one person at a time, import a CSV from any HRIS or spreadsheet, review what AuditHalo parsed, and send the invitations in a single batch.
+
+## Import a CSV
+
+1. Go to the team page at `/dashboard/team` and open the import at `/dashboard/team/import`.
+2. Paste your CSV or upload the file.
+3. Review the parsed preview.
+4. Send the batch of invitations.
+
+[Screenshot: the CSV import page showing the parsed preview with per-row status]
+
+## Read the preview
+
+Before anything is sent, AuditHalo parses your rows and shows a status for each:
+
+- **Add:** a valid new person who will be invited.
+- **Skip:** someone who is already a member or already has an open invitation.
+- **Error:** a row that could not be parsed or is missing required data.
+
+Fix any error rows in your source and re-import, or proceed to send the valid ones. AuditHalo does not send duplicate invitations to people it skips.
+
+> **Note:** Importing sends invitations; it does not create active accounts. Each person still accepts their own invitation and sets their own password, the same as an individual invite. See [Inviting your team](/docs/team/inviting-team-members).
+
+## After the import
+
+Invited people appear as pending on the roster until they accept. Resend or cancel a pending invitation from the roster as needed. See [Managing your roster](/docs/team/managing-your-roster).
+
+## What's next
+
+- Understand the single-invite flow the batch uses. See [Inviting your team](/docs/team/inviting-team-members).
+- Keep your roster in sync automatically. See [Connecting Paycor](/docs/integrations/connecting-paycor).

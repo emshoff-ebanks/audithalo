@@ -1,0 +1,47 @@
+---
+title: Rule versions and drift
+description: Understand how rule versions are pinned to a supervisee, how AuditHalo detects when a board changes a requirement, and how to upgrade an assignment.
+category: rules
+audience: ["supervisor", "hr_admin"]
+order: 7
+dateUpdated: "2026-09-14"
+prerequisites: []
+related: ["rules/how-state-rules-work", "rules/assigning-and-attesting-rules", "account/profile-and-credentials"]
+keywords: ["rule version", "drift", "upgrade", "auto-apply", "banner", "citation"]
+schema: ["Article"]
+---
+
+This guide explains how AuditHalo keeps rules current: how a version is pinned to each supervisee, how the product detects when a board changes a requirement, and how you move a supervisee to a newer version. Keeping rules accurate is the core commitment behind the product, so this matters.
+
+## Versions are pinned per supervisee
+
+When you assign a rule, the supervisee is pinned to a specific version of it. Their compliance is evaluated against that version, even if a newer one is published later. This is deliberate: a supervisee's requirements should not shift under them without a decision.
+
+## Drift detection
+
+AuditHalo monitors the citation source behind each canonical rule. When the source changes, the rule is flagged as potentially drifted, which is the signal that a board may have updated a requirement. Workspace admins review these signals and publish a new rule version when a change is confirmed.
+
+## Upgrade a supervisee to a new version
+
+When a newer version of an assigned rule exists, a banner appears on the supervisee's detail page offering the upgrade.
+
+1. Open the supervisee at `/dashboard/roster/[superviseeId]`.
+2. Review the rule-update banner and what changed.
+3. Apply the new version to move the assignment forward.
+
+The supervisee is now evaluated against the new version.
+
+[Screenshot: a supervisee detail page with the rule-update banner offering a new version]
+
+> **Note:** Review what changed before upgrading. A new version can add or tighten a requirement, which may open a new gap for the supervisee that you will then work to clear.
+
+## Auto-apply rule updates
+
+Supervisors can opt in to apply rule updates automatically, so assignments move to a new version without a manual step. Set this preference on your account page at `/dashboard/account`.
+
+To snooze a specific rule-change prompt instead, dismiss the banner; AuditHalo holds it for a period before surfacing it again.
+
+## What's next
+
+- Understand what a rule contains. See [How state rules work](/docs/rules/how-state-rules-work).
+- Manage the assignment itself. See [Assigning and attesting rules](/docs/rules/assigning-and-attesting-rules).

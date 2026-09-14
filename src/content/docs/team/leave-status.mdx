@@ -1,0 +1,45 @@
+---
+title: Leave status (on leave and PRN)
+description: Understand the active, on-leave, and PRN statuses, how a documented leave pauses cadence checks, and how leave status is set.
+category: team
+audience: ["hr_admin", "supervisor"]
+order: 4
+dateUpdated: "2026-09-14"
+prerequisites: []
+related: ["team/managing-your-roster", "rules/compliance-gaps-and-warnings", "integrations/connecting-paycor"]
+keywords: ["leave", "on leave", "prn", "cadence", "pause", "status"]
+schema: ["Article"]
+---
+
+This guide explains leave status: how AuditHalo records that a supervisee is on leave or working PRN, and what that changes about their compliance. A documented leave should not read as a missed requirement, and leave status is how AuditHalo keeps it from doing so.
+
+## The three statuses
+
+- **Active:** the default. All checks apply normally.
+- **On leave:** the supervisee is on a documented leave. Cadence checks (for example, a required weekly or individual supervision session) pause for the leave period, so a gap does not open for time the supervisee was not practicing.
+- **PRN:** a badge indicating the supervisee works on an as-needed basis. It is informational and does not change how checks run.
+
+A leave or PRN badge appears on the roster and the supervisee's detail page.
+
+[Screenshot: a roster row showing an on-leave badge]
+
+## What on-leave changes
+
+While a supervisee is on leave:
+
+- Cadence checks pause, so no recurring-behavior gap is raised for the leave period.
+- Accumulation targets remain; the supervisee simply is not accruing during leave.
+- When the supervisee returns to active, cadence checks resume.
+
+This means a supervisee's status stays accurate through a documented leave instead of drifting to red for time they were away. See [Compliance gaps and how to clear them](/docs/rules/compliance-gaps-and-warnings).
+
+## How leave status is set
+
+Leave status is kept in sync from Paycor for organizations that connect it, so an HR leave recorded in the HRIS flows through to AuditHalo. See [Connecting Paycor](/docs/integrations/connecting-paycor).
+
+> **Note:** PRN is a label only. It does not pause any check; use on-leave for a supervisee who is genuinely not practicing for a period.
+
+## What's next
+
+- Read status on the roster. See [Managing your roster](/docs/team/managing-your-roster).
+- Keep leave in sync from your HRIS. See [Connecting Paycor](/docs/integrations/connecting-paycor).
