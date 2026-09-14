@@ -1,18 +1,85 @@
 ---
 title: How to log and sign a supervision session
-description: Log a supervision session, sign it with intent, and collect the supervisee countersignature that seals the evidence package.
+description: Record a supervision session, sign it with intent, and collect the countersignature that seals a tamper-evident evidence package.
 category: sessions
 audience: ["supervisor", "supervisee"]
 order: 1
 dateUpdated: "2026-09-14"
-prerequisites: ["A supervisee assigned to you", "A completed supervision meeting"]
-related: ["getting-started/supervisor"]
-keywords: ["sign", "signature", "seal", "evidence"]
-schema: ["Article"]
+prerequisites: ["A supervisee assigned to you with a state rule", "A completed supervision meeting to record"]
+related: ["sessions/ai-session-notes", "sessions/scheduling-sessions", "evidence/understanding-evidence-packages"]
+keywords: ["sign session", "countersign", "evidence package", "seal", "signature with intent", "supervision session"]
+schema: ["HowTo"]
+howToSteps:
+  - name: Log the session
+    text: On the supervisee detail page, select Log session and enter the date, duration, and session type.
+  - name: Sign as supervisor
+    text: Open the session, select Sign session, confirm intent, and submit. The supervisor always signs first.
+  - name: Countersign as supervisee
+    text: The supervisee opens the session, selects Sign session, confirms intent, and submits.
+  - name: Seal the evidence package
+    text: When all required signers have signed, AuditHalo seals the session and generates a hashed evidence package.
 ---
 
-This guide is a Phase 2 scaffold. Content is written in Phase 3.
+This guide walks through the core loop that produces audit-ready proof: log a supervision session, sign it, and collect the countersignature that seals it. When every required signer has signed, AuditHalo generates an evidence package with a tamper-evident hash.
+
+The order is fixed. The supervisor signs first, then the supervisee countersigns. This is enforced in the product, not just a convention.
 
 ## Log the session
 
-Placeholder body so the route renders and search has text to index.
+The supervisor records the session. You can log a session you held ad hoc, or record one you scheduled in advance.
+
+1. Open the supervisee's detail page at `/dashboard/roster/[superviseeId]`.
+2. Select **Log session**.
+3. Choose the supervision type: individual, triadic, or group.
+4. Enter the date and duration.
+5. For a group session, add the other attendees.
+6. Save the session.
+
+The session appears in the session log marked as awaiting signature.
+
+[Screenshot: the Log session form showing the supervision type and duration fields]
+
+> **Tip:** If you scheduled the session with a Teams or Google Meet link, you can generate an AI-assisted note from the transcript before signing. See [AI-assisted session notes](/docs/sessions/ai-session-notes).
+
+## Sign as the supervisor
+
+1. Open the session to reach the sign page at `/sign/[sessionId]`.
+2. Review the details: date, duration, type, and your credentials.
+3. Select **Sign session**.
+4. Select the checkbox: *I confirm that I intend to electronically sign this session record.*
+5. Submit your signature.
+
+AuditHalo records your signature with your name, role, timestamp, and IP address. The session now waits for the supervisee.
+
+[Screenshot: the sign page with the supervisor signature confirmation checkbox]
+
+> **Warning:** The supervisee cannot countersign until you have signed. Sign promptly so their part is not blocked.
+
+## Countersign as the supervisee
+
+1. Open the session from your notifications or the session log.
+2. Review the same session details.
+3. Select **Sign session**.
+4. Confirm intent with the checkbox.
+5. Submit your signature.
+
+## The evidence package seals automatically
+
+When every required signer has signed, AuditHalo:
+
+- Sets the signed timestamp.
+- Builds a canonical record of the session and its signatures.
+- Generates a SHA-256 hash of that record so any later change is detectable.
+- Notifies both signers that the evidence package is sealed.
+
+For a group session, every attendee must sign before the package seals.
+
+[Screenshot: a sealed session showing the evidence package and its verification hash]
+
+> **Note:** A sealed package is downloadable as a PDF and independently verifiable. See [Understanding evidence packages](/docs/evidence/understanding-evidence-packages).
+
+## What's next
+
+- Schedule recurring sessions so this loop runs on a cadence. See [Scheduling supervision sessions](/docs/sessions/scheduling-sessions).
+- Generate structured notes from your meeting transcript. See [AI-assisted session notes](/docs/sessions/ai-session-notes).
+- Understand what a sealed package contains and how to verify it. See [Understanding evidence packages](/docs/evidence/understanding-evidence-packages).

@@ -54,22 +54,22 @@ describe("buildSearchIndex", () => {
 describe("getAdjacentDocs", () => {
   it("walks the flattened nav order across categories", () => {
     const docs = getAllDocs();
-    // First article overall (getting-started/supervisor) has no previous,
-    // and its next is the first article of the following category.
-    const first = getAdjacentDocs(docs, "getting-started/supervisor");
-    expect(first.prev).toBeNull();
-    expect(first.next).toEqual({
-      path: "sessions/log-and-sign-a-session",
-      title: "How to log and sign a supervision session",
-    });
+    // Derive expectations from the flattened nav so this stays correct as
+    // articles are added. prev/next is intentionally global (spans categories).
+    const flat = buildDocsNav(docs).flatMap((c) => c.articles);
+    expect(flat.length).toBeGreaterThanOrEqual(2);
 
-    // Last article overall has a previous and no next.
-    const last = getAdjacentDocs(docs, "sessions/log-and-sign-a-session");
-    expect(last.prev).toEqual({
-      path: "getting-started/supervisor",
-      title: "Getting started as a supervisor",
-    });
-    expect(last.next).toBeNull();
+    const first = flat[0];
+    const second = flat[1];
+    const last = flat[flat.length - 1];
+
+    const firstAdj = getAdjacentDocs(docs, first.path);
+    expect(firstAdj.prev).toBeNull();
+    expect(firstAdj.next).toEqual({ path: second.path, title: second.title });
+
+    const lastAdj = getAdjacentDocs(docs, last.path);
+    expect(lastAdj.next).toBeNull();
+    expect(lastAdj.prev).not.toBeNull();
   });
 
   it("returns both null for an unknown path", () => {

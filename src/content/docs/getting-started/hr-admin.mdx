@@ -1,0 +1,87 @@
+---
+title: Getting started as an HR admin
+description: Set up your organization, invite supervisors and staff, manage state rules, and keep the audit log ready, all without touching clinical signatures.
+category: getting-started
+audience: ["hr_admin"]
+order: 3
+dateUpdated: "2026-09-14"
+prerequisites: ["An HR admin account (provisioned or promoted by AuditHalo)", "Two-factor authentication enabled for sensitive actions"]
+related: ["team/inviting-team-members", "rules/creating-rule-overrides", "audit-log/exporting-the-audit-log"]
+keywords: ["hr admin", "organization", "invite", "team", "compliance owner", "onboarding"]
+schema: ["Article"]
+---
+
+This guide orients the HR admin: the compliance owner who runs the organization. You set up the team, assign who supervises whom, tune the state rules, and keep the audit trail export-ready.
+
+You have org-wide write access, with one deliberate limit: you never sign sessions or generate session notes. That clinical work belongs to supervisors. This clinical and administrative separation is intentional and shows up throughout the product.
+
+## What you can and cannot do
+
+You can:
+
+- Invite any role: supervisors, HR admins, executives, and supervisees.
+- View the entire organization roster, not just one supervisor's caseload.
+- Reassign supervisees between supervisors.
+- Deactivate members while preserving their history.
+- Manage state rules with overrides and custom rules.
+- Manage billing, org settings, and audit-log retention.
+- Export the audit log.
+
+You cannot:
+
+- Sign sessions or countersign.
+- Generate AI-assisted session notes.
+- Perform any clinical-supervisor action.
+
+> **Note:** Several sensitive actions require two-factor authentication: inviting another HR admin, deactivating a member, and exporting the audit log. Set up 2FA first. See [Securing your account with two-factor authentication](/docs/account/two-factor-authentication).
+
+## Build your team
+
+1. Go to the team page at `/dashboard/team`.
+2. Invite your supervisors, and executives if you use read-only oversight seats.
+3. Invite supervisees, or have each supervisor invite their own from the roster.
+
+For a large roster, import from a CSV instead of inviting one at a time.
+
+1. From the team page, open the CSV import at `/dashboard/team/import`.
+2. Paste or upload your CSV from any HRIS.
+3. Review the parsed rows, then send the batch of invitations.
+
+AuditHalo skips people who are already members or already have an open invitation.
+
+[Screenshot: the team page grouped by role, with the invite actions]
+
+> **Warning:** Inviting another HR admin is a two-factor-gated action. Keep your authenticator app handy.
+
+## Assign supervision
+
+Each supervisee needs a supervisor and a state rule. You can assign a supervisor when you invite, or reassign later.
+
+1. From the team page or roster, choose a supervisee.
+2. Assign or change their supervisor.
+
+When you reassign a supervisee, AuditHalo ends the old assignment and starts a new one, preserving the transfer history for the audit trail.
+
+## Tune your state rules
+
+AuditHalo ships board-verified canonical rules for ten states. As HR admin you can adjust them for your organization:
+
+- Create an override to tighten a canonical rule for your practice.
+- Create a custom rule for a state AuditHalo does not yet cover.
+
+See [Org rule overrides](/docs/rules/creating-rule-overrides) and [Creating custom rules](/docs/rules/creating-custom-rules).
+
+## Keep the audit log ready
+
+The audit log records every state-changing action in your organization. Set your retention period and know how to export.
+
+1. Go to org settings at `/dashboard/settings` to set audit-log retention (1 to 20 years).
+2. Export from the audit log at `/dashboard/audit-log` when a board or accreditation body asks.
+
+Exporting as HR admin requires two-factor confirmation. See [Exporting and retaining the audit log](/docs/audit-log/exporting-the-audit-log).
+
+## What's next
+
+- Invite and manage your team in detail. See [Inviting your team](/docs/team/inviting-team-members).
+- Customize state rules for your practice. See [Org rule overrides](/docs/rules/creating-rule-overrides).
+- Understand billing and seats. See [Plans and pricing](/docs/billing/plans-and-pricing).

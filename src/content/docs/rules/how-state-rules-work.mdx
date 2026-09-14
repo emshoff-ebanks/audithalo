@@ -1,0 +1,59 @@
+---
+title: How state rules work
+description: Understand the three-tier rule model, how checks and severities drive compliance, and how AuditHalo keeps rules current and citation-grounded.
+category: rules
+audience: ["supervisor", "hr_admin"]
+order: 1
+dateUpdated: "2026-09-14"
+prerequisites: []
+related: ["rules/understanding-compliance-status", "rules/compliance-gaps-and-warnings", "rules/creating-rule-overrides"]
+keywords: ["state rules", "rules engine", "canonical rule", "override", "custom rule", "checks", "severity", "citation"]
+schema: ["Article"]
+---
+
+A rule is the machine-readable version of a state board's supervision requirements: the hours, ratios, deadlines, and conditions a pre-licensed counselor must meet. AuditHalo evaluates each supervisee's logged sessions against their assigned rule and turns the result into a clear compliance picture.
+
+Every rule is grounded in a board citation and versioned, so you always know which requirements are being applied and where they came from.
+
+## The three tiers
+
+AuditHalo uses three kinds of rules that layer together.
+
+1. **Canonical rules.** Board-verified rules that AuditHalo maintains for the states it covers. Each defines the required practice and supervision hours, durations, ratios, group limits, and a set of checks, with a citation to the state's administrative code. Only AuditHalo staff edit canonical rules.
+2. **Org overrides.** An HR admin can modify a canonical rule for their organization: tighten a requirement, adjust a check, or change a check's severity. Overrides show how many requirements were made tighter, looser, or removed.
+3. **Custom rules.** For a state AuditHalo does not yet cover, an HR admin can author a full rule from scratch, supplying the citation, structured requirements, and checks.
+
+> **Note:** AuditHalo covers ten states at launch. If your state is not covered, an HR admin on a Practice or Enterprise plan can create a custom rule. See [Creating custom rules](/docs/rules/creating-custom-rules).
+
+## Checks and severity
+
+A rule is made of checks, each testing one requirement, for example a supervision cadence, a total-hours target, or a required attestation. Every check carries a severity:
+
+- **Info.** Informational; does not affect risk on its own.
+- **Warning.** A gap that needs attention but is not yet disqualifying.
+- **Blocker.** A gap serious enough to put the supervisee at red risk.
+
+When an HR admin overrides a canonical rule, severity can only be downgraded within the limits AuditHalo enforces, so an override cannot quietly weaken a board requirement past what is allowed.
+
+## How evaluation works
+
+AuditHalo runs the rule's checks against the supervisee's logged and approved sessions and produces:
+
+- A risk level: green, yellow, or red.
+- Hour totals for practice and supervision.
+- Progress toward each requirement.
+- A list of gaps, each with a concrete next step.
+
+For a supervisee on leave, cadence checks pause automatically so a documented leave does not register as a missed requirement.
+
+## Versions and staying current
+
+Rules are versioned. When AuditHalo publishes a newer version of a canonical rule, a banner on the supervisee's detail page offers to upgrade the assignment to the new version. Keeping rules current is AuditHalo's core commitment, and citations are monitored for drift so a rule does not silently fall out of date.
+
+[Screenshot: a supervisee detail page showing the assigned rule, its version, and a rule-update banner]
+
+## What's next
+
+- See how evaluation shows up for a supervisee. See [Understanding your compliance dashboard](/docs/rules/understanding-compliance-status).
+- Learn how to clear a flagged gap. See [Compliance gaps and how to clear them](/docs/rules/compliance-gaps-and-warnings).
+- HR admins: customize a rule for your practice. See [Org rule overrides](/docs/rules/creating-rule-overrides).

@@ -1,0 +1,58 @@
+---
+title: Understanding your compliance dashboard
+description: Read the green, yellow, and red risk levels, progress bars, and at-risk flags so you always know where each supervisee stands against their state rule.
+category: rules
+audience: ["supervisor", "supervisee"]
+order: 2
+dateUpdated: "2026-09-14"
+prerequisites: []
+related: ["rules/how-state-rules-work", "rules/compliance-gaps-and-warnings", "practice-hours/approving-practice-hours"]
+keywords: ["compliance dashboard", "risk level", "green yellow red", "progress", "at-risk", "status"]
+schema: ["Article"]
+---
+
+This guide explains how to read compliance status in AuditHalo. Every supervisee has a status that summarizes how their logged, approved hours measure against their assigned state rule, so you can tell at a glance who is on track and who needs attention.
+
+The same status appears in three places: the roster, the supervisee detail page, and, for supervisees, their own dashboard. Supervisors and supervisees see the same numbers.
+
+## The three risk levels
+
+AuditHalo reduces each supervisee's standing to one of three colors.
+
+- **Green: on track.** No warnings or blockers. Hours and cadence are keeping pace with the rule.
+- **Yellow: needs attention.** One or more warnings. Something is behind or approaching a deadline, but nothing is disqualifying yet.
+- **Red: at risk.** At least one blocker. A requirement is failing in a way that threatens the supervised hours if it is not resolved.
+
+[Screenshot: the roster showing supervisees with green, yellow, and red status badges]
+
+## Progress bars and totals
+
+On the supervisee detail page, progress bars show accumulation toward the rule's targets:
+
+- Practice hours toward the required total.
+- Supervision hours toward the required total.
+
+Only approved practice hours count toward these bars, so a supervisee's total can lag until a supervisor approves pending entries. See [Approving and rejecting practice hours](/docs/practice-hours/approving-practice-hours).
+
+[Screenshot: the supervisee detail page showing practice and supervision progress bars]
+
+## Reading the roster at scale
+
+The roster at `/dashboard/roster` shows every supervisee with their status badge, practice-hour progress, and pending-signature count. Use the filters to work by exception:
+
+- Filter to at-risk to see only red supervisees.
+- Filter to pending signatures to find sessions waiting to be signed.
+- Search by name to jump to one person.
+
+HR admins see the whole organization and can also filter by supervisor. Supervisors see their own caseload.
+
+> **Note:** A supervisee on leave has cadence checks paused, so an approved leave shows as a leave badge rather than dragging their status to red.
+
+## From status to action
+
+A yellow or red status is backed by specific gaps, each with a next step, on the supervisee detail page. Status tells you who needs attention; the gaps tell you exactly what to do.
+
+## What's next
+
+- Turn a flagged status into concrete fixes. See [Compliance gaps and how to clear them](/docs/rules/compliance-gaps-and-warnings).
+- Understand what drives the numbers. See [How state rules work](/docs/rules/how-state-rules-work).

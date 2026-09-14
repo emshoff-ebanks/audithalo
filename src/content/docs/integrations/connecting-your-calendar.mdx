@@ -1,0 +1,58 @@
+---
+title: Connecting your calendar
+description: Connect Microsoft or Google so AuditHalo can schedule supervision sessions, create meeting links, and write to your calendar.
+category: integrations
+audience: ["supervisor", "hr_admin", "supervisee"]
+order: 1
+dateUpdated: "2026-09-14"
+prerequisites: ["A Microsoft or Google work account"]
+related: ["integrations/using-the-calendar", "sessions/scheduling-sessions", "sessions/ai-session-notes"]
+keywords: ["calendar", "connect", "microsoft", "google", "teams", "outlook", "google meet", "oauth", "integration"]
+schema: ["Article"]
+---
+
+This guide shows you how to connect a calendar so AuditHalo can schedule supervision from inside the app: create the meeting, add the video link, and write the event to your calendar. Connecting also enables pulling a meeting transcript later for AI-assisted notes.
+
+You connect your own calendar from your account page. Each person connects their own; connecting is per user, not per organization.
+
+## Providers you can connect
+
+- **Microsoft (Teams + Outlook).** Creates Teams meetings and writes to Outlook Calendar.
+- **Google (Meet + Calendar).** Creates Google Meet meetings and writes to Google Calendar.
+
+## Connect a calendar
+
+1. Go to your account page at `/dashboard/account`.
+2. Find the **Calendar integrations** card.
+3. Next to the provider you use, select **Connect**.
+4. Sign in with that provider and grant AuditHalo access when prompted.
+
+After you authorize, the provider shows as connected, along with the account you connected as.
+
+[Screenshot: the Calendar integrations card showing Microsoft and Google with a Connect action]
+
+> **Note:** AuditHalo stores your calendar authorization encrypted and uses it only to create and read the supervision events you schedule.
+
+## Set a preferred provider
+
+If you connect both providers, set one as the default for new sessions.
+
+1. In the **Calendar integrations** card, find the connected provider you want as default.
+2. Select **Set as preferred**.
+
+New sessions you schedule use the preferred provider unless you choose otherwise.
+
+## Disconnect a calendar
+
+1. In the **Calendar integrations** card, find the connected provider.
+2. Select **Disconnect** and confirm.
+
+You can reconnect at any time. Disconnecting stops AuditHalo from creating or reading events with that provider; it does not delete events already on your calendar.
+
+> **Warning:** If you disconnect the calendar used for upcoming scheduled sessions, AuditHalo can no longer update or cancel those events on your calendar. Reconnect, or manage those events manually, before disconnecting mid-series.
+
+## What's next
+
+- Schedule one-off and recurring sessions. See [Scheduling supervision sessions](/docs/sessions/scheduling-sessions).
+- Move around week, month, and list views. See [Using the calendar](/docs/integrations/using-the-calendar).
+- Generate notes from a connected meeting's transcript. See [AI-assisted session notes](/docs/sessions/ai-session-notes).

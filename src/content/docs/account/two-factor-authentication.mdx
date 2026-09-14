@@ -1,0 +1,67 @@
+---
+title: Securing your account with two-factor authentication
+description: Set up TOTP two-factor authentication, save your backup codes, and understand which actions require it.
+category: account
+audience: ["supervisor", "supervisee", "hr_admin", "executive"]
+order: 1
+dateUpdated: "2026-09-14"
+prerequisites: ["An authenticator app such as Google Authenticator, 1Password, or Authy"]
+related: ["account/password-and-email", "getting-started/hr-admin", "audit-log/exporting-the-audit-log"]
+keywords: ["2fa", "two-factor", "totp", "authenticator", "backup codes", "security", "mfa"]
+schema: ["HowTo"]
+howToSteps:
+  - name: Start setup
+    text: On your account page, select Enable two-factor to generate a QR code.
+  - name: Scan the code
+    text: Scan the QR code with your authenticator app to add AuditHalo.
+  - name: Verify and enable
+    text: Enter the 6-digit code from your app and select Verify and enable.
+  - name: Save backup codes
+    text: Store the backup codes somewhere safe and confirm you have saved them.
+---
+
+This guide shows you how to turn on two-factor authentication (2FA) for your AuditHalo account. 2FA adds a time-based code from your phone on top of your password, so a stolen password alone cannot get into your account.
+
+AuditHalo uses TOTP, the standard supported by apps like Google Authenticator, 1Password, and Authy. Set it up from your account page at `/dashboard/account`.
+
+## Set up two-factor authentication
+
+1. Go to `/dashboard/account`.
+2. In the security section, select **Enable two-factor**.
+3. Scan the QR code with your authenticator app. If you cannot scan, enter the secret manually.
+4. Enter the 6-digit code your app shows.
+5. Select **Verify and enable**.
+
+[Screenshot: the two-factor setup step showing the QR code and the verification code field]
+
+## Save your backup codes
+
+After you enable 2FA, AuditHalo shows a set of single-use backup codes. Use one to sign in if you ever lose access to your authenticator app.
+
+1. Copy the backup codes and store them somewhere safe, separate from your password.
+2. Select **I've saved my backup codes**.
+
+> **Warning:** Backup codes are shown once and each works only once. If you lose both your authenticator app and your backup codes, you may be locked out of your account. Store the codes before you leave this screen.
+
+## Where two-factor is required
+
+Some sensitive actions require a 2FA code even after you sign in. For HR admins, these include:
+
+- Inviting another HR admin.
+- Deactivating a member.
+- Exporting the audit log.
+
+Setting up 2FA ahead of time means these actions are never blocked when you need them.
+
+## Turn off two-factor
+
+1. Go to `/dashboard/account`.
+2. In the security section, choose to disable two-factor.
+3. Confirm with your password and a current 6-digit code.
+
+> **Note:** Disabling 2FA removes a layer of protection and, for HR admins, will block the 2FA-gated actions above until it is re-enabled.
+
+## What's next
+
+- Manage your password and email. See [Managing your password and email](/docs/account/password-and-email).
+- HR admins: see which actions are gated. See [Getting started as an HR admin](/docs/getting-started/hr-admin).
