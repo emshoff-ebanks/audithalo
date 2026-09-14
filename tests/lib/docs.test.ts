@@ -25,7 +25,7 @@ describe("docs loader", () => {
     expect(doc!.meta.category).toBe("getting-started");
     expect(doc!.meta.order).toBe(1);
     expect(doc!.meta.related).toContain("sessions/log-and-sign-a-session");
-    expect(doc!.content).toContain("Placeholder body");
+    expect(doc!.content.trim().length).toBeGreaterThan(0);
   });
 
   it("getDocByPath returns null for a missing file", () => {

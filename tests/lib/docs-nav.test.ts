@@ -37,7 +37,8 @@ describe("buildSearchIndex", () => {
     const entry = index.find((e) => e.path === "getting-started/supervisor");
     expect(entry).toBeDefined();
     expect(entry!.title).toBe("Getting started as a supervisor");
-    expect(entry!.text.toLowerCase()).toContain("placeholder body");
+    // Body text is indexed: "supervisee" appears in the description and body.
+    expect(entry!.text.toLowerCase()).toContain("supervisee");
     expect(entry!.categoryLabel).toBe("Getting Started");
   });
 

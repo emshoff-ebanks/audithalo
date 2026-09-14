@@ -1,18 +1,86 @@
 ---
 title: Getting started as a supervisor
-description: Create your account, invite your first supervisee, assign a state rule, and sign your first supervision session.
+description: Create your account, invite your first supervisee, assign their state rule, and sign your first supervision session.
 category: getting-started
 audience: ["supervisor"]
 order: 1
 dateUpdated: "2026-09-14"
-prerequisites: ["A work email address", "The state whose rule your supervisee follows"]
-related: ["sessions/log-and-sign-a-session"]
-keywords: ["signup", "register", "onboarding", "first steps"]
+prerequisites: ["A work email address", "The state and license your supervisee is working toward"]
+related: ["sessions/log-and-sign-a-session", "practice-hours/approving-practice-hours", "rules/understanding-compliance-status"]
+keywords: ["signup", "register", "onboarding", "first steps", "invite supervisee", "assign rule"]
 schema: ["Article"]
 ---
 
-This guide is a Phase 2 scaffold. Content is written in Phase 3.
+This guide takes you from a new account to your first sealed evidence package: create your account, invite a supervisee, assign the rule for their state, then log and sign a supervision session.
+
+You are the buyer and the signer. Supervisees join for free by invitation, so nothing happens on their side until you invite them.
 
 ## Create your account
 
-Placeholder body so the route renders and search has text to index.
+1. Go to [app.audithalo.com/register](https://app.audithalo.com/register).
+2. Enter your **Full name**, **Work email**, and a **Password** of at least 8 characters.
+3. Select **Create account**.
+
+AuditHalo creates your account and a personal organization in one step, then signs you in and sends a verification email. You land on your supervisor dashboard at `/dashboard`.
+
+[Screenshot: the registration form at /register with the Full name, Work email, and Password fields]
+
+> **Note:** Your account starts a 14-day free trial. You can invite supervisees and sign sessions during the trial without entering payment details.
+
+## Verify your email
+
+Open the verification email and select the link inside. This confirms your address so AuditHalo can send you signature reminders and compliance alerts. If the link has expired, request a new one from `/dashboard/account`.
+
+## Invite your first supervisee
+
+1. Go to the roster at `/dashboard/roster`.
+2. Select **Invite a supervisee**.
+3. Enter the supervisee's email, and their name if you have it.
+4. Send the invitation.
+
+AuditHalo emails the supervisee an invitation with a secure link. When they accept, they set their password, join your roster, and appear with their compliance status. You receive a notification when they accept.
+
+[Screenshot: the roster page with the Invite a supervisee action]
+
+> **Tip:** You can assign the state rule and set the obligation start date while you invite, so the supervisee's compliance tracking begins the moment they accept. If you skip it now, assign it from their detail page next.
+
+## Assign a state rule
+
+The rule is what turns logged hours into a compliance picture. It sets the required practice and supervision hours, the ratios, and the deadlines for the supervisee's state and license.
+
+1. From the roster, select the supervisee to open their detail page at `/dashboard/roster/[superviseeId]`.
+2. Select **Assign rule**.
+3. Choose the rule for the supervisee's state and license (for example, North Carolina LCMHCA).
+4. Set the **Obligation start** date. This is the date their supervised-hour clock begins, usually the date their board registration took effect.
+5. Confirm with **Assign rule**.
+
+The detail page now shows progress bars for practice and supervision hours, plus any gaps the rule flags.
+
+[Screenshot: the supervisee detail page after a rule is assigned, showing progress bars]
+
+> **Note:** AuditHalo covers ten states at launch. If your supervisee's state is not listed, an HR admin on a Practice or Enterprise plan can author a custom rule. See [Creating custom rules](/docs/rules/creating-custom-rules).
+
+## Log and sign your first supervision session
+
+After you meet with a supervisee, record the session and sign it. Signing is what produces the audit-ready evidence package.
+
+1. On the supervisee detail page, select **Log session**.
+2. Enter the date, duration, and session type (individual, triadic, or group).
+3. Save the session. It appears in the session log as awaiting signature.
+4. Open the session and select **Sign session**.
+5. Read the confirmation and select the checkbox: *I confirm that I intend to electronically sign this session record.*
+6. Submit your signature.
+
+You sign first. The supervisee then countersigns from their own dashboard. When every required signer has signed, AuditHalo seals the session: it generates an evidence package with a tamper-evident hash and notifies both of you.
+
+[Screenshot: the sign page at /sign/[sessionId] showing the signature confirmation checkbox]
+
+> **Warning:** A supervisee cannot sign until you have signed. Sign promptly after each session so the countersignature is not held up.
+
+## What's next
+
+You now have a working supervision loop: invite, assign, log, sign, seal. From here:
+
+- Set a repeating schedule so sessions and reminders happen automatically. See [Scheduling supervision sessions](/docs/sessions/scheduling-sessions).
+- Approve the practice hours your supervisees log. See [Approving and rejecting practice hours](/docs/practice-hours/approving-practice-hours).
+- Learn how the compliance dashboard reads green, yellow, and red. See [Understanding your compliance dashboard](/docs/rules/understanding-compliance-status).
