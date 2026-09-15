@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SealMedallion } from "@/components/marketing/seal-medallion";
+import { StateMarquee } from "@/components/marketing/state-marquee";
 import { jsonLdScript, softwareApplicationJsonLd } from "@/lib/seo";
 
 export const metadata = {
@@ -108,29 +110,6 @@ const steps = [
   },
 ];
 
-function SealMedallion({ size = 56 }: { size?: number }) {
-  return (
-    <svg
-      viewBox="0 0 64 64"
-      width={size}
-      height={size}
-      aria-hidden="true"
-      className="shrink-0"
-    >
-      <circle cx="32" cy="32" r="28" fill="none" stroke="var(--seal-gold)" strokeWidth="1.5" />
-      <circle cx="32" cy="32" r="24" fill="none" stroke="var(--seal-gold)" strokeWidth="0.5" />
-      <path
-        d="M22 32 l7 7 l14 -16"
-        fill="none"
-        stroke="var(--seal-gold)"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export default function MarketingHome() {
   return (
     <>
@@ -171,19 +150,7 @@ export default function MarketingHome() {
               <span className="mb-3 block font-mono text-[0.6875rem] uppercase tracking-wider text-[color:var(--ink-500)]">
                 Currently tracking hours for supervisees credentialed in
               </span>
-              <div className="mkt-marquee" aria-label="Supported state boards">
-                <div className="mkt-marquee-track">
-                  {[...states, ...states].map((s, i) => (
-                    <span
-                      key={`${s.code}-${i}`}
-                      aria-hidden={i >= states.length}
-                      className="flex-none rounded-full border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] px-2.5 py-1 font-mono text-xs text-[color:var(--ink-600)]"
-                    >
-                      {s.code} · {s.license}
-                    </span>
-                  ))}
-                </div>
-              </div>
+              <StateMarquee items={states} />
             </div>
           </div>
 

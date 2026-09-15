@@ -50,11 +50,23 @@ export function AuditHaloMark({
   );
 }
 
-export function AuditHaloWordmark({ className }: { className?: string }) {
+export function AuditHaloWordmark({
+  className,
+  textClassName,
+}: {
+  className?: string;
+  /** Override the wordmark text color (e.g. light on a dark footer). */
+  textClassName?: string;
+}) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <AuditHaloMark className="h-7 w-7 text-[color:var(--color-gold)]" />
-      <span className="font-display text-xl font-bold text-foreground tracking-tight">
+      <span
+        className={cn(
+          "font-display text-xl font-bold tracking-tight",
+          textClassName ?? "text-foreground"
+        )}
+      >
         AuditHalo
       </span>
     </span>
