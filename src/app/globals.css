@@ -1,4 +1,5 @@
-@import url("https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&display=swap");
+/* Cabinet Grotesk (display face) is loaded via a <link> in app/layout.tsx —
+   a CSS @import here is stripped by Tailwind v4's Lightning CSS pipeline. */
 @import "tailwindcss";
 @import "tw-animate-css";
 
