@@ -30,7 +30,7 @@ export default function EvidencePackagesPage() {
         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-4xl leading-[1.05]">
           Evidence the board can&apos;t question.
         </h1>
-        <p className="mt-6 text-lg text-foreground/70 max-w-3xl leading-relaxed">
+        <p className="mt-6 text-lg text-[color:var(--ink-600)] max-w-3xl leading-relaxed">
           When your mental health supervisee finishes their hours, AuditHalo
           seals every signed session into a single PDF — citation-linked, SHA-256
           hashed, timestamped at the moment of signing. Hand it to the board
@@ -50,7 +50,7 @@ export default function EvidencePackagesPage() {
       </section>
 
       {/* Anatomy */}
-      <section className="border-t border-border bg-card">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
             What&apos;s inside the package
@@ -60,17 +60,17 @@ export default function EvidencePackagesPage() {
             doesn&apos;t.
           </h2>
 
-          <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-px bg-border">
-            <Card className="rounded-none border-0">
+          <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="rounded-[14px] border-[color:var(--ink-200)] border-t-2 border-t-[color:var(--seal-gold)] bg-[color:var(--paper-white)]">
               <CardContent className="p-8">
                 <FileSignature
-                  className="h-6 w-6 text-secondary"
-                  strokeWidth={1.75}
+                  className="h-6 w-6 text-[color:var(--ink-900)]"
+                  strokeWidth={2}
                 />
                 <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
                   Every signed session
                 </h3>
-                <p className="mt-2 text-foreground/70 leading-relaxed">
+                <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">
                   Date, type, duration, supervisor credential snapshot,
                   supervisee signature with intent confirmation. Citation-linked
                   to the state rule that was current the day each session was
@@ -79,16 +79,16 @@ export default function EvidencePackagesPage() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-none border-0">
+            <Card className="rounded-[14px] border-[color:var(--ink-200)] border-t-2 border-t-[color:var(--seal-gold)] bg-[color:var(--paper-white)]">
               <CardContent className="p-8">
                 <Hash
-                  className="h-6 w-6 text-secondary"
-                  strokeWidth={1.75}
+                  className="h-6 w-6 text-[color:var(--seal-gold)]"
+                  strokeWidth={2}
                 />
                 <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
                   Tamper-evident hash
                 </h3>
-                <p className="mt-2 text-foreground/70 leading-relaxed">
+                <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">
                   Every page is SHA-256 hashed, and the package as a whole is
                   hashed and embedded. Modify a single comma and the board can
                   prove it. Boards trust the proof — not the paperwork.
@@ -96,16 +96,16 @@ export default function EvidencePackagesPage() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-none border-0">
+            <Card className="rounded-[14px] border-[color:var(--ink-200)] border-t-2 border-t-[color:var(--seal-gold)] bg-[color:var(--paper-white)]">
               <CardContent className="p-8">
                 <ShieldCheck
-                  className="h-6 w-6 text-secondary"
-                  strokeWidth={1.75}
+                  className="h-6 w-6 text-[color:var(--seal-gold)]"
+                  strokeWidth={2}
                 />
                 <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
                   Independently verifiable
                 </h3>
-                <p className="mt-2 text-foreground/70 leading-relaxed">
+                <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">
                   Each package includes a verify-URL that anyone — auditor,
                   board, employer — can paste into a browser. The page returns
                   whether the document content matches its sealed hash. No
@@ -118,7 +118,7 @@ export default function EvidencePackagesPage() {
       </section>
 
       {/* When it's sealed */}
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
             <div className="lg:col-span-1">
@@ -128,14 +128,14 @@ export default function EvidencePackagesPage() {
               <h2 className="font-display text-3xl font-semibold text-foreground">
                 Sealed at the moment of signing.
               </h2>
-              <p className="mt-4 text-foreground/70 leading-relaxed">
+              <p className="mt-4 text-[color:var(--ink-600)] leading-relaxed">
                 Evidence packages aren&apos;t something you generate later.
                 Every supervision session creates one the moment supervisor and
                 supervisee both sign with intent — automatically, atomically,
                 immutably.
               </p>
             </div>
-            <Card className="lg:col-span-2">
+            <Card className="lg:col-span-2 rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
               <CardContent className="p-8 space-y-6">
                 <Step
                   Icon={FileSignature}
@@ -168,12 +168,12 @@ export default function EvidencePackagesPage() {
       </section>
 
       {/* CTA */}
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-6xl px-6 py-20 text-center">
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
             Stop reconstructing supervision records before audits.
           </h2>
-          <p className="mt-4 text-lg text-foreground/70 max-w-2xl mx-auto">
+          <p className="mt-4 text-lg text-[color:var(--ink-600)] max-w-2xl mx-auto">
             Every session your supervisee logs becomes part of an audit-ready
             evidence package the moment it&apos;s signed. Start a 14-day trial —
             no credit card.
@@ -207,18 +207,18 @@ function Step({
 }) {
   return (
     <div className="flex gap-4">
-      <div className="shrink-0 w-12 h-12 rounded-sm border border-border bg-card flex items-center justify-center">
+      <div className="shrink-0 w-12 h-12 rounded-sm border border-[color:var(--ink-200)] bg-[color:var(--paper-100)] flex items-center justify-center">
         <Icon
-          className="h-5 w-5 text-[color:var(--color-gold)]"
+          className="h-5 w-5 text-[color:var(--seal-gold)]"
           strokeWidth={1.75}
         />
       </div>
       <div className="min-w-0">
-        <p className="font-mono text-xs text-foreground/50">{step}</p>
+        <p className="font-mono text-xs text-[color:var(--ink-500)]">{step}</p>
         <h3 className="mt-1 font-display text-lg font-semibold text-foreground">
           {title}
         </h3>
-        <p className="mt-1 text-foreground/70 leading-relaxed">{body}</p>
+        <p className="mt-1 text-[color:var(--ink-600)] leading-relaxed">{body}</p>
       </div>
     </div>
   );

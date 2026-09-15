@@ -74,7 +74,7 @@ export default function MentalHealthSupervisionSoftwarePage() {
         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-4xl leading-[1.05]">
           Mental health supervision software, built for the supervisor.
         </h1>
-        <p className="mt-6 text-lg text-foreground/70 max-w-3xl leading-relaxed">
+        <p className="mt-6 text-lg text-[color:var(--ink-600)] max-w-3xl leading-relaxed">
           AuditHalo tracks every supervised hour your pre-licensed
           supervisee logs — across NC, CA, TX, FL, NY,
           AZ, DE, OH, LA, and WA — against the exact state-board rule, with
@@ -91,20 +91,20 @@ export default function MentalHealthSupervisionSoftwarePage() {
             <Link href="/for-supervisors">How it works</Link>
           </Button>
         </div>
-        <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/60">
+        <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[color:var(--ink-500)]">
           <span className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
+            <CheckCircle2 className="h-4 w-4 text-[color:var(--ok-700)]" />
             14-day free trial
           </span>
           <span className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
+            <CheckCircle2 className="h-4 w-4 text-[color:var(--ok-700)]" />
             Supervisee accounts always free
           </span>
         </div>
       </section>
 
       {/* Built around mental-health rules */}
-      <section className="border-t border-border bg-card">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
             Built around the rules
@@ -112,7 +112,7 @@ export default function MentalHealthSupervisionSoftwarePage() {
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground max-w-3xl">
             Every mental-health supervision rule, encoded.
           </h2>
-          <p className="mt-4 text-foreground/70 max-w-3xl leading-relaxed">
+          <p className="mt-4 text-[color:var(--ink-600)] max-w-3xl leading-relaxed">
             Mental-health licensing boards specify <em>exactly</em> what counts
             as supervised practice: the supervisor&apos;s credential, the
             session type, the cadence, the supervision-to-practice ratio, the
@@ -120,7 +120,7 @@ export default function MentalHealthSupervisionSoftwarePage() {
             state and runs every logged hour against the live rule.
           </p>
 
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border">
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[color:var(--ink-200)] border border-[color:var(--ink-200)] rounded-[14px] overflow-hidden">
             <Feature
               Icon={Brain}
               title="Supervisee-centric"
@@ -133,6 +133,7 @@ export default function MentalHealthSupervisionSoftwarePage() {
             />
             <Feature
               Icon={Sparkles}
+              iconClass="text-[color:var(--halo-yellow)]"
               title="AI-assisted notes"
               body="Drop in a supervision transcript; get a structured session note. Topics covered, competencies addressed, supervisor feedback, next steps."
             />
@@ -148,12 +149,12 @@ export default function MentalHealthSupervisionSoftwarePage() {
       <FaqSection items={FAQ} />
 
       {/* CTA */}
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-6xl px-6 py-20 text-center">
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
             Get your mental-health supervision audit-ready today.
           </h2>
-          <p className="mt-4 text-lg text-foreground/70 max-w-2xl mx-auto">
+          <p className="mt-4 text-lg text-[color:var(--ink-600)] max-w-2xl mx-auto">
             14-day free trial. No credit card. Supervisee accounts always free.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -176,19 +177,21 @@ function Feature({
   Icon,
   title,
   body,
+  iconClass = "text-[color:var(--ink-900)]",
 }: {
   Icon: React.ElementType;
   title: string;
   body: string;
+  iconClass?: string;
 }) {
   return (
-    <Card className="rounded-none border-0">
+    <Card className="rounded-none border-0 bg-[color:var(--paper-white)]">
       <CardContent className="p-8">
-        <Icon className="h-6 w-6 text-secondary" strokeWidth={1.75} />
+        <Icon className={`h-6 w-6 ${iconClass}`} strokeWidth={2} />
         <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
           {title}
         </h3>
-        <p className="mt-2 text-foreground/70 leading-relaxed">{body}</p>
+        <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">{body}</p>
       </CardContent>
     </Card>
   );

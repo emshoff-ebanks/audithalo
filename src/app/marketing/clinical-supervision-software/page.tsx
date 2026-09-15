@@ -74,7 +74,7 @@ export default function ClinicalSupervisionSoftwarePage() {
         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-4xl leading-[1.05]">
           Clinical supervision software for mental health supervisors.
         </h1>
-        <p className="mt-6 text-lg text-foreground/70 max-w-3xl leading-relaxed">
+        <p className="mt-6 text-lg text-[color:var(--ink-600)] max-w-3xl leading-relaxed">
           AuditHalo is the supervision compliance system built for the licensed
           supervisors who carry board liability. Track every supervised hour
           against your state-board rule, capture intent-confirmed e-signatures,
@@ -90,24 +90,24 @@ export default function ClinicalSupervisionSoftwarePage() {
             <Link href="/pricing">See pricing</Link>
           </Button>
         </div>
-        <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/60">
+        <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[color:var(--ink-500)]">
           <span className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
+            <CheckCircle2 className="h-4 w-4 text-[color:var(--ok-700)]" />
             14-day free trial
           </span>
           <span className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
+            <CheckCircle2 className="h-4 w-4 text-[color:var(--ok-700)]" />
             No credit card required
           </span>
           <span className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
+            <CheckCircle2 className="h-4 w-4 text-[color:var(--ok-700)]" />
             Every supported state, encoded and growing
           </span>
         </div>
       </section>
 
       {/* Why clinical supervision software is its own category */}
-      <section className="border-t border-border bg-card">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
             What general-purpose tools miss
@@ -115,7 +115,7 @@ export default function ClinicalSupervisionSoftwarePage() {
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground max-w-3xl">
             Spreadsheets don&apos;t encode statutes.
           </h2>
-          <p className="mt-4 text-foreground/70 max-w-3xl leading-relaxed">
+          <p className="mt-4 text-[color:var(--ink-600)] max-w-3xl leading-relaxed">
             A clinical supervision workflow has unusual rules. Every supervised
             hour has to count against an exact statute (NC 21 NCAC 53 §0210,
             CA 16 CCR §1820, etc.) with its own cadence, ratio, credential, and
@@ -126,7 +126,7 @@ export default function ClinicalSupervisionSoftwarePage() {
             of this.
           </p>
 
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border">
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[color:var(--ink-200)] border border-[color:var(--ink-200)] rounded-[14px] overflow-hidden">
             <Feature
               Icon={ShieldCheck}
               title="State-board rules encoded"
@@ -152,7 +152,7 @@ export default function ClinicalSupervisionSoftwarePage() {
       </section>
 
       {/* States supported */}
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
             Supported states
@@ -160,12 +160,12 @@ export default function ClinicalSupervisionSoftwarePage() {
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground max-w-2xl">
             Every supported state. Citation-linked. Quarterly verified.
           </h2>
-          <p className="mt-3 text-foreground/70 max-w-2xl">
+          <p className="mt-3 text-[color:var(--ink-600)] max-w-2xl">
             Each rule cites the state administrative code, includes the
             supervisor-credential requirement, the practice-to-supervision
             ratio, and the hour totals. New states ship based on customer demand.
           </p>
-          <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-px bg-border">
+          <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-px bg-[color:var(--ink-200)] border border-[color:var(--ink-200)] rounded-[14px] overflow-hidden">
             {[
               { code: "NC", license: "LCMHCA", href: "/states/nc-lcmhca" },
               { code: "CA", license: "APCC", href: "/states/ca-apcc" },
@@ -181,13 +181,13 @@ export default function ClinicalSupervisionSoftwarePage() {
               <Link
                 key={s.code}
                 href={s.href}
-                className="bg-card p-6 hover:bg-accent transition-colors group"
+                className="bg-[color:var(--paper-white)] p-6 hover:bg-[color:var(--paper-100)] transition-colors group"
               >
                 <p className="font-display text-3xl font-bold text-foreground">
                   {s.code}
                 </p>
-                <p className="mt-1 text-sm text-foreground/70">{s.license}</p>
-                <p className="mt-4 text-xs font-medium text-secondary group-hover:underline">
+                <p className="mt-1 text-sm text-[color:var(--ink-600)]">{s.license}</p>
+                <p className="mt-4 text-xs font-medium text-[color:var(--ink-600)] group-hover:text-[color:var(--ink-900)] group-hover:underline">
                   View requirements →
                 </p>
               </Link>
@@ -199,12 +199,12 @@ export default function ClinicalSupervisionSoftwarePage() {
       <FaqSection items={FAQ} />
 
       {/* CTA */}
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-6xl px-6 py-20 text-center">
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
             Get clinical supervision audit-ready today.
           </h2>
-          <p className="mt-4 text-lg text-foreground/70 max-w-2xl mx-auto">
+          <p className="mt-4 text-lg text-[color:var(--ink-600)] max-w-2xl mx-auto">
             14-day free trial. No credit card. Supervisee accounts are free —
             always.
           </p>
@@ -234,13 +234,13 @@ function Feature({
   body: string;
 }) {
   return (
-    <Card className="rounded-none border-0">
+    <Card className="rounded-none border-0 bg-[color:var(--paper-white)]">
       <CardContent className="p-8">
-        <Icon className="h-6 w-6 text-secondary" strokeWidth={1.75} />
+        <Icon className="h-6 w-6 text-[color:var(--ink-900)]" strokeWidth={2} />
         <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
           {title}
         </h3>
-        <p className="mt-2 text-foreground/70 leading-relaxed">{body}</p>
+        <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">{body}</p>
       </CardContent>
     </Card>
   );

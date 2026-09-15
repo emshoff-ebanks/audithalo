@@ -35,13 +35,13 @@ export default function PricingPage() {
         <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground max-w-3xl">
           Pricing built around your practice.
         </h1>
-        <p className="mt-6 text-lg text-foreground/70 max-w-2xl">
+        <p className="mt-6 text-lg text-[color:var(--ink-600)] max-w-2xl">
           We&apos;re finalizing our pricing tiers as we onboard our first cohort
           of supervisors and group practices. In the meantime, tell us about
           your team and we&apos;ll send a quote that fits — usually the same
           business day.
         </p>
-        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/60">
+        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[color:var(--ink-500)]">
           <span>14-day free trial · No credit card to start</span>
           <span className="hidden sm:inline">·</span>
           <span>Quote within 1 business day</span>
@@ -49,14 +49,14 @@ export default function PricingPage() {
       </section>
 
       {/* Contact form + sidebar */}
-      <section className="border-t border-border bg-card">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-6xl px-6 py-16 lg:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16">
             <div className="lg:col-span-2">
               <h2 className="font-display text-2xl font-semibold text-foreground mb-3">
                 Get a tailored quote
               </h2>
-              <p className="text-foreground/70 text-sm mb-8 max-w-xl">
+              <p className="text-[color:var(--ink-600)] text-sm mb-8 max-w-xl">
                 In your message, include how many supervisors and supervisees
                 are on your team, which states they practice in, and whether
                 you need HRIS integration. We&apos;ll come back with a quote
@@ -73,28 +73,28 @@ export default function PricingPage() {
                 </h3>
                 <div className="flex items-start gap-2.5 text-sm">
                   <Mail
-                    className="h-4 w-4 mt-0.5 shrink-0 text-secondary"
-                    strokeWidth={1.75}
+                    className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--ink-900)]"
+                    strokeWidth={2}
                   />
                   <div>
                     <a
                       href="mailto:info@audithalo.com"
-                      className="text-secondary hover:underline"
+                      className="text-[color:var(--ink-700)] hover:text-[color:var(--ink-900)] underline"
                     >
                       info@audithalo.com
                     </a>
-                    <p className="mt-1 text-xs text-foreground/60">
+                    <p className="mt-1 text-xs text-[color:var(--ink-500)]">
                       A real human answers — typically same day.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-border pt-8">
+              <div className="border-t border-[color:var(--ink-200)] pt-8">
                 <h3 className="font-display text-base font-semibold text-foreground mb-3">
                   What we&apos;ll discuss
                 </h3>
-                <ul className="space-y-2 text-sm text-foreground/70">
+                <ul className="space-y-2 text-sm text-[color:var(--ink-600)]">
                   <li>Team size — supervisors + supervisees</li>
                   <li>States your clinicians practice in</li>
                   <li>HRIS / payroll integration needs</li>
@@ -104,15 +104,15 @@ export default function PricingPage() {
                 </ul>
               </div>
 
-              <div className="border-t border-border pt-8">
+              <div className="border-t border-[color:var(--ink-200)] pt-8">
                 <h3 className="font-display text-base font-semibold text-foreground mb-3">
                   Already trialing?
                 </h3>
-                <p className="text-sm text-foreground/70">
+                <p className="text-sm text-[color:var(--ink-600)]">
                   Existing customers can manage billing from inside the app —{" "}
                   <a
                     href="https://app.audithalo.com/dashboard/billing"
-                    className="text-secondary hover:underline"
+                    className="text-[color:var(--ink-700)] hover:text-[color:var(--ink-900)] underline"
                   >
                     Account &amp; billing
                   </a>
@@ -125,12 +125,12 @@ export default function PricingPage() {
       </section>
 
       {/* Bottom CTA */}
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-3xl px-6 py-16 text-center">
           <h2 className="font-display text-3xl font-semibold text-foreground">
             Want to try it first?
           </h2>
-          <p className="mt-4 text-foreground/70">
+          <p className="mt-4 text-[color:var(--ink-600)]">
             Start a free 14-day trial — no credit card. Pricing locks in only
             after you&apos;ve seen how it fits your practice.
           </p>

@@ -152,21 +152,21 @@ export default async function StateRulePage({ params }: { params: Params }) {
         <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground max-w-3xl">
           {rule.license_name}
         </h1>
-        <p className="mt-3 text-foreground/70">{rule.issuing_board}</p>
+        <p className="mt-3 text-[color:var(--ink-600)]">{rule.issuing_board}</p>
       </section>
 
       {/* Intro + technical requirements */}
-      <section className="border-t border-border bg-card">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-6xl px-6 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main content */}
             <div className="lg:col-span-2 space-y-6">
               {/* Intro paragraphs */}
               {pc?.intro && (
-                <Card>
+                <Card className="rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
                   <CardContent className="p-8">
                     <p className="label-overline mb-3">Overview</p>
-                    <div className="space-y-4 text-foreground/80 leading-relaxed">
+                    <div className="space-y-4 text-[color:var(--ink-700)] leading-relaxed">
                       {pc.intro.trim().split(/\n\s*\n/).map((para, i) => (
                         <p key={i}>{para.trim()}</p>
                       ))}
@@ -176,33 +176,33 @@ export default async function StateRulePage({ params }: { params: Params }) {
               )}
 
               {/* Hour requirements */}
-              <Card>
+              <Card className="rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
                 <CardContent className="p-8 space-y-6">
                   <div>
                     <p className="label-overline mb-2">Summary</p>
-                    <p className="text-foreground/80 leading-relaxed whitespace-pre-line">
+                    <p className="text-[color:var(--ink-700)] leading-relaxed whitespace-pre-line">
                       {rule.summary}
                     </p>
                   </div>
 
-                  <div className="border-t border-border pt-6">
+                  <div className="border-t border-[color:var(--ink-200)] pt-6">
                     <p className="label-overline mb-3">Hour requirements</p>
                     <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
                       <div>
-                        <dt className="text-foreground/60">Total practice hours</dt>
+                        <dt className="text-[color:var(--ink-500)]">Total practice hours</dt>
                         <dd className="mt-1 font-display text-2xl font-semibold text-foreground">
                           {rule.structured.total_practice_hours_required.toLocaleString()}
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-foreground/60">Total supervision hours</dt>
+                        <dt className="text-[color:var(--ink-500)]">Total supervision hours</dt>
                         <dd className="mt-1 font-display text-2xl font-semibold text-foreground">
                           {rule.structured.total_supervision_hours_required.toLocaleString()}
                         </dd>
                       </div>
                       {rule.structured.min_individual_supervision_fraction != null && (
                         <div>
-                          <dt className="text-foreground/60">Min. individual share</dt>
+                          <dt className="text-[color:var(--ink-500)]">Min. individual share</dt>
                           <dd className="mt-1 font-display text-2xl font-semibold text-foreground">
                             {(rule.structured.min_individual_supervision_fraction * 100).toFixed(0)}%
                           </dd>
@@ -210,17 +210,17 @@ export default async function StateRulePage({ params }: { params: Params }) {
                       )}
                       {rule.structured.group_max_attendees != null && (
                         <div>
-                          <dt className="text-foreground/60">Group session max</dt>
+                          <dt className="text-[color:var(--ink-500)]">Group session max</dt>
                           <dd className="mt-1 font-display text-2xl font-semibold text-foreground">
                             {rule.structured.group_max_attendees}{" "}
-                            <span className="text-base text-foreground/60">attendees</span>
+                            <span className="text-base text-[color:var(--ink-500)]">attendees</span>
                           </dd>
                         </div>
                       )}
                       {(rule.structured.min_duration_months != null ||
                         rule.structured.max_duration_months != null) && (
                         <div className="col-span-2">
-                          <dt className="text-foreground/60">Duration window</dt>
+                          <dt className="text-[color:var(--ink-500)]">Duration window</dt>
                           <dd className="mt-1 font-display text-xl font-semibold text-foreground">
                             {rule.structured.min_duration_months ?? "—"} to{" "}
                             {rule.structured.max_duration_months ?? "—"} months
@@ -230,7 +230,7 @@ export default async function StateRulePage({ params }: { params: Params }) {
                     </dl>
                   </div>
 
-                  <div className="border-t border-border pt-6">
+                  <div className="border-t border-[color:var(--ink-200)] pt-6">
                     <p className="label-overline mb-3">Checks AuditHalo runs</p>
                     <ul className="space-y-3 text-sm">
                       {rule.checks.map((c) => (
@@ -244,7 +244,7 @@ export default async function StateRulePage({ params }: { params: Params }) {
                           )}
                           <div>
                             <p className="font-medium text-foreground">{c.description}</p>
-                            <p className="text-xs font-mono text-foreground/50 mt-0.5">
+                            <p className="text-xs font-mono text-[color:var(--ink-500)] mt-0.5">
                               {c.id} · {c.severity}
                             </p>
                           </div>
@@ -257,13 +257,13 @@ export default async function StateRulePage({ params }: { params: Params }) {
 
               {/* Supervisor qualifications */}
               {pc?.supervisor_qualifications && pc.supervisor_qualifications.length > 0 && (
-                <Card>
+                <Card className="rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
                   <CardContent className="p-8">
                     <p className="label-overline mb-3">Supervisor qualifications</p>
-                    <ul className="space-y-3 text-sm text-foreground/80">
+                    <ul className="space-y-3 text-sm text-[color:var(--ink-700)]">
                       {pc.supervisor_qualifications.map((q, i) => (
                         <li key={i} className="flex gap-3">
-                          <FileSignature className="h-4 w-4 mt-0.5 shrink-0 text-secondary" strokeWidth={1.75} />
+                          <FileSignature className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--ink-900)]" strokeWidth={2} />
                           <span className="leading-relaxed">{q}</span>
                         </li>
                       ))}
@@ -274,12 +274,12 @@ export default async function StateRulePage({ params }: { params: Params }) {
 
               {/* Key warnings */}
               {pc?.key_warnings && pc.key_warnings.length > 0 && (
-                <Card className="border-[color:var(--color-warning)]/30">
+                <Card className="rounded-[14px] border-[color:var(--color-warning)]/30 bg-[color:var(--paper-white)]">
                   <CardContent className="p-8">
                     <p className="label-overline mb-3 text-[color:var(--color-warning)]">
                       Common mistakes to avoid
                     </p>
-                    <ul className="space-y-3 text-sm text-foreground/80">
+                    <ul className="space-y-3 text-sm text-[color:var(--ink-700)]">
                       {pc.key_warnings.map((w, i) => (
                         <li key={i} className="flex gap-3">
                           <TriangleAlert className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-warning)]" strokeWidth={1.75} />
@@ -294,14 +294,14 @@ export default async function StateRulePage({ params }: { params: Params }) {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              <Card>
+              <Card className="rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
                 <CardContent className="p-6">
                   <p className="label-overline mb-3">Citation</p>
-                  <p className="font-mono text-sm text-foreground">
+                  <p className="font-mono text-sm text-[color:var(--ink-600)]">
                     {rule.citation.admincode}
                   </p>
                   {rule.citation.statute && (
-                    <p className="font-mono text-xs text-foreground/70 mt-1">
+                    <p className="font-mono text-xs text-[color:var(--ink-600)] mt-1">
                       {rule.citation.statute}
                     </p>
                   )}
@@ -309,28 +309,28 @@ export default async function StateRulePage({ params }: { params: Params }) {
                     href={rule.citation.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-4 inline-flex items-center gap-1.5 text-sm text-secondary hover:underline"
+                    className="mt-4 inline-flex items-center gap-1.5 text-sm text-[color:var(--ink-700)] hover:text-[color:var(--ink-900)] underline"
                   >
                     View official source ↗
                   </a>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
                 <CardContent className="p-6">
                   <p className="label-overline mb-3">Verification</p>
                   <dl className="space-y-2 text-sm">
                     <div>
-                      <dt className="text-foreground/60">Last verified</dt>
+                      <dt className="text-[color:var(--ink-500)]">Last verified</dt>
                       <dd className="font-mono text-foreground">{verifiedAt}</dd>
                     </div>
                     <div>
-                      <dt className="text-foreground/60">Verified by</dt>
+                      <dt className="text-[color:var(--ink-500)]">Verified by</dt>
                       <dd className="text-foreground">{rule.verification.last_verified_by}</dd>
                     </div>
                   </dl>
                   {isPreliminary && (
-                    <p className="mt-4 text-xs text-foreground/60 leading-relaxed">
+                    <p className="mt-4 text-xs text-[color:var(--ink-500)] leading-relaxed">
                       This encoding is preliminary — drafted from public sources,
                       awaiting QA by a licensed clinical supervisor in this
                       jurisdiction. Use the citation link to verify anything that
@@ -340,16 +340,16 @@ export default async function StateRulePage({ params }: { params: Params }) {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
                 <CardContent className="p-6">
                   <p className="label-overline mb-3">Evidence package</p>
-                  <p className="text-sm text-foreground/70">
+                  <p className="text-sm text-[color:var(--ink-600)]">
                     Required signers:{" "}
                     <span className="text-foreground font-medium">
                       {rule.evidence_requirements.required_signers.join(", ")}
                     </span>
                   </p>
-                  <p className="text-sm text-foreground/70 mt-2">
+                  <p className="text-sm text-[color:var(--ink-600)] mt-2">
                     Immutability:{" "}
                     <span className="text-foreground font-mono text-xs">
                       {rule.evidence_requirements.immutability}
@@ -358,11 +358,11 @@ export default async function StateRulePage({ params }: { params: Params }) {
                 </CardContent>
               </Card>
 
-              <div className="border border-border rounded-sm p-6 bg-card">
+              <div className="border border-[color:var(--ink-200)] rounded-sm p-6 bg-[color:var(--paper-white)]">
                 <p className="font-display text-base font-semibold text-foreground mb-2">
                   Track your {rule.jurisdiction} hours
                 </p>
-                <p className="text-sm text-foreground/70 mb-4">
+                <p className="text-sm text-[color:var(--ink-600)] mb-4">
                   AuditHalo evaluates every hour you log against this rule and
                   flags issues before they become problems.
                 </p>
@@ -379,7 +379,7 @@ export default async function StateRulePage({ params }: { params: Params }) {
 
       {/* FAQ */}
       {pc?.faq && pc.faq.length > 0 && (
-        <section className="border-t border-border">
+        <section className="border-t border-[color:var(--ink-200)]">
           <div className="mx-auto max-w-3xl px-6 py-16 lg:py-20">
             <Badge variant="outline" className="mb-4">
               Frequently asked
@@ -393,7 +393,7 @@ export default async function StateRulePage({ params }: { params: Params }) {
                   <h3 className="font-display text-lg font-semibold text-foreground">
                     {item.q}
                   </h3>
-                  <p className="mt-2 text-foreground/70 leading-relaxed">{item.a}</p>
+                  <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">{item.a}</p>
                 </div>
               ))}
             </div>
@@ -402,7 +402,7 @@ export default async function StateRulePage({ params }: { params: Params }) {
       )}
 
       {/* CTA */}
-      <section className="border-t border-border bg-card">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-3xl px-6 py-16 text-center">
           <Badge variant="outline" className="mb-4">
             Start tracking
@@ -410,7 +410,7 @@ export default async function StateRulePage({ params }: { params: Params }) {
           <h2 className="font-display text-3xl font-semibold text-foreground">
             Track your {rule.jurisdiction} {rule.license_code} supervision hours, audit-ready.
           </h2>
-          <p className="mt-4 text-foreground/70">
+          <p className="mt-4 text-[color:var(--ink-600)]">
             14-day free trial. No credit card. Supervisee accounts are free — always.
           </p>
           <Button asChild size="lg" className="mt-8">

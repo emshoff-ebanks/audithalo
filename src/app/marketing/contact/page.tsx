@@ -18,13 +18,13 @@ export default function ContactPage() {
         <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground max-w-3xl">
           We answer email. Really.
         </h1>
-        <p className="mt-6 text-lg text-foreground/70 max-w-2xl">
+        <p className="mt-6 text-lg text-[color:var(--ink-600)] max-w-2xl">
           No ticket queue. No bot. Someone from the team reads every message and
           responds — usually same day.
         </p>
       </section>
 
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-6xl px-6 py-16 lg:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16">
             {/* Contact form */}
@@ -41,7 +41,7 @@ export default function ContactPage() {
                 <h3 className="font-display text-base font-semibold text-foreground mb-3">
                   Common topics
                 </h3>
-                <ul className="space-y-2 text-sm text-foreground/70">
+                <ul className="space-y-2 text-sm text-[color:var(--ink-600)]">
                   <li>Setting up your supervisor account</li>
                   <li>Questions about your state&apos;s requirements</li>
                   <li>Enterprise or group practice plans</li>
@@ -50,13 +50,13 @@ export default function ContactPage() {
                 </ul>
               </div>
 
-              <div className="border-t border-border pt-8">
+              <div className="border-t border-[color:var(--ink-200)] pt-8">
                 <h3 className="font-display text-base font-semibold text-foreground mb-1">
                   Email directly
                 </h3>
                 <a
                   href="mailto:info@audithalo.com"
-                  className="text-secondary text-sm hover:underline"
+                  className="text-[color:var(--ink-700)] text-sm hover:text-[color:var(--ink-900)] underline"
                 >
                   info@audithalo.com
                 </a>
@@ -67,17 +67,17 @@ export default function ContactPage() {
       </section>
 
       {/* Newsletter */}
-      <section className="border-t border-border bg-card">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-6xl px-6 py-16 lg:py-20">
           <div className="max-w-2xl">
             <div className="flex items-center gap-2 mb-4">
-              <Bell className="h-5 w-5 text-secondary" strokeWidth={1.75} />
+              <Bell className="h-5 w-5 text-[color:var(--ink-900)]" strokeWidth={2} />
               <Badge variant="outline">State law updates</Badge>
             </div>
             <h2 className="font-display text-2xl font-semibold text-foreground">
               Be the first to know when your state&apos;s supervision requirements change.
             </h2>
-            <p className="mt-3 text-foreground/70 text-sm leading-relaxed mb-6">
+            <p className="mt-3 text-[color:var(--ink-600)] text-sm leading-relaxed mb-6">
               State boards update supervision rules — and the changes often come
               quietly. We monitor every state we cover and notify subscribers
               when hour requirements, cadence rules, or supervisor qualifications

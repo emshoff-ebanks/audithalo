@@ -43,11 +43,11 @@ export function LeadMagnetCapture({
 
   if (state?.ok) {
     return (
-      <div className="rounded-lg border border-[color:var(--color-success)]/30 bg-[color:var(--color-success)]/5 p-6">
+      <div className="rounded-[14px] border border-[color:var(--ok-700)]/30 bg-[color:var(--ok-50)] p-6">
         <p className="font-display text-xl font-semibold text-foreground">
           Sent — check your inbox.
         </p>
-        <p className="mt-2 text-foreground/80 leading-relaxed">
+        <p className="mt-2 text-[color:var(--ink-700)] leading-relaxed">
           {confirmationCopy ??
             `The ${magnetLabel} is on its way. If it doesn't show up in 60 seconds, check your spam folder — and tell us so we can fix it.`}
         </p>
@@ -68,7 +68,7 @@ export function LeadMagnetCapture({
             required
             autoComplete="given-name"
             placeholder="Jordan"
-            className="mt-1.5"
+            className="mt-1.5 border-[color:var(--ink-200)] bg-[color:var(--paper-white)] focus-visible:ring-[color:var(--halo-yellow)]"
           />
         </div>
         <div>
@@ -80,7 +80,7 @@ export function LeadMagnetCapture({
             required
             autoComplete="email"
             placeholder="you@firm.com"
-            className="mt-1.5"
+            className="mt-1.5 border-[color:var(--ink-200)] bg-[color:var(--paper-white)] focus-visible:ring-[color:var(--halo-yellow)]"
           />
         </div>
       </div>
@@ -90,7 +90,7 @@ export function LeadMagnetCapture({
         <select
           id="lm-state"
           name="state"
-          className="mt-1.5 w-full h-10 px-3 rounded-sm border border-border bg-background text-sm"
+          className="mt-1.5 w-full h-10 px-3 rounded-sm border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] text-sm focus:ring-2 focus:ring-[color:var(--halo-yellow)] focus:outline-none"
           defaultValue=""
         >
           <option value="">Skip</option>
@@ -100,7 +100,7 @@ export function LeadMagnetCapture({
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-foreground/60">
+        <p className="mt-1 text-xs text-[color:var(--ink-500)]">
           Helps us send a state-specific version when we publish it.
         </p>
       </div>
@@ -108,7 +108,7 @@ export function LeadMagnetCapture({
       {state && state.ok === false && (
         <p
           role="alert"
-          className="text-sm text-[color:var(--color-risk)] bg-[color:var(--color-risk)]/8 px-3 py-2 rounded-sm"
+          className="text-sm text-[color:var(--risk-700)] bg-[color:var(--risk-50)] px-3 py-2 rounded-sm"
         >
           {state.error}
         </p>
@@ -117,7 +117,7 @@ export function LeadMagnetCapture({
       <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending ? "Sending…" : `Get the printable PDF`}
       </Button>
-      <p className="text-xs text-foreground/60 text-center">
+      <p className="text-xs text-[color:var(--ink-500)] text-center">
         We email you the link and add you to a low-volume list for new
         state checklists. Unsubscribe in one click.
       </p>

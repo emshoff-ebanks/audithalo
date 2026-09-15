@@ -17,25 +17,25 @@ export default function PrivacyPage() {
         <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground max-w-3xl">
           Privacy Policy
         </h1>
-        <p className="mt-4 text-sm text-foreground/60 font-mono">
+        <p className="mt-4 text-sm text-[color:var(--ink-500)] font-mono">
           Last updated: {updated}
         </p>
       </section>
 
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-3xl px-6 py-16 lg:py-20 space-y-10 text-foreground/80 leading-relaxed">
+      <section className="border-t border-[color:var(--ink-200)]">
+        <div className="mx-auto max-w-3xl px-6 py-16 lg:py-20 space-y-10 text-[color:var(--ink-700)] leading-relaxed">
 
           <div>
             <h2 className="font-display text-2xl font-semibold text-foreground mb-4">1. Who we are</h2>
             <p>
               AuditHalo is a clinical supervision compliance platform operated by Medipyxis. For any privacy questions, contact us at{" "}
-              <a href="mailto:info@audithalo.com" className="text-secondary hover:underline">info@audithalo.com</a>.
+              <a href="mailto:info@audithalo.com" className="text-[color:var(--ink-700)] hover:text-[color:var(--ink-900)] underline">info@audithalo.com</a>.
             </p>
           </div>
 
           <div>
             <h2 className="font-display text-2xl font-semibold text-foreground mb-4">2. What we collect</h2>
-            <ul className="space-y-2 list-disc list-inside text-foreground/70">
+            <ul className="space-y-2 list-disc list-inside text-[color:var(--ink-600)]">
               <li><strong className="text-foreground">Account information</strong> — name, email address, password (bcrypt-hashed, never stored in plaintext), role, state, and license type.</li>
               <li><strong className="text-foreground">Organization data</strong> — practice name, billing contact, and subscription status.</li>
               <li><strong className="text-foreground">Supervision records</strong> — session dates, durations, session types, hour totals, and e-signature metadata (signer name, role, timestamp, IP address, intent confirmation).</li>
@@ -56,7 +56,7 @@ export default function PrivacyPage() {
 
           <div>
             <h2 className="font-display text-2xl font-semibold text-foreground mb-4">4. How we use your data</h2>
-            <ul className="space-y-2 list-disc list-inside text-foreground/70">
+            <ul className="space-y-2 list-disc list-inside text-[color:var(--ink-600)]">
               <li>Providing and operating the AuditHalo platform</li>
               <li>Evaluating supervision hours against encoded state board rules</li>
               <li>Generating, sealing, and storing evidence packages</li>
@@ -70,7 +70,7 @@ export default function PrivacyPage() {
 
           <div>
             <h2 className="font-display text-2xl font-semibold text-foreground mb-4">5. Third parties we share data with</h2>
-            <ul className="space-y-2 list-disc list-inside text-foreground/70">
+            <ul className="space-y-2 list-disc list-inside text-[color:var(--ink-600)]">
               <li><strong className="text-foreground">Neon</strong> — Postgres database, US-East-1, encrypted at rest</li>
               <li><strong className="text-foreground">Vercel</strong> — application hosting, US-East, receives request logs</li>
               <li><strong className="text-foreground">Stripe</strong> — payment processing; AuditHalo does not store card numbers</li>
@@ -83,7 +83,7 @@ export default function PrivacyPage() {
 
           <div>
             <h2 className="font-display text-2xl font-semibold text-foreground mb-4">6. Data retention</h2>
-            <ul className="space-y-2 list-disc list-inside text-foreground/70">
+            <ul className="space-y-2 list-disc list-inside text-[color:var(--ink-600)]">
               <li>Account and organization data: retained while your account is active and for 90 days after deletion</li>
               <li>Supervision records and evidence packages: retained for 7 years from creation (matching most state board record-retention requirements)</li>
               <li>Raw transcript content: deleted after AI processing completes — not stored</li>
@@ -94,7 +94,7 @@ export default function PrivacyPage() {
           <div>
             <h2 className="font-display text-2xl font-semibold text-foreground mb-4">7. Your rights</h2>
             <p className="mb-3">You may request to:</p>
-            <ul className="space-y-2 list-disc list-inside text-foreground/70">
+            <ul className="space-y-2 list-disc list-inside text-[color:var(--ink-600)]">
               <li>Access a copy of the data we hold about you</li>
               <li>Correct inaccurate data</li>
               <li>Delete your account and associated data (subject to retention requirements above)</li>
@@ -102,7 +102,7 @@ export default function PrivacyPage() {
             </ul>
             <p className="mt-3">
               To make any of these requests, email{" "}
-              <a href="mailto:info@audithalo.com?subject=Privacy%20request" className="text-secondary hover:underline">info@audithalo.com</a>.
+              <a href="mailto:info@audithalo.com?subject=Privacy%20request" className="text-[color:var(--ink-700)] hover:text-[color:var(--ink-900)] underline">info@audithalo.com</a>.
             </p>
           </div>
 
@@ -128,7 +128,7 @@ export default function PrivacyPage() {
           <div>
             <h2 className="font-display text-2xl font-semibold text-foreground mb-4">11. Contact</h2>
             <p>
-              <a href="mailto:info@audithalo.com" className="text-secondary hover:underline">info@audithalo.com</a>
+              <a href="mailto:info@audithalo.com" className="text-[color:var(--ink-700)] hover:text-[color:var(--ink-900)] underline">info@audithalo.com</a>
             </p>
           </div>
 

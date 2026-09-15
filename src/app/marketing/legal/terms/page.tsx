@@ -17,14 +17,14 @@ export default function TermsPage() {
         <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground max-w-3xl">
           Terms of Service
         </h1>
-        <p className="mt-4 text-sm text-foreground/60 font-mono">
+        <p className="mt-4 text-sm text-[color:var(--ink-500)] font-mono">
           Last updated: {updated}
         </p>
       </section>
 
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-3xl px-6 py-16">
-          <div className="space-y-10 text-foreground/80 leading-relaxed">
+          <div className="space-y-10 text-[color:var(--ink-700)] leading-relaxed">
 
             <div>
               <h2 className="font-display text-2xl font-semibold text-foreground mb-4">1. Acceptance</h2>
@@ -38,7 +38,7 @@ export default function TermsPage() {
               <p className="mb-3">
                 AuditHalo is a software platform that helps clinical supervisors and their supervisees track supervision hours against encoded state licensing board rules, capture e-signatures, and generate audit-ready evidence packages. Specifically, AuditHalo:
               </p>
-              <ul className="space-y-2 list-disc list-inside text-foreground/70">
+              <ul className="space-y-2 list-disc list-inside text-[color:var(--ink-600)]">
                 <li>Encodes state supervision rules from publicly available administrative code and board guidance</li>
                 <li>Evaluates logged hours against those rules</li>
                 <li>Facilitates e-signature capture for supervision session records</li>
@@ -52,7 +52,7 @@ export default function TermsPage() {
               <p className="mb-3">
                 <strong className="text-foreground">AuditHalo is a software tool, not a law firm and not a licensing board.</strong> The state rules encoded in the platform are derived from publicly available sources and re-verified on a published schedule, but:
               </p>
-              <ul className="space-y-2 list-disc list-inside text-foreground/70">
+              <ul className="space-y-2 list-disc list-inside text-[color:var(--ink-600)]">
                 <li>State licensing rules change. We verify rules quarterly, but a rule may change between verifications.</li>
                 <li>Your specific facts may involve edge cases not captured by our encoding.</li>
                 <li>AuditHalo&apos;s evaluation of your hours is not a determination by any licensing board that your supervision is compliant.</li>
@@ -75,7 +75,7 @@ export default function TermsPage() {
 
             <div>
               <h2 className="font-display text-2xl font-semibold text-foreground mb-4">5. Accounts and organizations</h2>
-              <ul className="space-y-2 list-disc list-inside text-foreground/70">
+              <ul className="space-y-2 list-disc list-inside text-[color:var(--ink-600)]">
                 <li>You are responsible for maintaining the security of your account credentials.</li>
                 <li>Supervisors who create an organization are responsible for the accuracy of the roster, rule assignments, and supervision records entered on behalf of their supervisees.</li>
                 <li>Each user must have their own account. Sharing accounts is not permitted.</li>
@@ -88,7 +88,7 @@ export default function TermsPage() {
               <p className="mb-3">
                 By signing a session record in AuditHalo, you confirm that:
               </p>
-              <ul className="space-y-2 list-disc list-inside text-foreground/70">
+              <ul className="space-y-2 list-disc list-inside text-[color:var(--ink-600)]">
                 <li>You are the person identified as the signer</li>
                 <li>You intend to sign the record as your legal signature</li>
                 <li>The information in the record is accurate to the best of your knowledge</li>
@@ -100,7 +100,7 @@ export default function TermsPage() {
 
             <div>
               <h2 className="font-display text-2xl font-semibold text-foreground mb-4">7. Payment and billing</h2>
-              <ul className="space-y-2 list-disc list-inside text-foreground/70">
+              <ul className="space-y-2 list-disc list-inside text-[color:var(--ink-600)]">
                 <li>Paid plans are billed through Stripe. By subscribing, you agree to Stripe&apos;s terms in addition to ours.</li>
                 <li>The 14-day free trial requires no payment information. At the end of the trial, you must subscribe or lose access to paid features.</li>
                 <li>Subscriptions auto-renew. Cancel anytime through the billing portal — cancellation takes effect at the end of the current billing period.</li>
@@ -113,7 +113,7 @@ export default function TermsPage() {
             <div>
               <h2 className="font-display text-2xl font-semibold text-foreground mb-4">8. Acceptable use</h2>
               <p className="mb-3">You may not:</p>
-              <ul className="space-y-2 list-disc list-inside text-foreground/70">
+              <ul className="space-y-2 list-disc list-inside text-[color:var(--ink-600)]">
                 <li>Submit false supervision records or fabricate hours</li>
                 <li>Forge or misrepresent signatures</li>
                 <li>Use the Service to facilitate fraud against a state licensing board</li>
@@ -135,7 +135,7 @@ export default function TermsPage() {
               <p className="mb-3">
                 To the fullest extent permitted by law:
               </p>
-              <ul className="space-y-2 list-disc list-inside text-foreground/70">
+              <ul className="space-y-2 list-disc list-inside text-[color:var(--ink-600)]">
                 <li>AuditHalo is provided &ldquo;as is.&rdquo; We make no warranty that the Service will be error-free, uninterrupted, or that any state rule encoding is fully accurate at all times.</li>
                 <li>We are not liable for any licensing board decision, denial of licensure, or regulatory action that results from relying on AuditHalo&apos;s rule evaluation.</li>
                 <li>In no event will AuditHalo&apos;s aggregate liability exceed the amounts you paid us in the 12 months preceding the claim.</li>
@@ -168,7 +168,7 @@ export default function TermsPage() {
               <h2 className="font-display text-2xl font-semibold text-foreground mb-4">14. Contact</h2>
               <p>
                 Questions about these Terms:{" "}
-                <a href="mailto:info@audithalo.com" className="text-secondary hover:underline">
+                <a href="mailto:info@audithalo.com" className="text-[color:var(--ink-700)] hover:text-[color:var(--ink-900)] underline">
                   info@audithalo.com
                 </a>
               </p>

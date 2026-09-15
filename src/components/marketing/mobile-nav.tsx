@@ -21,7 +21,7 @@ export function MobileNav() {
   return (
     <>
       <button
-        className="md:hidden p-2 -mr-2 text-foreground/70 hover:text-foreground"
+        className="md:hidden p-2 -mr-2 text-[color:var(--ink-600)] hover:text-[color:var(--ink-900)]"
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? "Close menu" : "Open menu"}
       >
@@ -29,13 +29,13 @@ export function MobileNav() {
       </button>
 
       {open && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-card border-b border-border z-40 shadow-sm">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-[color:var(--paper-50)] border-b border-[color:var(--ink-200)] z-40">
           <nav className="mx-auto max-w-6xl px-6 py-4 flex flex-col gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="py-3 text-sm font-medium text-foreground/70 hover:text-foreground border-b border-border/50 last:border-none transition-colors"
+                className="py-3 text-sm font-medium text-[color:var(--ink-600)] hover:text-[color:var(--ink-900)] border-b border-[color:var(--ink-200)]/60 last:border-none transition-colors"
                 onClick={() => setOpen(false)}
               >
                 {link.label}

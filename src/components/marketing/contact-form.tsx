@@ -46,11 +46,11 @@ export function ContactForm() {
 
   if (done) {
     return (
-      <div className="flex items-start gap-3 p-6 border border-border rounded-sm bg-card">
+      <div className="flex items-start gap-3 p-6 border border-[color:var(--ink-200)] rounded-sm bg-[color:var(--paper-white)]">
         <CheckCircle2 className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--color-success)]" />
         <div>
           <p className="font-medium text-foreground">Message sent.</p>
-          <p className="mt-1 text-sm text-foreground/70">
+          <p className="mt-1 text-sm text-[color:var(--ink-600)]">
             We&apos;ll get back to you at the email you provided — usually same day.
           </p>
         </div>
@@ -76,7 +76,7 @@ export function ContactForm() {
         <select
           id="topic"
           name="topic"
-          className="w-full h-9 rounded-sm border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-secondary"
+          className="w-full h-9 rounded-sm border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[color:var(--halo-yellow)]"
         >
           {TOPICS.map((t) => (
             <option key={t} value={t}>{t}</option>
@@ -92,12 +92,12 @@ export function ContactForm() {
           rows={5}
           required
           placeholder="Tell us what you need..."
-          className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-1 focus:ring-secondary resize-none"
+          className="w-full rounded-sm border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] px-3 py-2 text-sm text-foreground placeholder:text-[color:var(--ink-400)] focus:outline-none focus:ring-2 focus:ring-[color:var(--halo-yellow)] resize-none"
         />
       </div>
 
       {error && (
-        <p className="text-sm text-[color:var(--color-risk)]">{error}</p>
+        <p className="text-xs text-[color:var(--risk-700)]">{error}</p>
       )}
 
       <Button type="submit" disabled={pending}>
@@ -150,7 +150,7 @@ export function NewsletterForm() {
         />
         <select
           name="state"
-          className="h-9 rounded-sm border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-secondary"
+          className="h-9 rounded-sm border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[color:var(--halo-yellow)]"
         >
           {STATES.map((s) => (
             <option key={s.value} value={s.value}>{s.label}</option>
@@ -160,7 +160,7 @@ export function NewsletterForm() {
           {pending ? "…" : "Subscribe"}
         </Button>
       </div>
-      {error && <p className="text-xs text-[color:var(--color-risk)]">{error}</p>}
+      {error && <p className="text-xs text-[color:var(--risk-700)]">{error}</p>}
     </form>
   );
 }

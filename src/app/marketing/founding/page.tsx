@@ -63,7 +63,7 @@ export default function FoundingPage() {
         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-4xl leading-[1.05]">
           Help us build the supervision-compliance system you actually want.
         </h1>
-        <p className="mt-6 text-lg text-foreground/70 max-w-2xl leading-relaxed">
+        <p className="mt-6 text-lg text-[color:var(--ink-600)] max-w-2xl leading-relaxed">
           We&apos;re inviting the first 15-25 licensed supervisors in NC, CA, TX,
           FL, and NY into a 12-month Founding cohort. You get the Practice tier
           free for a year and a 50% lifetime discount after. We get your honest
@@ -73,7 +73,7 @@ export default function FoundingPage() {
       </section>
 
       {/* Offer + ask side-by-side */}
-      <section className="border-y border-border bg-card">
+      <section className="border-y border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-4xl px-6 py-16 lg:py-20 grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>
             <p className="label-overline mb-3">What you get</p>
@@ -84,7 +84,7 @@ export default function FoundingPage() {
                     className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--color-success)]"
                     strokeWidth={2}
                   />
-                  <span className="text-foreground/80 leading-relaxed">
+                  <span className="text-[color:var(--ink-700)] leading-relaxed">
                     {line}
                   </span>
                 </li>
@@ -100,13 +100,13 @@ export default function FoundingPage() {
                     className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--color-success)]"
                     strokeWidth={2}
                   />
-                  <span className="text-foreground/80 leading-relaxed">
+                  <span className="text-[color:var(--ink-700)] leading-relaxed">
                     {line}
                   </span>
                 </li>
               ))}
             </ul>
-            <p className="mt-6 text-sm text-foreground/60">
+            <p className="mt-6 text-sm text-[color:var(--ink-500)]">
               The review is for the act of writing one — not the sentiment. We
               never tie the reward to a positive review. That&apos;s a
               Capterra/G2 policy thing, and it&apos;s the right thing to do.
@@ -116,7 +116,7 @@ export default function FoundingPage() {
       </section>
 
       {/* Why this matters — 4 pillars compressed */}
-      <section className="border-b border-border">
+      <section className="border-b border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-6xl px-6 py-16 lg:py-20">
           <Badge variant="outline" className="mb-4">
             What you&apos;d be using
@@ -126,12 +126,12 @@ export default function FoundingPage() {
           </h2>
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-px bg-border">
             {pillars.map((p) => (
-              <div key={p.title} className="bg-card p-8">
-                <p.icon className="h-6 w-6 text-secondary" strokeWidth={1.75} />
+              <div key={p.title} className="bg-[color:var(--paper-white)] p-8">
+                <p.icon className="h-6 w-6 text-[color:var(--ink-900)]" strokeWidth={2} />
                 <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
                   {p.title}
                 </h3>
-                <p className="mt-2 text-foreground/70 leading-relaxed">
+                <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">
                   {p.body}
                 </p>
               </div>
@@ -141,7 +141,7 @@ export default function FoundingPage() {
       </section>
 
       {/* Apply form */}
-      <section className="border-b border-border bg-card">
+      <section className="border-b border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-2xl px-6 py-16 lg:py-20">
           <Badge variant="outline" className="mb-4">
             Apply
@@ -149,12 +149,12 @@ export default function FoundingPage() {
           <h2 className="font-display text-3xl font-semibold text-foreground">
             Tell us about your roster.
           </h2>
-          <p className="mt-3 text-foreground/70">
+          <p className="mt-3 text-[color:var(--ink-600)]">
             Three minutes. We read each application personally and reply
             within 48 hours.
           </p>
           <div className="mt-8">
-            <Card>
+            <Card className="rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
               <CardContent className="p-6 sm:p-8">
                 <FoundingApplyForm />
               </CardContent>
@@ -166,13 +166,13 @@ export default function FoundingPage() {
       {/* Honest small-print */}
       <section>
         <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-          <p className="text-foreground/70 leading-relaxed">
+          <p className="text-[color:var(--ink-600)] leading-relaxed">
             We expect to fill cohort 1 in 4-6 weeks. If we don&apos;t reach you
             within 48 hours, the email got eaten somewhere — send a follow-up
             to{" "}
             <a
               href="mailto:info@audithalo.com"
-              className="text-secondary hover:underline"
+              className="text-[color:var(--ink-700)] hover:text-[color:var(--ink-900)] underline"
             >
               info@audithalo.com
             </a>{" "}

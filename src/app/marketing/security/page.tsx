@@ -43,14 +43,14 @@ export default function SecurityPage() {
         <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground max-w-3xl">
           Your supervision records are protected. Here&apos;s how.
         </h1>
-        <p className="mt-6 text-lg text-foreground/70 max-w-2xl">
+        <p className="mt-6 text-lg text-[color:var(--ink-600)] max-w-2xl">
           AuditHalo handles compliance documentation. The bar for how we protect
           that data is high — and we&apos;ll tell you exactly what&apos;s in place, not
           marketing-speak.
         </p>
       </section>
 
-      <section className="border-t border-border bg-card">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
             What&apos;s in place
@@ -60,13 +60,13 @@ export default function SecurityPage() {
           </h2>
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
             {measures.map((item) => (
-              <Card key={item.title}>
+              <Card key={item.title} className="rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
                 <CardContent className="p-8">
-                  <item.icon className="h-6 w-6 text-secondary" strokeWidth={1.75} />
+                  <item.icon className="h-6 w-6 text-[color:var(--ink-900)]" strokeWidth={2} />
                   <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
                     {item.title}
                   </h3>
-                  <p className="mt-2 text-foreground/70 leading-relaxed">{item.body}</p>
+                  <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">{item.body}</p>
                 </CardContent>
               </Card>
             ))}
@@ -74,12 +74,12 @@ export default function SecurityPage() {
         </div>
       </section>
 
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-3xl px-6 py-16 text-center">
           <h2 className="font-display text-3xl font-semibold text-foreground">
             Questions about how we handle your data?
           </h2>
-          <p className="mt-4 text-foreground/70">
+          <p className="mt-4 text-[color:var(--ink-600)]">
             We&apos;ll answer anything. No sales pitch.
           </p>
           <Button asChild size="lg" className="mt-8" variant="outline">

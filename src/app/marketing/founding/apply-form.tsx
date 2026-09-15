@@ -41,7 +41,7 @@ export function FoundingApplyForm() {
         <p className="font-display text-xl font-semibold text-foreground">
           We&apos;ve got it.
         </p>
-        <p className="mt-2 text-foreground/80 leading-relaxed">
+        <p className="mt-2 text-[color:var(--ink-700)] leading-relaxed">
           Damon reads every Founding Supervisor application personally and
           will write back within 48 hours. Check your inbox for confirmation
           — we just sent one over.
@@ -86,7 +86,7 @@ export function FoundingApplyForm() {
             id="apply-state"
             name="state"
             required
-            className="mt-1.5 w-full h-10 px-3 rounded-sm border border-border bg-background text-sm"
+            className="mt-1.5 w-full h-10 px-3 rounded-sm border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[color:var(--halo-yellow)]"
             defaultValue=""
           >
             <option value="" disabled>
@@ -118,7 +118,7 @@ export function FoundingApplyForm() {
           {ROSTER_OPTIONS.map((r, i) => (
             <label
               key={r.value}
-              className="flex items-center gap-2 rounded-sm border border-border bg-card px-3 py-2 cursor-pointer hover:bg-accent text-sm"
+              className="flex items-center gap-2 rounded-sm border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] px-3 py-2 cursor-pointer hover:bg-[color:var(--paper-100)] text-sm"
             >
               <input
                 type="radio"
@@ -146,14 +146,14 @@ export function FoundingApplyForm() {
           minLength={10}
           maxLength={2000}
           placeholder="A sentence or two is fine. Whatever you'd say to a peer over coffee."
-          className="mt-1.5 w-full rounded-sm border border-border bg-background px-3 py-2 text-sm leading-relaxed"
+          className="mt-1.5 w-full rounded-sm border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] px-3 py-2 text-sm text-foreground leading-relaxed focus:outline-none focus:ring-2 focus:ring-[color:var(--halo-yellow)]"
         />
       </div>
 
       {state && state.ok === false && (
         <p
           role="alert"
-          className="text-sm text-[color:var(--color-risk)] bg-[color:var(--color-risk)]/8 px-3 py-2 rounded-sm"
+          className="text-xs text-[color:var(--risk-700)] bg-[color:var(--color-risk)]/8 px-3 py-2 rounded-sm"
         >
           {state.error}
         </p>
@@ -162,7 +162,7 @@ export function FoundingApplyForm() {
       <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending ? "Sending…" : "Apply for the cohort"}
       </Button>
-      <p className="text-xs text-foreground/60 text-center">
+      <p className="text-xs text-[color:var(--ink-500)] text-center">
         We&apos;ll reply within 48 hours. No marketing list spam — your email
         is used to evaluate the application and send our reply.
       </p>

@@ -57,7 +57,7 @@ export function PainPage(props: PainPageProps) {
         <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground leading-[1.1]">
           {props.h1}
         </h1>
-        <p className="mt-6 text-lg text-foreground/75 leading-relaxed">
+        <p className="mt-6 text-lg text-[color:var(--ink-600)] leading-relaxed">
           {props.intro}
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -72,9 +72,9 @@ export function PainPage(props: PainPageProps) {
         </div>
       </section>
 
-      <section className="border-t border-border bg-card">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-4xl px-6 py-16 lg:py-20">
-          <div className="space-y-5 text-foreground/80 leading-relaxed">
+          <div className="space-y-5 text-[color:var(--ink-700)] leading-relaxed">
             {props.bodyParagraphs.map((p, i) => (
               <p key={i}>{p}</p>
             ))}
@@ -83,16 +83,19 @@ export function PainPage(props: PainPageProps) {
           {props.keyPoints.length > 0 && (
             <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {props.keyPoints.map((point, i) => (
-                <Card key={i}>
+                <Card
+                  key={i}
+                  className="rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]"
+                >
                   <CardContent className="p-6">
                     <CheckCircle2
-                      className="h-5 w-5 text-[color:var(--color-success)]"
+                      className="h-5 w-5 text-[color:var(--ok-700)]"
                       strokeWidth={1.75}
                     />
                     <h3 className="mt-3 font-display text-lg font-semibold text-foreground">
                       {point.title}
                     </h3>
-                    <p className="mt-1 text-foreground/70 leading-relaxed">
+                    <p className="mt-1 text-[color:var(--ink-600)] leading-relaxed">
                       {point.body}
                     </p>
                   </CardContent>
@@ -104,7 +107,7 @@ export function PainPage(props: PainPageProps) {
       </section>
 
       {props.leadMagnet && (
-        <section className="border-t border-border">
+        <section className="border-t border-[color:var(--ink-200)]">
           <div className="mx-auto max-w-2xl px-6 py-16 lg:py-20">
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <Badge variant="outline">
@@ -115,11 +118,11 @@ export function PainPage(props: PainPageProps) {
             <h2 className="font-display text-3xl font-semibold text-foreground">
               {props.leadMagnet.heading}
             </h2>
-            <p className="mt-3 text-foreground/70 leading-relaxed">
+            <p className="mt-3 text-[color:var(--ink-600)] leading-relaxed">
               {props.leadMagnet.description}
             </p>
             <div className="mt-8">
-              <Card>
+              <Card className="rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
                 <CardContent className="p-6 sm:p-8">
                   <LeadMagnetCapture
                     slug={props.leadMagnet.slug}
@@ -134,12 +137,12 @@ export function PainPage(props: PainPageProps) {
 
       <FaqSection items={props.faq} />
 
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-4xl px-6 py-16 text-center">
           <h2 className="font-display text-3xl font-semibold text-foreground">
             {props.ctaHeading}
           </h2>
-          <p className="mt-4 text-foreground/70">
+          <p className="mt-4 text-[color:var(--ink-600)]">
             14-day free trial. No credit card. Supervisee accounts free.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

@@ -81,7 +81,7 @@ export default function ForGroupPracticesPage() {
           Mental health supervision compliance across your whole practice — not
           just the supervisees who remembered to log their hours.
         </h1>
-        <p className="mt-6 text-lg text-foreground/70 max-w-2xl leading-relaxed">
+        <p className="mt-6 text-lg text-[color:var(--ink-600)] max-w-2xl leading-relaxed">
           Group practices don&apos;t have a supervision problem — they have a
           visibility problem. AuditHalo gives practice owners, HR admins, and
           clinical directors a single real-time view of every supervised
@@ -97,7 +97,7 @@ export default function ForGroupPracticesPage() {
             <Link href="/pricing">See Practice pricing</Link>
           </Button>
         </div>
-        <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/60">
+        <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[color:var(--ink-500)]">
           <span className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
             14-day free trial
@@ -129,19 +129,19 @@ export default function ForGroupPracticesPage() {
       </section>
 
       {/* Risk callout */}
-      <section className="border-y border-border bg-[color:var(--color-risk)]/5">
+      <section className="border-y border-[color:var(--ink-200)] bg-[color:var(--color-risk)]/5">
         <div className="mx-auto max-w-6xl px-6 py-12">
           <div className="flex items-start gap-4">
             <AlertTriangle
-              className="h-6 w-6 mt-1 shrink-0 text-[color:var(--color-risk)]"
-              strokeWidth={1.75}
+              className="h-6 w-6 mt-1 shrink-0 text-[color:var(--risk-700)]"
+              strokeWidth={2}
             />
             <div>
               <h2 className="font-display text-xl font-semibold text-foreground">
                 Most practice compliance failures aren&apos;t discovered until the
                 board asks — and by then, it&apos;s a reconstruction project.
               </h2>
-              <p className="mt-2 text-foreground/70 max-w-3xl">
+              <p className="mt-2 text-[color:var(--ink-600)] max-w-3xl">
                 Supervision logs that live in individual supervisors&apos; spreadsheets
                 and email threads cannot be produced as a coherent, tamper-evident
                 record on short notice. AuditHalo builds that record continuously —
@@ -154,7 +154,7 @@ export default function ForGroupPracticesPage() {
       </section>
 
       {/* Wins */}
-      <section className="bg-card">
+      <section className="bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
             Why group practices switch
@@ -164,13 +164,13 @@ export default function ForGroupPracticesPage() {
           </h2>
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {wins.map((w) => (
-              <Card key={w.title}>
+              <Card key={w.title} className="rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
                 <CardContent className="p-8">
-                  <w.icon className="h-6 w-6 text-secondary" strokeWidth={1.75} />
+                  <w.icon className="h-6 w-6 text-[color:var(--ink-900)]" strokeWidth={2} />
                   <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
                     {w.title}
                   </h3>
-                  <p className="mt-2 text-foreground/70 leading-relaxed">{w.body}</p>
+                  <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">{w.body}</p>
                 </CardContent>
               </Card>
             ))}
@@ -179,7 +179,7 @@ export default function ForGroupPracticesPage() {
       </section>
 
       {/* Two-audience section: practice owners + HR directors */}
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
             {/* Practice tier */}
@@ -188,7 +188,7 @@ export default function ForGroupPracticesPage() {
               <h2 className="font-display text-2xl font-semibold text-foreground">
                 For practice owners with 4–20 associates.
               </h2>
-              <p className="mt-3 text-foreground/70 mb-6">
+              <p className="mt-3 text-[color:var(--ink-600)] mb-6">
                 $25 per supervisee / month + $49 base. Annual billing only.
                 Supervisor and HR admin seats included free.
               </p>
@@ -213,7 +213,7 @@ export default function ForGroupPracticesPage() {
               <h2 className="font-display text-2xl font-semibold text-foreground">
                 Compliance oversight without chasing supervisors.
               </h2>
-              <p className="mt-3 text-foreground/70 mb-6">
+              <p className="mt-3 text-[color:var(--ink-600)] mb-6">
                 HR admins get a read-only view of every supervisor&apos;s roster and
                 every supervisee&apos;s compliance status. No login sharing. No weekly
                 status emails to supervisors. No surprises.
@@ -237,14 +237,14 @@ export default function ForGroupPracticesPage() {
       </section>
 
       {/* Enterprise callout */}
-      <section className="border-t border-border bg-card">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-6xl px-6 py-16">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div>
               <p className="font-display text-xl font-semibold text-foreground">
                 More than 20 supervisees, or multiple locations?
               </p>
-              <p className="mt-1 text-foreground/70">
+              <p className="mt-1 text-[color:var(--ink-600)]">
                 Enterprise adds multi-supervisor org with HR Admin + Executive
                 roles, executive rollup dashboard, custom state additions, up
                 to 20-year audit log retention with CSV/JSON export, and
@@ -261,12 +261,12 @@ export default function ForGroupPracticesPage() {
       </section>
 
       {/* CTA */}
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-3xl px-6 py-16 text-center">
           <h2 className="font-display text-3xl font-semibold text-foreground">
             Start with your real roster.
           </h2>
-          <p className="mt-4 text-foreground/70">
+          <p className="mt-4 text-[color:var(--ink-600)]">
             14-day trial. No card. Bring your supervisors and supervisees in on
             day one.
           </p>

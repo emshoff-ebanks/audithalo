@@ -24,7 +24,7 @@ export default async function VerifyPage({
         <h1 className="font-display text-3xl font-semibold text-foreground">
           Provide a document hash to verify
         </h1>
-        <p className="mt-3 text-foreground/70">
+        <p className="mt-3 text-[color:var(--ink-600)]">
           Open the AuditHalo evidence PDF you received and find the SHA-256 hash
           on the last page. Append it as a query parameter, e.g.{" "}
           <span className="font-mono text-sm">
@@ -73,20 +73,20 @@ export default async function VerifyPage({
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <Badge variant="success" className="mb-3">
+      <Badge variant="sealed" className="mb-3">
         <CheckCircle2 className="h-3.5 w-3.5" />
         Verified
       </Badge>
       <h1 className="font-display text-3xl font-semibold text-foreground">
         This evidence package is genuine.
       </h1>
-      <p className="mt-3 text-foreground/70">
+      <p className="mt-3 text-[color:var(--ink-600)]">
         AuditHalo issued this package on{" "}
         <span className="font-mono">{doc.generatedAt.slice(0, 10)}</span>. The hash on
         the document you have matches the canonical hash on record.
       </p>
 
-      <Card className="mt-8">
+      <Card className="mt-8 rounded-[14px] border-[color:var(--ink-200)] border-t-2 border-t-[color:var(--seal-gold)] bg-[color:var(--paper-white)]">
         <CardContent className="p-6 space-y-4">
           <Field label="Rule" value={`${doc.rule.jurisdiction} ${doc.rule.licenseCode} v${doc.rule.version}`} />
           <Field label="Organization" value={doc.organization.name} />
@@ -100,18 +100,18 @@ export default async function VerifyPage({
             <p className="label-overline mb-2">Signatures</p>
             <ul className="space-y-1 text-sm">
               {doc.signatures.map((s, i) => (
-                <li key={i} className="text-foreground/80">
+                <li key={i} className="text-[color:var(--ink-700)]">
                   <span className="font-medium">{s.signerName}</span>{" "}
-                  <span className="text-foreground/60">
+                  <span className="text-[color:var(--ink-500)]">
                     ({s.signerRole}, signed {s.signedAt.replace("T", " ").slice(0, 19)}Z)
                   </span>
                 </li>
               ))}
             </ul>
           </div>
-          <div className="pt-4 border-t border-border">
+          <div className="pt-4 border-t border-[color:var(--ink-200)]">
             <p className="label-overline mb-1">Canonical hash (SHA-256)</p>
-            <p className="font-mono text-xs text-foreground/80 break-all">{providedHash}</p>
+            <p className="font-mono text-xs text-[color:var(--ink-700)] break-all">{providedHash}</p>
           </div>
         </CardContent>
       </Card>
@@ -129,22 +129,22 @@ function Mismatch({ packageId, reason }: { packageId: string; reason: string }) 
       <h1 className="font-display text-3xl font-semibold text-foreground">
         This document does not match our records.
       </h1>
-      <p className="mt-3 text-foreground/70">{reason}</p>
-      <p className="mt-3 text-sm text-foreground/60 font-mono">
+      <p className="mt-3 text-[color:var(--ink-600)]">{reason}</p>
+      <p className="mt-3 text-sm text-[color:var(--ink-500)] font-mono">
         Package ID: {packageId}
       </p>
-      <Card className="mt-8">
+      <Card className="mt-8 rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
         <CardContent className="p-6">
           <div className="flex gap-3">
-            <ShieldQuestion className="h-5 w-5 mt-0.5 text-foreground/50 shrink-0" />
+            <ShieldQuestion className="h-5 w-5 mt-0.5 text-[color:var(--ink-500)] shrink-0" />
             <div>
               <p className="text-sm font-medium text-foreground">
                 What to do next
               </p>
-              <p className="mt-2 text-sm text-foreground/70">
+              <p className="mt-2 text-sm text-[color:var(--ink-600)]">
                 Ask the person who sent you the PDF to re-export it from
                 AuditHalo. If you continue to see this message, contact{" "}
-                <a href="mailto:support@audithalo.com" className="text-secondary hover:underline">
+                <a href="mailto:support@audithalo.com" className="text-[color:var(--ink-700)] hover:text-[color:var(--ink-900)] underline">
                   support@audithalo.com
                 </a>{" "}
                 with this Package ID.
