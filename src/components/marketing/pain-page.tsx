@@ -137,21 +137,30 @@ export function PainPage(props: PainPageProps) {
 
       <FaqSection items={props.faq} />
 
-      <section className="border-t border-[color:var(--ink-200)]">
-        <div className="mx-auto max-w-4xl px-6 py-16 text-center">
-          <h2 className="font-display text-3xl font-semibold text-foreground">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--halo-yellow)]">
+        <div className="mx-auto max-w-3xl px-6 py-20 text-center">
+          <h2 className="font-display text-3xl sm:text-5xl font-bold leading-tight tracking-tight text-[color:var(--ink-900)]">
             {props.ctaHeading}
           </h2>
-          <p className="mt-4 text-[color:var(--ink-600)]">
+          <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-[color:rgba(14,14,12,0.75)]">
             14-day free trial. No credit card. Supervisee accounts free.
           </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Button asChild size="lg">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Button
+              asChild
+              size="lg"
+              className="bg-[color:var(--ink-900)] text-[color:var(--halo-yellow)] hover:bg-[color:var(--ink-800)] hover:text-[color:var(--halo-yellow)]"
+            >
               <a href="https://app.audithalo.com/register">
                 Start your supervisor account <ArrowRight />
               </a>
             </Button>
-            <Button asChild size="lg" variant="outline">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-[color:var(--ink-900)] text-[color:var(--ink-900)] hover:bg-[color:rgba(14,14,12,0.06)] hover:border-[color:var(--ink-900)]"
+            >
               <Link href="/pricing">See pricing</Link>
             </Button>
           </div>

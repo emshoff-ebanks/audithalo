@@ -221,8 +221,11 @@ export default function ForSupervisorsPage() {
     <>
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 py-20 lg:py-28">
-        <div className="flex flex-wrap gap-2 mb-6">
-          <Badge variant="outline">For Licensed Supervisors</Badge>
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] px-3 py-1.5 font-mono text-xs uppercase tracking-wide text-[color:var(--ink-600)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--halo-yellow)] shadow-[0_0_0_3px_rgba(255,214,10,0.22)]" />
+            For Licensed Supervisors
+          </span>
           <Badge variant="outline">LCMHCS · LPC-S · LCSW-S · Qualified Supervisor</Badge>
         </div>
         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-4xl leading-[1.05]">
@@ -301,10 +304,10 @@ export default function ForSupervisorsPage() {
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground max-w-2xl">
             Set up in 15 minutes. Audit-ready for the next 5 years.
           </h2>
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-px bg-border">
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
             {steps.map((s) => (
-              <div key={s.number} className="bg-[color:var(--paper-white)] p-8">
-                <p className="font-mono text-3xl font-bold text-[color:var(--ink-300)] mb-4">
+              <div key={s.number} className="rounded-[14px] border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] p-6">
+                <p className="mkt-num-emboss font-display text-4xl font-black mb-4">
                   {s.number}
                 </p>
                 <h3 className="font-display text-xl font-semibold text-foreground">

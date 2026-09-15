@@ -62,7 +62,9 @@ export default function SecurityPage() {
             {measures.map((item) => (
               <Card key={item.title} className="rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
                 <CardContent className="p-8">
-                  <item.icon className="h-6 w-6 text-[color:var(--ink-900)]" strokeWidth={2} />
+                  <div className="flex h-14 w-14 items-center justify-center rounded-[10px] bg-[color:var(--paper-100)] text-[color:var(--ink-900)]">
+                    <item.icon className="h-7 w-7" strokeWidth={2} />
+                  </div>
                   <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
                     {item.title}
                   </h3>

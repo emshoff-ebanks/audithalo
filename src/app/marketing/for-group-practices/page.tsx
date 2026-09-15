@@ -73,8 +73,11 @@ export default function ForGroupPracticesPage() {
     <>
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 py-20 lg:py-28">
-        <div className="flex flex-wrap gap-2 mb-6">
-          <Badge variant="outline">For Group Practices</Badge>
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] px-3 py-1.5 font-mono text-xs uppercase tracking-wide text-[color:var(--ink-600)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--halo-yellow)] shadow-[0_0_0_3px_rgba(255,214,10,0.22)]" />
+            For Group Practices
+          </span>
           <Badge variant="outline">Practice owners · HR directors · Clinical directors</Badge>
         </div>
         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-4xl leading-[1.05]">

@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SealMedallion } from "@/components/marketing/seal-medallion";
 
 export const metadata = {
   title:
@@ -23,29 +24,77 @@ export default function EvidencePackagesPage() {
   return (
     <>
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 py-20 lg:py-28">
-        <Badge variant="outline" className="mb-6">
-          The proof-moment in your dashboard
-        </Badge>
-        <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-4xl leading-[1.05]">
-          Evidence the board can&apos;t question.
-        </h1>
-        <p className="mt-6 text-lg text-[color:var(--ink-600)] max-w-3xl leading-relaxed">
-          When your mental health supervisee finishes their hours, AuditHalo
-          seals every signed session into a single PDF — citation-linked, SHA-256
-          hashed, timestamped at the moment of signing. Hand it to the board
-          exactly as-is. They never call you back asking &quot;do you have proof
-          of…&quot;.
-        </p>
-        <div className="mt-10 flex flex-wrap items-center gap-3">
-          <Button asChild size="lg">
-            <a href="https://app.audithalo.com/register">
-              Start your supervisor account <ArrowRight />
-            </a>
-          </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link href="/for-supervisors">See how it works</Link>
-          </Button>
+      <section className="mx-auto max-w-6xl px-6 py-16 lg:py-24">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-8 items-center">
+          <div className="max-w-xl">
+            <Badge variant="outline" className="mb-6">
+              The proof-moment in your dashboard
+            </Badge>
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-[color:var(--ink-900)] max-w-4xl leading-[1.05] tracking-tight">
+              Evidence the board can&apos;t question.
+            </h1>
+            <p className="mt-6 text-lg text-[color:var(--ink-600)] leading-relaxed">
+              When your mental health supervisee finishes their hours, AuditHalo
+              seals every signed session into a single PDF — citation-linked, SHA-256
+              hashed, timestamped at the moment of signing. Hand it to the board
+              exactly as-is. They never call you back asking &quot;do you have proof
+              of…&quot;.
+            </p>
+            <div className="mt-10 flex flex-wrap items-center gap-3">
+              <Button asChild size="lg">
+                <a href="https://app.audithalo.com/register">
+                  Start your supervisor account <ArrowRight />
+                </a>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link href="/for-supervisors">See how it works</Link>
+              </Button>
+            </div>
+          </div>
+
+          {/* Sealed evidence card (illustrative sample) */}
+          <div className="relative rounded-[14px] border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] p-5 shadow-[0_24px_60px_-30px_rgba(14,14,12,0.25)]">
+            <div className="absolute inset-x-0 top-0 h-[3px] rounded-t-[14px] bg-[color:var(--seal-gold)]" />
+            <div className="mb-4 flex items-start gap-4">
+              <SealMedallion />
+              <div>
+                <div className="label-overline">Evidence Package · Sealed</div>
+                <div className="mt-1 font-display text-xl font-bold leading-tight text-[color:var(--ink-900)]">
+                  Individual Supervision · Ava Villareal
+                </div>
+                <div className="mt-1 font-mono text-xs text-[color:var(--ink-500)]">
+                  EVD-2026-0916 · Sealed Sep 16, 14:07 EDT
+                </div>
+              </div>
+            </div>
+            <div className="mb-4 rounded-md border border-[color:var(--ink-100)] bg-[color:var(--paper-100)] px-3.5 py-3">
+              <div className="font-mono text-[0.625rem] uppercase tracking-wider text-[color:var(--seal-gold)]">
+                sha-256
+              </div>
+              <code className="mt-1 block break-all font-mono text-xs leading-relaxed text-[color:var(--ink-700)]">
+                9f2c1a7d4e8b6f2a83c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4a47e
+              </code>
+            </div>
+            <ul className="mb-4 grid gap-2.5">
+              {[
+                ["Supervisor", "Jillian Steyl · NC LCMHCS"],
+                ["Supervisee", "Ava Villareal · NC LCMHCA"],
+                ["Rule", "21 NCAC 53 .0301 · v2024.03"],
+                ["Signatures", "2 of 2 · both parties"],
+              ].map(([k, v]) => (
+                <li key={k} className="grid grid-cols-[110px_1fr] items-baseline gap-3 text-sm">
+                  <span className="font-mono text-[0.6875rem] uppercase tracking-wider text-[color:var(--ink-500)]">
+                    {k}
+                  </span>
+                  <strong className="font-medium text-[color:var(--ink-800)]">{v}</strong>
+                </li>
+              ))}
+            </ul>
+            <div className="flex items-center gap-2 border-t border-[color:var(--ink-100)] pt-3 font-mono text-xs text-[color:var(--seal-gold)]">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Sealed &amp; verified · hash matches
+            </div>
+          </div>
         </div>
       </section>
 
