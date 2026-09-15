@@ -1,8 +1,40 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
+import { slugify } from "@/lib/slugify";
 
 const DOCS_DIR = path.join(process.cwd(), "src", "content", "docs");
+
+export interface DocHeading {
+  level: 2 | 3;
+  text: string;
+  id: string;
+}
+
+/**
+ * Extract h2/h3 headings from raw MDX for the "On this page" rail. Fenced code
+ * blocks are skipped so a `## comment` inside a code sample isn't mistaken for
+ * a heading. Slugs match the ids the MDX heading components render (see
+ * mdx-components.tsx), so the anchors line up.
+ */
+export function extractHeadings(content: string): DocHeading[] {
+  const headings: DocHeading[] = [];
+  let inFence = false;
+  for (const line of content.split(/\r?\n/)) {
+    if (/^\s*(```|~~~)/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    const match = /^(#{2,3})\s+(.*)$/.exec(line);
+    if (!match) continue;
+    const level = match[1].length as 2 | 3;
+    const text = match[2].replace(/[*_`]/g, "").trim();
+    if (!text) continue;
+    headings.push({ level, text, id: slugify(text) });
+  }
+  return headings;
+}
 
 export interface DocMeta {
   title: string;

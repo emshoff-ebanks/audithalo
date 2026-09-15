@@ -9,11 +9,11 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
   const index = buildSearchIndex(docs);
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10 lg:py-14">
+    <div className="mx-auto max-w-7xl px-6 py-10 lg:py-14">
       <div className="mb-8 max-w-md">
         <DocsSearch index={index} />
       </div>
-      <div className="lg:grid lg:grid-cols-[16rem_1fr] lg:gap-12">
+      <div className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-10">
         <aside>
           <DocsSidebar nav={nav} />
         </aside>

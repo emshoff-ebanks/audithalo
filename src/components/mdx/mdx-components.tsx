@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { MDXRemoteProps } from "next-mdx-remote/rsc";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
+import { slugify, nodeToText } from "@/lib/slugify";
 
 function MdxAnchor({
   href,
@@ -28,17 +29,23 @@ function MdxAnchor({
 }
 
 export const mdxComponents: MDXRemoteProps["components"] = {
-  h2: (props) => (
+  h2: ({ children, ...props }) => (
     <h2
+      id={slugify(nodeToText(children))}
       className="font-display text-2xl sm:text-3xl font-semibold text-foreground mt-12 mb-4 scroll-mt-24"
       {...props}
-    />
+    >
+      {children}
+    </h2>
   ),
-  h3: (props) => (
+  h3: ({ children, ...props }) => (
     <h3
+      id={slugify(nodeToText(children))}
       className="font-display text-xl font-semibold text-foreground mt-8 mb-3 scroll-mt-24"
       {...props}
-    />
+    >
+      {children}
+    </h3>
   ),
   p: (props) => (
     <p className="text-[color:var(--ink-700)] leading-relaxed mb-5" {...props} />

@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   BarChart3,
@@ -14,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { DashboardPreview } from "@/components/marketing/dashboard-preview";
 
 export const metadata = {
   title: "Mental health supervision tracking for group practices — AuditHalo",
@@ -116,18 +116,10 @@ export default function ForGroupPracticesPage() {
         </div>
       </section>
 
-      {/* Product screenshot */}
+      {/* Product preview — real component, not a screenshot */}
       <section className="bg-background">
         <div className="mx-auto max-w-5xl px-6 py-12 lg:py-16">
-          <div>
-            <Image
-              src="/images/feature-dashboard.png"
-              alt="AuditHalo HR Admin dashboard with compliance score, risk distribution, and at-risk supervisee alerts"
-              width={1440}
-              height={900}
-              className="w-full h-auto"
-            />
-          </div>
+          <DashboardPreview />
         </div>
       </section>
 

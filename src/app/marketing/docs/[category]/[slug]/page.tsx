@@ -4,10 +4,11 @@ import { format, parseISO } from "date-fns";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
-import { getAllDocPaths, getDocByPath, getAllDocs } from "@/lib/docs";
+import { getAllDocPaths, getDocByPath, getAllDocs, extractHeadings } from "@/lib/docs";
 import { categoryLabel, getAdjacentDocs } from "@/lib/docs-nav";
 import { mdxComponents } from "@/components/mdx/mdx-components";
 import { DocsBreadcrumbs } from "@/components/marketing/docs-breadcrumbs";
+import { DocsOnThisPage } from "@/components/marketing/docs-on-this-page";
 import {
   articleJsonLd,
   breadcrumbListJsonLd,
@@ -57,6 +58,7 @@ export default async function DocArticlePage({ params }: { params: Params }) {
   const url = `${BASE}/docs/${category}/${slug}`;
   const catLabel = categoryLabel(category);
   const { prev, next } = getAdjacentDocs(getAllDocs(), doc.path);
+  const headings = extractHeadings(doc.content);
 
   const relatedDocs = (doc.meta.related ?? [])
     .map((p) => {
@@ -107,6 +109,8 @@ export default async function DocArticlePage({ params }: { params: Params }) {
         dangerouslySetInnerHTML={jsonLdScript(jsonLd)}
       />
 
+      <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_11rem] xl:gap-10">
+        <div className="min-w-0">
       <article className="max-w-3xl">
         <DocsBreadcrumbs
           crumbs={[
@@ -218,6 +222,12 @@ export default async function DocArticlePage({ params }: { params: Params }) {
           </div>
         </section>
       )}
+        </div>
+
+        <aside className="hidden xl:block">
+          <DocsOnThisPage headings={headings} />
+        </aside>
+      </div>
     </>
   );
 }

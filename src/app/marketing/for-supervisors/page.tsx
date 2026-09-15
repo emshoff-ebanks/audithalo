@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -16,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { RosterPreview } from "@/components/marketing/roster-preview";
 
 export const metadata = {
   title: "For licensed supervisors — AuditHalo mental health supervision software",
@@ -320,18 +320,10 @@ export default function ForSupervisorsPage() {
         </div>
       </section>
 
-      {/* Product screenshot */}
+      {/* Product preview — real component, not a screenshot */}
       <section className="bg-background">
-        <div className="mx-auto max-w-5xl px-6 py-12 lg:py-16">
-          <div>
-            <Image
-              src="/images/feature-roster.png"
-              alt="AuditHalo supervisor roster showing five supervisees across multiple states with progress bars and risk indicators"
-              width={1440}
-              height={900}
-              className="w-full h-auto"
-            />
-          </div>
+        <div className="mx-auto max-w-4xl px-6 py-12 lg:py-16">
+          <RosterPreview />
         </div>
       </section>
 

@@ -109,37 +109,41 @@ export default async function BlogPostPage({ params }: { params: Params }) {
           </Link>
         </Button>
 
-        <div className="flex flex-wrap items-center gap-2 mb-4 text-xs text-[color:var(--ink-500)]">
-          <Badge variant="outline">{post.meta.category}</Badge>
-          <span>{format(parseISO(post.meta.datePublished), "MMM d, yyyy")}</span>
-          <span>·</span>
-          <span>{Math.ceil(stats.minutes)} min read</span>
-        </div>
+        {/* Article on a white document surface — mirrors the docs long-form
+            treatment (design-system marketing §09). */}
+        <div className="rounded-[14px] border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] p-6 sm:p-8 lg:p-10">
+          <div className="flex flex-wrap items-center gap-2 mb-4 text-xs text-[color:var(--ink-500)]">
+            <Badge variant="outline">{post.meta.category}</Badge>
+            <span>{format(parseISO(post.meta.datePublished), "MMM d, yyyy")}</span>
+            <span>·</span>
+            <span>{Math.ceil(stats.minutes)} min read</span>
+          </div>
 
-        <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-[1.15]">
-          {post.meta.title}
-        </h1>
-        <p className="mt-5 text-lg text-[color:var(--ink-600)] leading-relaxed">
-          {post.meta.metaDescription}
-        </p>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-[1.15]">
+            {post.meta.title}
+          </h1>
+          <p className="mt-5 text-lg text-[color:var(--ink-600)] leading-relaxed">
+            {post.meta.metaDescription}
+          </p>
 
-        <div className="mt-12">
-          <MDXRemote
-            source={post.content}
-            components={mdxComponents}
-            options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }}
-          />
-        </div>
+          <div className="mt-10 border-t border-[color:var(--ink-100)] pt-10">
+            <MDXRemote
+              source={post.content}
+              components={mdxComponents}
+              options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }}
+            />
+          </div>
 
-        <div className="mt-16 border-t border-[color:var(--ink-200)] pt-10 flex flex-wrap items-center gap-3">
-          <Button asChild size="lg">
-            <a href="https://app.audithalo.com/register">
-              Start your supervisor account <ArrowRight />
-            </a>
-          </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link href="/pricing">See pricing</Link>
-          </Button>
+          <div className="mt-14 border-t border-[color:var(--ink-200)] pt-10 flex flex-wrap items-center gap-3">
+            <Button asChild size="lg">
+              <a href="https://app.audithalo.com/register">
+                Start your supervisor account <ArrowRight />
+              </a>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link href="/pricing">See pricing</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
