@@ -61,14 +61,34 @@ export function articleJsonLd(input: {
   description: string;
   url: string;
   datePublished: string;
+  /** Defaults to datePublished when omitted. */
+  dateModified?: string;
+  /** "Article" (default) or "TechArticle" for documentation pages. */
+  type?: "Article" | "TechArticle";
+  /** Canonical page URL, emitted as mainEntityOfPage for a stronger signal. */
+  mainEntityOfPage?: string;
+  keywords?: string[];
 }) {
   return {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": input.type ?? "Article",
     headline: input.headline,
     description: input.description,
     url: input.url,
     datePublished: input.datePublished,
+    dateModified: input.dateModified ?? input.datePublished,
+    inLanguage: "en-US",
+    ...(input.mainEntityOfPage
+      ? {
+          mainEntityOfPage: {
+            "@type": "WebPage",
+            "@id": input.mainEntityOfPage,
+          },
+        }
+      : {}),
+    ...(input.keywords && input.keywords.length
+      ? { keywords: input.keywords.join(", ") }
+      : {}),
     publisher: { "@type": "Organization", name: "AuditHalo", url: BASE },
     author: { "@type": "Organization", name: "AuditHalo", url: BASE },
   };

@@ -9,6 +9,13 @@ prerequisites: ["A supervisee assigned to you with a state rule", "A completed s
 related: ["sessions/ai-session-notes", "sessions/scheduling-sessions", "evidence/understanding-evidence-packages"]
 keywords: ["sign session", "countersign", "evidence package", "seal", "signature with intent", "supervision session"]
 schema: ["HowTo"]
+faq:
+  - q: "Who signs first, the supervisor or the supervisee?"
+    a: "The supervisor signs first. The supervisee cannot countersign until the supervisor has signed."
+  - q: "What happens when both people sign?"
+    a: "AuditHalo seals the session, builds a canonical record, and generates a SHA-256 hash so any later change is detectable. Both signers are notified."
+  - q: "Does everyone in a group session have to sign?"
+    a: "Yes. A group or triadic session seals only when every required attendee has signed."
 howToSteps:
   - name: Log the session
     text: On the supervisee detail page, select Log session and enter the date, duration, and session type.

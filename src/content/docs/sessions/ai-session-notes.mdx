@@ -9,6 +9,15 @@ prerequisites: ["A supervision session to document", "For auto-fetch: a session 
 related: ["sessions/log-and-sign-a-session", "integrations/connecting-your-calendar", "billing/plans-and-pricing"]
 keywords: ["ai notes", "session note", "transcript", "whisper", "no phi", "supervision note", "ai-assisted"]
 schema: ["Article"]
+faq:
+  - q: "Does AuditHalo store the session transcript?"
+    a: "No. AuditHalo keeps the structured note and a one-way hash of the transcript for audit, then discards the raw transcript text."
+  - q: "Where does the transcript come from?"
+    a: "Paste it, auto-fetch it from a Teams or Google Meet session, or record an in-person session in the browser."
+  - q: "Should the note contain client PHI?"
+    a: "No. The note is about the supervision of the clinician, not the client. Confirm the no-PHI prompt before generating."
+  - q: "How many AI notes can I generate?"
+    a: "10 per month on Solo and 100 per month for the organization on Practice. Reaching the limit pauses note generation until the next billing period."
 ---
 
 This guide covers AI-assisted session notes: how to turn a session transcript into a structured supervision note, review it, and sign it in. Only supervisors generate notes.

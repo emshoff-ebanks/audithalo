@@ -8,7 +8,6 @@ import { getAllDocPaths, getDocByPath, getAllDocs } from "@/lib/docs";
 import { categoryLabel, getAdjacentDocs } from "@/lib/docs-nav";
 import { mdxComponents } from "@/components/mdx/mdx-components";
 import { DocsBreadcrumbs } from "@/components/marketing/docs-breadcrumbs";
-import { FaqSection } from "@/components/marketing/faq-section";
 import {
   articleJsonLd,
   breadcrumbListJsonLd,
@@ -33,6 +32,7 @@ export async function generateMetadata({ params }: { params: Params }) {
   return {
     title: `${doc.meta.title} | AuditHalo docs`,
     description: doc.meta.description,
+    keywords: doc.meta.keywords,
     alternates: { canonical: url },
     openGraph: {
       title: doc.meta.title,
@@ -66,6 +66,9 @@ export default async function DocArticlePage({ params }: { params: Params }) {
     })
     .filter((d): d is { path: string; title: string } => d !== null);
 
+  // Structured data is driven by what the article actually contains: every
+  // docs page is a TechArticle with breadcrumbs; HowTo and FAQPage are added
+  // when the frontmatter provides steps or FAQs.
   const jsonLd: object[] = [
     breadcrumbListJsonLd([
       { name: "Home", url: BASE },
@@ -73,21 +76,21 @@ export default async function DocArticlePage({ params }: { params: Params }) {
       { name: catLabel, url: `${BASE}/docs/${category}` },
       { name: doc.meta.title, url },
     ]),
+    articleJsonLd({
+      headline: doc.meta.title,
+      description: doc.meta.description,
+      url,
+      datePublished: doc.meta.dateUpdated,
+      dateModified: doc.meta.dateUpdated,
+      type: "TechArticle",
+      mainEntityOfPage: url,
+      keywords: doc.meta.keywords,
+    }),
   ];
-  if (doc.meta.schema.includes("Article")) {
-    jsonLd.push(
-      articleJsonLd({
-        headline: doc.meta.title,
-        description: doc.meta.description,
-        url,
-        datePublished: doc.meta.dateUpdated,
-      })
-    );
-  }
-  if (doc.meta.schema.includes("FAQPage") && doc.meta.faq?.length) {
+  if (doc.meta.faq?.length) {
     jsonLd.push(faqPageJsonLd(doc.meta.faq));
   }
-  if (doc.meta.schema.includes("HowTo") && doc.meta.howToSteps?.length) {
+  if (doc.meta.howToSteps?.length) {
     jsonLd.push(
       howToJsonLd({
         name: doc.meta.title,
@@ -195,9 +198,23 @@ export default async function DocArticlePage({ params }: { params: Params }) {
       </article>
 
       {doc.meta.faq && doc.meta.faq.length > 0 && (
-        <div className="max-w-3xl">
-          <FaqSection items={doc.meta.faq} />
-        </div>
+        <section className="max-w-3xl mt-14 border-t border-border pt-10">
+          <h2 className="font-display text-2xl font-semibold text-foreground mb-6">
+            Frequently asked questions
+          </h2>
+          <div className="space-y-6">
+            {doc.meta.faq.map((item, i) => (
+              <div key={i}>
+                <h3 className="font-display text-lg font-semibold text-foreground">
+                  {item.q}
+                </h3>
+                <p className="mt-2 text-foreground/80 leading-relaxed">
+                  {item.a}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
     </>
   );

@@ -9,6 +9,13 @@ prerequisites: ["An HR admin account (provisioned or promoted by AuditHalo)", "T
 related: ["team/inviting-team-members", "rules/creating-rule-overrides", "audit-log/exporting-the-audit-log"]
 keywords: ["hr admin", "organization", "invite", "team", "compliance owner", "onboarding"]
 schema: ["Article"]
+faq:
+  - q: "Can an HR admin sign supervision sessions?"
+    a: "No. HR admins run the organization but never sign sessions or generate notes. Only supervisors sign. This clinical and administrative separation is deliberate."
+  - q: "Which HR admin actions require two-factor authentication?"
+    a: "Inviting another HR admin, deactivating a member, and exporting the audit log all require a two-factor code."
+  - q: "How do I onboard a large team at once?"
+    a: "Use the CSV import at /dashboard/team/import to preview, validate, and batch-send invitations from any HRIS export."
 ---
 
 This guide orients the HR admin: the compliance owner who runs the organization. You set up the team, assign who supervises whom, tune the state rules, and keep the audit trail export-ready.

@@ -9,6 +9,13 @@ prerequisites: ["An authenticator app such as Google Authenticator, 1Password, o
 related: ["account/password-and-email", "getting-started/hr-admin", "audit-log/exporting-the-audit-log"]
 keywords: ["2fa", "two-factor", "totp", "authenticator", "backup codes", "security", "mfa"]
 schema: ["HowTo"]
+faq:
+  - q: "What authenticator apps work with AuditHalo?"
+    a: "Any TOTP authenticator app, such as Google Authenticator, 1Password, or Authy."
+  - q: "What if I lose my authenticator app?"
+    a: "Use one of the backup codes shown when you enabled two-factor authentication. Each code works once, so store them somewhere safe."
+  - q: "When is two-factor authentication required?"
+    a: "For HR admins, inviting another HR admin, deactivating a member, and exporting the audit log all require a two-factor code."
 howToSteps:
   - name: Start setup
     text: On your account page, select Enable two-factor to generate a QR code.

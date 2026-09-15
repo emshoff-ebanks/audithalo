@@ -9,6 +9,15 @@ prerequisites: []
 related: ["rules/understanding-compliance-status", "rules/compliance-gaps-and-warnings", "rules/creating-rule-overrides"]
 keywords: ["state rules", "rules engine", "canonical rule", "override", "custom rule", "checks", "severity", "citation"]
 schema: ["Article"]
+faq:
+  - q: "Which states does AuditHalo support?"
+    a: "Ten at launch: Arizona, California, Delaware, Florida, Louisiana, North Carolina, New York, Ohio, Texas, and Washington. See the state coverage article for the license mapping."
+  - q: "What if my state is not covered?"
+    a: "An HR admin on a Practice or Enterprise plan can author a custom rule from the state's administrative code."
+  - q: "Can an organization change a state rule?"
+    a: "Yes. An HR admin can create an override to tighten a canonical rule, within the limits AuditHalo enforces. Severity can only be downgraded so far, so an override cannot weaken a board requirement past what is allowed."
+  - q: "How does AuditHalo keep rules current?"
+    a: "Rules are versioned and grounded in board citations, which are monitored for drift. When a board changes a requirement, a new version is published and offered as an upgrade."
 ---
 
 A rule is the machine-readable version of a state board's supervision requirements: the hours, ratios, deadlines, and conditions a pre-licensed counselor must meet. AuditHalo evaluates each supervisee's logged sessions against their assigned rule and turns the result into a clear compliance picture.
