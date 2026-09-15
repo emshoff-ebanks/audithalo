@@ -116,6 +116,7 @@ export default async function DocArticlePage({ params }: { params: Params }) {
           ]}
         />
 
+        <div className="mt-5 rounded-[14px] border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] p-6 sm:p-8 lg:p-10">
         <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-[1.15]">
           {doc.meta.title}
         </h1>
@@ -195,6 +196,7 @@ export default async function DocArticlePage({ params }: { params: Params }) {
             </Link>
           )}
         </nav>
+        </div>
       </article>
 
       {doc.meta.faq && doc.meta.faq.length > 0 && (

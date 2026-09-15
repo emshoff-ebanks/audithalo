@@ -57,6 +57,29 @@ export const mdxComponents: MDXRemoteProps["components"] = {
   ),
   li: (props) => <li className="leading-relaxed" {...props} />,
   a: MdxAnchor,
+  pre: (props) => (
+    <pre
+      className="mb-6 overflow-x-auto rounded-[10px] bg-[color:var(--ink-900)] p-4 text-sm leading-relaxed"
+      {...props}
+    />
+  ),
+  code: ({ className, ...props }: { className?: string }) => {
+    // Fenced blocks arrive as <pre><code class="language-…">; inline code has
+    // no language class. Block code inherits the dark <pre> surface; inline
+    // code gets a subtle cream chip.
+    const isBlock =
+      typeof className === "string" && className.includes("language-");
+    return (
+      <code
+        className={
+          isBlock
+            ? `${className} font-mono text-[color:var(--halo-yellow)]`
+            : "rounded bg-[color:var(--paper-100)] px-1.5 py-0.5 font-mono text-[0.85em] text-[color:var(--ink-900)]"
+        }
+        {...props}
+      />
+    );
+  },
   strong: (props) => (
     <strong className="font-semibold text-foreground" {...props} />
   ),

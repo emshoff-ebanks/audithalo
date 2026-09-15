@@ -1,4 +1,3 @@
-import Image from "next/image";
 import {
   ShieldCheck,
   Sparkles,
@@ -196,17 +195,6 @@ export default function FeaturesPage() {
                       </li>
                     ))}
                   </ul>
-                  {section.image && (
-                    <div className="mt-8 overflow-hidden rounded-[14px] border border-[color:var(--ink-200)]">
-                      <Image
-                        src={section.image.src}
-                        alt={section.image.alt}
-                        width={1440}
-                        height={900}
-                        className="w-full h-auto"
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
             </article>
