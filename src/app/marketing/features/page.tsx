@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import {
   ShieldCheck,
   Sparkles,
@@ -10,10 +9,9 @@ import {
   History,
   Lock,
   ArrowRight,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = {
   title: "Features — AuditHalo",
@@ -141,77 +139,101 @@ const featureSections: Array<{
 export default function FeaturesPage() {
   return (
     <>
-      {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 py-16 lg:py-24">
-        <Badge variant="outline" className="mb-4">
+      {/* ============================ HERO ============================ */}
+      <section className="mx-auto max-w-6xl px-6 py-14 lg:py-20">
+        <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] px-3 py-1.5 font-mono text-xs uppercase tracking-wide text-[color:var(--ink-600)]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--halo-yellow)] shadow-[0_0_0_3px_rgba(255,214,10,0.22)]" />
           Features
-        </Badge>
-        <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground max-w-3xl">
+        </span>
+        <h1 className="font-display text-4xl sm:text-5xl font-bold text-[color:var(--ink-900)] max-w-3xl leading-[1.05] tracking-tight">
           Every piece of the supervision audit, in one product.
         </h1>
-        <p className="mt-6 text-lg text-[color:var(--ink-600)] max-w-2xl">
+        <p className="mt-6 text-lg text-[color:var(--ink-600)] max-w-2xl leading-relaxed">
           Built around what state boards actually require — not what an EHR
           happens to also include.
         </p>
       </section>
 
-      {/* Feature sections */}
-      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
-        <div className="mx-auto max-w-4xl px-6 py-16 lg:py-20 space-y-16">
-          {featureSections.map((section) => (
-            <div key={section.title} className="grid grid-cols-1 md:grid-cols-12 gap-8">
-              <div className="md:col-span-3">
-                <section.icon
-                  className="h-8 w-8 text-[color:var(--ink-900)]"
-                  strokeWidth={2}
-                />
-                <h2 className="mt-4 font-display text-2xl font-semibold text-foreground">
-                  {section.title}
-                </h2>
-              </div>
-              <div className="md:col-span-9">
-                <p className="text-[color:var(--ink-700)] leading-relaxed">
-                  {section.intro}
-                </p>
-                <ul className="mt-4 space-y-2 text-[color:var(--ink-600)]">
-                  {section.bullets.map((b) => (
-                    <li key={b} className="flex gap-3">
-                      <span className="text-[color:var(--sage-500)] mt-1.5">▸</span>
-                      <span className="leading-relaxed">{b}</span>
-                    </li>
-                  ))}
-                </ul>
-                {section.image && (
-                  <div className="mt-8">
-                    <Image
-                      src={section.image.src}
-                      alt={section.image.alt}
-                      width={1440}
-                      height={900}
-                      className="w-full h-auto"
-                    />
+      {/* ========================= FEATURES ========================= */}
+      {featureSections.map((section, i) => (
+        <section
+          key={section.title}
+          className={`border-t border-[color:var(--ink-200)] ${
+            i % 2 === 0
+              ? "bg-[color:var(--paper-100)]"
+              : "bg-[color:var(--paper-50)]"
+          }`}
+        >
+          <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
+            <article className="rounded-[14px] border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] p-6 sm:p-8">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-10">
+                {/* Left — icon tile + title */}
+                <div className="md:col-span-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-[10px] bg-[color:var(--paper-100)] text-[color:var(--ink-900)]">
+                    <section.icon className="h-7 w-7" strokeWidth={2} />
                   </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+                  <h2 className="mt-4 font-display text-2xl sm:text-3xl font-semibold text-[color:var(--ink-900)]">
+                    {section.title}
+                  </h2>
+                </div>
 
-      {/* CTA */}
-      <section className="border-t border-[color:var(--ink-200)]">
-        <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-          <h2 className="font-display text-3xl font-semibold text-foreground">
+                {/* Right — intro + bullets + image */}
+                <div className="md:col-span-8">
+                  <p className="text-[color:var(--ink-600)] leading-relaxed">
+                    {section.intro}
+                  </p>
+                  <ul className="mt-5 grid gap-3">
+                    {section.bullets.map((b) => (
+                      <li
+                        key={b}
+                        className="flex gap-2.5 text-[color:var(--ink-800)] leading-relaxed"
+                      >
+                        <Check
+                          className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--sage-500)]"
+                          strokeWidth={2.5}
+                        />
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {section.image && (
+                    <div className="mt-8 overflow-hidden rounded-[14px] border border-[color:var(--ink-200)]">
+                      <Image
+                        src={section.image.src}
+                        alt={section.image.alt}
+                        width={1440}
+                        height={900}
+                        className="w-full h-auto"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+      ))}
+
+      {/* ====================== FOOTER CTA BAND ====================== */}
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--halo-yellow)]">
+        <div className="mx-auto max-w-3xl px-6 py-20 text-center">
+          <h2 className="font-display text-3xl sm:text-5xl font-bold leading-tight tracking-tight text-[color:var(--ink-900)]">
             Try it on your real roster.
           </h2>
-          <p className="mt-4 text-[color:var(--ink-600)]">
+          <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-[color:rgba(14,14,12,0.75)]">
             Full feature set on the 14-day trial. No credit card.
           </p>
-          <Button asChild size="lg" className="mt-8">
-            <a href="https://app.audithalo.com/register">
-              Start free trial <ArrowRight />
-            </a>
-          </Button>
+          <div className="mt-8 flex justify-center">
+            <Button
+              asChild
+              size="lg"
+              className="bg-[color:var(--ink-900)] text-[color:var(--halo-yellow)] hover:bg-[color:var(--ink-800)] hover:text-[color:var(--halo-yellow)]"
+            >
+              <a href="https://app.audithalo.com/register">
+                Start free trial <ArrowRight />
+              </a>
+            </Button>
+          </div>
         </div>
       </section>
     </>

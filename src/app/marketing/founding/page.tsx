@@ -60,7 +60,7 @@ export default function FoundingPage() {
         <Badge variant="outline" className="mb-6">
           Founding Supervisor program · cohort 1
         </Badge>
-        <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground max-w-4xl leading-[1.05]">
+        <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-[color:var(--ink-900)] max-w-4xl leading-[1.05] tracking-tight">
           Help us build the supervision-compliance system you actually want.
         </h1>
         <p className="mt-6 text-lg text-[color:var(--ink-600)] max-w-2xl leading-relaxed">
@@ -74,14 +74,14 @@ export default function FoundingPage() {
 
       {/* Offer + ask side-by-side */}
       <section className="border-y border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
-        <div className="mx-auto max-w-4xl px-6 py-16 lg:py-20 grid grid-cols-1 md:grid-cols-2 gap-12">
-          <div>
-            <p className="label-overline mb-3">What you get</p>
+        <div className="mx-auto max-w-4xl px-6 py-16 lg:py-20 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="rounded-[14px] border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] p-6 sm:p-8">
+            <p className="label-overline mb-4">What you get</p>
             <ul className="space-y-3">
               {offerLines.map((line) => (
                 <li key={line} className="flex items-start gap-2.5">
                   <Check
-                    className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--color-success)]"
+                    className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--sage-500)]"
                     strokeWidth={2}
                   />
                   <span className="text-[color:var(--ink-700)] leading-relaxed">
@@ -91,13 +91,13 @@ export default function FoundingPage() {
               ))}
             </ul>
           </div>
-          <div>
-            <p className="label-overline mb-3">What we ask</p>
+          <div className="rounded-[14px] border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] p-6 sm:p-8">
+            <p className="label-overline mb-4">What we ask</p>
             <ul className="space-y-3">
               {askLines.map((line) => (
                 <li key={line} className="flex items-start gap-2.5">
                   <Check
-                    className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--color-success)]"
+                    className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--sage-500)]"
                     strokeWidth={2}
                   />
                   <span className="text-[color:var(--ink-700)] leading-relaxed">
@@ -106,7 +106,7 @@ export default function FoundingPage() {
                 </li>
               ))}
             </ul>
-            <p className="mt-6 text-sm text-[color:var(--ink-500)]">
+            <p className="mt-6 text-sm text-[color:var(--ink-500)] leading-relaxed">
               The review is for the act of writing one — not the sentiment. We
               never tie the reward to a positive review. That&apos;s a
               Capterra/G2 policy thing, and it&apos;s the right thing to do.
@@ -115,26 +115,31 @@ export default function FoundingPage() {
         </div>
       </section>
 
-      {/* Why this matters — 4 pillars compressed */}
+      {/* Why this matters — 4 pillars */}
       <section className="border-b border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-6xl px-6 py-16 lg:py-20">
           <Badge variant="outline" className="mb-4">
             What you&apos;d be using
           </Badge>
-          <h2 className="font-display text-3xl font-semibold text-foreground max-w-2xl">
+          <h2 className="font-display text-3xl sm:text-4xl font-semibold text-[color:var(--ink-900)] max-w-2xl">
             Built around four things.
           </h2>
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-px bg-border">
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-5">
             {pillars.map((p) => (
-              <div key={p.title} className="bg-[color:var(--paper-white)] p-8">
-                <p.icon className="h-6 w-6 text-[color:var(--ink-900)]" strokeWidth={2} />
-                <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
+              <article
+                key={p.title}
+                className="flex flex-col gap-3 rounded-[14px] border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] p-6 sm:p-8 transition-colors hover:border-[color:var(--ink-400)]"
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-[10px] bg-[color:var(--paper-100)] text-[color:var(--ink-900)]">
+                  <p.icon className="h-7 w-7" strokeWidth={2} />
+                </div>
+                <h3 className="font-display text-xl font-semibold text-[color:var(--ink-900)]">
                   {p.title}
                 </h3>
-                <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">
+                <p className="text-[color:var(--ink-600)] leading-relaxed">
                   {p.body}
                 </p>
-              </div>
+              </article>
             ))}
           </div>
         </div>
@@ -146,7 +151,7 @@ export default function FoundingPage() {
           <Badge variant="outline" className="mb-4">
             Apply
           </Badge>
-          <h2 className="font-display text-3xl font-semibold text-foreground">
+          <h2 className="font-display text-3xl sm:text-4xl font-semibold text-[color:var(--ink-900)]">
             Tell us about your roster.
           </h2>
           <p className="mt-3 text-[color:var(--ink-600)]">
