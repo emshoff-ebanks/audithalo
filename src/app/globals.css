@@ -295,6 +295,49 @@ body {
 }
 
 /* ============================================================================
+   Surface primitives (design-system-v2.md §3). Ground → Panel → Content.
+   Flat, 14px radius, no drop shadows. Used across marketing + app.
+   ========================================================================== */
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-panel);
+  padding: var(--panel-padding);
+}
+.panel-flush { padding: 0; overflow: hidden; }
+.panel-tight { padding: var(--sp-4); }
+.panel-loose { padding: var(--sp-8); }
+
+/* The one hero surface per view carries halo-yellow (design-system-v2.md §7.4). */
+.panel-hero {
+  background: var(--halo-yellow);
+  color: var(--ink-900);
+  border-color: var(--halo-yellow);
+}
+/* Inverse authority band (footer CTA, seal treatment section). */
+.panel-dark {
+  background: var(--ink-900);
+  color: var(--paper-50);
+  border-color: var(--ink-900);
+}
+/* Inner grouping inside a panel — never nest a second .panel. */
+.panel-inner {
+  background: var(--paper-100);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-inner);
+  padding: var(--sp-4);
+}
+
+/* Evidence surface: seal-gold top border + cream ground (design-system-v2.md §12.1). */
+.panel-evidence {
+  background: var(--paper-100);
+  border: 1px solid var(--panel-border);
+  border-top: 2px solid var(--seal-gold);
+  border-radius: var(--radius-inner);
+  padding: var(--sp-5);
+}
+
+/* ============================================================================
    MIGRATION NOTES (Phase 1 → Phases 2-3)
    ----------------------------------------------------------------------------
    Old semantic tokens are re-pointed, not removed, so the ~1,300 existing

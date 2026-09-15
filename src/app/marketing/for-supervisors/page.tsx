@@ -20,7 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata = {
   title: "For licensed supervisors — AuditHalo mental health supervision software",
   description:
-    "The supervision compliance system for mental health professionals. Track every supervised hour against your state board's requirements, capture intent-confirmed e-signatures, and generate board-ready audit packages. Built for LCMHCS, LPC-S, and qualified mental health supervisors across 10 states.",
+    "The supervision compliance system for mental health professionals. Track every supervised hour against your state board's requirements, capture intent-confirmed e-signatures, and generate board-ready audit packages. Built for LCMHCS, LPC-S, and qualified mental health supervisors across every supported state.",
 };
 
 const steps = [
@@ -186,7 +186,7 @@ const objections = [
   {
     objection: "What if my supervisee is in a state you don't support?",
     response:
-      "We cover NC, CA, TX, FL, NY, AZ, DE, OH, LA, and WA — 10 states and growing. Tell us your state if it's not listed — we prioritize encoding new rules by demand. Enterprise customers can also create custom rules for any jurisdiction directly in the app.",
+      "We cover NC, CA, TX, FL, NY, AZ, DE, OH, LA, and WA — with more boards on request. Tell us your state if it's not listed — we prioritize encoding new rules by demand. Enterprise customers can also create custom rules for any jurisdiction directly in the app.",
   },
 ];
 
@@ -208,7 +208,7 @@ const faqItems = [
   },
   {
     q: "What if my state isn't listed?",
-    a: "We cover NC, CA, TX, FL, NY, AZ, DE, OH, LA, and WA — 10 states and growing. Tell us your state if it's not listed — we prioritize encoding new rules by demand. Enterprise customers can also create custom rules for any jurisdiction directly in the app.",
+    a: "We cover NC, CA, TX, FL, NY, AZ, DE, OH, LA, and WA — with more boards on request. Tell us your state if it's not listed — we prioritize encoding new rules by demand. Enterprise customers can also create custom rules for any jurisdiction directly in the app.",
   },
   {
     q: "How long does setup take?",
@@ -238,7 +238,7 @@ export default function ForSupervisorsPage() {
         </p>
         <p className="mt-4 text-lg text-foreground/70 max-w-2xl leading-relaxed">
           AuditHalo is the supervision compliance platform for licensed
-          mental health supervisors across 10 states. Track every
+          mental health supervisors across every supported state. Track every
           supervised hour against the live state rule, capture intent-confirmed
           e-signatures, and generate tamper-evident audit packages — without a
           single spreadsheet.

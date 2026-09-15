@@ -34,7 +34,7 @@ const featureSections: Array<{
     intro:
       "The whole product is built around this. Every supervised hour is evaluated against your state's rule the moment it's logged.",
     bullets: [
-      "Ten states: NC LCMHCA, CA APCC, TX LPC-A, FL RMHCI, NY LP-MHC, AZ LAC, DE LACMH, OH LPC, LA PLPC, WA LMHCA",
+      "Supported today: NC LCMHCA, CA APCC, TX LPC-A, FL RMHCI, NY LP-MHC, AZ LAC, DE LACMH, OH LPC, LA PLPC, WA LMHCA — more boards on request",
       "Every rule is citation-linked to the state administrative code",
       "Versioned with effective dates — in-flight obligations grandfather under the rule they started under",
       "Re-verified quarterly by licensed clinical supervisors on contract",

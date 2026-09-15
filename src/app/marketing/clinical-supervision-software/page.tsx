@@ -38,7 +38,7 @@ const FAQ = [
   },
   {
     q: "Which states does AuditHalo cover?",
-    a: "Ten states: North Carolina (LCMHCA), California (APCC), Texas (LPC-A), Florida (RMHCI), New York (LP-MHC), Arizona (LAC), Delaware (LACMH), Ohio (LPC), Louisiana (PLPC), and Washington (LMHCA). Each rule is citation-linked to the state administrative code and re-verified quarterly. Additional states are added based on customer demand.",
+    a: "We cover North Carolina (LCMHCA), California (APCC), Texas (LPC-A), Florida (RMHCI), New York (LP-MHC), Arizona (LAC), Delaware (LACMH), Ohio (LPC), Louisiana (PLPC), and Washington (LMHCA). Each rule is citation-linked to the state administrative code and re-verified quarterly. Additional states are added based on customer demand.",
   },
   {
     q: "How do evidence packages work?",
@@ -101,7 +101,7 @@ export default function ClinicalSupervisionSoftwarePage() {
           </span>
           <span className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
-            10 states encoded and growing
+            Every supported state, encoded and growing
           </span>
         </div>
       </section>
@@ -158,7 +158,7 @@ export default function ClinicalSupervisionSoftwarePage() {
             Supported states
           </Badge>
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground max-w-2xl">
-            Ten states. Citation-linked. Quarterly verified.
+            Every supported state. Citation-linked. Quarterly verified.
           </h2>
           <p className="mt-3 text-foreground/70 max-w-2xl">
             Each rule cites the state administrative code, includes the

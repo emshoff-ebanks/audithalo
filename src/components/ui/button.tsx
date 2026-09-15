@@ -8,16 +8,18 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // v2: halo-yellow fill + ink-900 text is THE primary CTA (design-system-v2.md §6.2)
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
+          "bg-[color:var(--halo-yellow)] text-[color:var(--ink-900)] hover:bg-[color:var(--halo-yellow-hover)]",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/90",
+          "bg-[color:var(--ink-900)] text-[color:var(--paper-50)] hover:bg-[color:var(--ink-800)]",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-secondary underline-offset-4 hover:underline",
+          "border border-[color:var(--ink-200)] bg-transparent text-[color:var(--ink-900)] hover:border-[color:var(--ink-900)] hover:bg-[color:var(--ink-100)]",
+        ghost:
+          "text-[color:var(--ink-900)] hover:bg-[color:var(--ink-100)]",
+        link: "text-[color:var(--ink-900)] font-semibold underline decoration-2 decoration-[color:var(--halo-yellow)] underline-offset-4 hover:text-[color:var(--ink-600)]",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-[color:var(--risk-700)] text-white hover:bg-[color:var(--risk-900)]",
       },
       size: {
         default: "h-10 px-4 py-2",

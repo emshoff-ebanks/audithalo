@@ -25,7 +25,8 @@ const badgeVariants = cva(
         blocking:
           "border border-transparent bg-[color:var(--color-risk-900)] text-white gap-1.5",
         sealed:
-          "border border-transparent bg-[color:var(--color-gold)]/10 text-[color:var(--color-gold)] gap-1.5",
+          "border border-transparent bg-[color:var(--seal-gold)]/10 text-[color:var(--seal-gold)] gap-1.5",
+        ai: "border border-transparent bg-[color:var(--halo-yellow)]/15 text-[color:var(--ink-900)] gap-1.5",
       },
     },
     defaultVariants: {

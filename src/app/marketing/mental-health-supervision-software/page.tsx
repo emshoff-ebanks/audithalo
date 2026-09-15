@@ -19,7 +19,7 @@ export const metadata = {
   title:
     "Mental health supervision software for LCMHCA, APCC, LPC-A, RMHCI, LP-MHC, LAC, LACMH, LPC, PLPC, LMHCA | AuditHalo",
   description:
-    "Mental health supervision software for pre-licensed counselor associates. Track hours, capture e-signatures, and seal evidence packages against your exact state-board rule — 10 states including NC, CA, TX, FL, NY, AZ, DE, OH, LA, WA.",
+    "Mental health supervision software for pre-licensed counselor associates. Track hours, capture e-signatures, and seal evidence packages against your exact state-board rule — across NC, CA, TX, FL, NY, AZ, DE, OH, LA, and WA.",
   alternates: { canonical: URL },
 };
 
@@ -30,7 +30,7 @@ const FAQ = [
   },
   {
     q: "Which mental-health credentials does AuditHalo support?",
-    a: "Ten states: LCMHCA (North Carolina), APCC (California), LPC-A (Texas), RMHCI (Florida), LP-MHC (New York), LAC (Arizona), LACMH (Delaware), LPC (Ohio), PLPC (Louisiana), and LMHCA (Washington). Each rule is citation-linked to the state administrative code and quarterly re-verified.",
+    a: "We cover LCMHCA (North Carolina), APCC (California), LPC-A (Texas), RMHCI (Florida), LP-MHC (New York), LAC (Arizona), LACMH (Delaware), LPC (Ohio), PLPC (Louisiana), and LMHCA (Washington). Each rule is citation-linked to the state administrative code and quarterly re-verified.",
   },
   {
     q: "How is this different from EHR or practice-management software?",
@@ -76,7 +76,7 @@ export default function MentalHealthSupervisionSoftwarePage() {
         </h1>
         <p className="mt-6 text-lg text-foreground/70 max-w-3xl leading-relaxed">
           AuditHalo tracks every supervised hour your pre-licensed
-          supervisee logs — across 10 states including NC, CA, TX, FL, NY,
+          supervisee logs — across NC, CA, TX, FL, NY,
           AZ, DE, OH, LA, and WA — against the exact state-board rule, with
           intent-confirmed e-signatures and SHA-256-hashed evidence packages.
           Audit-ready from day one.
