@@ -51,7 +51,7 @@ const featureSections: Array<{
     intro:
       "Paste a supervision transcript — or auto-fetch it from Teams or Google Meet. Get a structured session note your supervisor can review and sign in minutes.",
     bullets: [
-      "7-section structured note: overview, topics covered, competencies addressed, goals, supervisor feedback, and next steps",
+      "Structured four-field note: topics discussed, competencies demonstrated, supervisor feedback, and next steps",
       "Prompt is versioned alongside the rule version — auditors can see exactly what the AI was instructed to produce",
       "Supervisor reviews and edits the note before signing — the final record is always human-approved",
       "Supervision notes document the supervisory relationship and counselor development, not client details",
@@ -149,34 +149,34 @@ export default function FeaturesPage() {
         <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground max-w-3xl">
           Every piece of the supervision audit, in one product.
         </h1>
-        <p className="mt-6 text-lg text-foreground/70 max-w-2xl">
+        <p className="mt-6 text-lg text-[color:var(--ink-600)] max-w-2xl">
           Built around what state boards actually require — not what an EHR
           happens to also include.
         </p>
       </section>
 
       {/* Feature sections */}
-      <section className="border-t border-border bg-card">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-4xl px-6 py-16 lg:py-20 space-y-16">
           {featureSections.map((section) => (
             <div key={section.title} className="grid grid-cols-1 md:grid-cols-12 gap-8">
               <div className="md:col-span-3">
                 <section.icon
-                  className="h-8 w-8 text-secondary"
-                  strokeWidth={1.5}
+                  className="h-8 w-8 text-[color:var(--ink-900)]"
+                  strokeWidth={2}
                 />
                 <h2 className="mt-4 font-display text-2xl font-semibold text-foreground">
                   {section.title}
                 </h2>
               </div>
               <div className="md:col-span-9">
-                <p className="text-foreground/80 leading-relaxed">
+                <p className="text-[color:var(--ink-700)] leading-relaxed">
                   {section.intro}
                 </p>
-                <ul className="mt-4 space-y-2 text-foreground/70">
+                <ul className="mt-4 space-y-2 text-[color:var(--ink-600)]">
                   {section.bullets.map((b) => (
                     <li key={b} className="flex gap-3">
-                      <span className="text-secondary mt-1.5">▸</span>
+                      <span className="text-[color:var(--sage-500)] mt-1.5">▸</span>
                       <span className="leading-relaxed">{b}</span>
                     </li>
                   ))}
@@ -199,12 +199,12 @@ export default function FeaturesPage() {
       </section>
 
       {/* CTA */}
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-3xl px-6 py-16 text-center">
           <h2 className="font-display text-3xl font-semibold text-foreground">
             Try it on your real roster.
           </h2>
-          <p className="mt-4 text-foreground/70">
+          <p className="mt-4 text-[color:var(--ink-600)]">
             Full feature set on the 14-day trial. No credit card.
           </p>
           <Button asChild size="lg" className="mt-8">

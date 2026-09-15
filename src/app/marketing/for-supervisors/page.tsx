@@ -233,10 +233,10 @@ export default function ForSupervisorsPage() {
          * subhead so it's the first thing a prospect reads after the H1 —
          * the line that names the outcome they actually want.
          */}
-        <p className="mt-6 font-display text-xl sm:text-2xl font-medium text-foreground/85 max-w-3xl leading-snug">
+        <p className="mt-6 font-display text-xl sm:text-2xl font-medium text-[color:var(--ink-800)] max-w-3xl leading-snug">
           When the board asks, the answer&apos;s already in a folder.
         </p>
-        <p className="mt-4 text-lg text-foreground/70 max-w-2xl leading-relaxed">
+        <p className="mt-4 text-lg text-[color:var(--ink-600)] max-w-2xl leading-relaxed">
           AuditHalo is the supervision compliance platform for licensed
           mental health supervisors across every supported state. Track every
           supervised hour against the live state rule, capture intent-confirmed
@@ -253,7 +253,7 @@ export default function ForSupervisorsPage() {
             <Link href="/pricing">See pricing</Link>
           </Button>
         </div>
-        <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/60">
+        <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[color:var(--ink-500)]">
           <span className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-[color:var(--color-success)]" />
             14-day free trial
@@ -270,18 +270,18 @@ export default function ForSupervisorsPage() {
       </section>
 
       {/* Risk callout */}
-      <section className="border-y border-border bg-[color:var(--color-risk)]/5">
+      <section className="border-y border-[color:var(--ink-200)] bg-[color:var(--color-risk)]/5">
         <div className="mx-auto max-w-6xl px-6 py-12">
           <div className="flex items-start gap-4">
             <AlertTriangle
-              className="h-6 w-6 mt-1 shrink-0 text-[color:var(--color-risk)]"
-              strokeWidth={1.75}
+              className="h-6 w-6 mt-1 shrink-0 text-[color:var(--risk-700)]"
+              strokeWidth={2}
             />
             <div>
               <h2 className="font-display text-xl font-semibold text-foreground">
                 When a supervisee&apos;s audit fails, the board comes to you first.
               </h2>
-              <p className="mt-2 text-foreground/70 max-w-3xl">
+              <p className="mt-2 text-[color:var(--ink-600)] max-w-3xl">
                 In every state we cover, the supervisor signs attesting to the
                 hours. If those hours don&apos;t pass the board&apos;s review, your
                 supervisor credential is at risk — not just the supervisee&apos;s
@@ -293,7 +293,7 @@ export default function ForSupervisorsPage() {
       </section>
 
       {/* How it works */}
-      <section className="border-b border-border">
+      <section className="border-b border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
             How it works
@@ -303,14 +303,14 @@ export default function ForSupervisorsPage() {
           </h2>
           <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-px bg-border">
             {steps.map((s) => (
-              <div key={s.number} className="bg-background p-8">
-                <p className="font-mono text-3xl font-bold text-foreground/20 mb-4">
+              <div key={s.number} className="bg-[color:var(--paper-white)] p-8">
+                <p className="font-mono text-3xl font-bold text-[color:var(--ink-300)] mb-4">
                   {s.number}
                 </p>
                 <h3 className="font-display text-xl font-semibold text-foreground">
                   {s.title}
                 </h3>
-                <p className="mt-2 text-foreground/70 leading-relaxed">{s.body}</p>
+                <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">{s.body}</p>
               </div>
             ))}
           </div>
@@ -333,7 +333,7 @@ export default function ForSupervisorsPage() {
       </section>
 
       {/* Features */}
-      <section className="bg-card">
+      <section className="bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
             Why supervisors switch
@@ -343,13 +343,13 @@ export default function ForSupervisorsPage() {
           </h2>
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
             {features.map((f) => (
-              <Card key={f.title}>
+              <Card key={f.title} className="rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)]">
                 <CardContent className="p-8">
-                  <f.icon className="h-6 w-6 text-secondary" strokeWidth={1.75} />
+                  <f.icon className="h-6 w-6 text-[color:var(--ink-900)]" strokeWidth={2} />
                   <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
                     {f.title}
                   </h3>
-                  <p className="mt-2 text-foreground/70 leading-relaxed">{f.body}</p>
+                  <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">{f.body}</p>
                 </CardContent>
               </Card>
             ))}
@@ -358,7 +358,7 @@ export default function ForSupervisorsPage() {
       </section>
 
       {/* State compliance grid */}
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
             Supported states
@@ -366,7 +366,7 @@ export default function ForSupervisorsPage() {
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground max-w-2xl">
             Your state&apos;s requirements, encoded.
           </h2>
-          <p className="mt-3 text-foreground/70 max-w-2xl">
+          <p className="mt-3 text-[color:var(--ink-600)] max-w-2xl">
             Every rule is pulled directly from the state administrative code,
             citation-linked, and re-verified quarterly by licensed clinical
             supervisors. When requirements change, we encode the new rule — your
@@ -375,7 +375,7 @@ export default function ForSupervisorsPage() {
           <div className="mt-10 overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b border-[color:var(--ink-200)]">
                   <th className="text-left py-3 pr-6 label-overline font-medium">State</th>
                   <th className="text-left py-3 pr-6 label-overline font-medium">Credential</th>
                   <th className="text-left py-3 pr-6 label-overline font-medium">Practice hours</th>
@@ -386,18 +386,18 @@ export default function ForSupervisorsPage() {
               </thead>
               <tbody>
                 {stateGrid.map((s) => (
-                  <tr key={s.code} className="border-b border-border/50 hover:bg-card transition-colors">
+                  <tr key={s.code} className="border-b border-[color:var(--ink-200)]/50 hover:bg-[color:var(--paper-100)] transition-colors">
                     <td className="py-4 pr-6 font-display text-lg font-bold text-foreground">
                       {s.code}
                     </td>
-                    <td className="py-4 pr-6 font-mono text-xs text-foreground/70">{s.credential}</td>
+                    <td className="py-4 pr-6 font-mono text-xs text-[color:var(--ink-600)]">{s.credential}</td>
                     <td className="py-4 pr-6 text-foreground">{s.hours}</td>
-                    <td className="py-4 pr-6 text-foreground/80">{s.supervision}</td>
-                    <td className="py-4 pr-6 text-foreground/80">{s.window}</td>
+                    <td className="py-4 pr-6 text-[color:var(--ink-700)]">{s.supervision}</td>
+                    <td className="py-4 pr-6 text-[color:var(--ink-700)]">{s.window}</td>
                     <td className="py-4">
                       <Link
                         href={`/states/${s.slug}`}
-                        className="text-xs text-secondary hover:underline whitespace-nowrap"
+                        className="text-xs text-[color:var(--ink-700)] hover:text-[color:var(--ink-900)] underline whitespace-nowrap"
                       >
                         Full requirements →
                       </Link>
@@ -411,7 +411,7 @@ export default function ForSupervisorsPage() {
       </section>
 
       {/* Objection handling */}
-      <section className="border-t border-border bg-card">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-3xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
             Honest answers
@@ -425,7 +425,7 @@ export default function ForSupervisorsPage() {
                 <h3 className="font-display text-lg font-semibold text-foreground">
                   &ldquo;{o.objection}&rdquo;
                 </h3>
-                <p className="mt-2 text-foreground/70 leading-relaxed">{o.response}</p>
+                <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">{o.response}</p>
               </div>
             ))}
           </div>
@@ -433,7 +433,7 @@ export default function ForSupervisorsPage() {
       </section>
 
       {/* Pricing summary */}
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
             Pricing
@@ -441,16 +441,16 @@ export default function ForSupervisorsPage() {
           <h2 className="font-display text-3xl font-semibold text-foreground max-w-2xl">
             Priced per supervisee. Your account is included.
           </h2>
-          <p className="mt-3 text-foreground/70 max-w-xl">
+          <p className="mt-3 text-[color:var(--ink-600)] max-w-xl">
             The supervisor is the one with board liability. So they&apos;re the buyer.
             The supervisee has the audit on the line — so their account is free.
           </p>
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-px bg-border">
-            <div className="bg-background p-8">
+            <div className="bg-[color:var(--paper-white)] p-8">
               <p className="label-overline mb-3">Supervisee</p>
               <p className="font-display text-4xl font-bold text-foreground">Free</p>
-              <p className="mt-2 text-sm text-foreground/60">Always. No time limit.</p>
-              <ul className="mt-6 space-y-2 text-sm text-foreground/70">
+              <p className="mt-2 text-sm text-[color:var(--ink-500)]">Always. No time limit.</p>
+              <ul className="mt-6 space-y-2 text-sm text-[color:var(--ink-600)]">
                 {["Hour progress dashboard", "Supervisor connection", "Session history", "Evidence package access"].map((f) => (
                   <li key={f} className="flex items-start gap-2">
                     <Check className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-success)]" strokeWidth={2.5} />
@@ -459,14 +459,14 @@ export default function ForSupervisorsPage() {
                 ))}
               </ul>
             </div>
-            <div className="bg-background p-8 ring-2 ring-secondary ring-inset">
+            <div className="bg-[color:var(--paper-white)] p-8 ring-2 ring-[color:var(--halo-yellow)] ring-inset">
               <div className="flex items-baseline justify-between">
                 <p className="label-overline mb-3">Solo Supervisor</p>
                 <Badge variant="secondary">Most popular</Badge>
               </div>
               <p className="font-display text-4xl font-bold text-foreground">$89</p>
-              <p className="mt-2 text-sm text-foreground/60">per month · up to 3 supervisees</p>
-              <ul className="mt-6 space-y-2 text-sm text-foreground/70">
+              <p className="mt-2 text-sm text-[color:var(--ink-500)]">per month · up to 3 supervisees</p>
+              <ul className="mt-6 space-y-2 text-sm text-[color:var(--ink-600)]">
                 {["Supervisor dashboard", "State rules engine", "E-signature + audit package", "AI session notes", "Hour progress tracking"].map((f) => (
                   <li key={f} className="flex items-start gap-2">
                     <Check className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-success)]" strokeWidth={2.5} />
@@ -486,11 +486,11 @@ export default function ForSupervisorsPage() {
                 </a>
               </Button>
             </div>
-            <div className="bg-background p-8">
+            <div className="bg-[color:var(--paper-white)] p-8">
               <p className="label-overline mb-3">Practice</p>
               <p className="font-display text-4xl font-bold text-foreground">$25</p>
-              <p className="mt-2 text-sm text-foreground/60">per supervisee / month + $49 base</p>
-              <ul className="mt-6 space-y-2 text-sm text-foreground/70">
+              <p className="mt-2 text-sm text-[color:var(--ink-500)]">per supervisee / month + $49 base</p>
+              <ul className="mt-6 space-y-2 text-sm text-[color:var(--ink-600)]">
                 {["Everything in Solo Supervisor", "Unlimited supervisees", "Practice compliance heatmap", "Bulk HRIS import (CSV)", "AI session notes (100/mo)", "7-year audit retention"].map((f) => (
                   <li key={f} className="flex items-start gap-2">
                     <Check className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-success)]" strokeWidth={2.5} />
@@ -505,9 +505,9 @@ export default function ForSupervisorsPage() {
               </Button>
             </div>
           </div>
-          <p className="mt-6 text-sm text-foreground/60 text-center">
+          <p className="mt-6 text-sm text-[color:var(--ink-500)] text-center">
             Annual billing available — 2 months free.{" "}
-            <Link href="/pricing" className="text-secondary hover:underline">
+            <Link href="/pricing" className="text-[color:var(--ink-700)] hover:text-[color:var(--ink-900)] underline">
               Full pricing details →
             </Link>
           </p>
@@ -515,7 +515,7 @@ export default function ForSupervisorsPage() {
       </section>
 
       {/* FAQ */}
-      <section className="border-t border-border bg-card">
+      <section className="border-t border-[color:var(--ink-200)] bg-[color:var(--paper-100)]">
         <div className="mx-auto max-w-3xl px-6 py-20 lg:py-24">
           <Badge variant="outline" className="mb-4">
             FAQ
@@ -529,7 +529,7 @@ export default function ForSupervisorsPage() {
                 <h3 className="font-display text-lg font-semibold text-foreground">
                   {item.q}
                 </h3>
-                <p className="mt-2 text-foreground/70 leading-relaxed">{item.a}</p>
+                <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed">{item.a}</p>
               </div>
             ))}
           </div>
@@ -537,12 +537,12 @@ export default function ForSupervisorsPage() {
       </section>
 
       {/* Final CTA */}
-      <section className="border-t border-border">
+      <section className="border-t border-[color:var(--ink-200)]">
         <div className="mx-auto max-w-3xl px-6 py-16 text-center">
           <h2 className="font-display text-3xl font-semibold text-foreground">
             Try it on your real roster.
           </h2>
-          <p className="mt-4 text-foreground/70">
+          <p className="mt-4 text-[color:var(--ink-600)]">
             14 days, no card. Bring your supervisees in, assign their state rule,
             and see the dashboard fill up.
           </p>
