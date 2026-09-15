@@ -9,16 +9,16 @@ export interface Crumb {
 export function DocsBreadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
   return (
     <nav aria-label="Breadcrumb" className="mb-6">
-      <ol className="flex flex-wrap items-center gap-1.5 text-xs text-foreground/60">
+      <ol className="flex flex-wrap items-center gap-1.5 text-xs text-[color:var(--ink-500)]">
         {crumbs.map((c, i) => (
           <li key={i} className="flex items-center gap-1.5">
-            {i > 0 && <ChevronRight className="h-3 w-3 text-foreground/30" />}
+            {i > 0 && <ChevronRight className="h-3 w-3 text-[color:var(--ink-300)]" />}
             {c.href ? (
-              <Link href={c.href} className="hover:text-foreground transition-colors">
+              <Link href={c.href} className="hover:text-[color:var(--ink-900)] transition-colors">
                 {c.name}
               </Link>
             ) : (
-              <span aria-current="page" className="text-foreground/80">
+              <span aria-current="page" className="text-[color:var(--ink-700)]">
                 {c.name}
               </span>
             )}

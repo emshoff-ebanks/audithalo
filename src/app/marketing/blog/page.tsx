@@ -40,7 +40,7 @@ export default function BlogIndexPage() {
       <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground leading-[1.1]">
         Supervision compliance guides.
       </h1>
-      <p className="mt-6 text-lg text-foreground/75 leading-relaxed max-w-2xl">
+      <p className="mt-6 text-lg text-[color:var(--ink-600)] leading-relaxed max-w-2xl">
         Citation-backed guides on supervision hours, board audits, and
         documentation, written for supervisors and supervisees who need the
         rule itself, not a summary of it.

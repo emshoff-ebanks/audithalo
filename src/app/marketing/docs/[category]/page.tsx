@@ -42,25 +42,25 @@ export default async function DocsCategoryPage({ params }: { params: Params }) {
       <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-[1.15]">
         {cat.title}
       </h1>
-      <p className="mt-4 text-lg text-foreground/75 leading-relaxed max-w-2xl">
+      <p className="mt-4 text-lg text-[color:var(--ink-600)] leading-relaxed max-w-2xl">
         {cat.description}
       </p>
 
       <div className="mt-10 grid grid-cols-1 gap-4">
         {(navCat?.articles ?? []).map((a) => (
           <Link key={a.path} href={`/docs/${a.path}`} className="block group">
-            <Card className="transition-colors group-hover:border-secondary/50">
+            <Card className="transition-colors group-hover:border-[color:var(--ink-400)]">
               <CardContent className="p-5 flex items-center justify-between gap-3">
-                <span className="font-medium text-foreground group-hover:text-secondary">
+                <span className="font-medium text-foreground group-hover:text-[color:var(--ink-700)]">
                   {a.title}
                 </span>
-                <ArrowRight className="h-4 w-4 text-secondary shrink-0" />
+                <ArrowRight className="h-4 w-4 text-[color:var(--ink-900)] shrink-0" />
               </CardContent>
             </Card>
           </Link>
         ))}
         {(!navCat || navCat.articles.length === 0) && (
-          <p className="text-foreground/60">
+          <p className="text-[color:var(--ink-500)]">
             Articles for this section are coming soon.
           </p>
         )}

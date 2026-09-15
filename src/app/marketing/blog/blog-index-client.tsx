@@ -22,18 +22,18 @@ export type BlogIndexPost = {
 function PostCard({ post }: { post: BlogIndexPost }) {
   return (
     <Link href={`/blog/${post.slug}`} className="block group h-full">
-      <Card className="h-full transition-colors group-hover:border-secondary/50">
+      <Card className="h-full rounded-[14px] border-[color:var(--ink-200)] bg-[color:var(--paper-white)] transition-all group-hover:-translate-y-0.5 group-hover:border-[color:var(--ink-400)]">
         <CardContent className="p-6 sm:p-8 flex h-full flex-col">
-          <div className="flex flex-wrap items-center gap-2 mb-3 text-xs text-foreground/60">
+          <div className="flex flex-wrap items-center gap-2 mb-3 text-xs text-[color:var(--ink-500)]">
             <Badge variant="outline">{post.category}</Badge>
             <span>{format(parseISO(post.datePublished), "MMM d, yyyy")}</span>
             <span>·</span>
             <span>{post.readMinutes} min read</span>
           </div>
-          <h2 className="font-display text-xl font-semibold text-foreground group-hover:text-secondary transition-colors">
+          <h2 className="font-display text-xl font-semibold text-[color:var(--ink-900)] group-hover:text-[color:var(--ink-700)] transition-colors">
             {post.title}
           </h2>
-          <p className="mt-2 text-foreground/70 leading-relaxed flex-1">
+          <p className="mt-2 text-[color:var(--ink-600)] leading-relaxed flex-1">
             {post.metaDescription}
           </p>
           {post.tags.length > 0 && (
@@ -41,14 +41,14 @@ function PostCard({ post }: { post: BlogIndexPost }) {
               {post.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
-                  className="text-[11px] uppercase tracking-wide text-foreground/70"
+                  className="text-[11px] uppercase tracking-wide text-[color:var(--ink-500)]"
                 >
                   #{tag}
                 </span>
               ))}
             </div>
           )}
-          <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-secondary">
+          <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-[color:var(--ink-900)]">
             Read the guide <ArrowRight className="h-3.5 w-3.5" />
           </p>
         </CardContent>
@@ -112,8 +112,8 @@ export function BlogIndexClient({
                 onClick={() => setCategory(cat)}
                 className={`inline-flex items-center rounded-sm px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                   active
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-border text-foreground/70 hover:text-foreground hover:border-foreground/30"
+                    ? "bg-[color:var(--ink-900)] text-[color:var(--paper-50)]"
+                    : "border border-[color:var(--ink-200)] text-[color:var(--ink-600)] hover:text-[color:var(--ink-900)] hover:border-[color:var(--ink-300)]"
                 }`}
               >
                 {cat}
@@ -123,7 +123,7 @@ export function BlogIndexClient({
         </div>
 
         <div className="relative w-full sm:w-64 shrink-0">
-          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/40" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[color:var(--ink-400)]" />
           <Input
             type="search"
             value={query}
@@ -135,15 +135,15 @@ export function BlogIndexClient({
         </div>
       </div>
 
-      <p className="text-sm text-foreground/60 mb-6">
+      <p className="text-sm text-[color:var(--ink-500)] mb-6">
         {isFiltering
           ? `Showing ${gridPosts.length} of ${posts.length} guides`
           : `${posts.length} guides`}
       </p>
 
       {gridPosts.length === 0 ? (
-        <div className="rounded-sm border border-dashed border-border p-12 text-center">
-          <p className="text-foreground/70">
+        <div className="rounded-[14px] border border-dashed border-[color:var(--ink-200)] p-12 text-center">
+          <p className="text-[color:var(--ink-600)]">
             No guides match that search or category.
           </p>
           <button
@@ -152,7 +152,7 @@ export function BlogIndexClient({
               setCategory("All");
               setQuery("");
             }}
-            className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-secondary"
+            className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-[color:var(--ink-900)]"
           >
             <X className="h-3.5 w-3.5" /> Clear filters
           </button>

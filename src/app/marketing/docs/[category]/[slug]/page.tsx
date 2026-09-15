@@ -119,19 +119,19 @@ export default async function DocArticlePage({ params }: { params: Params }) {
         <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-[1.15]">
           {doc.meta.title}
         </h1>
-        <p className="mt-4 text-lg text-foreground/75 leading-relaxed">
+        <p className="mt-4 text-lg text-[color:var(--ink-600)] leading-relaxed">
           {doc.meta.description}
         </p>
         {doc.meta.dateUpdated && (
-          <p className="mt-3 font-mono text-xs text-foreground/50">
+          <p className="mt-3 font-mono text-xs text-[color:var(--ink-500)]">
             Last updated {format(parseISO(doc.meta.dateUpdated), "MMM d, yyyy")}
           </p>
         )}
 
         {doc.meta.prerequisites && doc.meta.prerequisites.length > 0 && (
-          <div className="mt-8 rounded-sm border border-border bg-evidence-bg/50 p-5">
+          <div className="mt-8 rounded-sm border border-[color:var(--ink-200)] bg-evidence-bg/50 p-5">
             <p className="label-overline mb-2">What you&rsquo;ll need</p>
-            <ul className="list-disc pl-5 space-y-1 text-sm text-foreground/80">
+            <ul className="list-disc pl-5 space-y-1 text-sm text-[color:var(--ink-700)]">
               {doc.meta.prerequisites.map((p, i) => (
                 <li key={i}>{p}</li>
               ))}
@@ -148,14 +148,14 @@ export default async function DocArticlePage({ params }: { params: Params }) {
         </div>
 
         {relatedDocs.length > 0 && (
-          <div className="mt-14 border-t border-border pt-8">
+          <div className="mt-14 border-t border-[color:var(--ink-200)] pt-8">
             <p className="label-overline mb-3">Related articles</p>
             <ul className="space-y-2">
               {relatedDocs.map((r) => (
                 <li key={r.path}>
                   <Link
                     href={`/docs/${r.path}`}
-                    className="inline-flex items-center gap-1.5 text-secondary hover:underline"
+                    className="inline-flex items-center gap-1.5 text-[color:var(--ink-700)] hover:text-[color:var(--ink-900)] underline"
                   >
                     {r.title} <ArrowUpRight className="h-3.5 w-3.5" />
                   </Link>
@@ -169,12 +169,12 @@ export default async function DocArticlePage({ params }: { params: Params }) {
           {prev ? (
             <Link
               href={`/docs/${prev.path}`}
-              className="group rounded-sm border border-border p-4 hover:border-secondary/50"
+              className="group rounded-sm border border-[color:var(--ink-200)] p-4 hover:border-[color:var(--ink-400)]"
             >
-              <span className="inline-flex items-center gap-1.5 text-xs text-foreground/50">
+              <span className="inline-flex items-center gap-1.5 text-xs text-[color:var(--ink-500)]">
                 <ArrowLeft className="h-3 w-3" /> Previous
               </span>
-              <span className="mt-1 block font-medium text-foreground group-hover:text-secondary">
+              <span className="mt-1 block font-medium text-foreground group-hover:text-[color:var(--ink-700)]">
                 {prev.title}
               </span>
             </Link>
@@ -184,12 +184,12 @@ export default async function DocArticlePage({ params }: { params: Params }) {
           {next && (
             <Link
               href={`/docs/${next.path}`}
-              className="group rounded-sm border border-border p-4 text-right hover:border-secondary/50 sm:col-start-2"
+              className="group rounded-sm border border-[color:var(--ink-200)] p-4 text-right hover:border-[color:var(--ink-400)] sm:col-start-2"
             >
-              <span className="inline-flex items-center gap-1.5 text-xs text-foreground/50">
+              <span className="inline-flex items-center gap-1.5 text-xs text-[color:var(--ink-500)]">
                 Next <ArrowRight className="h-3 w-3" />
               </span>
-              <span className="mt-1 block font-medium text-foreground group-hover:text-secondary">
+              <span className="mt-1 block font-medium text-foreground group-hover:text-[color:var(--ink-700)]">
                 {next.title}
               </span>
             </Link>
@@ -198,7 +198,7 @@ export default async function DocArticlePage({ params }: { params: Params }) {
       </article>
 
       {doc.meta.faq && doc.meta.faq.length > 0 && (
-        <section className="max-w-3xl mt-14 border-t border-border pt-10">
+        <section className="max-w-3xl mt-14 border-t border-[color:var(--ink-200)] pt-10">
           <h2 className="font-display text-2xl font-semibold text-foreground mb-6">
             Frequently asked questions
           </h2>
@@ -208,7 +208,7 @@ export default async function DocArticlePage({ params }: { params: Params }) {
                 <h3 className="font-display text-lg font-semibold text-foreground">
                   {item.q}
                 </h3>
-                <p className="mt-2 text-foreground/80 leading-relaxed">
+                <p className="mt-2 text-[color:var(--ink-700)] leading-relaxed">
                   {item.a}
                 </p>
               </div>

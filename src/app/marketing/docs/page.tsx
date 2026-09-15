@@ -32,7 +32,7 @@ export default function DocsIndexPage() {
       <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground leading-[1.1]">
         Documentation.
       </h1>
-      <p className="mt-6 text-lg text-foreground/75 leading-relaxed max-w-2xl">
+      <p className="mt-6 text-lg text-[color:var(--ink-600)] leading-relaxed max-w-2xl">
         Everything you need to run audit-ready supervision, organized by task.
         New here? Start with the guide for your role.
       </p>
@@ -43,12 +43,12 @@ export default function DocsIndexPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {gettingStarted.articles.map((a) => (
               <Link key={a.path} href={`/docs/${a.path}`} className="block group">
-                <Card className="h-full transition-colors group-hover:border-secondary/50">
+                <Card className="h-full transition-colors group-hover:border-[color:var(--ink-400)]">
                   <CardContent className="p-5 flex items-center justify-between gap-3">
-                    <span className="font-medium text-foreground group-hover:text-secondary">
+                    <span className="font-medium text-foreground group-hover:text-[color:var(--ink-700)]">
                       {a.title}
                     </span>
-                    <ArrowRight className="h-4 w-4 text-secondary shrink-0" />
+                    <ArrowRight className="h-4 w-4 text-[color:var(--ink-900)] shrink-0" />
                   </CardContent>
                 </Card>
               </Link>
@@ -66,15 +66,15 @@ export default function DocsIndexPage() {
               href={`/docs/${cat.slug}`}
               className="block group h-full"
             >
-              <Card className="h-full transition-colors group-hover:border-secondary/50">
+              <Card className="h-full transition-colors group-hover:border-[color:var(--ink-400)]">
                 <CardContent className="p-6">
-                  <h2 className="font-display text-lg font-semibold text-foreground group-hover:text-secondary">
+                  <h2 className="font-display text-lg font-semibold text-foreground group-hover:text-[color:var(--ink-700)]">
                     {cat.title}
                   </h2>
-                  <p className="mt-1.5 text-sm text-foreground/70 leading-relaxed">
+                  <p className="mt-1.5 text-sm text-[color:var(--ink-600)] leading-relaxed">
                     {cat.description}
                   </p>
-                  <p className="mt-3 text-xs text-foreground/50">
+                  <p className="mt-3 text-xs text-[color:var(--ink-500)]">
                     {(() => {
                       const n = countBySlug.get(cat.slug) ?? 0;
                       return n === 0

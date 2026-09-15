@@ -43,7 +43,7 @@ export function DocsSearch({ index }: { index: SearchEntry[] }) {
   return (
     <div className="relative" ref={containerRef}>
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/40" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[color:var(--ink-400)]" />
         <Input
           type="search"
           value={query}
@@ -60,7 +60,7 @@ export function DocsSearch({ index }: { index: SearchEntry[] }) {
             type="button"
             onClick={() => setQuery("")}
             aria-label="Clear search"
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-foreground/40 hover:text-foreground"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[color:var(--ink-400)] hover:text-[color:var(--ink-900)]"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -70,10 +70,10 @@ export function DocsSearch({ index }: { index: SearchEntry[] }) {
       {open && (
         <div
           id="docs-search-results"
-          className="absolute z-40 mt-2 w-full rounded-sm border border-border bg-card shadow-md"
+          className="absolute z-40 mt-2 w-full rounded-[10px] border border-[color:var(--ink-200)] bg-[color:var(--paper-white)] shadow-md"
         >
           {results.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-foreground/60">
+            <p className="px-4 py-3 text-sm text-[color:var(--ink-500)]">
               No articles match &ldquo;{query}&rdquo;.
             </p>
           ) : (
@@ -88,7 +88,7 @@ export function DocsSearch({ index }: { index: SearchEntry[] }) {
                     <span className="block text-sm font-medium text-foreground">
                       {r.title}
                     </span>
-                    <span className="block text-xs text-foreground/60">
+                    <span className="block text-xs text-[color:var(--ink-500)]">
                       {r.categoryLabel}
                     </span>
                   </Link>

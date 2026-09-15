@@ -109,7 +109,7 @@ export default async function BlogPostPage({ params }: { params: Params }) {
           </Link>
         </Button>
 
-        <div className="flex flex-wrap items-center gap-2 mb-4 text-xs text-foreground/60">
+        <div className="flex flex-wrap items-center gap-2 mb-4 text-xs text-[color:var(--ink-500)]">
           <Badge variant="outline">{post.meta.category}</Badge>
           <span>{format(parseISO(post.meta.datePublished), "MMM d, yyyy")}</span>
           <span>·</span>
@@ -119,7 +119,7 @@ export default async function BlogPostPage({ params }: { params: Params }) {
         <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-[1.15]">
           {post.meta.title}
         </h1>
-        <p className="mt-5 text-lg text-foreground/75 leading-relaxed">
+        <p className="mt-5 text-lg text-[color:var(--ink-600)] leading-relaxed">
           {post.meta.metaDescription}
         </p>
 
@@ -131,7 +131,7 @@ export default async function BlogPostPage({ params }: { params: Params }) {
           />
         </div>
 
-        <div className="mt-16 border-t border-border pt-10 flex flex-wrap items-center gap-3">
+        <div className="mt-16 border-t border-[color:var(--ink-200)] pt-10 flex flex-wrap items-center gap-3">
           <Button asChild size="lg">
             <a href="https://app.audithalo.com/register">
               Start your supervisor account <ArrowRight />
