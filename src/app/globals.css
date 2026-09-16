@@ -315,7 +315,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   line-height: 1.2;
-  color: var(--ink-600);
+  color: var(--text-secondary);      /* flips in dark mode (§2.2) */
 }
 
 /* ============================================================================
