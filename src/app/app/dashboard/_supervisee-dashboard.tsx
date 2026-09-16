@@ -1,14 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { and, eq, desc } from "drizzle-orm";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, AlertOctagon, AlertTriangle, CheckCircle2, FileSignature } from "lucide-react";
 import { getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
-import { riskBadgeLabel, riskBadgeVariant } from "@/lib/rules";
+import { riskBadgeLabel } from "@/lib/rules";
 import { resolveEvaluationWithOverrides } from "@/lib/rules/evaluation-context-with-overrides";
 import { pendingSignaturesForUser } from "@/lib/supervisee";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { LogSessionForm } from "@/app/app/dashboard/roster/[superviseeId]/log-session-form";
 import { SessionLog } from "@/components/app/session-log";
 import { SuperviseeThisWeek } from "./_supervisee-this-week";
@@ -32,26 +30,26 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
 
   if (!assignment) {
     return (
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
-        <Badge variant="outline" className="mb-3">Your account</Badge>
-        <h1 className="font-display text-4xl font-semibold text-foreground">
-          Welcome, {userName ?? userEmail}
-        </h1>
-        <p className="mt-2 text-foreground/70">{userEmail}</p>
-        <Card className="mt-10">
-          <CardContent className="p-6">
-            <Badge variant="warning" className="mb-3">No rule assigned</Badge>
-            <h2 className="font-display text-xl font-semibold text-foreground">
-              Your supervisor hasn&apos;t assigned your state rule yet.
-            </h2>
-            <p className="mt-2 text-foreground/70">
-              Reach out to your supervisor so they can pick the right rule (e.g., NC
-              LCMHCA). Once they do, your hour progress and at-risk flags will start
-              filling in here.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <div>
+          <h1 className="shell-page-title">Welcome, {userName ?? userEmail}</h1>
+          <p className="shell-page-sub">{userEmail}</p>
+        </div>
+        <div className="panel">
+          <span className="status-pill status-warn mb-3 inline-flex">
+            <AlertTriangle className="h-3 w-3" />
+            No rule assigned
+          </span>
+          <h2 className="font-display text-xl font-semibold text-[color:var(--text-primary)] mt-1">
+            Your supervisor hasn&apos;t assigned your state rule yet.
+          </h2>
+          <p className="mt-2 text-[color:var(--text-secondary)]">
+            Reach out to your supervisor so they can pick the right rule (e.g., NC
+            LCMHCA). Once they do, your hour progress and at-risk flags will start
+            filling in here.
+          </p>
+        </div>
+      </>
     );
   }
 
@@ -79,166 +77,123 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
   const isOnLeave = membership.leaveStatus === "on_leave";
   const isPrn = membership.leaveStatus === "prn";
 
-  return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
-      <Badge variant="outline" className="mb-3">Your account</Badge>
-      <h1 className="font-display text-4xl font-semibold text-foreground">
-        Welcome, {userName ?? userEmail}
-      </h1>
-      <p className="mt-2 text-foreground/70">{userEmail}</p>
-      {rule && (
-        <p className="mt-1 text-foreground/70">
-          Tracking against {rule.jurisdiction} {rule.license_code} v{rule.version}
-        </p>
-      )}
-      {isOnLeave && (
-        <Card className="mt-5 border-[color:var(--color-warning)]/30 bg-[color:var(--color-warning)]/5">
-          <CardContent className="p-4">
-            <Badge variant="warning" className="mb-2">On leave</Badge>
-            <p className="text-sm text-foreground">
-              Your supervision hour clock is paused. Reminders and cadence
-              checks stop until HR flips your status back to active in Paycor.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-      {isPrn && (
-        <p className="mt-3 text-sm text-foreground/70">
-          <Badge variant="outline" className="mr-2">PRN</Badge>
-          You&apos;ll still receive supervision reminders so they happen
-          whenever you next pick up shifts.
-        </p>
-      )}
+  const level = evalResult?.riskLevel;
+  const statusPill =
+    level === "red" ? "status-risk" : level === "yellow" ? "status-warn" : level === "green" ? "status-ok" : "status-pending";
+  const StatusIcon = level === "red" ? AlertOctagon : level === "yellow" ? AlertTriangle : CheckCircle2;
+  const hasGaps = !!(evalResult && evalResult.gaps.length > 0);
 
-      {rule && (
-        <div className="mt-5">
+  const statusBody = (
+    <div className="panel flex flex-col gap-2 h-full">
+      <p className="label-overline">Status</p>
+      {evalResult ? (
+        <>
+          <span className={`status-pill ${statusPill} inline-flex`}>
+            <StatusIcon className="h-3 w-3" />
+            {riskBadgeLabel(evalResult.riskLevel)}
+          </span>
+          <p className="text-xs text-[color:var(--text-secondary)]">
+            {hasGaps
+              ? `${evalResult.gaps.length} gap${evalResult.gaps.length !== 1 ? "s" : ""} flagged · click to review`
+              : "No open gaps"}
+          </p>
+        </>
+      ) : (
+        <span className="status-pill status-pending">No rule</span>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="shell-page-title">Welcome, {userName ?? userEmail}</h1>
+          <p className="shell-page-sub">{userEmail}</p>
+          {rule && (
+            <p className="mt-1 text-sm font-mono text-[color:var(--text-secondary)]">
+              {rule.jurisdiction} {rule.license_code} · v{rule.version}
+            </p>
+          )}
+        </div>
+        {rule && (
           <Link
             href={`/dashboard/roster/${userId}`}
-            className="inline-flex items-center gap-1.5 rounded-sm bg-primary text-primary-foreground hover:bg-primary/90 px-3 h-9 text-sm font-medium shadow-sm"
+            className="inline-flex items-center gap-1.5 rounded-sm bg-[color:var(--ink-900)] text-[color:var(--paper-50)] dark:bg-[color:var(--paper-50)] dark:text-[color:var(--ink-900)] hover:opacity-90 px-3 h-9 text-sm font-medium"
           >
             View full record
             <ArrowRight className="h-4 w-4" />
           </Link>
+        )}
+      </div>
+
+      {isOnLeave && (
+        <div className="panel border-l-[3px] border-l-[color:var(--warn-500)]">
+          <span className="status-pill status-warn mb-2 inline-flex">
+            <AlertTriangle className="h-3 w-3" />
+            On leave
+          </span>
+          <p className="text-sm text-[color:var(--text-primary)]">
+            Your supervision hour clock is paused. Reminders and cadence checks
+            stop until HR flips your status back to active in Paycor.
+          </p>
         </div>
       )}
+      {isPrn && (
+        <p className="text-sm text-[color:var(--text-secondary)] flex items-center gap-2 flex-wrap">
+          <span className="status-pill status-pending">PRN</span>
+          You&apos;ll still receive supervision reminders so they happen whenever
+          you next pick up shifts.
+        </p>
+      )}
 
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <p className="label-overline mb-2">Practice hours</p>
-            <p className="font-display text-3xl font-bold text-foreground">
-              {practiceHours.toFixed(1)}{" "}
-              <span className="text-base font-normal text-foreground/60">
-                / {practiceRequired}
-              </span>
-            </p>
-            <div className="mt-3 h-1.5 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[color:var(--color-gold)] transition-all"
-                style={{ width: `${Math.min(100, practicePct)}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="panel flex flex-col gap-2">
+          <p className="label-overline">Practice hours</p>
+          <p className="font-mono text-3xl font-bold leading-none text-[color:var(--text-primary)]">
+            {practiceHours.toFixed(1)}
+            <span className="text-base font-normal text-[color:var(--text-muted)]"> / {practiceRequired}</span>
+          </p>
+          <div className="mt-1 h-2 rounded-full overflow-hidden bg-[color:var(--ink-100)] dark:bg-[rgba(250,247,240,0.12)]">
+            <div className="h-full bg-[color:var(--seal-gold)]" style={{ width: `${Math.min(100, practicePct)}%` }} />
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-6">
-            <p className="label-overline mb-2">Supervision hours</p>
-            <p className="font-display text-3xl font-bold text-foreground">
-              {supervisionHours.toFixed(1)}{" "}
-              <span className="text-base font-normal text-foreground/60">
-                / {supervisionRequired}
-              </span>
-            </p>
-            <div className="mt-3 h-1.5 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[color:var(--color-gold)] transition-all"
-                style={{ width: `${Math.min(100, supervisionPct)}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="panel flex flex-col gap-2">
+          <p className="label-overline">Supervision hours</p>
+          <p className="font-mono text-3xl font-bold leading-none text-[color:var(--text-primary)]">
+            {supervisionHours.toFixed(1)}
+            <span className="text-base font-normal text-[color:var(--text-muted)]"> / {supervisionRequired}</span>
+          </p>
+          <div className="mt-1 h-2 rounded-full overflow-hidden bg-[color:var(--ink-100)] dark:bg-[rgba(250,247,240,0.12)]">
+            <div className="h-full bg-[color:var(--seal-gold)]" style={{ width: `${Math.min(100, supervisionPct)}%` }} />
+          </div>
+        </div>
 
-        {(() => {
-          // Only wrap the Status card in a Link when there are gaps to
-          // navigate to — the #gaps anchor on the detail page only
-          // renders when gaps.length > 0, so an unconditional link
-          // would scroll-to-nothing for clean accounts.
-          const hasGaps = !!(evalResult && evalResult.gaps.length > 0);
-          const card = (
-            <Card
-              className={
-                hasGaps
-                  ? "hover:bg-accent/40 transition-colors cursor-pointer h-full"
-                  : "h-full"
-              }
-            >
-              <CardContent className="p-6">
-                <p className="label-overline mb-2">Status</p>
-                {evalResult ? (
-                  <>
-                    <Badge variant={riskBadgeVariant(evalResult.riskLevel)}>
-                      {riskBadgeLabel(evalResult.riskLevel)}
-                    </Badge>
-                    {evalResult.gaps.length > 0 ? (
-                      <p className="mt-3 text-xs text-foreground/60">
-                        {evalResult.gaps.length} gap
-                        {evalResult.gaps.length !== 1 ? "s" : ""} flagged
-                        &middot; click to review
-                      </p>
-                    ) : (
-                      <p className="mt-3 text-xs text-foreground/60">
-                        No open gaps
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <Badge variant="outline">No rule</Badge>
-                )}
-              </CardContent>
-            </Card>
-          );
-          return hasGaps ? (
-            <Link
-              href={`/dashboard/roster/${userId}#gaps`}
-              aria-label="Open compliance gaps"
-            >
-              {card}
-            </Link>
-          ) : (
-            card
-          );
-        })()}
+        {hasGaps ? (
+          <Link href={`/dashboard/roster/${userId}#gaps`} aria-label="Open compliance gaps" className="block h-full">
+            {statusBody}
+          </Link>
+        ) : (
+          statusBody
+        )}
 
         {pendingForMe.length > 0 ? (
-          <a
-            href="#session-log"
-            aria-label="Jump to pending signatures"
-            className="block"
-          >
-            <Card className="hover:bg-accent/40 transition-colors cursor-pointer h-full">
-              <CardContent className="p-6">
-                <p className="label-overline mb-2">Pending signatures</p>
-                <p className="font-display text-3xl font-bold text-[color:var(--color-warning)]">
-                  {pendingForMe.length}
-                </p>
-                <p className="mt-1 text-sm text-foreground/60">
-                  supervision session{pendingForMe.length === 1 ? "" : "s"}
-                  &middot; click to sign
-                </p>
-              </CardContent>
-            </Card>
+          <a href="#session-log" aria-label="Jump to pending signatures" className="block h-full">
+            <div className="panel panel-hero flex flex-col gap-2 h-full transition-[filter] hover:brightness-[0.97]">
+              <FileSignature className="h-5 w-5 text-[color:var(--ink-900)]" strokeWidth={2} />
+              <p className="font-display text-3xl font-bold leading-none text-[color:var(--ink-900)]">
+                {pendingForMe.length}
+              </p>
+              <p className="label-overline !text-[color:var(--ink-900)]/70">Pending signatures · sign now</p>
+            </div>
           </a>
         ) : (
-          <Card className="h-full">
-            <CardContent className="p-6">
-              <p className="label-overline mb-2">Pending signatures</p>
-              <p className="font-display text-3xl font-bold text-foreground">
-                0
-              </p>
-              <p className="mt-1 text-sm text-foreground/60">All caught up</p>
-            </CardContent>
-          </Card>
+          <div className="panel flex flex-col gap-2 h-full">
+            <p className="label-overline">Pending signatures</p>
+            <p className="font-display text-3xl font-bold leading-none text-[color:var(--text-primary)]">0</p>
+            <p className="text-sm text-[color:var(--text-secondary)]">All caught up</p>
+          </div>
         )}
       </div>
 
@@ -251,8 +206,8 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
       />
 
       {events.length > 0 && (
-        <div className="mt-10" id="session-log">
-          <h2 className="font-display text-xl font-semibold text-foreground mb-4">
+        <section id="session-log">
+          <h2 className="font-display text-xl font-semibold text-[color:var(--text-primary)] mb-4">
             Session log
           </h2>
           <SessionLog
@@ -272,17 +227,13 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
             superviseeId={userId}
             superviseeState={null}
           />
-        </div>
+        </section>
       )}
 
-      <div className="mt-10">
-        <Card>
-          <CardContent className="p-6">
-            <p className="label-overline mb-3">Log practice hours</p>
-            <LogSessionForm superviseeId={userId} allowSupervision={false} />
-          </CardContent>
-        </Card>
+      <div className="panel">
+        <p className="label-overline mb-3">Log practice hours</p>
+        <LogSessionForm superviseeId={userId} allowSupervision={false} />
       </div>
-    </div>
+    </>
   );
 }
