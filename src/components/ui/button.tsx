@@ -12,12 +12,14 @@ const buttonVariants = cva(
         default:
           "bg-[color:var(--halo-yellow)] text-[color:var(--ink-900)] hover:bg-[color:var(--halo-yellow-hover)]",
         secondary:
-          "bg-[color:var(--ink-900)] text-[color:var(--paper-50)] hover:bg-[color:var(--ink-800)]",
+          "bg-[color:var(--ink-900)] text-[color:var(--paper-50)] hover:bg-[color:var(--ink-800)] dark:bg-[color:var(--paper-50)] dark:text-[color:var(--ink-900)] dark:hover:bg-[color:var(--ink-200)]",
+        // Neutral variants author against flipping tokens so they stay legible
+        // in dark mode (design-system-v2.md §3.2, §6.2).
         outline:
-          "border border-[color:var(--ink-200)] bg-transparent text-[color:var(--ink-900)] hover:border-[color:var(--ink-900)] hover:bg-[color:var(--ink-100)]",
+          "border border-[color:var(--border)] bg-transparent text-[color:var(--text-primary)] hover:border-[color:var(--border-strong)] hover:bg-[color:var(--surface-muted)]",
         ghost:
-          "text-[color:var(--ink-900)] hover:bg-[color:var(--ink-100)]",
-        link: "text-[color:var(--ink-900)] font-semibold underline decoration-2 decoration-[color:var(--halo-yellow)] underline-offset-4 hover:text-[color:var(--ink-600)]",
+          "text-[color:var(--text-primary)] hover:bg-[color:var(--surface-muted)]",
+        link: "text-[color:var(--text-primary)] font-semibold underline decoration-2 decoration-[color:var(--halo-yellow)] underline-offset-4 hover:text-[color:var(--text-secondary)]",
         destructive:
           "bg-[color:var(--risk-700)] text-white hover:bg-[color:var(--risk-900)]",
       },

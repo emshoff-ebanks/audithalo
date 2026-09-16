@@ -146,14 +146,14 @@ export function CalendarView({
   }, [view, anchor]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-10 space-y-6">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="label-overline mb-1">Calendar</p>
-          <h1 className="font-display text-3xl font-semibold text-foreground">
+          <p className="shell-eyebrow">Calendar</p>
+          <h1 className="shell-page-title mt-1">
             {viewerIsHrAdmin ? "Org calendar" : "Your calendar"}
           </h1>
-          <p className="text-sm text-foreground/60 mt-1">
+          <p className="shell-page-sub">
             {viewerIsHrAdmin
               ? "Every supervision session across your organization."
               : "Supervision sessions on your roster."}
@@ -199,21 +199,17 @@ export function CalendarView({
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <span className="ml-2 text-sm font-medium text-foreground">
+          <span className="ml-2 text-sm font-medium text-[color:var(--text-primary)]">
             {headerLabel}
           </span>
         </div>
-        <div className="inline-flex rounded-md border border-border bg-card p-0.5 text-xs">
+        <div className="inline-flex items-center gap-1.5">
           {(["week", "month", "list"] as ViewMode[]).map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => setView(v)}
-              className={`px-3 py-1 rounded-sm transition-colors capitalize ${
-                view === v
-                  ? "bg-foreground text-background"
-                  : "text-foreground/70 hover:bg-accent"
-              }`}
+              className={`chip capitalize ${view === v ? "chip-active" : ""}`}
             >
               {v}
             </button>
@@ -229,10 +225,10 @@ export function CalendarView({
         onStatusesChange={setSelectedStatuses}
       />
 
-      <div className="rounded-md border border-border bg-card">
+      <div className="panel panel-flush overflow-hidden">
         {visibleEvents.length === 0 ? (
-          <div className="px-6 py-12 text-center text-foreground/60 text-sm">
-            <CalIcon className="h-6 w-6 mx-auto mb-2 text-foreground/40" />
+          <div className="px-6 py-12 text-center text-[color:var(--text-muted)] text-sm">
+            <CalIcon className="h-6 w-6 mx-auto mb-2 text-[color:var(--text-muted)]" />
             No sessions match these filters in this range.
           </div>
         ) : view === "week" ? (
