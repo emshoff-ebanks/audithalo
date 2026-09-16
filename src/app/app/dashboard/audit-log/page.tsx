@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { eq, desc, inArray, and } from "drizzle-orm";
 import { auth } from "@/auth";
 import {
@@ -10,8 +9,6 @@ import {
   isManagerRole,
 } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AuditLogExportForm } from "./_export-form";
 
@@ -84,49 +81,40 @@ export default async function AuditLogPage({
   const actorMap = new Map(actors.map((u) => [u.id, u]));
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8 sm:py-12">
-      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
-        <Link href="/dashboard">
-          <ArrowLeft />
-          Back to dashboard
-        </Link>
-      </Button>
-
-      <Badge variant="outline" className="mb-3">Audit log · {org?.name ?? "Practice"}</Badge>
-      <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
-        Audit log
-      </h1>
-      <p className="mt-3 text-foreground/70 max-w-2xl">
-        Every state-changing action in your practice is recorded here, with who
-        did it, when, and what changed. Retained for {retentionYears}{" "}
-        year{retentionYears === 1 ? "" : "s"}.
-      </p>
+    <div className="flex flex-col gap-6">
+      <div>
+        <p className="shell-eyebrow">Audit log · {org?.name ?? "Practice"}</p>
+        <h1 className="shell-page-title mt-1">Audit log</h1>
+        <p className="shell-page-sub max-w-2xl">
+          Every state-changing action in your practice is recorded here, with who
+          did it, when, and what changed. Retained for {retentionYears}{" "}
+          year{retentionYears === 1 ? "" : "s"}.
+        </p>
+      </div>
 
       {showExport && (
-        <Card className="mt-6">
-          <CardContent className="p-6">
-            <p className="label-overline mb-1">Export audit log</p>
-            <p className="text-sm text-foreground/60 mb-4">
-              {exportRequiresTotp
-                ? "Streams up to 10,000 rows. Confirm with 2FA to download."
-                : "Streams up to 10,000 rows. Read-only oversight export."}
-            </p>
-            <AuditLogExportForm requireTotp={exportRequiresTotp} />
-          </CardContent>
-        </Card>
+        <div className="panel">
+          <p className="label-overline mb-1">Export audit log</p>
+          <p className="text-sm text-[color:var(--text-muted)] mb-4">
+            {exportRequiresTotp
+              ? "Streams up to 10,000 rows. Confirm with 2FA to download."
+              : "Streams up to 10,000 rows. Read-only oversight export."}
+          </p>
+          <AuditLogExportForm requireTotp={exportRequiresTotp} />
+        </div>
       )}
 
       {/* Action filter — simple <form> with GET method so filter is in the URL */}
-      <form className="mt-6 flex flex-wrap items-end gap-3">
+      <form className="flex flex-wrap items-end gap-3">
         <div>
-          <label htmlFor="action" className="block text-xs text-foreground/60 mb-1">
+          <label htmlFor="action" className="block text-xs text-[color:var(--text-muted)] mb-1">
             Filter by action
           </label>
           <select
             id="action"
             name="action"
             defaultValue={actionFilter ?? ""}
-            className="h-9 rounded-sm border border-input bg-card px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-9 rounded-sm border border-[color:var(--border)] bg-[color:var(--paper-white)] dark:bg-[color:var(--surface-muted)] px-2 py-1 text-sm text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--halo-yellow)]"
           >
             <option value="">All actions</option>
             {Object.entries(ACTION_LABELS).map(([code, label]) => (
@@ -142,81 +130,77 @@ export default async function AuditLogPage({
         )}
       </form>
 
-      <Card className="mt-8">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[800px]">
-              <thead className="bg-accent">
-                <tr className="text-left">
-                  <th className="px-4 py-3 font-semibold whitespace-nowrap">When</th>
-                  <th className="px-4 py-3 font-semibold">Actor</th>
-                  <th className="px-4 py-3 font-semibold">Action</th>
-                  <th className="px-4 py-3 font-semibold">Resource</th>
-                  <th className="px-4 py-3 font-semibold">Details</th>
+      <div className="panel panel-flush overflow-x-auto">
+        <table className="w-full text-sm min-w-[800px]">
+          <thead>
+            <tr className="text-left border-b border-[color:var(--border)] bg-[color:var(--surface-muted)]">
+              <th className="px-4 py-3 label-overline whitespace-nowrap">When</th>
+              <th className="px-4 py-3 label-overline">Actor</th>
+              <th className="px-4 py-3 label-overline">Action</th>
+              <th className="px-4 py-3 label-overline">Resource</th>
+              <th className="px-4 py-3 label-overline">Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((e) => {
+              const actor = e.actorUserId ? actorMap.get(e.actorUserId) : null;
+              return (
+                <tr key={e.id} className="border-b border-[color:var(--divider)] hover:bg-[color:var(--surface-muted)] align-top">
+                  <td className="px-4 py-3 font-mono text-xs text-[color:var(--text-secondary)] whitespace-nowrap">
+                    {e.createdAt.toISOString().slice(0, 16).replace("T", " ")}Z
+                  </td>
+                  <td className="px-4 py-3">
+                    {actor ? (
+                      <>
+                        <span className="font-medium text-[color:var(--text-primary)]">{actor.name}</span>
+                        <span className="text-[color:var(--text-muted)] text-xs"> · {actor.email}</span>
+                      </>
+                    ) : (
+                      <span className="text-[color:var(--text-muted)] italic">system</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-[color:var(--text-primary)]">
+                    {ACTION_LABELS[e.action] ?? e.action}
+                  </td>
+                  <td className="px-4 py-3 text-[color:var(--text-secondary)] text-xs font-mono">
+                    {e.resourceType ? (
+                      <>
+                        <span>{e.resourceType}</span>
+                        {e.resourceId && (
+                          <>
+                            <br />
+                            <span className="text-[color:var(--text-muted)]">{e.resourceId.slice(0, 8)}…</span>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-[color:var(--text-muted)]">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-xs">
+                    {e.details && Object.keys(e.details).length > 0 ? (
+                      <pre className="font-mono text-[color:var(--text-secondary)] whitespace-pre-wrap break-words max-w-md">
+                        {JSON.stringify(e.details, null, 2)}
+                      </pre>
+                    ) : (
+                      <span className="text-[color:var(--text-muted)]">—</span>
+                    )}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {entries.map((e) => {
-                  const actor = e.actorUserId ? actorMap.get(e.actorUserId) : null;
-                  return (
-                    <tr key={e.id} className="border-t border-border hover:bg-accent/40 align-top">
-                      <td className="px-4 py-3 font-mono text-xs text-foreground/70 whitespace-nowrap">
-                        {e.createdAt.toISOString().slice(0, 16).replace("T", " ")}Z
-                      </td>
-                      <td className="px-4 py-3">
-                        {actor ? (
-                          <>
-                            <span className="font-medium">{actor.name}</span>
-                            <span className="text-foreground/50 text-xs"> · {actor.email}</span>
-                          </>
-                        ) : (
-                          <span className="text-foreground/40 italic">system</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {ACTION_LABELS[e.action] ?? e.action}
-                      </td>
-                      <td className="px-4 py-3 text-foreground/70 text-xs font-mono">
-                        {e.resourceType ? (
-                          <>
-                            <span>{e.resourceType}</span>
-                            {e.resourceId && (
-                              <>
-                                <br />
-                                <span className="text-foreground/40">{e.resourceId.slice(0, 8)}…</span>
-                              </>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-foreground/30">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-xs">
-                        {e.details && Object.keys(e.details).length > 0 ? (
-                          <pre className="font-mono text-foreground/70 whitespace-pre-wrap break-words max-w-md">
-                            {JSON.stringify(e.details, null, 2)}
-                          </pre>
-                        ) : (
-                          <span className="text-foreground/30">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {entries.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-foreground/50 text-sm">
-                      No entries{actionFilter ? ` matching "${ACTION_LABELS[actionFilter] ?? actionFilter}"` : " yet"}.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+              );
+            })}
+            {entries.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center text-[color:var(--text-muted)] text-sm">
+                  No entries{actionFilter ? ` matching "${ACTION_LABELS[actionFilter] ?? actionFilter}"` : " yet"}.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
-      <p className="mt-3 text-xs text-foreground/50">
+      <p className="text-xs text-[color:var(--text-muted)]">
         Showing the most recent 100 entries. Older entries are retained but require export to view.
       </p>
     </div>
