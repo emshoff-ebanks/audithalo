@@ -2,17 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AuditHaloMark } from "@/components/brand/AuditHaloMark";
 import { NAV_GROUPS, type AppRole, type NavItem } from "./nav-config";
-
-/** AuditHalo mark — sound-wave halo, seal-gold (brand-book §3, B1). */
-function BrandMark() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-      <path d="M12 3a9 9 0 1 0 9 9" />
-      <circle cx="12" cy="12" r="3" fill="currentColor" />
-    </svg>
-  );
-}
 
 function isActive(pathname: string, item: NavItem, allHrefs: string[]): boolean {
   if (item.exact) return pathname === item.href;
@@ -44,7 +35,7 @@ export function SidebarNav({
   return (
     <>
       <Link href="/dashboard" className="shell-brand" onClick={onNavigate}>
-        <BrandMark />
+        <AuditHaloMark className="h-[22px] w-[22px]" />
         <span className="shell-brand-text">AuditHalo</span>
       </Link>
 
