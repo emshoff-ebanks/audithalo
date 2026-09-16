@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { and, eq, inArray, desc } from "drizzle-orm";
-import { ArrowLeft, ArrowRight, AlertTriangle, Plus } from "lucide-react";
+import { ArrowRight, AlertTriangle, Plus } from "lucide-react";
 import { auth } from "@/auth";
 import { canManageOrg, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { getRule } from "@/lib/rules/loader";
 import { isCustomRuleId } from "@/lib/rules/overrides";
 import { summarizeOverrideDiff } from "@/lib/rules/diff";
@@ -138,22 +137,11 @@ export default async function RulesAdminPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-12 space-y-8">
-      <Button asChild variant="ghost" size="sm" className="-ml-3">
-        <Link href="/dashboard/team">
-          <ArrowLeft />
-          Back to team
-        </Link>
-      </Button>
-
+    <div className="flex flex-col gap-8">
       <div>
-        <Badge variant="outline" className="mb-3">
-          State rules
-        </Badge>
-        <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
-          Customize your state rules
-        </h1>
-        <p className="mt-3 text-foreground/70 max-w-2xl">
+        <p className="shell-eyebrow">State rules</p>
+        <h1 className="shell-page-title mt-1">Customize your state rules</h1>
+        <p className="shell-page-sub max-w-2xl">
           Tighten a board rule for internal policy, or define a custom rule
           for a state we haven&apos;t shipped canonical guidance for yet.
           Canonical rules are board-verified and edited only by AuditHalo
@@ -161,14 +149,14 @@ export default async function RulesAdminPage() {
         </p>
       </div>
 
-      <div className="rounded-sm border border-[color:var(--color-risk)]/50 bg-[color:var(--color-risk)]/8 p-4 flex gap-3">
-        <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--color-risk)]" />
+      <div className="panel panel-tight border-l-[3px] border-l-[color:var(--risk-600)] flex gap-3">
+        <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--risk-600)]" />
         <div className="space-y-2 text-sm">
-          <p className="font-medium text-foreground">
+          <p className="font-medium text-[color:var(--text-primary)]">
             Customizing a state rule changes how AuditHalo evaluates your
             supervisees&apos; progress &mdash; for your org only.
           </p>
-          <p className="text-foreground/70">
+          <p className="text-[color:var(--text-secondary)]">
             If your custom values disagree with the actual board requirement,
             AuditHalo will not catch you. Every canonical rule shown below has
             a citation URL you can click through to verify against the live
@@ -183,20 +171,18 @@ export default async function RulesAdminPage() {
           Canonical rules in use ({canonicalRulesInUse.length})
         </h2>
         {canonicalRulesInUse.length === 0 ? (
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-foreground/70">
-                No supervisees have a state rule assigned yet.{" "}
-                <Link
-                  href="/dashboard/roster"
-                  className="text-secondary font-medium hover:underline"
-                >
-                  Open the roster
-                </Link>{" "}
-                to assign one.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="panel">
+            <p className="text-sm text-[color:var(--text-secondary)]">
+              No supervisees have a state rule assigned yet.{" "}
+              <Link
+                href="/dashboard/roster"
+                className="text-[color:var(--text-primary)] font-medium underline"
+              >
+                Open the roster
+              </Link>{" "}
+              to assign one.
+            </p>
+          </div>
         ) : (
           <ul className="space-y-2">
             {canonicalRulesInUse.map(({ id, rule }) => {
@@ -205,39 +191,35 @@ export default async function RulesAdminPage() {
               );
               return (
                 <li key={id}>
-                  <Card>
-                    <CardContent className="p-4 flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-medium text-foreground">
-                            {rule.jurisdiction} {rule.license_code} v{rule.version}
-                          </p>
-                          {hasOverride && (
-                            <Badge variant="outline-warn" className="text-[10px]">
-                              Override active
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-foreground/60">
-                          {rule.license_name} &middot;{" "}
-                          <a
-                            href={rule.citation.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline hover:no-underline"
-                          >
-                            {rule.citation.admincode}
-                          </a>
+                  <div className="panel panel-tight flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium text-[color:var(--text-primary)]">
+                          {rule.jurisdiction} {rule.license_code} v{rule.version}
                         </p>
+                        {hasOverride && (
+                          <span className="status-pill status-warn">Override active</span>
+                        )}
                       </div>
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/dashboard/team/rules/${id}`}>
-                          {hasOverride ? "Edit override" : "Customize"}
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
+                      <p className="text-xs text-[color:var(--text-muted)] font-mono">
+                        {rule.license_name} &middot;{" "}
+                        <a
+                          href={rule.citation.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          {rule.citation.admincode}
+                        </a>
+                      </p>
+                    </div>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/dashboard/team/rules/${id}`}>
+                        {hasOverride ? "Edit override" : "Customize"}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
                 </li>
               );
             })}
@@ -251,14 +233,11 @@ export default async function RulesAdminPage() {
           Active overrides ({overrideRows.length})
         </h2>
         {overrideRows.length === 0 ? (
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-foreground/70">
-                No active overrides. Use &quot;Customize&quot; above to
-                create one.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="panel">
+            <p className="text-sm text-[color:var(--text-secondary)]">
+              No active overrides. Use &quot;Customize&quot; above to create one.
+            </p>
+          </div>
         ) : (
           <ul className="space-y-2">
             {overrideRows.map((row) => {
@@ -374,48 +353,35 @@ export default async function RulesAdminPage() {
               }
               return (
                 <li key={row.id}>
-                  <Card>
-                    <CardContent className="p-4 space-y-3">
+                  <div className="panel panel-tight space-y-3">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0 space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-medium text-foreground">
+                            <p className="font-medium text-[color:var(--text-primary)]">
                               {row.label}
                             </p>
                             {counter && (
                               <span className="inline-flex flex-wrap gap-1.5">
                                 {counter.tighter > 0 && (
-                                  <Badge
-                                    variant="outline-warn"
-                                    className="text-[9px]"
-                                    title="Fields where your override is stricter than canonical."
-                                  >
+                                  <span className="status-pill status-warn" title="Fields where your override is stricter than canonical.">
                                     {counter.tighter} tighter
-                                  </Badge>
+                                  </span>
                                 )}
                                 {counter.looser > 0 && (
-                                  <Badge
-                                    variant="risk"
-                                    className="text-[9px]"
-                                    title="Fields or checks where your override is more permissive than canonical."
-                                  >
+                                  <span className="status-pill status-risk" title="Fields or checks where your override is more permissive than canonical.">
                                     {counter.looser} looser
-                                  </Badge>
+                                  </span>
                                 )}
                                 {counter.removed > 0 && (
-                                  <Badge
-                                    variant="risk"
-                                    className="text-[9px]"
-                                    title="Canonical checks your override has disabled."
-                                  >
+                                  <span className="status-pill status-risk" title="Canonical checks your override has disabled.">
                                     {counter.removed} removed
-                                  </Badge>
+                                  </span>
                                 )}
                               </span>
                             )}
                           </div>
                           <p
-                            className="text-xs text-foreground/60"
+                            className="text-xs text-[color:var(--text-muted)]"
                             title={row.canonicalRuleId ?? undefined}
                           >
                             on{" "}
@@ -451,8 +417,7 @@ export default async function RulesAdminPage() {
                         overrideId={row.id}
                         diffSlot={diffSlot}
                       />
-                    </CardContent>
-                  </Card>
+                  </div>
                 </li>
               );
             })}
@@ -474,15 +439,13 @@ export default async function RulesAdminPage() {
           </Button>
         </div>
         {customRows.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 space-y-2">
-              <p className="text-sm text-foreground/70">
-                No custom rules yet. Build one for a state we haven&apos;t
-                shipped canonical YAML for. You supply the board citation
-                and AuditHalo runs the same evaluator against it.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="panel">
+            <p className="text-sm text-[color:var(--text-secondary)]">
+              No custom rules yet. Build one for a state we haven&apos;t
+              shipped canonical YAML for. You supply the board citation
+              and AuditHalo runs the same evaluator against it.
+            </p>
+          </div>
         ) : (
           <ul className="space-y-2">
             {customRows.map((row) => {
@@ -491,32 +454,28 @@ export default async function RulesAdminPage() {
               const count = superviseeCountByRuleId.get(customId) ?? 0;
               return (
                 <li key={row.id}>
-                  <Card>
-                    <CardContent className="p-4 flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-medium text-foreground">{row.label}</p>
-                          <Badge variant="outline" className="text-[10px]">
-                            Org-created
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-foreground/60">
-                          {row.jurisdiction} {row.licenseCode} v{row.version}
-                          {" · "}
-                          {count} {count === 1 ? "supervisee" : "supervisees"} assigned
-                          {" · "}
-                          created by{" "}
-                          {editorById.get(row.createdBy) ?? "an HR Admin"}
-                        </p>
+                  <div className="panel panel-tight flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium text-[color:var(--text-primary)]">{row.label}</p>
+                        <span className="status-pill status-pending">Org-created</span>
                       </div>
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/dashboard/team/rules/custom/${row.id}`}>
-                          Open editor
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
+                      <p className="text-xs text-[color:var(--text-muted)]">
+                        <span className="font-mono">{row.jurisdiction} {row.licenseCode} v{row.version}</span>
+                        {" · "}
+                        {count} {count === 1 ? "supervisee" : "supervisees"} assigned
+                        {" · "}
+                        created by{" "}
+                        {editorById.get(row.createdBy) ?? "an HR Admin"}
+                      </p>
+                    </div>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/dashboard/team/rules/custom/${row.id}`}>
+                        Open editor
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
                 </li>
               );
             })}
