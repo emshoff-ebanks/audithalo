@@ -3,7 +3,6 @@ import { redirect, notFound } from "next/navigation";
 import { and, eq, desc, isNull } from "drizzle-orm";
 import {
   AlertTriangle,
-  ArrowLeft,
   CheckCircle2,
   Download,
   FileSignature,
@@ -16,12 +15,8 @@ import {
   isCustomRuleId,
   latestVersionForState,
   loadAllRules,
-  toneClasses,
 } from "@/lib/rules";
 import { resolveEvaluationWithOverrides } from "@/lib/rules/evaluation-context-with-overrides";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { AssignRuleForm } from "./assign-rule-form";
 import { SessionsPanel } from "./sessions-panel";
 import { RuleSummaryCard } from "./rule-summary-card";
@@ -44,12 +39,12 @@ function ProgressBar({ pct, label }: { pct: number; label: string }) {
   return (
     <div>
       <div className="flex justify-between text-sm mb-1.5">
-        <span className="text-foreground/70">{label}</span>
-        <span className="font-mono text-foreground">{clamped.toFixed(1)}%</span>
+        <span className="text-[color:var(--text-secondary)]">{label}</span>
+        <span className="font-mono text-[color:var(--text-primary)]">{clamped.toFixed(1)}%</span>
       </div>
-      <div className="h-2 bg-muted rounded-full overflow-hidden">
+      <div className="h-2 rounded-full overflow-hidden bg-[color:var(--ink-100)] dark:bg-[rgba(250,247,240,0.12)]">
         <div
-          className="h-full bg-[color:var(--color-gold)] transition-all"
+          className="h-full bg-[color:var(--seal-gold)]"
           style={{ width: `${clamped}%` }}
         />
       </div>
@@ -473,48 +468,32 @@ export default async function SuperviseeDetailPage({
   })();
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
-      {viewerIsManager && (
-        <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
-          <Link href="/dashboard/roster">
-            <ArrowLeft />
-            Back to roster
-          </Link>
-        </Button>
-      )}
-
-      <Badge variant="outline" className="mb-3">
-        {viewerIsManager ? "Supervisee" : "Your account"}
-      </Badge>
-      <h1 className="font-display text-4xl font-semibold text-foreground">
-        {supervisee.name}
-      </h1>
-      <p className="mt-2 text-foreground/70">{supervisee.email}</p>
+    <>
+      <div>
+        <p className="shell-eyebrow">{viewerIsManager ? "Supervisee" : "Your account"}</p>
+        <h1 className="shell-page-title mt-1">{supervisee.name}</h1>
+        <p className="shell-page-sub">{supervisee.email}</p>
+      </div>
 
       {viewerIsHrAdmin && (
-        <Card className="mt-6 bg-accent/40">
-          <CardContent className="p-4">
-            <p className="label-overline mb-2">Primary supervisor</p>
-            {activeSupervisorOptions.length > 0 ? (
-              <ReassignSupervisorDropdown
-                superviseeId={superviseeId}
-                currentSupervisorId={currentSupervisorId}
-                supervisors={activeSupervisorOptions}
-              />
-            ) : (
-              <p className="text-sm text-foreground/70">
-                No active supervisors in this org yet.{" "}
-                <Link
-                  href="/dashboard/team"
-                  className="underline text-foreground"
-                >
-                  Invite a supervisor
-                </Link>{" "}
-                before assigning.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <div className="panel panel-tight">
+          <p className="label-overline mb-2">Primary supervisor</p>
+          {activeSupervisorOptions.length > 0 ? (
+            <ReassignSupervisorDropdown
+              superviseeId={superviseeId}
+              currentSupervisorId={currentSupervisorId}
+              supervisors={activeSupervisorOptions}
+            />
+          ) : (
+            <p className="text-sm text-[color:var(--text-secondary)]">
+              No active supervisors in this org yet.{" "}
+              <Link href="/dashboard/team" className="underline text-[color:var(--text-primary)]">
+                Invite a supervisor
+              </Link>{" "}
+              before assigning.
+            </p>
+          )}
+        </div>
       )}
 
       {ruleVersionDrift && assignment && (
@@ -529,18 +508,16 @@ export default async function SuperviseeDetailPage({
       )}
 
       {!rule && (
-        <div className="mt-6 rounded-md border border-[color:var(--color-warning)]/30 bg-[color:var(--color-warning)]/5 p-4">
+        <div className="panel panel-tight border-l-[3px] border-l-[color:var(--warn-500)]">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--color-warning)]" />
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--warn-500)]" />
             <div>
-              <p className="font-medium text-[color:var(--color-warning)]">
-                {viewerCanSupervise
+              <p className="font-medium text-[color:var(--text-primary)]">
+                {viewerCanSupervise || viewerIsManager
                   ? "No state rule assigned"
-                  : viewerIsManager
-                    ? "No state rule assigned"
-                    : "No state rule assigned yet"}
+                  : "No state rule assigned yet"}
               </p>
-              <p className="mt-1 text-sm text-foreground/70">
+              <p className="mt-1 text-sm text-[color:var(--text-secondary)]">
                 {viewerCanSupervise
                   ? "This supervisee’s compliance tracking is paused. Assign a state rule below to start tracking hours and audit readiness."
                   : viewerIsManager
@@ -553,54 +530,52 @@ export default async function SuperviseeDetailPage({
       )}
 
       {!rule ? (
-        <Card className="mt-10">
-          <CardContent className="p-6">
-            <Badge variant="warning" className="mb-3">
-              No rule assigned
-            </Badge>
-            {viewerCanSupervise ? (
-              <>
-                <h2 className="font-display text-xl font-semibold text-foreground">
-                  Assign a state rule
-                </h2>
-                <p className="mt-2 text-foreground/70">
-                  Pick the state and license type this supervisee is working toward. Their
-                  hour progress and at-risk flags only start once a rule is assigned.
-                </p>
-                <AssignRuleForm
-                  superviseeId={superviseeId}
-                  availableRules={allRules}
-                  guidance={ruleGuidance}
-                />
-              </>
-            ) : viewerIsManager ? (
-              <>
-                <h2 className="font-display text-xl font-semibold text-foreground">
-                  No rule assigned yet.
-                </h2>
-                <p className="mt-2 text-foreground/70">
-                  This supervisee&apos;s licensed supervisor hasn&apos;t picked a state rule yet.
-                  Hour progress and at-risk flags will start once they do.
-                </p>
-              </>
-            ) : (
-              <>
-                <h2 className="font-display text-xl font-semibold text-foreground">
-                  Your supervisor hasn&apos;t assigned your state rule yet.
-                </h2>
-                <p className="mt-2 text-foreground/70">
-                  Reach out to your supervisor so they can pick the right rule (e.g., NC
-                  LCMHCA). Once they do, your hour progress and at-risk flags will start
-                  filling in here.
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <div className="panel">
+          <span className="status-pill status-warn mb-3 inline-flex">
+            <AlertTriangle className="h-3 w-3" />
+            No rule assigned
+          </span>
+          {viewerCanSupervise ? (
+            <>
+              <h2 className="font-display text-xl font-semibold text-[color:var(--text-primary)] mt-1">
+                Assign a state rule
+              </h2>
+              <p className="mt-2 text-[color:var(--text-secondary)]">
+                Pick the state and license type this supervisee is working toward. Their
+                hour progress and at-risk flags only start once a rule is assigned.
+              </p>
+              <AssignRuleForm
+                superviseeId={superviseeId}
+                availableRules={allRules}
+                guidance={ruleGuidance}
+              />
+            </>
+          ) : viewerIsManager ? (
+            <>
+              <h2 className="font-display text-xl font-semibold text-[color:var(--text-primary)] mt-1">
+                No rule assigned yet.
+              </h2>
+              <p className="mt-2 text-[color:var(--text-secondary)]">
+                This supervisee&apos;s licensed supervisor hasn&apos;t picked a state rule yet.
+                Hour progress and at-risk flags will start once they do.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="font-display text-xl font-semibold text-[color:var(--text-primary)] mt-1">
+                Your supervisor hasn&apos;t assigned your state rule yet.
+              </h2>
+              <p className="mt-2 text-[color:var(--text-secondary)]">
+                Reach out to your supervisor so they can pick the right rule (e.g., NC
+                LCMHCA). Once they do, your hour progress and at-risk flags will start
+                filling in here.
+              </p>
+            </>
+          )}
+        </div>
       ) : (
-        <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2">
-            <CardContent className="p-6 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+          <div className="panel lg:col-span-2 flex flex-col gap-6">
               <RuleSummaryCard
                 superviseeId={superviseeId}
                 viewerCanSupervise={viewerCanSupervise}
@@ -656,39 +631,33 @@ export default async function SuperviseeDetailPage({
               )}
 
               {evalResult && evalResult.gaps.length === 0 && (
-                <div className={(() => {
-                  const t = toneClasses("success");
-                  return `flex gap-3 p-3 rounded-sm text-sm border ${t.border} ${t.bg}`;
-                })()}>
-                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--color-success)]" />
-                  <span className="text-foreground/80">
+                <div className="flex gap-3 p-3 rounded-[8px] text-sm border border-[color:var(--ok-700)]/30 bg-[color:var(--ok-50)] dark:bg-[rgba(30,138,84,0.1)]">
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--ok-700)]" />
+                  <span className="text-[color:var(--text-primary)]">
                     All checks pass. Hours are accruing correctly under{" "}
                     {rule.jurisdiction} {rule.license_code} v{rule.version}.
                   </span>
                 </div>
               )}
-            </CardContent>
-          </Card>
+          </div>
 
-          <Card>
-            <CardContent className="p-6">
-              <SessionsPanel
-                superviseeId={superviseeId}
-                viewerCanSupervise={viewerCanSupervise}
-                viewerCanScheduleSession={viewerCanScheduleSession}
-                connectedProviders={viewerConnectedProviders}
-                hostingSupervisorName={
-                  viewerCanSupervise ? null : hostingSupervisorNameForPage
-                }
-                hasAssignedSupervisor={
-                  !!hostingSupervisorIdForPage || viewerCanSupervise
-                }
-                groupCandidates={groupCandidates}
-                supervisorCredentials={viewerCredentials}
-                contractFiled={!!assignment?.supervisionContractFiledAt}
-              />
-            </CardContent>
-          </Card>
+          <div className="panel">
+            <SessionsPanel
+              superviseeId={superviseeId}
+              viewerCanSupervise={viewerCanSupervise}
+              viewerCanScheduleSession={viewerCanScheduleSession}
+              connectedProviders={viewerConnectedProviders}
+              hostingSupervisorName={
+                viewerCanSupervise ? null : hostingSupervisorNameForPage
+              }
+              hasAssignedSupervisor={
+                !!hostingSupervisorIdForPage || viewerCanSupervise
+              }
+              groupCandidates={groupCandidates}
+              supervisorCredentials={viewerCredentials}
+              contractFiled={!!assignment?.supervisionContractFiledAt}
+            />
+          </div>
         </div>
       )}
 
@@ -699,146 +668,129 @@ export default async function SuperviseeDetailPage({
         );
         if (pendingPractice.length === 0) return null;
         return (
-          <Card className="mt-6">
-            <CardContent className="p-6">
-              <PracticeReviewQueue
-                entries={pendingPractice.map((e) => ({
-                  id: e.id,
-                  date: e.date.toISOString().slice(0, 10),
-                  durationHours: e.durationHours,
-                  directContactHours: e.directContactHours,
-                  practiceState: e.practiceState,
-                }))}
-              />
-            </CardContent>
-          </Card>
+          <div className="panel">
+            <PracticeReviewQueue
+              entries={pendingPractice.map((e) => ({
+                id: e.id,
+                date: e.date.toISOString().slice(0, 10),
+                durationHours: e.durationHours,
+                directContactHours: e.directContactHours,
+                practiceState: e.practiceState,
+              }))}
+            />
+          </div>
         );
       })()}
 
       {/* Order on this page: Session log (most-touched) → Evidence packages
           (sealed history) → Completed compliance tasks (rarely-touched
           attestation receipts at the bottom). */}
-      <Card id="session-log" className="mt-6">
-        <CardContent className="p-6">
-          <p className="label-overline mb-4">Session log ({events.length})</p>
-          {events.length === 0 ? (
-            <p className="text-sm text-foreground/60 py-4">
-              No sessions logged yet.
-            </p>
-          ) : (
-            <SessionLog
-              events={events.map((e) => ({
-                id: e.id,
-                kind: e.kind,
-                date: e.date,
-                durationHours: e.durationHours,
-                sessionType: e.sessionType,
-                signedAt: e.signedAt,
-                signatures: e.signatures ?? [],
-                scheduledStatus: e.scheduledStatus,
-                practiceState: e.practiceState,
-                approvedAt: e.approvedAt,
-              }))}
-              viewerIsManager={viewerIsManager}
-              viewerUserId={session.user.id}
-              superviseeId={superviseeId}
-              superviseeState={supervisee.state ?? null}
-              flaggedSessionIds={flaggedSessionIds}
-            />
-          )}
-        </CardContent>
-      </Card>
+      <div id="session-log" className="panel">
+        <p className="label-overline mb-4">Session log ({events.length})</p>
+        {events.length === 0 ? (
+          <p className="text-sm text-[color:var(--text-muted)] py-4">
+            No sessions logged yet.
+          </p>
+        ) : (
+          <SessionLog
+            events={events.map((e) => ({
+              id: e.id,
+              kind: e.kind,
+              date: e.date,
+              durationHours: e.durationHours,
+              sessionType: e.sessionType,
+              signedAt: e.signedAt,
+              signatures: e.signatures ?? [],
+              scheduledStatus: e.scheduledStatus,
+              practiceState: e.practiceState,
+              approvedAt: e.approvedAt,
+            }))}
+            viewerIsManager={viewerIsManager}
+            viewerUserId={session.user.id}
+            superviseeId={superviseeId}
+            superviseeState={supervisee.state ?? null}
+            flaggedSessionIds={flaggedSessionIds}
+          />
+        )}
+      </div>
 
-      <Card className="mt-6">
-        <CardContent className="p-0">
-          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-            <p className="label-overline">
-              Evidence packages ({evidencePackages.length})
+      {/* Evidence packages — seal-gold treatment (design-system-v2.md §12.1). */}
+      <div className="panel panel-flush overflow-hidden border-t-2 border-t-[color:var(--seal-gold)]">
+        <div className="px-5 py-4 border-b border-[color:var(--border)] flex items-center justify-between">
+          <p className="label-overline">Evidence packages ({evidencePackages.length})</p>
+          {evidencePackages.length === 0 && (
+            <p className="text-xs text-[color:var(--text-muted)]">
+              Minted when a session is fully signed
             </p>
-            {evidencePackages.length === 0 && (
-              <p className="text-xs text-foreground/50">
-                Minted when a session is fully signed
-              </p>
-            )}
-          </div>
-          {evidencePackages.length > 0 && (
-            <ul className="divide-y divide-border">
-              {evidencePackages.map((p) => {
-                // documentContent's exact shape has drifted across versions
-                // (the canonical hash is what audits verify, not the JSON
-                // shape). Accept both the current nested shape from
-                // generateEvidencePackage AND the flatter shape produced by
-                // older seed/test fixtures by reading whichever is present.
-                const raw = (p.documentContent ?? {}) as Record<string, unknown>;
-                const nested = raw.session as
-                  | { date?: string; sessionType?: string | null; kind?: string }
-                  | undefined;
-                const kind =
-                  nested?.kind ??
-                  (typeof raw.kind === "string" ? raw.kind : "supervision");
-                const sessionType =
-                  nested?.sessionType ??
-                  (typeof raw.sessionType === "string"
-                    ? raw.sessionType
-                    : null);
-                const date =
-                  nested?.date ??
-                  (typeof raw.sessionDate === "string"
-                    ? raw.sessionDate
-                    : "");
-                return (
-                  <li
-                    key={p.id}
-                    className="px-6 py-4 flex items-center justify-between gap-4 hover:bg-accent/40"
-                  >
-                    <div className="flex gap-3 items-start min-w-0">
-                      <FileSignature className="h-4 w-4 mt-1 shrink-0 text-[color:var(--color-gold)]" />
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-medium text-foreground">
-                            {kind === "supervision"
-                              ? `${sessionType ?? "supervision"} session`
-                              : "Practice session"}{" "}
-                            · {date.slice(0, 10)}
-                          </p>
-                          {/* Green "Sealed" badge so the gold icon reads as
-                              "official package" rather than "still pending".
-                              See feedback B3. */}
-                          <Badge variant="success">
-                            <CheckCircle2 className="h-2.5 w-2.5" />
-                            Sealed
-                          </Badge>
-                        </div>
-                        <p className="font-mono text-xs text-foreground/50 truncate">
-                          {p.documentHash}
-                        </p>
-                      </div>
-                    </div>
-                    <a
-                      href={`/api/evidence/${p.id}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-medium text-secondary hover:underline shrink-0"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      PDF
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
           )}
-        </CardContent>
-      </Card>
+        </div>
+        {evidencePackages.length > 0 && (
+          <ul className="divide-y divide-[color:var(--divider)]">
+            {evidencePackages.map((p) => {
+              // documentContent's exact shape has drifted across versions
+              // (the canonical hash is what audits verify, not the JSON
+              // shape). Accept both the current nested shape from
+              // generateEvidencePackage AND the flatter shape produced by
+              // older seed/test fixtures by reading whichever is present.
+              const raw = (p.documentContent ?? {}) as Record<string, unknown>;
+              const nested = raw.session as
+                | { date?: string; sessionType?: string | null; kind?: string }
+                | undefined;
+              const kind =
+                nested?.kind ??
+                (typeof raw.kind === "string" ? raw.kind : "supervision");
+              const sessionType =
+                nested?.sessionType ??
+                (typeof raw.sessionType === "string" ? raw.sessionType : null);
+              const date =
+                nested?.date ??
+                (typeof raw.sessionDate === "string" ? raw.sessionDate : "");
+              return (
+                <li
+                  key={p.id}
+                  className="px-5 py-4 flex items-center justify-between gap-4 hover:bg-[color:var(--surface-muted)]"
+                >
+                  <div className="flex gap-3 items-start min-w-0">
+                    <FileSignature className="h-4 w-4 mt-1 shrink-0 text-[color:var(--seal-gold)]" />
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium text-[color:var(--text-primary)]">
+                          {kind === "supervision"
+                            ? `${sessionType ?? "supervision"} session`
+                            : "Practice session"}{" "}
+                          · {date.slice(0, 10)}
+                        </p>
+                        {/* Sealed evidence badge is seal-gold, never green or
+                            halo-yellow (design-system-v2.md §7.1, §12.1). */}
+                        <span className="status-pill status-sealed">Sealed</span>
+                      </div>
+                      <p className="font-mono text-xs text-[color:var(--text-muted)] truncate">
+                        {p.documentHash}
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href={`/api/evidence/${p.id}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-[color:var(--text-primary)] hover:underline shrink-0"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    PDF
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
       {assignment && (
-        <div className="mt-6">
-          <CompletedAttestations
-            assignmentId={assignment.id}
-            superviseeId={superviseeId}
-            items={completedAttestations}
-            viewerCanSupervise={viewerCanSupervise}
-          />
-        </div>
+        <CompletedAttestations
+          assignmentId={assignment.id}
+          superviseeId={superviseeId}
+          items={completedAttestations}
+          viewerCanSupervise={viewerCanSupervise}
+        />
       )}
-    </div>
+    </>
   );
 }
