@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Circle, AlertTriangle, AlertOctagon } from "lucide-react";
+import { Circle, AlertTriangle, AlertOctagon } from "lucide-react";
 import { and, eq, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import {
@@ -10,11 +10,8 @@ import {
   isManagerRole,
 } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
-import { loadAllRules, riskBadgeVariant, riskBadgeLabel } from "@/lib/rules";
+import { loadAllRules, riskBadgeLabel } from "@/lib/rules";
 import { getOrgRosterWithCompliance } from "@/lib/db/roster-queries";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { InviteForm } from "./invite-form";
 import { PendingInviteActions } from "./pending-invite-actions";
 import { FilterBar } from "./_filter-bar";
@@ -24,6 +21,20 @@ import { ClickableRow } from "@/components/app/clickable-row";
 export const metadata = {
   title: "Roster — AuditHalo",
 };
+
+/** Severity status pill (design-system-v2.md §7.1, §13 — icon + text, never
+ *  color alone). */
+function RiskPill({ level }: { level: "green" | "yellow" | "red" }) {
+  const cls = level === "red" ? "status-risk" : level === "yellow" ? "status-warn" : "status-ok";
+  return (
+    <span className={`status-pill ${cls}`}>
+      {level === "green" && <Circle className="h-2 w-2 fill-current" />}
+      {level === "yellow" && <AlertTriangle className="h-3 w-3" />}
+      {level === "red" && <AlertOctagon className="h-3 w-3" />}
+      {riskBadgeLabel(level)}
+    </span>
+  );
+}
 
 type SearchParams = Promise<{
   filter?: string;
@@ -209,25 +220,18 @@ export default async function RosterPage({
   ).length;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
-      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
-        <Link href="/dashboard">
-          <ArrowLeft />
-          Back to dashboard
-        </Link>
-      </Button>
-
-      <Badge variant="outline" className="mb-3">
-        {org?.name ?? "Roster"}
-      </Badge>
-      <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
-        {viewerIsHrAdmin ? "Org roster" : "Your roster"}
-      </h1>
-      <p className="mt-3 text-foreground/70 max-w-2xl">
-        {viewerIsHrAdmin
-          ? "Every supervisee across this organization. Click into a row to reassign their supervisor or review their compliance."
-          : "Every supervisee you invite gets a free AuditHalo account. They join your roster the moment they accept the invitation, and you'll see their hour progress here."}
-      </p>
+    <>
+      <div>
+        <p className="shell-eyebrow">{org?.name ?? "Roster"}</p>
+        <h1 className="shell-page-title mt-1">
+          {viewerIsHrAdmin ? "Org roster" : "Your roster"}
+        </h1>
+        <p className="shell-page-sub max-w-2xl">
+          {viewerIsHrAdmin
+            ? "Every supervisee across this organization. Click into a row to reassign their supervisor or review their compliance."
+            : "Every supervisee you invite gets a free AuditHalo account. They join your roster the moment they accept the invitation, and you'll see their hour progress here."}
+        </p>
+      </div>
 
       <FilterBar
         activeFilter={filter}
@@ -239,281 +243,218 @@ export default async function RosterPage({
       />
 
       {atRiskCount > 0 && (
-        <div className="mt-6 flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          <span className="font-semibold">
-            {atRiskCount} supervisee{atRiskCount === 1 ? "" : "s"} at risk
+        <div className="flex flex-wrap items-center gap-2 rounded-[8px] border border-[color:var(--risk-600)]/30 border-l-[3px] border-l-[color:var(--risk-600)] bg-[color:var(--risk-50)]/40 px-4 py-3 text-sm">
+          <AlertOctagon className="h-4 w-4 text-[color:var(--risk-600)] shrink-0" />
+          <span className="font-semibold text-[color:var(--text-primary)]">
+            {atRiskCount} supervisee{atRiskCount === 1 ? "" : "s"} need attention
           </span>
-          <span className="text-destructive/70">
+          <span className="text-[color:var(--text-secondary)]">
             — review their compliance status below.
           </span>
         </div>
       )}
 
-      <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardContent className="p-0">
-            {/* Mobile card-per-row (under md) */}
-            <ul className="md:hidden divide-y divide-border">
-              {rosterRows.map((row) => {
-                const pct = row.evaluation?.progress.practiceProgressPct ?? 0;
-                const practiced = row.evaluation?.totals.practiceHours ?? 0;
-                const accent = (() => {
-                  if (row.evaluation?.riskLevel === "red")
-                    return "border-l-[3px] border-l-[color:var(--color-risk-600)] bg-[color:var(--color-risk-50)]/30";
-                  if (row.evaluation?.riskLevel === "yellow")
-                    return "border-l-[3px] border-l-[color:var(--color-warn-500)] bg-[color:var(--color-warn-50)]/30";
-                  return "";
-                })();
-                return (
-                  <li key={row.userId} className={`px-4 py-3 ${accent}`}>
-                    <Link
-                      href={`/dashboard/roster/${row.userId}`}
-                      className="flex items-start justify-between gap-3"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {row.name}
-                        </p>
-                        <p className="mt-0.5 text-xs text-foreground/60 truncate">
-                          {row.state && row.licenseType
-                            ? `${row.state} · ${row.licenseType}`
-                            : row.state ?? row.licenseType ?? "—"}
-                        </p>
-                        {row.evaluation !== null && (
-                          <div className="mt-2 flex items-center gap-2">
-                            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-[color:var(--color-gold)] transition-all"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                            <span className="font-mono text-[10px] text-foreground/60 whitespace-nowrap">
-                              {practiced.toFixed(1)}h
-                            </span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+        <div className="panel panel-flush lg:col-span-2 overflow-hidden">
+          {/* Mobile card-per-row (under md) */}
+          <ul className="md:hidden divide-y divide-[color:var(--divider)]">
+            {rosterRows.map((row) => {
+              const pct = row.evaluation?.progress.practiceProgressPct ?? 0;
+              const practiced = row.evaluation?.totals.practiceHours ?? 0;
+              const accent =
+                row.evaluation?.riskLevel === "red"
+                  ? "border-l-[3px] border-l-[color:var(--risk-600)] bg-[color:var(--risk-50)]/40"
+                  : row.evaluation?.riskLevel === "yellow"
+                    ? "border-l-[3px] border-l-[color:var(--warn-500)] bg-[color:var(--warn-50)]/40"
+                    : "";
+              return (
+                <li key={row.userId} className={`px-4 py-3 ${accent}`}>
+                  <Link href={`/dashboard/roster/${row.userId}`} className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-[color:var(--text-primary)] truncate">{row.name}</p>
+                      <p className="mt-0.5 text-xs text-[color:var(--text-muted)] truncate">
+                        {row.state && row.licenseType
+                          ? `${row.state} · ${row.licenseType}`
+                          : row.state ?? row.licenseType ?? "—"}
+                      </p>
+                      {row.evaluation !== null && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className="flex-1 h-2 rounded-full overflow-hidden bg-[color:var(--ink-100)] dark:bg-[rgba(250,247,240,0.12)]">
+                            <div className="h-full bg-[color:var(--seal-gold)]" style={{ width: `${pct}%` }} />
                           </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-1.5 shrink-0">
-                        {row.leaveStatus === "on_leave" ? (
-                          <Badge variant="warning">On leave</Badge>
-                        ) : row.evaluation ? (
-                          <Badge variant={riskBadgeVariant(row.evaluation.riskLevel)}>
-                            {row.evaluation.riskLevel === "green" && <Circle className="h-2 w-2 fill-current" />}
-                            {row.evaluation.riskLevel === "yellow" && <AlertTriangle className="h-3 w-3" />}
-                            {row.evaluation.riskLevel === "red" && <AlertOctagon className="h-3 w-3" />}
-                            {riskBadgeLabel(row.evaluation.riskLevel)}
-                          </Badge>
-                        ) : (
-                          <span className="text-foreground/40 italic text-[10px]">
-                            No rule
+                          <span className="font-mono text-[10px] text-[color:var(--text-secondary)] whitespace-nowrap">
+                            {practiced.toFixed(1)}h
                           </span>
-                        )}
-                        {row.leaveStatus === "prn" && (
-                          <Badge variant="outline">PRN</Badge>
-                        )}
-                        {row.pendingSignatureCount > 0 && (
-                          <Badge variant="warning">
-                            {row.pendingSignatureCount} pending
-                          </Badge>
-                        )}
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-              {visiblePendingInvites.map((i) => (
-                  <li
-                    key={i.id}
-                    className="px-4 py-3 bg-[color:var(--color-evidence-bg)]/40"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {i.name ?? (
-                            <span className="text-foreground/50 italic">
-                              unnamed
-                            </span>
-                          )}
-                        </p>
-                        <p className="mt-0.5 text-xs text-foreground/60 break-all">
-                          {i.email}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-2 shrink-0">
-                        <Badge variant="warning">Pending</Badge>
-                        {viewerCanSupervise && (
-                          <PendingInviteActions
-                            invitationId={i.id}
-                            email={i.email}
-                          />
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
-                  </li>
-                ))}
-              {rosterRows.length === 0 &&
-                visiblePendingInvites.length === 0 && (
-                  <li className="px-4 py-8 text-center text-foreground/50 text-sm">
-                    {supervisorFilterId
-                      ? "This supervisor has no supervisees assigned yet."
-                      : "No supervisees yet. Use the form below to invite one."}
-                  </li>
-                )}
-            </ul>
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      {row.leaveStatus === "on_leave" ? (
+                        <span className="status-pill status-warn"><AlertTriangle className="h-3 w-3" />On leave</span>
+                      ) : row.evaluation ? (
+                        <RiskPill level={row.evaluation.riskLevel} />
+                      ) : (
+                        <span className="text-[color:var(--text-muted)] italic text-[10px]">No rule</span>
+                      )}
+                      {row.leaveStatus === "prn" && <span className="status-pill status-pending">PRN</span>}
+                      {row.pendingSignatureCount > 0 && (
+                        <span className="status-pill status-warn">{row.pendingSignatureCount} pending</span>
+                      )}
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+            {visiblePendingInvites.map((i) => (
+              <li key={i.id} className="px-4 py-3 bg-[color:var(--surface-muted)]/50">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-[color:var(--text-primary)] truncate">
+                      {i.name ?? <span className="text-[color:var(--text-muted)] italic">unnamed</span>}
+                    </p>
+                    <p className="mt-0.5 text-xs text-[color:var(--text-muted)] break-all">{i.email}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <span className="status-pill status-pending">Pending</span>
+                    {viewerCanSupervise && <PendingInviteActions invitationId={i.id} email={i.email} />}
+                  </div>
+                </div>
+              </li>
+            ))}
+            {rosterRows.length === 0 && visiblePendingInvites.length === 0 && (
+              <li className="px-4 py-8 text-center text-[color:var(--text-muted)] text-sm">
+                {supervisorFilterId
+                  ? "This supervisor has no supervisees assigned yet."
+                  : "No supervisees yet. Use the form below to invite one."}
+              </li>
+            )}
+          </ul>
 
-            {/* Tablet+ table view */}
-            <div className="hidden md:block overflow-x-auto">
+          {/* Tablet+ table view */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm min-w-[640px]">
-              <thead className="bg-accent">
-                <tr className="text-left">
-                  <th className="px-5 py-3 font-semibold">Name</th>
-                  <th className="px-5 py-3 font-semibold">Credential</th>
-                  <th className="px-5 py-3 font-semibold">Practice hrs</th>
-                  <th className="px-5 py-3 font-semibold">Status</th>
-                  <th className="px-5 py-3 font-semibold">Pending sigs</th>
+              <thead>
+                <tr className="text-left border-b border-[color:var(--border)] bg-[color:var(--surface-muted)]">
+                  <th scope="col" className="px-5 py-3 label-overline">Name</th>
+                  <th scope="col" className="px-5 py-3 label-overline">Credential</th>
+                  <th scope="col" className="px-5 py-3 label-overline">Practice hrs</th>
+                  <th scope="col" className="px-5 py-3 label-overline">Status</th>
+                  <th scope="col" className="px-5 py-3 label-overline">Pending sigs</th>
                 </tr>
               </thead>
               <tbody>
                 {rosterRows.map((row) => {
                   const pct = row.evaluation?.progress.practiceProgressPct ?? 0;
                   const practiced = row.evaluation?.totals.practiceHours ?? 0;
-
-                  const rowClasses = (() => {
-                    if (row.evaluation?.riskLevel === "red") {
-                      return "border-l-[3px] border-l-[color:var(--color-risk-600)] bg-[color:var(--color-risk-50)]/30";
-                    }
-                    if (row.evaluation?.riskLevel === "yellow") {
-                      return "border-l-[3px] border-l-[color:var(--color-warn-500)] bg-[color:var(--color-warn-50)]/30";
-                    }
-                    return "";
-                  })();
-
+                  const rowClasses =
+                    row.evaluation?.riskLevel === "red"
+                      ? "border-l-[3px] border-l-[color:var(--risk-600)] bg-[color:var(--risk-50)]/40"
+                      : row.evaluation?.riskLevel === "yellow"
+                        ? "border-l-[3px] border-l-[color:var(--warn-500)] bg-[color:var(--warn-50)]/40"
+                        : "";
                   return (
                     <ClickableRow
                       key={row.userId}
                       href={`/dashboard/roster/${row.userId}`}
-                      className={`border-t border-border hover:bg-accent/40 ${rowClasses}`}
+                      className={`border-b border-[color:var(--divider)] hover:bg-[color:var(--surface-muted)] ${rowClasses}`}
                     >
-                      <td className="px-5 py-3 font-medium">
-                        <Link
-                          href={`/dashboard/roster/${row.userId}`}
-                          className="hover:underline"
-                        >
+                      <td className="px-5 py-3 font-medium text-[color:var(--text-primary)]">
+                        <Link href={`/dashboard/roster/${row.userId}`} className="hover:underline">
                           {row.name}
                         </Link>
                       </td>
-                      <td className="px-5 py-3 text-foreground/70">
+                      <td className="px-5 py-3 text-[color:var(--text-secondary)]">
                         {row.state && row.licenseType
                           ? `${row.state} · ${row.licenseType}`
-                          : row.state ?? row.licenseType ?? (
-                              <span className="italic text-foreground/40">—</span>
-                            )}
+                          : row.state ?? row.licenseType ?? <span className="italic text-[color:var(--text-muted)]">—</span>}
                       </td>
                       <td className="px-5 py-3">
                         {row.evaluation !== null ? (
                           <div className="flex items-center gap-2 min-w-[120px]">
-                            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-[color:var(--color-gold)] transition-all"
-                                style={{ width: `${pct}%` }}
-                              />
+                            <div className="flex-1 h-2 rounded-full overflow-hidden bg-[color:var(--ink-100)] dark:bg-[rgba(250,247,240,0.12)]">
+                              <div className="h-full bg-[color:var(--seal-gold)]" style={{ width: `${pct}%` }} />
                             </div>
-                            <span className="font-mono text-xs text-foreground/60">
-                              {practiced.toFixed(1)}h
-                            </span>
+                            <span className="font-mono text-xs text-[color:var(--text-secondary)]">{practiced.toFixed(1)}h</span>
                           </div>
                         ) : (
-                          <span className="text-foreground/40 italic text-xs">no rule</span>
+                          <span className="text-[color:var(--text-muted)] italic text-xs">no rule</span>
                         )}
                       </td>
                       <td className="px-5 py-3">
-                        {row.leaveStatus === "on_leave" ? (
-                          <Badge variant="warning">On leave</Badge>
-                        ) : row.evaluation ? (
-                          <Badge variant={riskBadgeVariant(row.evaluation.riskLevel)}>
-                            {row.evaluation.riskLevel === "green" && <Circle className="h-2 w-2 fill-current" />}
-                            {row.evaluation.riskLevel === "yellow" && <AlertTriangle className="h-3 w-3" />}
-                            {row.evaluation.riskLevel === "red" && <AlertOctagon className="h-3 w-3" />}
-                            {riskBadgeLabel(row.evaluation.riskLevel)}
-                          </Badge>
-                        ) : (
-                          <span className="text-foreground/40 italic text-xs">No rule</span>
-                        )}
-                        {row.leaveStatus === "prn" && (
-                          <Badge variant="outline" className="ml-1.5">PRN</Badge>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {row.leaveStatus === "on_leave" ? (
+                            <span className="status-pill status-warn"><AlertTriangle className="h-3 w-3" />On leave</span>
+                          ) : row.evaluation ? (
+                            <RiskPill level={row.evaluation.riskLevel} />
+                          ) : (
+                            <span className="text-[color:var(--text-muted)] italic text-xs">No rule</span>
+                          )}
+                          {row.leaveStatus === "prn" && <span className="status-pill status-pending">PRN</span>}
+                        </div>
                       </td>
                       <td className="px-5 py-3">
                         {row.pendingSignatureCount > 0 ? (
-                          <Badge variant="warning">
-                            {row.pendingSignatureCount}
-                          </Badge>
+                          <span className="status-pill status-warn">{row.pendingSignatureCount}</span>
                         ) : (
-                          <span className="text-foreground/40">—</span>
+                          <span className="text-[color:var(--text-muted)]">—</span>
                         )}
                       </td>
                     </ClickableRow>
                   );
                 })}
-                {rosterRows.length === 0 &&
-                  visiblePendingInvites.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-5 py-8 text-center text-foreground/50 text-sm">
-                        {supervisorFilterId
-                          ? "This supervisor has no supervisees assigned yet."
-                          : "No supervisees yet. Invite one using the form →"}
-                      </td>
-                    </tr>
-                  )}
+                {rosterRows.length === 0 && visiblePendingInvites.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-8 text-center text-[color:var(--text-muted)] text-sm">
+                      {supervisorFilterId
+                        ? "This supervisor has no supervisees assigned yet."
+                        : "No supervisees yet. Invite one using the form →"}
+                    </td>
+                  </tr>
+                )}
                 {visiblePendingInvites.map((i) => (
-                    <tr key={i.id} className="border-t border-border bg-[color:var(--color-evidence-bg)]/40">
-                      <td className="px-5 py-3 font-medium">
-                        {i.name ?? <span className="text-foreground/50 italic">unnamed</span>}
-                      </td>
-                      <td className="px-5 py-3 text-foreground/70 break-all">{i.email}</td>
-                      <td className="px-5 py-3">
-                        <span className="text-foreground/40 italic text-xs">—</span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <Badge variant="warning">Pending invite</Badge>
-                      </td>
-                      <td className="px-5 py-3">
-                        {viewerCanSupervise ? (
-                          <PendingInviteActions invitationId={i.id} email={i.email} />
-                        ) : (
-                          <span className="text-foreground/40">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  <tr key={i.id} className="border-b border-[color:var(--divider)] bg-[color:var(--surface-muted)]/50">
+                    <td className="px-5 py-3 font-medium text-[color:var(--text-primary)]">
+                      {i.name ?? <span className="text-[color:var(--text-muted)] italic">unnamed</span>}
+                    </td>
+                    <td className="px-5 py-3 text-[color:var(--text-secondary)] break-all">{i.email}</td>
+                    <td className="px-5 py-3">
+                      <span className="text-[color:var(--text-muted)] italic text-xs">—</span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className="status-pill status-pending">Pending invite</span>
+                    </td>
+                    <td className="px-5 py-3">
+                      {viewerCanSupervise ? (
+                        <PendingInviteActions invitationId={i.id} email={i.email} />
+                      ) : (
+                        <span className="text-[color:var(--text-muted)]">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-6">
-            <p className="label-overline mb-3">Invite a supervisee</p>
-            <InviteForm
-              availableRules={[
-                ...[...loadAllRules().values()].map((r) => {
-                  const id = `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`;
-                  return {
-                    id,
-                    label: `${r.jurisdiction} ${r.license_code} v${r.version}`,
-                    summary: r.summary,
-                  };
-                }),
-                // Org's active custom rules — synthetic ids the resolver
-                // recognizes. Cycle 4.
-                ...orgCustomRules,
-              ]}
-              supervisorOptions={supervisorOptionsForForm}
-            />
-          </CardContent>
-        </Card>
+        <div className="panel">
+          <p className="label-overline mb-3">Invite a supervisee</p>
+          <InviteForm
+            availableRules={[
+              ...[...loadAllRules().values()].map((r) => {
+                const id = `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`;
+                return {
+                  id,
+                  label: `${r.jurisdiction} ${r.license_code} v${r.version}`,
+                  summary: r.summary,
+                };
+              }),
+              ...orgCustomRules,
+            ]}
+            supervisorOptions={supervisorOptionsForForm}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
