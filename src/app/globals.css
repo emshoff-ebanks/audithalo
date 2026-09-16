@@ -231,6 +231,19 @@
   /* ---------- Layout ---------- */
   --container: 1152px;           /* max-w-6xl */
   --container-narrow: 880px;
+
+  /* ---------- v2 semantic aliases (app shell + components author against
+     these; they resolve to the ink/paper scale above and flip in .dark). --- */
+  --text-primary: var(--ink-900);
+  --text-secondary: var(--ink-600);
+  --text-muted: var(--ink-400);
+  --text-inverse: var(--paper-50);
+  --surface: var(--paper-white);
+  --surface-muted: var(--paper-100);
+  --border-strong: var(--ink-400);
+  --divider: var(--ink-100);
+  --radius-full: 999px;
+  --radius-lg: 8px;              /* inner cards / list rows (§4.3) */
 }
 
 /* ============================================================================
@@ -267,6 +280,16 @@
 
   --panel-bg: var(--ink-800);
   --panel-border: rgba(250, 247, 240, 0.10);
+
+  /* v2 semantic aliases — dark flip. */
+  --text-primary: var(--paper-50);
+  --text-secondary: #C7C4B8;
+  --text-muted: #8B8A80;
+  --text-inverse: var(--ink-900);
+  --surface: var(--ink-800);
+  --surface-muted: var(--ink-700);
+  --border-strong: #4E4E45;
+  --divider: #232320;
 }
 
 html,
@@ -427,3 +450,163 @@ details[open] .mkt-faq-plus { transform: rotate(45deg); }
      - Retire --color-halo-blue / --color-gold / --color-success etc. once
        call-sites move to --halo-yellow / --seal-gold / --ok-700 / --warn-700.
    ========================================================================== */
+
+/* ============================================================================
+   APP SHELL (v2) — sidebar + header + canvas, app-only. Ported from the
+   design-system mockup (app.html / styles.css §APP SHELL), adapted to a
+   full-viewport layout. Dark mode flips via the semantic aliases above.
+   design-system-v2.md §3 (surfaces), §5 (icons), §16 (responsive).
+   ========================================================================== */
+.app-shell {
+  min-height: 100vh;
+  background: var(--paper-50);
+  display: grid;
+  grid-template-columns: 264px 1fr;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+}
+.dark .app-shell,
+.app-shell.dark { background: var(--background); }
+
+.app-main { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+
+/* --- Sidebar (sticky full-height panel) --- */
+.shell-sidebar {
+  position: sticky;
+  top: var(--sp-4);
+  align-self: start;
+  height: calc(100vh - var(--sp-8));
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-panel);
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.shell-brand {
+  display: flex; align-items: center; gap: var(--sp-2);
+  margin-bottom: var(--sp-7);
+  text-decoration: none;
+}
+.shell-brand svg { width: 22px; height: 22px; color: var(--seal-gold); flex: 0 0 22px; }
+.shell-brand-text {
+  font-family: var(--font-display); font-weight: 700; font-size: 1.0625rem;
+  letter-spacing: -0.01em; color: var(--text-primary);
+}
+.shell-nav-label {
+  font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--text-muted); font-weight: 600;
+  margin: var(--sp-5) 0 var(--sp-2); padding: 0 var(--sp-2);
+}
+.shell-nav-label:first-of-type { margin-top: 0; }
+.shell-nav { display: flex; flex-direction: column; gap: 2px; }
+.shell-nav-item {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.875rem; font-weight: 500;
+  text-decoration: none;
+  transition: background var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+}
+.shell-nav-item:hover { background: var(--surface-muted); color: var(--text-primary); }
+.shell-nav-item:focus-visible { outline: 2px solid var(--halo-yellow); outline-offset: 2px; }
+.shell-nav-item.active { background: var(--ink-900); color: var(--paper-50); }
+.dark .shell-nav-item.active { background: var(--halo-yellow); color: var(--ink-900); }
+.shell-nav-item.active .shell-nav-badge { background: var(--halo-yellow); color: var(--ink-900); border-color: transparent; }
+.dark .shell-nav-item.active .shell-nav-badge { background: var(--ink-900); color: var(--paper-50); }
+.shell-nav-icon { width: 16px; height: 16px; flex: 0 0 16px; }
+.shell-nav-text { flex: 1; }
+.shell-nav-badge {
+  min-width: 20px; height: 18px; padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono); font-size: 0.6875rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface-muted); color: var(--text-secondary);
+}
+.shell-nav-foot {
+  margin-top: auto; padding-top: var(--sp-4);
+  display: flex; flex-direction: column; gap: 2px;
+}
+
+/* --- Header (floats on the ground) --- */
+.shell-header {
+  padding: var(--sp-1) var(--sp-2);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-4);
+}
+.shell-header-lead { display: flex; align-items: center; gap: var(--sp-3); min-width: 0; }
+.shell-eyebrow {
+  font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--text-muted); font-weight: 600;
+}
+.shell-header-actions { display: flex; align-items: center; gap: var(--sp-2); }
+.shell-icon-btn {
+  width: 36px; height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--paper-50);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-primary); cursor: pointer;
+  transition: background var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
+}
+.dark .shell-icon-btn { background: var(--surface-muted); }
+.shell-icon-btn:hover { background: var(--surface-muted); border-color: var(--border-strong); }
+.shell-icon-btn:focus-visible { outline: 2px solid var(--halo-yellow); outline-offset: 2px; }
+.shell-icon-btn svg { width: 16px; height: 16px; }
+
+/* --- Canvas --- */
+.shell-canvas { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+.shell-page-title {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 2rem; line-height: 1.1; letter-spacing: -0.02em;
+  color: var(--text-primary); margin: 0;
+}
+.shell-page-sub { font-size: 0.9375rem; color: var(--text-secondary); margin: var(--sp-2) 0 0; }
+
+/* --- Mobile: sidebar becomes a slide-in overlay (design-system-v2.md §16) --- */
+.shell-menu-btn { display: none; }
+@media (max-width: 900px) {
+  .app-shell { grid-template-columns: 1fr; padding: var(--sp-3); }
+  .shell-menu-btn { display: inline-flex; }
+  .shell-sidebar {
+    position: fixed; inset: 0 auto 0 0; z-index: 60;
+    width: 264px; height: 100vh; margin: 0;
+    border-radius: 0 var(--radius-panel) var(--radius-panel) 0;
+    transform: translateX(-100%);
+    transition: transform var(--dur) var(--ease-out);
+  }
+  .shell-sidebar.open { transform: translateX(0); }
+  .shell-scrim {
+    position: fixed; inset: 0; z-index: 55;
+    background: rgba(14,14,12,0.5); backdrop-filter: blur(2px);
+  }
+  .shell-page-title { font-size: 1.625rem; }
+}
+
+/* ============================================================================
+   STATUS PILLS + CHIPS (shared data-display atoms, design-system-v2.md §7).
+   ========================================================================== */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 22px; padding: 0 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em;
+  border: 1px solid transparent; white-space: nowrap; line-height: 1;
+}
+.status-ok     { background: var(--ok-50);   color: var(--ok-900);   border-color: rgba(30,138,84,0.25); }
+.status-warn   { background: var(--warn-50); color: var(--warn-900); border-color: rgba(217,119,6,0.25); }
+.status-risk   { background: var(--risk-50); color: var(--risk-900); border-color: rgba(214,58,44,0.28); }
+.status-info   { background: var(--info-50); color: var(--info-900); border-color: rgba(47,95,224,0.25); }
+.status-sealed { background: var(--seal-gold-tint); color: var(--ink-900); border-color: rgba(184,134,11,0.45); }
+.status-sealed::before { content:""; width:6px; height:6px; border-radius: var(--radius-full); background: var(--seal-gold); }
+.status-pending{ background: var(--surface-muted); color: var(--text-secondary); border-color: var(--border); }
+.status-pending::before { content:""; width:6px; height:6px; border-radius: var(--radius-full); background: var(--ink-300); }
+.dark .status-ok   { background: rgba(30,138,84,0.14);  color: #7FD1A6; border-color: rgba(30,138,84,0.35); }
+.dark .status-warn { background: rgba(217,119,6,0.14);  color: #F0B366; border-color: rgba(217,119,6,0.35); }
+.dark .status-risk { background: rgba(214,58,44,0.16);  color: #F0938A; border-color: rgba(214,58,44,0.38); }
+.dark .status-info { background: rgba(47,95,224,0.16);  color: #9DB4F2; border-color: rgba(47,95,224,0.38); }
+.dark .status-sealed { color: var(--paper-50); }
