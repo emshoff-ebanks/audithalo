@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { auth } from "@/auth";
 import { getCurrentMembership, isManagerRole } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   CheckoutButton,
   PortalButton,
@@ -22,7 +20,7 @@ export const metadata = {
 const PLAN_FEATURES: Record<string, string[]> = {
   solo: [
     "Up to 3 supervisees",
-    "All 10 supported states (NC, CA, TX, FL, NY, AZ, DE, OH, LA, WA)",
+    "Every supported state, versioned to its board",
     "Supervisor dashboard",
     "E-signature with intent confirmation",
     "Audit-ready evidence package PDF",
@@ -68,87 +66,71 @@ export default async function BillingPage({
     subStatus === "past_due";
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
-      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
-        <Link href="/dashboard">
-          <ArrowLeft />
-          Back to dashboard
-        </Link>
-      </Button>
-
-      <Badge variant="outline" className="mb-3">
-        Billing
-      </Badge>
-      <h1 className="font-display text-4xl font-semibold text-foreground">
-        {org.name}
-      </h1>
+    <div className="flex flex-col gap-6">
+      <div>
+        <p className="shell-eyebrow">Billing</p>
+        <h1 className="shell-page-title mt-1">{org.name}</h1>
+      </div>
 
       {params.status === "success" && (
-        <div className="mt-6 p-4 rounded-sm border border-[color:var(--color-success)]/20 bg-[color:var(--color-success)]/5 text-sm text-foreground/80">
+        <div className="panel panel-tight border-l-[3px] border-l-[color:var(--ok-700)] text-sm text-[color:var(--text-secondary)]">
           Subscription started. It can take a moment for the status below to
           update — refresh the page if it still says &ldquo;no active plan&rdquo;.
         </div>
       )}
       {params.status === "canceled" && (
-        <div className="mt-6 p-4 rounded-sm border border-border bg-muted/40 text-sm text-foreground/80">
+        <div className="panel panel-tight text-sm text-[color:var(--text-secondary)]">
           Checkout canceled. You can try again any time.
         </div>
       )}
 
       {/* Current subscription summary */}
-      <Card className="mt-8">
-        <CardContent className="p-6">
+      {hasActive && (
+        <div className="panel">
           <p className="label-overline mb-2">Current plan</p>
-          {hasActive ? (
-            <>
-              <div className="flex items-center gap-3">
-                <h2 className="font-display text-2xl font-semibold text-foreground capitalize">
-                  {org.subscriptionTier ?? "—"}
-                </h2>
-                {isEnterprise ? (
-                  <Badge variant="success">contract</Badge>
-                ) : (
-                  <Badge
-                    variant={subStatus === "trialing" ? "warning" : "success"}
-                  >
-                    {subStatus}
-                  </Badge>
-                )}
-              </div>
-              {org.subscriptionPeriodEnd && !isEnterprise && (
-                <p className="mt-2 text-sm text-foreground/70">
-                  Next renewal:{" "}
-                  <span className="font-mono">
-                    {org.subscriptionPeriodEnd.toISOString().slice(0, 10)}
-                  </span>
-                </p>
-              )}
-              {org.subscriptionTier === "practice" && org.seatCount !== null && (
-                <p className="mt-1 text-sm text-foreground/70">
-                  Seats purchased:{" "}
-                  <span className="font-mono">{org.seatCount}</span>
-                </p>
-              )}
-              {isEnterprise ? (
-                <p className="mt-3 text-sm text-foreground/70">
-                  Enterprise plans are managed by contract. Reach out to{" "}
-                  <a
-                    href="mailto:info@audithalo.com"
-                    className="text-secondary hover:underline"
-                  >
-                    info@audithalo.com
-                  </a>{" "}
-                  for invoice questions, seat additions, or renewal terms.
-                </p>
-              ) : (
-                <div className="mt-5">
-                  <PortalButton />
-                </div>
-              )}
-            </>
-          ) : null}
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-3">
+            <h2 className="font-display text-2xl font-semibold text-[color:var(--text-primary)] capitalize">
+              {org.subscriptionTier ?? "—"}
+            </h2>
+            {isEnterprise ? (
+              <span className="status-pill status-sealed">contract</span>
+            ) : (
+              <span className={`status-pill ${subStatus === "trialing" ? "status-warn" : "status-ok"}`}>
+                {subStatus}
+              </span>
+            )}
+          </div>
+          {org.subscriptionPeriodEnd && !isEnterprise && (
+            <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
+              Next renewal:{" "}
+              <span className="font-mono">
+                {org.subscriptionPeriodEnd.toISOString().slice(0, 10)}
+              </span>
+            </p>
+          )}
+          {org.subscriptionTier === "practice" && org.seatCount !== null && (
+            <p className="mt-1 text-sm text-[color:var(--text-secondary)]">
+              Seats purchased: <span className="font-mono">{org.seatCount}</span>
+            </p>
+          )}
+          {isEnterprise ? (
+            <p className="mt-3 text-sm text-[color:var(--text-secondary)]">
+              Enterprise plans are managed by contract. Reach out to{" "}
+              <a
+                href="mailto:info@audithalo.com"
+                className="text-[color:var(--text-primary)] underline"
+              >
+                info@audithalo.com
+              </a>{" "}
+              for invoice questions, seat additions, or renewal terms.
+            </p>
+          ) : (
+            <div className="mt-5">
+              <PortalButton />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Solo customers see an in-app upgrade path to Practice. Enterprise
           upgrades stay sales-mediated via /admin/orgs (per spec). */}
@@ -157,29 +139,29 @@ export default async function BillingPage({
       )}
 
       {!hasActive && (
-        <Card className="mt-8">
-          <CardContent className="p-6">
-            <p className="label-overline mb-2">Current plan</p>
-            <p className="text-foreground/70">
-              No active plan. You&apos;re in a free read-only state — pick a plan
-              below to start your 14-day trial.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="panel">
+          <p className="label-overline mb-2">Current plan</p>
+          <p className="text-[color:var(--text-secondary)]">
+            No active plan. You&apos;re in a free read-only state — pick a plan
+            below to start your 14-day trial.
+          </p>
+        </div>
       )}
 
       {/* Pricing tiers */}
       {!hasActive && (
-        <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-px bg-border">
-          {/* Solo Supervisor */}
-          <div className="bg-card p-8 ring-2 ring-secondary ring-inset">
-            <div className="flex items-baseline justify-between">
-              <h3 className="font-display text-xl font-semibold text-foreground">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+          {/* Solo Supervisor — featured (halo-yellow ring = the recommended action) */}
+          <div className="panel panel-loose ring-2 ring-[color:var(--halo-yellow)] ring-inset">
+            <div className="flex items-baseline justify-between gap-2">
+              <h3 className="font-display text-xl font-semibold text-[color:var(--text-primary)]">
                 Solo Supervisor
               </h3>
-              <Badge variant="secondary">Most popular</Badge>
+              <span className="status-pill" style={{ background: "var(--halo-yellow)", color: "var(--ink-900)" }}>
+                Most popular
+              </span>
             </div>
-            <p className="mt-2 text-sm text-foreground/60 min-h-10">
+            <p className="mt-2 text-sm text-[color:var(--text-muted)] min-h-10">
               For a supervisor with up to 3 supervisees.
             </p>
             <div className="mt-6 space-y-2">
@@ -208,7 +190,7 @@ export default async function BillingPage({
           </div>
 
           {/* Practice */}
-          <div className="bg-card p-8">
+          <div className="panel panel-loose">
             <h3 className="font-display text-xl font-semibold text-foreground">
               Practice
             </h3>
@@ -241,7 +223,7 @@ export default async function BillingPage({
           </div>
 
           {/* Enterprise */}
-          <div className="bg-card p-8">
+          <div className="panel panel-loose">
             <h3 className="font-display text-xl font-semibold text-foreground">
               Enterprise
             </h3>
