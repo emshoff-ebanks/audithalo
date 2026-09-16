@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { auth } from "@/auth";
 import { canSupervise, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NameForm } from "./name-form";
 import { PasswordForm } from "./password-form";
 import { EmailVerificationStatus } from "./email-verification-status";
@@ -47,6 +45,32 @@ const NAV_ITEMS: { id: string; label: string; supervisorOnly?: boolean }[] = [
   { id: "delete", label: "Delete account" },
 ];
 
+/** One v2 panel per account section — title row (with optional status pill)
+ *  over the section body. Replaces the shadcn Card/CardHeader/CardTitle stack. */
+function AccountSection({
+  id,
+  title,
+  badge,
+  children,
+}: {
+  id: string;
+  title: string;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={id} className="panel space-y-4 scroll-mt-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-lg font-semibold text-[color:var(--text-primary)]">
+          {title}
+        </h2>
+        {badge}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 export default async function AccountPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -70,119 +94,96 @@ export default async function AccountPage() {
   );
 
   return (
-    <div className="mx-auto max-w-2xl px-4 sm:px-6 py-6 sm:py-12 space-y-6 sm:space-y-8">
-      <Button asChild variant="ghost" size="sm" className="-ml-3">
-        <Link href="/dashboard">
-          <ArrowLeft />
-          Back to dashboard
-        </Link>
-      </Button>
+    <div className="mx-auto max-w-2xl flex flex-col gap-6">
       <div>
-        <p className="label-overline mb-4">Account settings</p>
-        <h1 className="font-display text-3xl font-semibold text-foreground">
-          Your account
-        </h1>
-        <p className="mt-3 text-foreground/70">
+        <p className="shell-eyebrow">Account settings</p>
+        <h1 className="shell-page-title mt-1">Your account</h1>
+        <p className="shell-page-sub">
           Manage your billing, notifications, profile, and security settings.
         </p>
       </div>
 
       {/* Anchor nav */}
-      <nav
-        aria-label="Account sections"
-        className="-mt-2 flex flex-wrap gap-x-2 gap-y-1.5 text-xs"
-      >
+      <nav aria-label="Account sections" className="flex flex-wrap gap-1.5">
         {navItems.map((n) => (
-          <a
-            key={n.id}
-            href={`#${n.id}`}
-            className="inline-flex items-center rounded-full border border-border bg-card px-2.5 py-1 text-foreground/70 hover:bg-accent hover:text-foreground transition-colors"
-          >
+          <a key={n.id} href={`#${n.id}`} className="chip text-xs">
             {n.label}
           </a>
         ))}
       </nav>
 
       {/* 1. Email + verification */}
-      <Card id="email">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between gap-3">
-            <span>Email</span>
-            {verified ? (
-              <Badge variant="success">Verified</Badge>
-            ) : (
-              <Badge variant="outline-warn">Not verified</Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-foreground/70">
-            Signed in as <span className="font-medium text-foreground">{user.email}</span>.
-          </p>
-          <EmailVerificationStatus verified={verified} />
-        </CardContent>
-      </Card>
+      <AccountSection
+        id="email"
+        title="Email"
+        badge={
+          verified ? (
+            <span className="status-pill status-ok">Verified</span>
+          ) : (
+            <span className="status-pill status-warn">Not verified</span>
+          )
+        }
+      >
+        <p className="text-sm text-[color:var(--text-secondary)]">
+          Signed in as{" "}
+          <span className="font-medium text-[color:var(--text-primary)]">{user.email}</span>.
+        </p>
+        <EmailVerificationStatus verified={verified} />
+      </AccountSection>
 
       {/* 2. Billing & subscription — supervisor only */}
       {userCanSupervise && org && (
-        <Card id="billing">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between gap-3">
-              <span>Billing & subscription</span>
-              {org.subscriptionStatus === "active" ? (
-                <Badge variant="success">Active</Badge>
-              ) : org.subscriptionStatus === "trialing" ? (
-                <Badge variant="success">Trialing</Badge>
-              ) : org.subscriptionStatus === "past_due" ? (
-                <Badge variant="outline-warn">Past due</Badge>
-              ) : (
-                <Badge variant="outline">No plan</Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <dl className="text-sm space-y-1.5">
+        <AccountSection
+          id="billing"
+          title="Billing & subscription"
+          badge={
+            org.subscriptionStatus === "active" ? (
+              <span className="status-pill status-ok">Active</span>
+            ) : org.subscriptionStatus === "trialing" ? (
+              <span className="status-pill status-ok">Trialing</span>
+            ) : org.subscriptionStatus === "past_due" ? (
+              <span className="status-pill status-warn">Past due</span>
+            ) : (
+              <span className="status-pill status-pending">No plan</span>
+            )
+          }
+        >
+          <dl className="text-sm space-y-1.5">
+            <div className="flex justify-between gap-3">
+              <dt className="text-[color:var(--text-muted)]">Plan</dt>
+              <dd className="font-medium text-[color:var(--text-primary)] capitalize">
+                {org.subscriptionTier ?? "—"}
+              </dd>
+            </div>
+            {org.subscriptionPeriodEnd && (
               <div className="flex justify-between gap-3">
-                <dt className="text-foreground/60">Plan</dt>
-                <dd className="font-medium text-foreground capitalize">
-                  {org.subscriptionTier ?? "—"}
+                <dt className="text-[color:var(--text-muted)]">Renews / ends</dt>
+                <dd className="font-mono text-xs text-[color:var(--text-primary)]">
+                  {org.subscriptionPeriodEnd.toISOString().slice(0, 10)}
                 </dd>
               </div>
-              {org.subscriptionPeriodEnd && (
-                <div className="flex justify-between gap-3">
-                  <dt className="text-foreground/60">Renews / ends</dt>
-                  <dd className="font-mono text-xs text-foreground">
-                    {org.subscriptionPeriodEnd.toISOString().slice(0, 10)}
-                  </dd>
-                </div>
-              )}
-            </dl>
-            <Button asChild variant="outline">
-              <Link href="/dashboard/billing">
-                Manage billing <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+            )}
+          </dl>
+          <Button asChild variant="outline">
+            <Link href="/dashboard/billing">
+              Manage billing <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </AccountSection>
       )}
 
       {/* 3. Notifications */}
-      <Card id="notifications">
-        <CardHeader>
-          <CardTitle>Notifications</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-foreground/70 mb-4">
-            Pick which events ping your inbox. The bell icon in the top nav
-            always shows every notification — these toggles only control the
-            email side-effect.
-          </p>
-          <NotificationsPrefsForm
-            initialPrefs={user.notificationPrefs ?? null}
-            role={membership?.role ?? null}
-          />
-        </CardContent>
-      </Card>
+      <AccountSection id="notifications" title="Notifications">
+        <p className="text-sm text-[color:var(--text-secondary)]">
+          Pick which events ping your inbox. The bell icon in the header
+          always shows every notification — these toggles only control the
+          email side-effect.
+        </p>
+        <NotificationsPrefsForm
+          initialPrefs={user.notificationPrefs ?? null}
+          role={membership?.role ?? null}
+        />
+      </AccountSection>
 
       {/* 4. Calendar integrations — visible to everyone (any user can
             connect their personal Microsoft or Google account for
@@ -192,182 +193,141 @@ export default async function AccountPage() {
 
       {/* 5. Compliance preferences — supervisor only */}
       {userCanSupervise && (
-        <Card id="compliance">
-          <CardHeader>
-            <CardTitle>Compliance preferences</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CompliancePrefsForm
-              initialEnabled={user.autoApplyRuleUpdates}
-            />
-          </CardContent>
-        </Card>
+        <AccountSection id="compliance" title="Compliance preferences">
+          <CompliancePrefsForm initialEnabled={user.autoApplyRuleUpdates} />
+        </AccountSection>
       )}
 
       {/* 5. Professional credentials — supervisor only. */}
       {userCanSupervise && (
-        <Card id="credentials">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between gap-3">
-              <span>Professional credentials</span>
-              {user.credentials && user.credentials.length > 0 ? (
-                <Badge variant="success">
-                  {user.credentials.join(", ")}
-                </Badge>
-              ) : (
-                <Badge variant="outline-warn">Not set</Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-foreground/70 mb-4">
-              Your professional licenses and credentials (e.g. LCMHCS, NCC, LPC).
-              These auto-populate when you log supervision sessions and are validated
-              against your supervisees&apos; state requirements.
-            </p>
-            <CredentialsForm
-              initialCredentials={user.credentials as string[] | null}
-            />
-          </CardContent>
-        </Card>
+        <AccountSection
+          id="credentials"
+          title="Professional credentials"
+          badge={
+            user.credentials && user.credentials.length > 0 ? (
+              <span className="status-pill status-ok">{user.credentials.join(", ")}</span>
+            ) : (
+              <span className="status-pill status-warn">Not set</span>
+            )
+          }
+        >
+          <p className="text-sm text-[color:var(--text-secondary)]">
+            Your professional licenses and credentials (e.g. LCMHCS, NCC, LPC).
+            These auto-populate when you log supervision sessions and are validated
+            against your supervisees&apos; state requirements.
+          </p>
+          <CredentialsForm initialCredentials={user.credentials as string[] | null} />
+        </AccountSection>
       )}
 
       {/* 6. Supervisor training — supervisor only.
             Moved up from the bottom because it's a real compliance gate
             for CA APCC + a few other states. */}
       {userCanSupervise && (
-        <Card id="training">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between gap-3">
-              <span>Supervisor training</span>
-              {user.supervisorTrainingHours !== null &&
-              user.supervisorTrainingHours > 0 ? (
-                <Badge variant="success">
-                  {user.supervisorTrainingHours}{" "}
-                  {user.supervisorTrainingHours === 1 ? "hour" : "hours"} on file
-                </Badge>
-              ) : (
-                <Badge variant="outline-warn">Not recorded</Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-foreground/70 mb-4">
-              Some states require supervisors to complete a training course
-              before supervising. CA requires 15 hours under 16 CCR §1822.
-              Record your verified training hours here — they snapshot onto
-              every supervision session you log.
-            </p>
-            <SupervisorTrainingForm
-              initialHours={user.supervisorTrainingHours}
-            />
-          </CardContent>
-        </Card>
+        <AccountSection
+          id="training"
+          title="Supervisor training"
+          badge={
+            user.supervisorTrainingHours !== null && user.supervisorTrainingHours > 0 ? (
+              <span className="status-pill status-ok">
+                {user.supervisorTrainingHours}{" "}
+                {user.supervisorTrainingHours === 1 ? "hour" : "hours"} on file
+              </span>
+            ) : (
+              <span className="status-pill status-warn">Not recorded</span>
+            )
+          }
+        >
+          <p className="text-sm text-[color:var(--text-secondary)]">
+            Some states require supervisors to complete a training course
+            before supervising. CA requires 15 hours under 16 CCR §1822.
+            Record your verified training hours here — they snapshot onto
+            every supervision session you log.
+          </p>
+          <SupervisorTrainingForm initialHours={user.supervisorTrainingHours} />
+        </AccountSection>
       )}
 
       {/* 6. Profile (display name) */}
-      <Card id="profile">
-        <CardHeader>
-          <CardTitle>Display name</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <NameForm currentName={user.name} />
-        </CardContent>
-      </Card>
+      <AccountSection id="profile" title="Display name">
+        <NameForm currentName={user.name} />
+      </AccountSection>
 
       {/* 7. Password */}
-      <Card id="password">
-        <CardHeader>
-          <CardTitle>Password</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PasswordForm />
-        </CardContent>
-      </Card>
+      <AccountSection id="password" title="Password">
+        <PasswordForm />
+      </AccountSection>
 
       {/* 8. 2FA */}
-      <Card id="2fa">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between gap-3">
-            <span>Two-factor authentication</span>
-            {user.totpEnabledAt ? (
-              <Badge variant="success">Active</Badge>
-            ) : (
-              <Badge variant="outline">Off</Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {user.totpEnabledAt ? (
-            <div className="space-y-4">
-              <p className="text-sm text-foreground/70">
-                Active since{" "}
-                <span className="font-medium text-foreground">
-                  {user.totpEnabledAt.toLocaleDateString(undefined, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </span>
-                . You&apos;ll be asked for a 6-digit code from your
-                authenticator app every time you sign in.
-              </p>
-              <TotpDisableForm />
-            </div>
+      <AccountSection
+        id="2fa"
+        title="Two-factor authentication"
+        badge={
+          user.totpEnabledAt ? (
+            <span className="status-pill status-ok">Active</span>
           ) : (
-            <TotpSetupWizard />
-          )}
-        </CardContent>
-      </Card>
+            <span className="status-pill status-pending">Off</span>
+          )
+        }
+      >
+        {user.totpEnabledAt ? (
+          <div className="space-y-4">
+            <p className="text-sm text-[color:var(--text-secondary)]">
+              Active since{" "}
+              <span className="font-medium text-[color:var(--text-primary)]">
+                {user.totpEnabledAt.toLocaleDateString(undefined, {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+              . You&apos;ll be asked for a 6-digit code from your
+              authenticator app every time you sign in.
+            </p>
+            <TotpDisableForm />
+          </div>
+        ) : (
+          <TotpSetupWizard />
+        )}
+      </AccountSection>
 
       {/* 9. Sessions */}
-      <Card id="sessions">
-        <CardContent className="p-6">
-          <p className="label-overline mb-1">Sessions</p>
-          <p className="text-sm text-foreground/60 mb-4">
-            Signed in on a public computer? Lost a device? Sign out of every
-            device where this account is currently signed in. You&apos;ll need
-            to sign in again on each device you want to keep using.
-          </p>
-          <SignOutEverywhereButton />
-        </CardContent>
-      </Card>
+      <AccountSection id="sessions" title="Sessions">
+        <p className="text-sm text-[color:var(--text-secondary)]">
+          Signed in on a public computer? Lost a device? Sign out of every
+          device where this account is currently signed in. You&apos;ll need
+          to sign in again on each device you want to keep using.
+        </p>
+        <SignOutEverywhereButton />
+      </AccountSection>
 
       {/* 10. Change email (rarely touched) */}
-      <Card id="change-email">
-        <CardContent className="p-6">
-          <p className="label-overline mb-1">Change email</p>
-          <p className="text-sm text-foreground/60 mb-4">
-            Move your account to a different email address. The new address
-            must be verified before the change takes effect.
-          </p>
-          <EmailChangeForm currentEmail={user.email} />
-        </CardContent>
-      </Card>
+      <AccountSection id="change-email" title="Change email">
+        <p className="text-sm text-[color:var(--text-secondary)]">
+          Move your account to a different email address. The new address
+          must be verified before the change takes effect.
+        </p>
+        <EmailChangeForm currentEmail={user.email} />
+      </AccountSection>
 
       {/* 11. Danger zone — account deletion */}
-      <Card
+      <section
         id="delete"
-        className="border-[color:var(--color-risk)]/30 bg-[color:var(--color-risk)]/5"
+        className="panel space-y-4 scroll-mt-6 border-l-[3px] border-l-[color:var(--risk-600)]"
       >
-        <CardContent className="p-6">
-          <p className="label-overline text-[color:var(--color-risk)] mb-1">
-            Delete account
-          </p>
-          <p className="text-sm text-foreground/70 mb-4">
-            Permanently delete your AuditHalo account. You&apos;ll be signed out
-            immediately and your data is purged after 30 days. Email{" "}
-            <a
-              href="mailto:info@audithalo.com"
-              className="underline hover:no-underline"
-            >
-              info@audithalo.com
-            </a>{" "}
-            inside that window if you change your mind.
-          </p>
-          <DeleteAccountForm />
-        </CardContent>
-      </Card>
+        <h2 className="font-display text-lg font-semibold text-[color:var(--risk-600)]">
+          Delete account
+        </h2>
+        <p className="text-sm text-[color:var(--text-secondary)]">
+          Permanently delete your AuditHalo account. You&apos;ll be signed out
+          immediately and your data is purged after 30 days. Email{" "}
+          <a href="mailto:info@audithalo.com" className="underline hover:no-underline">
+            info@audithalo.com
+          </a>{" "}
+          inside that window if you change your mind.
+        </p>
+        <DeleteAccountForm />
+      </section>
     </div>
   );
 }
