@@ -5,9 +5,6 @@ import { ArrowLeft, AlertTriangle, ExternalLink } from "lucide-react";
 import { auth } from "@/auth";
 import { canManageOrg, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { getRule, parseRuleId } from "@/lib/rules/loader";
 import {
   buildReauthorPrefill,
@@ -135,33 +132,29 @@ export default async function CustomizeCanonicalRulePage({
     : null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12 space-y-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-3">
-        <Link href="/dashboard/team/rules">
-          <ArrowLeft />
+    <div className="flex flex-col gap-6">
+      <div>
+        <Link
+          href="/dashboard/team/rules"
+          className="inline-flex items-center gap-1.5 text-sm text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] mb-3"
+        >
+          <ArrowLeft className="h-4 w-4" />
           Back to rules
         </Link>
-      </Button>
-
-      <div>
-        <Badge variant="outline" className="mb-3">
-          {existing
-            ? "Edit override"
-            : isReauthor
-              ? "Re-author override"
-              : "New override"}
-        </Badge>
-        <h1 className="font-display text-3xl font-semibold text-foreground">
+        <p className="shell-eyebrow">
+          {existing ? "Edit override" : isReauthor ? "Re-author override" : "New override"}
+        </p>
+        <h1 className="shell-page-title mt-1">
           {canonical.jurisdiction} {canonical.license_code} v{canonical.version}
         </h1>
-        <p className="mt-2 text-foreground/70">
+        <p className="shell-page-sub">
           {canonical.license_name} &middot; {canonical.issuing_board}
         </p>
         <a
           href={canonical.citation.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-1 inline-flex items-center gap-1 text-xs text-secondary hover:underline"
+          className="mt-1 inline-flex items-center gap-1 text-xs font-mono text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:underline"
         >
           {canonical.citation.admincode}
           <ExternalLink className="h-3 w-3" />
@@ -169,13 +162,13 @@ export default async function CustomizeCanonicalRulePage({
       </div>
 
       {isReauthor && reauthorSourceLabel && (
-        <div className="rounded-sm border border-secondary/40 bg-secondary/5 p-4 flex gap-3">
-          <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0 text-secondary" />
+        <div className="panel panel-tight border-l-[3px] border-l-[color:var(--ink-400)] flex gap-3">
+          <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--text-secondary)]" />
           <div className="space-y-1 text-sm">
-            <p className="font-medium text-foreground">
+            <p className="font-medium text-[color:var(--text-primary)]">
               Re-authoring your override from {reauthorSourceLabel}.
             </p>
-            <p className="text-foreground/70">
+            <p className="text-[color:var(--text-secondary)]">
               The form is pre-filled with your values from {reauthorSourceLabel}.
               Review them against the new canonical column on the left &mdash;
               the board may have changed numbers since you last saved. Saving
@@ -186,14 +179,14 @@ export default async function CustomizeCanonicalRulePage({
         </div>
       )}
 
-      <div className="rounded-sm border border-[color:var(--color-warning)]/40 bg-[color:var(--color-warning)]/5 p-4 flex gap-3">
-        <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--color-warning)]" />
+      <div className="panel panel-tight border-l-[3px] border-l-[color:var(--warn-500)] flex gap-3">
+        <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--warn-500)]" />
         <div className="space-y-2 text-sm">
-          <p className="font-medium text-foreground">
+          <p className="font-medium text-[color:var(--text-primary)]">
             This override applies to every supervisee in your org on{" "}
             {canonical.jurisdiction} {canonical.license_code} v{canonical.version}.
           </p>
-          <p className="text-foreground/70">
+          <p className="text-[color:var(--text-secondary)]">
             Severity is downgrade-only &mdash; you can soften a blocker to a
             warning but not the reverse. Removing a check stops AuditHalo from
             evaluating it for this rule. Compare against the canonical column
@@ -202,13 +195,12 @@ export default async function CustomizeCanonicalRulePage({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {/* Left: canonical, read-only */}
-        <Card>
-          <CardContent className="p-6 space-y-5">
+        <div className="panel space-y-5">
             <div>
               <p className="label-overline mb-2">Canonical (board-verified)</p>
-              <p className="text-sm text-foreground/70">{canonical.summary}</p>
+              <p className="text-sm text-[color:var(--text-secondary)]">{canonical.summary}</p>
             </div>
 
             <div>
@@ -258,55 +250,48 @@ export default async function CustomizeCanonicalRulePage({
               </p>
               <ul className="text-sm space-y-2.5">
                 {canonical.checks.map((c) => (
-                  <li
-                    key={c.id}
-                    className="border border-border rounded-sm p-3"
-                  >
+                  <li key={c.id} className="border border-[color:var(--border)] rounded-[8px] p-3">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="font-mono text-xs text-foreground/80">
+                      <p className="font-mono text-xs text-[color:var(--text-secondary)]">
                         {c.id}
                       </p>
-                      <Badge
-                        variant={
+                      <span
+                        className={`status-pill ${
                           c.severity === "blocker"
-                            ? "risk"
+                            ? "status-risk"
                             : c.severity === "warning"
-                              ? "outline-warn"
-                              : "outline"
-                        }
-                        className="text-[10px] uppercase"
+                              ? "status-warn"
+                              : "status-pending"
+                        }`}
                       >
                         {c.severity}
-                      </Badge>
+                      </span>
                     </div>
-                    <p className="mt-1 text-xs text-foreground/70">
+                    <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
                       {c.description}
                     </p>
                   </li>
                 ))}
               </ul>
             </div>
-          </CardContent>
-        </Card>
+        </div>
 
         {/* Right: editable override form */}
-        <Card>
-          <CardContent className="p-6">
-            <p className="label-overline mb-4">Your override</p>
-            <OverrideEditorForm
-              canonicalRuleId={canonicalRuleId}
-              canonical={{
-                structured: canonical.structured,
-                checks: canonical.checks.map((c) => ({
-                  id: c.id,
-                  severity: c.severity,
-                  description: c.description,
-                })),
-              }}
-              initial={initial}
-            />
-          </CardContent>
-        </Card>
+        <div className="panel">
+          <p className="label-overline mb-4">Your override</p>
+          <OverrideEditorForm
+            canonicalRuleId={canonicalRuleId}
+            canonical={{
+              structured: canonical.structured,
+              checks: canonical.checks.map((c) => ({
+                id: c.id,
+                severity: c.severity,
+                description: c.description,
+              })),
+            }}
+            initial={initial}
+          />
+        </div>
       </div>
     </div>
   );
@@ -321,8 +306,8 @@ function StructuredCanonicalRow({
 }) {
   return (
     <>
-      <dt className="text-foreground/60">{label}</dt>
-      <dd className="text-right font-mono text-foreground">{value}</dd>
+      <dt className="text-[color:var(--text-muted)]">{label}</dt>
+      <dd className="text-right font-mono text-[color:var(--text-primary)]">{value}</dd>
     </>
   );
 }

@@ -5,9 +5,6 @@ import { ArrowLeft, AlertTriangle, ExternalLink } from "lucide-react";
 import { auth } from "@/auth";
 import { canManageOrg, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { buildCustomRule } from "@/lib/rules/overrides";
 import { CustomRuleActions } from "./_custom-rule-actions";
 
@@ -105,35 +102,29 @@ export default async function CustomRuleDetailPage({
   );
 
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-12 space-y-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-3">
-        <Link href="/dashboard/team/rules">
-          <ArrowLeft />
+    <div className="mx-auto max-w-4xl flex flex-col gap-6">
+      <div>
+        <Link
+          href="/dashboard/team/rules"
+          className="inline-flex items-center gap-1.5 text-sm text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] mb-3"
+        >
+          <ArrowLeft className="h-4 w-4" />
           Back to rules
         </Link>
-      </Button>
-
-      <div>
         <div className="flex flex-wrap items-center gap-2 mb-2">
-          <Badge variant="outline">Custom rule</Badge>
+          <span className="status-pill status-pending">Custom rule</span>
           {row.isActive ? (
-            <Badge variant="outline-warn" className="text-[10px]">
-              Active
-            </Badge>
+            <span className="status-pill status-warn">Active</span>
           ) : (
-            <Badge variant="risk" className="text-[10px]">
-              Inactive
-            </Badge>
+            <span className="status-pill status-risk">Inactive</span>
           )}
         </div>
-        <h1 className="font-display text-3xl font-semibold text-foreground">
-          {row.label}
-        </h1>
-        <p className="mt-2 text-foreground/70">
+        <h1 className="shell-page-title">{row.label}</h1>
+        <p className="shell-page-sub">
           {rule.license_name} &middot; {rule.issuing_board}
         </p>
-        <p className="mt-1 text-xs text-foreground/60">
-          {rule.jurisdiction} {rule.license_code} v{rule.version}
+        <p className="mt-1 text-xs text-[color:var(--text-muted)]">
+          <span className="font-mono">{rule.jurisdiction} {rule.license_code} v{rule.version}</span>
           {" · "}
           {assignmentCount.length}{" "}
           {assignmentCount.length === 1 ? "supervisee" : "supervisees"} assigned
@@ -144,26 +135,23 @@ export default async function CustomRuleDetailPage({
           href={rule.citation.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-2 inline-flex items-center gap-1 text-xs text-secondary hover:underline"
+          className="mt-2 inline-flex items-center gap-1 text-xs font-mono text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:underline"
         >
           {rule.citation.admincode}
           <ExternalLink className="h-3 w-3" />
         </a>
       </div>
 
-      <div className="rounded-sm border border-[color:var(--color-warning)]/40 bg-[color:var(--color-warning)]/5 p-4 flex gap-3">
-        <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--color-warning)]" />
+      <div className="panel panel-tight border-l-[3px] border-l-[color:var(--warn-500)] flex gap-3">
+        <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0 text-[color:var(--warn-500)]" />
         <div className="space-y-1 text-sm">
-          <p className="font-medium text-foreground">
+          <p className="font-medium text-[color:var(--text-primary)]">
             This is an org-created custom rule, not board-verified.
           </p>
-          <p className="text-foreground/70">
+          <p className="text-[color:var(--text-secondary)]">
             If your values disagree with the actual board requirement,
             AuditHalo will not catch you. Email{" "}
-            <a
-              href="mailto:info@audithalo.com"
-              className="underline hover:no-underline"
-            >
+            <a href="mailto:info@audithalo.com" className="underline hover:no-underline">
               info@audithalo.com
             </a>{" "}
             to fast-track a canonical YAML for this state.
@@ -171,11 +159,10 @@ export default async function CustomRuleDetailPage({
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-6 space-y-5">
+      <div className="panel space-y-5">
           <div>
             <p className="label-overline mb-2">Summary</p>
-            <p className="text-sm text-foreground/80">{rule.summary}</p>
+            <p className="text-sm text-[color:var(--text-secondary)]">{rule.summary}</p>
           </div>
 
           <div>
@@ -223,85 +210,66 @@ export default async function CustomRuleDetailPage({
             </p>
             <ul className="text-sm space-y-2">
               {rule.checks.map((c) => (
-                <li
-                  key={c.id}
-                  className="border border-border rounded-sm p-3"
-                >
+                <li key={c.id} className="border border-[color:var(--border)] rounded-[8px] p-3">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="font-mono text-xs text-foreground/80">
+                    <p className="font-mono text-xs text-[color:var(--text-secondary)]">
                       {c.id}
                     </p>
-                    <Badge
-                      variant={
+                    <span
+                      className={`status-pill ${
                         c.severity === "blocker"
-                          ? "risk"
+                          ? "status-risk"
                           : c.severity === "warning"
-                            ? "outline-warn"
-                            : "outline"
-                      }
-                      className="text-[10px] uppercase"
+                            ? "status-warn"
+                            : "status-pending"
+                      }`}
                     >
                       {c.severity}
-                    </Badge>
+                    </span>
                   </div>
-                  <p className="mt-1 text-xs text-foreground/70">
+                  <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
                     {c.description}
                   </p>
                 </li>
               ))}
             </ul>
           </div>
-        </CardContent>
-      </Card>
+      </div>
 
       {trail.length > 0 && (
-        <Card>
-          <CardContent className="p-6 space-y-2">
-            <p className="label-overline">Audit trail</p>
-            <ul className="space-y-1 text-xs">
-              {trail.map((a) => (
-                <li
-                  key={a.id}
-                  className="flex flex-wrap items-baseline gap-2"
-                >
-                  <span className="font-mono text-foreground/80">
-                    {a.action}
-                  </span>
-                  <span className="text-foreground/60">
-                    {a.createdAt
-                      .toISOString()
-                      .slice(0, 16)
-                      .replace("T", " ")}
-                  </span>
-                  <span className="text-foreground/60">
-                    by{" "}
-                    {a.actorUserId
-                      ? actorById.get(a.actorUserId) ?? "unknown"
-                      : "system"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <div className="panel space-y-2">
+          <p className="label-overline">Audit trail</p>
+          <ul className="space-y-1 text-xs">
+            {trail.map((a) => (
+              <li key={a.id} className="flex flex-wrap items-baseline gap-2">
+                <span className="font-mono text-[color:var(--text-secondary)]">{a.action}</span>
+                <span className="text-[color:var(--text-muted)]">
+                  {a.createdAt.toISOString().slice(0, 16).replace("T", " ")}
+                </span>
+                <span className="text-[color:var(--text-muted)]">
+                  by{" "}
+                  {a.actorUserId ? actorById.get(a.actorUserId) ?? "unknown" : "system"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {row.isActive && (
-        <Card>
-          <CardContent className="p-6 space-y-2">
-            <p className="label-overline">Deactivate</p>
-            <p className="text-sm text-foreground/70">
-              Marks the rule inactive and removes it from the assignment
-              picker. The row stays in the audit trail. Refuses if any
-              supervisee is still assigned this rule &mdash; reassign them
-              first.
-            </p>
-            <CustomRuleActions
-              overrideId={row.id}
-              assignmentCount={assignmentCount.length}
-            />
-          </CardContent>
-        </Card>
+        <div className="panel space-y-2">
+          <p className="label-overline">Deactivate</p>
+          <p className="text-sm text-[color:var(--text-secondary)]">
+            Marks the rule inactive and removes it from the assignment
+            picker. The row stays in the audit trail. Refuses if any
+            supervisee is still assigned this rule &mdash; reassign them
+            first.
+          </p>
+          <CustomRuleActions
+            overrideId={row.id}
+            assignmentCount={assignmentCount.length}
+          />
+        </div>
       )}
     </div>
   );
@@ -310,8 +278,8 @@ export default async function CustomRuleDetailPage({
 function StructuredRow({ label, value }: { label: string; value: number }) {
   return (
     <>
-      <dt className="text-foreground/60">{label}</dt>
-      <dd className="text-right font-mono text-foreground">{value}</dd>
+      <dt className="text-[color:var(--text-muted)]">{label}</dt>
+      <dd className="text-right font-mono text-[color:var(--text-primary)]">{value}</dd>
     </>
   );
 }
