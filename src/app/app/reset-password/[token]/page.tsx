@@ -2,8 +2,7 @@ import Link from "next/link";
 import { and, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { hashAuthToken } from "@/lib/auth-tokens";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { AuthShell } from "@/components/app/auth-shell";
 import { ResetPasswordForm } from "./reset-password-form";
 
 export const metadata = {
@@ -30,48 +29,41 @@ export default async function ResetPasswordPage({
 
   if (!row || expired) {
     return (
-      <div className="mx-auto max-w-md px-6 py-20">
-        <Badge variant="risk" className="mb-4">
+      <AuthShell>
+        <span className="status-pill status-risk mb-3 inline-flex">
           {expired ? "Expired" : "Invalid"}
-        </Badge>
-        <h1 className="font-display text-3xl font-semibold text-foreground">
-          {expired
-            ? "This reset link has expired."
-            : "This reset link is invalid."}
+        </span>
+        <h1 className="font-display text-2xl font-semibold text-[color:var(--text-primary)] mt-1">
+          {expired ? "This reset link has expired." : "This reset link is invalid."}
         </h1>
-        <p className="mt-3 text-foreground/70">
+        <p className="text-sm text-[color:var(--text-secondary)] mt-2">
           Request a fresh link — they expire after 1 hour for security.
         </p>
         <p className="mt-6 text-sm">
           <Link
             href="/forgot-password"
-            className="text-secondary font-medium hover:underline"
+            className="font-medium text-[color:var(--text-primary)] underline"
           >
             Request a new reset link
           </Link>
         </p>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-md px-6 py-20">
-      <Badge variant="outline" className="mb-4">
-        Set a new password
-      </Badge>
-      <h1 className="font-display text-3xl font-semibold text-foreground">
+    <AuthShell>
+      <p className="shell-eyebrow">Set a new password</p>
+      <h1 className="font-display text-2xl font-semibold text-[color:var(--text-primary)] mt-1">
         Choose a new password
       </h1>
-      <p className="mt-3 text-foreground/70">
+      <p className="text-sm text-[color:var(--text-secondary)] mt-2">
         Pick something at least 8 characters long. You&apos;ll sign in with this from
         now on.
       </p>
-
-      <Card className="mt-8">
-        <CardContent className="p-6">
-          <ResetPasswordForm token={token} />
-        </CardContent>
-      </Card>
-    </div>
+      <div className="mt-6">
+        <ResetPasswordForm token={token} />
+      </div>
+    </AuthShell>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { AuthShell } from "@/components/app/auth-shell";
 import { LoginForm } from "./login-form";
 
 export const metadata = {
@@ -15,23 +16,26 @@ export default async function LoginPage() {
   if (session?.user) redirect("/dashboard");
 
   return (
-    <div className="mx-auto max-w-md px-6 py-20">
-      <p className="label-overline mb-4">Welcome back</p>
-      <h1 className="font-display text-3xl font-semibold text-foreground">
+    <AuthShell
+      footer={
+        <>
+          Need an account?{" "}
+          <Link href="/register" className="font-medium text-[color:var(--text-primary)] underline">
+            Create one
+          </Link>
+        </>
+      }
+    >
+      <p className="shell-eyebrow">Welcome back</p>
+      <h1 className="font-display text-2xl font-semibold text-[color:var(--text-primary)] mt-1">
         Sign in
       </h1>
-      <p className="mt-3 text-foreground/70">
+      <p className="text-sm text-[color:var(--text-secondary)] mt-2">
         Pick up your roster where you left off.
       </p>
-
-      <LoginForm />
-
-      <p className="mt-6 text-sm text-foreground/60">
-        Need an account?{" "}
-        <Link href="/register" className="text-secondary font-medium hover:underline">
-          Create one
-        </Link>
-      </p>
-    </div>
+      <div className="mt-6">
+        <LoginForm />
+      </div>
+    </AuthShell>
   );
 }
