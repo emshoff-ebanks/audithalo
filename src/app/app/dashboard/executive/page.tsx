@@ -1,8 +1,9 @@
 import Link from "next/link";
 import {
-  ArrowLeft,
   Users,
   AlertTriangle,
+  AlertOctagon,
+  Circle,
   FileSignature,
   ShieldCheck,
   CalendarClock,
@@ -16,9 +17,6 @@ import {
 import { riskBadgeLabel } from "@/lib/rules";
 import { db, schema } from "@/lib/db";
 import { getOrgRosterWithCompliance } from "@/lib/db/roster-queries";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = { title: "Executive — AuditHalo" };
 export const dynamic = "force-dynamic";
@@ -137,42 +135,30 @@ export default async function ExecutiveDashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
-      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
-        <Link href="/dashboard">
-          <ArrowLeft />
-          Back to dashboard
-        </Link>
-      </Button>
-
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Badge variant="outline">Executive overview</Badge>
+    <>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="shell-eyebrow">Executive overview</p>
+          <h1 className="shell-page-title mt-1 break-words">{org.name}</h1>
+          <p className="shell-page-sub">
+            {totalSupervisees === 0
+              ? "No supervisees yet — invite some to populate this dashboard."
+              : `Audit-readiness ${auditReadinessScore}% — ${onTrackCount} of ${totalSupervisees} supervisees on track.`}
+          </p>
+        </div>
         {org.subscriptionTier === "enterprise" && (
-          <Badge variant="outline">Enterprise</Badge>
+          <span className="status-pill status-sealed">Enterprise</span>
         )}
       </div>
-      <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground break-words">
-        {org.name}
-      </h1>
-      <p className="mt-2 text-foreground/70">
-        {totalSupervisees === 0
-          ? "No supervisees yet — invite some to populate this dashboard."
-          : `Audit-readiness ${auditReadinessScore}% — ${onTrackCount} of ${totalSupervisees} supervisees on track.`}
-      </p>
 
       {/* Summary cards */}
-      <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <SummaryCard
-          label="Supervisees"
-          value={totalSupervisees}
-          Icon={Users}
-        />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <SummaryCard label="Supervisees" value={totalSupervisees} Icon={Users} />
         <SummaryCard
           label="Need attention"
           value={atRiskCount}
           Icon={AlertTriangle}
-          warn={atRiskCount > 0}
-          good={atRiskCount === 0 && totalSupervisees > 0}
+          hero
         />
         <SummaryCard
           label="Pending signatures"
@@ -188,15 +174,9 @@ export default async function ExecutiveDashboardPage() {
         />
       </div>
 
-      {/* Scheduling rollup — Phase 5 additions. Sits below the headline
-          cards so the existing four don't grow into a 6-up that breaks
-          mobile layout. */}
-      <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <SummaryCard
-          label="Scheduled this week"
-          value={monthStats.scheduledThisWeek}
-          Icon={CalendarClock}
-        />
+      {/* Scheduling rollup */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <SummaryCard label="Scheduled this week" value={monthStats.scheduledThisWeek} Icon={CalendarClock} />
         <SummaryCard
           label="No-shows last 30d"
           value={monthStats.noShowsLast30Days}
@@ -204,138 +184,112 @@ export default async function ExecutiveDashboardPage() {
           warn={monthStats.noShowsLast30Days > 0}
           good={monthStats.noShowsLast30Days === 0}
         />
-        <SummaryCard
-          label="Sealed this month"
-          value={monthStats.evidenceSealed}
-          Icon={FileSignature}
-          good
-        />
+        <SummaryCard label="Sealed this month" value={monthStats.evidenceSealed} Icon={FileSignature} good />
       </div>
 
       {/* Needs attention — top 8 */}
-      <div className="mt-10">
-        <h2 className="font-display text-xl font-semibold text-foreground mb-4">
+      <section>
+        <h2 className="font-display text-xl font-semibold text-[color:var(--text-primary)] mb-3">
           Needs attention
         </h2>
         {needsAttention.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-foreground/60">
-                Every supervisee is on track. No flags to triage.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="panel text-center text-[color:var(--text-muted)]">
+            Every supervisee is on track. No flags to triage.
+          </div>
         ) : (
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[640px]">
-                  <thead className="bg-accent text-left">
-                    <tr>
-                      <th className="px-5 py-3 font-semibold">Supervisee</th>
-                      <th className="px-5 py-3 font-semibold">Primary supervisor</th>
-                      <th className="px-5 py-3 font-semibold">Credential</th>
-                      <th className="px-5 py-3 font-semibold">Practice hrs</th>
-                      <th className="px-5 py-3 font-semibold">Status</th>
+          <div className="panel panel-flush overflow-x-auto">
+            <table className="w-full text-sm min-w-[640px]">
+              <thead>
+                <tr className="text-left border-b border-[color:var(--border)] bg-[color:var(--surface-muted)]">
+                  <th className="px-5 py-3 label-overline">Supervisee</th>
+                  <th className="px-5 py-3 label-overline">Primary supervisor</th>
+                  <th className="px-5 py-3 label-overline">Credential</th>
+                  <th className="px-5 py-3 label-overline">Practice hrs</th>
+                  <th className="px-5 py-3 label-overline">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {needsAttention.map((r) => {
+                  const supName = superviseeToSupervisorName.get(r.userId) ?? "—";
+                  const practiceHrs = r.evaluation?.totals.practiceHours ?? 0;
+                  const riskLevel = r.evaluation?.riskLevel;
+                  return (
+                    <tr key={r.userId} className="border-b border-[color:var(--divider)]">
+                      <td className="px-5 py-3 font-medium text-[color:var(--text-primary)]">
+                        <Link href={`/dashboard/roster/${r.userId}`} className="hover:underline">
+                          {r.name}
+                        </Link>
+                      </td>
+                      <td className="px-5 py-3 text-[color:var(--text-secondary)]">{supName}</td>
+                      <td className="px-5 py-3 text-[color:var(--text-secondary)]">
+                        {r.state && r.licenseType
+                          ? `${r.state} · ${r.licenseType}`
+                          : r.state ?? r.licenseType ?? "—"}
+                      </td>
+                      <td className="px-5 py-3 font-mono text-[color:var(--text-primary)]">
+                        {practiceHrs.toFixed(1)}h
+                      </td>
+                      <td className="px-5 py-3">
+                        {riskLevel ? <RiskPill level={riskLevel} /> : (
+                          <span className="text-[color:var(--text-muted)] italic text-xs">No rule</span>
+                        )}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {needsAttention.map((r) => {
-                      const supName =
-                        superviseeToSupervisorName.get(r.userId) ?? "—";
-                      const practiceHrs =
-                        r.evaluation?.totals.practiceHours ?? 0;
-                      const riskLevel = r.evaluation?.riskLevel;
-                      return (
-                        <tr key={r.userId} className="border-t border-border">
-                          <td className="px-5 py-3 font-medium">
-                            <Link
-                              href={`/dashboard/roster/${r.userId}`}
-                              className="hover:underline"
-                            >
-                              {r.name}
-                            </Link>
-                          </td>
-                          <td className="px-5 py-3 text-foreground/70">
-                            {supName}
-                          </td>
-                          <td className="px-5 py-3 text-foreground/70">
-                            {r.state && r.licenseType
-                              ? `${r.state} · ${r.licenseType}`
-                              : r.state ?? r.licenseType ?? "—"}
-                          </td>
-                          <td className="px-5 py-3 font-mono">
-                            {practiceHrs.toFixed(1)}h
-                          </td>
-                          <td className="px-5 py-3">
-                            {riskLevel ? (
-                              <Badge
-                                variant={
-                                  riskLevel === "red"
-                                    ? "risk"
-                                    : riskLevel === "yellow"
-                                      ? "warning"
-                                      : "success"
-                                }
-                              >
-                                {riskBadgeLabel(riskLevel)}
-                              </Badge>
-                            ) : (
-                              <span className="text-foreground/40 italic text-xs">
-                                No rule
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
-      </div>
+      </section>
 
       {/* Pending signatures by supervisor */}
       {totalPendingSigs > 0 && (
-        <div className="mt-10">
-          <h2 className="font-display text-xl font-semibold text-foreground mb-4">
+        <section>
+          <h2 className="font-display text-xl font-semibold text-[color:var(--text-primary)] mb-3">
             Pending signatures by supervisor
           </h2>
-          <Card>
-            <CardContent className="p-0">
-              <table className="w-full text-sm">
-                <thead className="bg-accent text-left">
-                  <tr>
-                    <th className="px-5 py-3 font-semibold">Supervisor</th>
-                    <th className="px-5 py-3 font-semibold">Pending</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...pendingBySupervisor.entries()]
-                    .sort((a, b) => b[1] - a[1])
-                    .filter(([, n]) => n > 0)
-                    .map(([supervisorId, count]) => (
-                      <tr
-                        key={supervisorId}
-                        className="border-t border-border"
-                      >
-                        <td className="px-5 py-3 font-medium">
-                          {supervisorMap.get(supervisorId) ?? "—"}
-                        </td>
-                        <td className="px-5 py-3">
-                          <Badge variant="warning">{count}</Badge>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
-        </div>
+          <div className="panel panel-flush overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b border-[color:var(--border)] bg-[color:var(--surface-muted)]">
+                  <th className="px-5 py-3 label-overline">Supervisor</th>
+                  <th className="px-5 py-3 label-overline">Pending</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...pendingBySupervisor.entries()]
+                  .sort((a, b) => b[1] - a[1])
+                  .filter(([, n]) => n > 0)
+                  .map(([supervisorId, count]) => (
+                    <tr key={supervisorId} className="border-b border-[color:var(--divider)]">
+                      <td className="px-5 py-3 font-medium text-[color:var(--text-primary)]">
+                        {supervisorMap.get(supervisorId) ?? "—"}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className="status-pill status-warn">{count}</span>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
-    </div>
+    </>
+  );
+}
+
+/** Severity status pill (design-system-v2.md §7.1, §13). */
+function RiskPill({ level }: { level: "green" | "yellow" | "red" }) {
+  const cls = level === "red" ? "status-risk" : level === "yellow" ? "status-warn" : "status-ok";
+  return (
+    <span className={`status-pill ${cls}`}>
+      {level === "green" && <Circle className="h-2 w-2 fill-current" />}
+      {level === "yellow" && <AlertTriangle className="h-3 w-3" />}
+      {level === "red" && <AlertOctagon className="h-3 w-3" />}
+      {riskBadgeLabel(level)}
+    </span>
   );
 }
 
@@ -345,28 +299,44 @@ function SummaryCard({
   Icon,
   warn,
   good,
+  hero,
 }: {
   label: string;
   value: number;
   Icon: typeof Users;
   warn?: boolean;
   good?: boolean;
+  hero?: boolean;
 }) {
-  const color = warn
-    ? "text-[color:var(--color-warning)]"
+  const numTone = warn
+    ? "text-[color:var(--warn-700)]"
     : good
-      ? "text-[color:var(--color-success)]"
-      : "text-foreground";
+      ? "text-[color:var(--ok-700)]"
+      : "text-[color:var(--text-primary)]";
+  const iconTone = warn
+    ? "text-[color:var(--warn-500)]"
+    : good
+      ? "text-[color:var(--ok-700)]"
+      : "text-[color:var(--text-secondary)]";
   return (
-    <Card>
-      <CardContent className="p-4 sm:p-6">
-        <Icon className={`h-5 w-5 mb-2 sm:mb-3 ${color}`} strokeWidth={1.75} />
-        <p className={`font-display text-2xl sm:text-3xl font-bold ${color}`}>
+    <div className={`panel flex flex-col gap-3${hero ? " panel-hero" : ""}`}>
+      <Icon
+        className={`h-5 w-5 ${hero ? "text-[color:var(--ink-900)]" : iconTone}`}
+        strokeWidth={2}
+      />
+      <div>
+        <p
+          className={`font-display text-3xl font-bold leading-none ${
+            hero ? "text-[color:var(--ink-900)]" : numTone
+          }`}
+        >
           {value}
         </p>
-        <p className="mt-1 text-xs sm:text-sm text-foreground/60">{label}</p>
-      </CardContent>
-    </Card>
+        <p className={`label-overline mt-2 ${hero ? "!text-[color:var(--ink-900)]/70" : ""}`}>
+          {label}
+        </p>
+      </div>
+    </div>
   );
 }
 
