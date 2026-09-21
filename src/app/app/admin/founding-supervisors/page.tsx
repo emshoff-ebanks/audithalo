@@ -1,7 +1,5 @@
 import { eq, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { FoundingToggleForm } from "./_toggle-form";
 
 export const metadata = { title: "Founding Supervisors — Admin" };
@@ -39,79 +37,69 @@ export default async function FoundingSupervisorsPage() {
   const foundingCount = rows.filter((r) => r.isFoundingSupervisor).length;
 
   return (
-    <div>
-      <h1 className="font-display text-3xl font-semibold text-foreground">
-        Founding Supervisor program
-      </h1>
-      <p className="mt-3 text-foreground/70 max-w-3xl">
-        Manually grant or revoke the Founding Supervisor flag for any
-        supervisor in the system. Granting it surfaces a badge in their
-        dashboard header and reserves them for future early-access feature
-        branches.
-      </p>
-
-      <div className="mt-6 flex flex-wrap gap-2">
-        <Badge variant="outline">
-          {rows.length} supervisor{rows.length === 1 ? "" : "s"} total
-        </Badge>
-        <Badge
-          variant="outline"
-          className="border-[color:var(--color-gold)] bg-[color:var(--color-gold)]/10 text-[color:var(--color-gold)]"
-        >
-          {foundingCount} Founding · target 15-25
-        </Badge>
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="shell-page-title">Founding Supervisor program</h1>
+        <p className="shell-page-sub max-w-3xl">
+          Manually grant or revoke the Founding Supervisor flag for any
+          supervisor in the system. Granting it surfaces a badge in their
+          dashboard header and reserves them for future early-access feature
+          branches.
+        </p>
       </div>
 
-      <Card className="mt-8">
-        <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="bg-accent text-left">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Name</th>
-                <th className="px-4 py-3 font-semibold">Email</th>
-                <th className="px-4 py-3 font-semibold">Org</th>
-                <th className="px-4 py-3 font-semibold">Joined</th>
-                <th className="px-4 py-3 font-semibold">Founding</th>
-                <th className="px-4 py-3 font-semibold"></th>
+      <div className="flex flex-wrap gap-2">
+        <span className="status-pill status-pending">
+          {rows.length} supervisor{rows.length === 1 ? "" : "s"} total
+        </span>
+        <span className="status-pill status-sealed">
+          {foundingCount} Founding · target 15-25
+        </span>
+      </div>
+
+      <div className="panel panel-flush overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left border-b border-[color:var(--border)] bg-[color:var(--surface-muted)]">
+              <th className="px-4 py-3 label-overline">Name</th>
+              <th className="px-4 py-3 label-overline">Email</th>
+              <th className="px-4 py-3 label-overline">Org</th>
+              <th className="px-4 py-3 label-overline">Joined</th>
+              <th className="px-4 py-3 label-overline">Founding</th>
+              <th className="px-4 py-3 label-overline"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id} className="border-b border-[color:var(--divider)]">
+                <td className="px-4 py-3 font-medium text-[color:var(--text-primary)]">{r.name ?? "—"}</td>
+                <td className="px-4 py-3 text-[color:var(--text-secondary)] font-mono text-xs">
+                  {r.email}
+                </td>
+                <td className="px-4 py-3 text-[color:var(--text-secondary)]">
+                  {r.orgName ?? "—"}
+                </td>
+                <td className="px-4 py-3 text-[color:var(--text-muted)] text-xs font-mono">
+                  {r.createdAt.toISOString().slice(0, 10)}
+                </td>
+                <td className="px-4 py-3">
+                  {r.isFoundingSupervisor ? (
+                    <span className="status-pill status-sealed">Founding</span>
+                  ) : (
+                    <span className="text-[color:var(--text-muted)] text-xs">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <FoundingToggleForm
+                    userId={r.id}
+                    currentlyFounding={r.isFoundingSupervisor}
+                  />
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} className="border-t border-border">
-                  <td className="px-4 py-3 font-medium">{r.name ?? "—"}</td>
-                  <td className="px-4 py-3 text-foreground/70 font-mono text-xs">
-                    {r.email}
-                  </td>
-                  <td className="px-4 py-3 text-foreground/70">
-                    {r.orgName ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-foreground/60 text-xs font-mono">
-                    {r.createdAt.toISOString().slice(0, 10)}
-                  </td>
-                  <td className="px-4 py-3">
-                    {r.isFoundingSupervisor ? (
-                      <Badge
-                        variant="outline"
-                        className="border-[color:var(--color-gold)] bg-[color:var(--color-gold)]/10 text-[color:var(--color-gold)]"
-                      >
-                        Founding
-                      </Badge>
-                    ) : (
-                      <span className="text-foreground/40 text-xs">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <FoundingToggleForm
-                      userId={r.id}
-                      currentlyFounding={r.isFoundingSupervisor}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

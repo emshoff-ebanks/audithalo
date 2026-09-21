@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { db, schema } from "@/lib/db";
 import { loadAllRules } from "@/lib/rules";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = { title: "Rule drift — Admin" };
 export const dynamic = "force-dynamic";
@@ -28,85 +26,83 @@ export default async function RuleDriftPage() {
   );
 
   return (
-    <div>
-      <h1 className="font-display text-3xl font-semibold text-foreground">
-        Rule source drift
-      </h1>
-      <p className="mt-3 text-foreground/70 max-w-3xl">
-        Weekly cron fetches each rule&apos;s citation URL, hashes the body,
-        and flags any change. Status <strong>changed</strong> means the page
-        moved or its content differs from what we last verified — read the
-        page, decide if the rule needs a new version YAML, then update
-        verification.last_verified_at + source_hash to clear the flag.
-      </p>
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="shell-page-title">Rule source drift</h1>
+        <p className="shell-page-sub max-w-3xl">
+          Weekly cron fetches each rule&apos;s citation URL, hashes the body,
+          and flags any change. Status <strong>changed</strong> means the page
+          moved or its content differs from what we last verified — read the
+          page, decide if the rule needs a new version YAML, then update
+          verification.last_verified_at + source_hash to clear the flag.
+        </p>
+      </div>
 
-      <Card className="mt-8">
-        <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="bg-accent text-left">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Rule</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Last checked</th>
-                <th className="px-4 py-3 font-semibold">Last changed</th>
-                <th className="px-4 py-3 font-semibold">Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rules.map((r) => {
-                const ruleId =
-                  `${r.jurisdiction}-${r.license_code}-v${r.version}`.toLowerCase();
-                const snap = byRuleId.get(ruleId);
-                const status = snap?.status ?? "unseen";
-                const badgeVariant =
-                  status === "changed"
-                    ? "warning"
-                    : status === "error"
-                      ? "risk"
-                      : status === "ok"
-                        ? "success"
-                        : "outline";
-                return (
-                  <tr key={ruleId} className="border-t border-border">
-                    <td className="px-4 py-3">
-                      <p className="font-medium">
-                        {r.jurisdiction} {r.license_code} v{r.version}
+      <div className="panel panel-flush overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left border-b border-[color:var(--border)] bg-[color:var(--surface-muted)]">
+              <th className="px-4 py-3 label-overline">Rule</th>
+              <th className="px-4 py-3 label-overline">Status</th>
+              <th className="px-4 py-3 label-overline">Last checked</th>
+              <th className="px-4 py-3 label-overline">Last changed</th>
+              <th className="px-4 py-3 label-overline">Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rules.map((r) => {
+              const ruleId =
+                `${r.jurisdiction}-${r.license_code}-v${r.version}`.toLowerCase();
+              const snap = byRuleId.get(ruleId);
+              const status = snap?.status ?? "unseen";
+              const pill =
+                status === "changed"
+                  ? "status-warn"
+                  : status === "error"
+                    ? "status-risk"
+                    : status === "ok"
+                      ? "status-ok"
+                      : "status-pending";
+              return (
+                <tr key={ruleId} className="border-b border-[color:var(--divider)]">
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-[color:var(--text-primary)]">
+                      {r.jurisdiction} {r.license_code} v{r.version}
+                    </p>
+                    <p className="text-xs text-[color:var(--text-muted)] font-mono">
+                      {ruleId}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`status-pill ${pill}`}>{status}</span>
+                    {snap?.errorMessage && (
+                      <p className="mt-1 text-xs text-[color:var(--risk-600)]">
+                        {snap.errorMessage}
                       </p>
-                      <p className="text-xs text-foreground/60 font-mono">
-                        {ruleId}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge variant={badgeVariant}>{status}</Badge>
-                      {snap?.errorMessage && (
-                        <p className="mt-1 text-xs text-[color:var(--color-risk)]">
-                          {snap.errorMessage}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-foreground/70">
-                      {relTime(snap?.lastCheckedAt ?? null)}
-                    </td>
-                    <td className="px-4 py-3 text-foreground/70">
-                      {relTime(snap?.lastChangedAt ?? null)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={r.citation.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-secondary hover:underline text-xs"
-                      >
-                        Open ↗
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-[color:var(--text-secondary)]">
+                    {relTime(snap?.lastCheckedAt ?? null)}
+                  </td>
+                  <td className="px-4 py-3 text-[color:var(--text-secondary)]">
+                    {relTime(snap?.lastChangedAt ?? null)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={r.citation.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[color:var(--text-primary)] underline text-xs"
+                    >
+                      Open ↗
+                    </Link>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
