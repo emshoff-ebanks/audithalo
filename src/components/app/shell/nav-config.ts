@@ -34,9 +34,9 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: null,
     items: [
-      { href: "/dashboard", label: "Home", icon: Home, exact: true, roles: ["supervisee", "supervisor", "hr_admin"] },
-      { href: "/dashboard/executive", label: "Overview", icon: BarChart3, roles: ["executive", "hr_admin"] },
-      { href: "/dashboard/roster", label: "Roster", icon: Users, roles: ["supervisor", "hr_admin"] },
+      { href: "/dashboard", label: "Overview", icon: Home, exact: true, roles: ["supervisee", "supervisor", "hr_admin"] },
+      { href: "/dashboard/executive", label: "Executive rollup", icon: BarChart3, roles: ["executive", "hr_admin"] },
+      { href: "/dashboard/roster", label: "Supervisees", icon: Users, roles: ["supervisor", "hr_admin"] },
       { href: "/dashboard/calendar", label: "Calendar", icon: Calendar, roles: ["supervisee", "supervisor", "hr_admin", "executive"] },
     ],
   },
