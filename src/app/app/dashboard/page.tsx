@@ -6,7 +6,18 @@ import { SuperviseeDashboard } from "./_supervisee-dashboard";
 
 export const metadata = { title: "Dashboard — AuditHalo" };
 
-export default async function DashboardPage() {
+function parseWeekOffset(raw: string | string[] | undefined): number {
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  const n = Number.parseInt(v ?? "", 10);
+  // Clamp to a sane window so a hand-edited URL can't wander far.
+  return Number.isFinite(n) ? Math.max(-52, Math.min(52, n)) : 0;
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ wk?: string | string[] }>;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -28,6 +39,8 @@ export default async function DashboardPage() {
     userEmail: session.user.email,
   };
 
+  const weekOffset = parseWeekOffset((await searchParams).wk);
+
   // Route by role. Executive lands on their dedicated rollup (no roster
   // page for them — they're read-only oversight). HR Admin sees the
   // supervisor dashboard for now; future iterations may build a dedicated
@@ -41,5 +54,5 @@ export default async function DashboardPage() {
   // supervisor + hr_admin both see the supervisor dashboard. The
   // supervisor dashboard's queries already use org-scoped reads, so
   // HR Admin sees the whole roster correctly.
-  return <SupervisorDashboard {...baseProps} />;
+  return <SupervisorDashboard {...baseProps} weekOffset={weekOffset} />;
 }
