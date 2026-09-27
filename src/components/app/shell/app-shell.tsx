@@ -27,12 +27,15 @@ export function AppShell({
   name,
   initialTheme,
   notifications,
+  navCounts,
   children,
 }: {
   role: AppRole;
   name: string;
   initialTheme: "light" | "dark";
   notifications: NotificationRow[];
+  /** Numeric nav badges keyed by NavItem.badgeKey, resolved server-side. */
+  navCounts?: Record<string, number>;
   children: React.ReactNode;
 }) {
   const pathname = usePathname() ?? "/dashboard";
@@ -65,7 +68,7 @@ export function AppShell({
       ) : null}
 
       <aside className={`shell-sidebar${mobileOpen ? " open" : ""}`}>
-        <SidebarNav role={role} onNavigate={() => setMobileOpen(false)} />
+        <SidebarNav role={role} counts={navCounts} onNavigate={() => setMobileOpen(false)} />
       </aside>
 
       <div className="app-main">

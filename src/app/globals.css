@@ -527,6 +527,17 @@ details[open] .mkt-faq-plus { transform: rotate(45deg); }
   display: inline-flex; align-items: center; justify-content: center;
   background: var(--surface-muted); color: var(--text-secondary);
 }
+/* Action-needed count (e.g. Signature queue) — small red count pill.
+   Not a CTA (halo-yellow) and not sealed evidence (seal-gold): a pending
+   count is risk-toned per design-system-v2.md §1.3. */
+.shell-nav-badge.risk {
+  background: var(--risk-50); color: var(--risk-700);
+  border-color: rgba(214, 58, 44, 0.28);
+}
+.dark .shell-nav-badge.risk {
+  background: rgba(214, 58, 44, 0.16); color: #F0938A;
+  border-color: rgba(214, 58, 44, 0.38);
+}
 .shell-nav-foot {
   margin-top: auto; padding-top: var(--sp-4);
   display: flex; flex-direction: column; gap: 2px;

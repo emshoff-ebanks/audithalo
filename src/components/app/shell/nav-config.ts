@@ -3,6 +3,7 @@ import {
   Home,
   Users,
   Calendar,
+  PenLine,
   Briefcase,
   ClipboardList,
   BarChart3,
@@ -21,6 +22,12 @@ export type NavItem = {
   roles: ReadonlyArray<AppRole>;
   /** Home is matched exactly; every other item matches by path prefix. */
   exact?: boolean;
+  /** Key into the optional `counts` map (resolved server-side in the
+   *  dashboard layout) for a numeric badge next to the label. */
+  badgeKey?: string;
+  /** Badge treatment. "neutral" = outlined count pill; "risk" = red
+   *  action-needed pill. Only rendered when the count is > 0. */
+  badgeTone?: "neutral" | "risk";
 };
 
 export type NavGroup = { label: string | null; items: NavItem[] };
@@ -36,7 +43,8 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/dashboard", label: "Overview", icon: Home, exact: true, roles: ["supervisee", "supervisor", "hr_admin"] },
       { href: "/dashboard/executive", label: "Executive rollup", icon: BarChart3, roles: ["executive", "hr_admin"] },
-      { href: "/dashboard/roster", label: "Supervisees", icon: Users, roles: ["supervisor", "hr_admin"] },
+      { href: "/dashboard/roster", label: "Supervisees", icon: Users, roles: ["supervisor", "hr_admin"], badgeKey: "supervisees", badgeTone: "neutral" },
+      { href: "/dashboard/signature-queue", label: "Signature queue", icon: PenLine, roles: ["supervisor", "hr_admin"], badgeKey: "signature-queue", badgeTone: "risk" },
       { href: "/dashboard/calendar", label: "Calendar", icon: Calendar, roles: ["supervisee", "supervisor", "hr_admin", "executive"] },
     ],
   },

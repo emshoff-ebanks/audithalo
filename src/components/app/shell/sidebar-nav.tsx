@@ -19,9 +19,13 @@ function isActive(pathname: string, item: NavItem, allHrefs: string[]): boolean 
 
 export function SidebarNav({
   role,
+  counts,
   onNavigate,
 }: {
   role: AppRole;
+  /** Optional numeric badges keyed by NavItem.badgeKey (resolved
+   *  server-side in the dashboard layout). */
+  counts?: Record<string, number>;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname() ?? "/dashboard";
@@ -46,6 +50,8 @@ export function SidebarNav({
             {group.items.map((item) => {
               const active = isActive(pathname, item, allHrefs);
               const Icon = item.icon;
+              const badgeCount = item.badgeKey ? counts?.[item.badgeKey] : undefined;
+              const showBadge = typeof badgeCount === "number" && badgeCount > 0;
               return (
                 <Link
                   key={item.href}
@@ -56,6 +62,13 @@ export function SidebarNav({
                 >
                   <Icon className="shell-nav-icon" />
                   <span className="shell-nav-text">{item.label}</span>
+                  {showBadge && (
+                    <span
+                      className={`shell-nav-badge${item.badgeTone === "risk" ? " risk" : ""}`}
+                    >
+                      {badgeCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
