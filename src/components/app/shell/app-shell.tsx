@@ -85,6 +85,7 @@ export function AppShell({
             <span className="shell-eyebrow">{sectionLabel(pathname)}</span>
           </div>
           <div className="shell-header-actions">
+            <div id="app-header-action" className="shell-header-action" />
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
             <NotificationsBell initialNotifications={notifications} />
             <ProfileMenu name={name} role={role} />

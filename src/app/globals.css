@@ -555,6 +555,11 @@ details[open] .mkt-faq-plus { transform: rotate(45deg); }
   color: var(--text-muted); font-weight: 600;
 }
 .shell-header-actions { display: flex; align-items: center; gap: var(--sp-2); }
+/* Portal target for a page's primary header action (design-system-v2 header
+   slot). Collapses to nothing when no page injects an action so the flex gap
+   doesn't leave a hole. */
+.shell-header-action { display: flex; align-items: center; }
+.shell-header-action:empty { display: none; }
 .shell-icon-btn {
   width: 36px; height: 36px;
   border: 1px solid var(--border);
