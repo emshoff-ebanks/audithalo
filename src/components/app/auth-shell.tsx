@@ -20,10 +20,10 @@ export function AuthShell({
         <Link
           href="/"
           aria-label="AuditHalo home"
-          className="inline-flex items-center gap-2 mb-8"
+          className="inline-flex items-center gap-2.5 mb-8"
         >
-          <AuditHaloMark className="h-6 w-6" />
-          <span className="font-display text-lg font-bold tracking-tight text-[color:var(--text-primary)]">
+          <AuditHaloMark className="h-10 w-10" />
+          <span className="font-display text-2xl font-bold tracking-tight text-[color:var(--text-primary)]">
             AuditHalo
           </span>
         </Link>
