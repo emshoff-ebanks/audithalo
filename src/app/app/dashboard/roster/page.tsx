@@ -243,7 +243,7 @@ export default async function RosterPage({
       />
 
       {atRiskCount > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-[8px] border border-[color:var(--risk-600)]/30 border-l-[3px] border-l-[color:var(--risk-600)] bg-[color:var(--risk-50)]/40 px-4 py-3 text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-[8px] border border-[color:var(--border)] border-l-[3px] border-l-[color:var(--risk-600)] px-4 py-3 text-sm">
           <AlertOctagon className="h-4 w-4 text-[color:var(--risk-600)] shrink-0" />
           <span className="font-semibold text-[color:var(--text-primary)]">
             {atRiskCount} supervisee{atRiskCount === 1 ? "" : "s"} need attention
@@ -258,17 +258,22 @@ export default async function RosterPage({
         <div className="panel panel-flush lg:col-span-2 overflow-hidden">
           {/* Mobile card-per-row (under md) */}
           <ul className="md:hidden divide-y divide-[color:var(--divider)]">
-            {rosterRows.map((row) => {
+            {rosterRows.map((row, idx) => {
               const pct = row.evaluation?.progress.practiceProgressPct ?? 0;
               const practiced = row.evaluation?.totals.practiceHours ?? 0;
               const accent =
                 row.evaluation?.riskLevel === "red"
-                  ? "border-l-[3px] border-l-[color:var(--risk-600)] bg-[color:var(--risk-50)]/40"
+                  ? "border-l-[3px] border-l-[color:var(--risk-600)]"
                   : row.evaluation?.riskLevel === "yellow"
-                    ? "border-l-[3px] border-l-[color:var(--warn-500)] bg-[color:var(--warn-50)]/40"
+                    ? "border-l-[3px] border-l-[color:var(--warn-500)]"
                     : "";
+              // Subtle zebra so rows don't blend together, especially in dark
+              // mode. Applied only to plain roster rows (pending-invite rows
+              // keep their own tint).
+              const zebra =
+                idx % 2 === 1 ? "bg-black/[0.025] dark:bg-white/[0.035]" : "";
               return (
-                <li key={row.userId} className={`px-4 py-3 ${accent}`}>
+                <li key={row.userId} className={`px-4 py-3 ${accent} ${zebra}`}>
                   <Link href={`/dashboard/roster/${row.userId}`} className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-[color:var(--text-primary)] truncate">{row.name}</p>
@@ -343,20 +348,24 @@ export default async function RosterPage({
                 </tr>
               </thead>
               <tbody>
-                {rosterRows.map((row) => {
+                {rosterRows.map((row, idx) => {
                   const pct = row.evaluation?.progress.practiceProgressPct ?? 0;
                   const practiced = row.evaluation?.totals.practiceHours ?? 0;
                   const rowClasses =
                     row.evaluation?.riskLevel === "red"
-                      ? "border-l-[3px] border-l-[color:var(--risk-600)] bg-[color:var(--risk-50)]/40"
+                      ? "border-l-[3px] border-l-[color:var(--risk-600)]"
                       : row.evaluation?.riskLevel === "yellow"
-                        ? "border-l-[3px] border-l-[color:var(--warn-500)] bg-[color:var(--warn-50)]/40"
+                        ? "border-l-[3px] border-l-[color:var(--warn-500)]"
                         : "";
+                  // Subtle zebra so rows don't blend together, especially in
+                  // dark mode. Skipped on odd rows so hover still stands out.
+                  const zebra =
+                    idx % 2 === 1 ? "bg-black/[0.025] dark:bg-white/[0.035]" : "";
                   return (
                     <ClickableRow
                       key={row.userId}
                       href={`/dashboard/roster/${row.userId}`}
-                      className={`border-b border-[color:var(--divider)] hover:bg-[color:var(--surface-muted)] ${rowClasses}`}
+                      className={`border-b border-[color:var(--divider)] hover:bg-[color:var(--surface-muted)] ${rowClasses} ${zebra}`}
                     >
                       <td className="px-5 py-3 font-medium text-[color:var(--text-primary)]">
                         <Link href={`/dashboard/roster/${row.userId}`} className="hover:underline">
