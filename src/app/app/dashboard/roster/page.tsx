@@ -12,9 +12,9 @@ import {
 import { db, schema } from "@/lib/db";
 import { loadAllRules, riskBadgeLabel } from "@/lib/rules";
 import { getOrgRosterWithCompliance } from "@/lib/db/roster-queries";
-import { InviteForm } from "./invite-form";
 import { PendingInviteActions } from "./pending-invite-actions";
 import { FilterBar } from "./_filter-bar";
+import { RosterInviteAction } from "./_invite-action";
 import { parseRosterFilter, parseSupervisorId } from "./_roster-filter";
 import { ClickableRow } from "@/components/app/clickable-row";
 
@@ -240,6 +240,22 @@ export default async function RosterPage({
         searchQuery={searchQuery}
         supervisorOptions={supervisorOptionsForForm ?? null}
         activeSupervisorId={supervisorFilterId}
+        trailingSlot={
+          <RosterInviteAction
+            availableRules={[
+              ...[...loadAllRules().values()].map((r) => {
+                const id = `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`;
+                return {
+                  id,
+                  label: `${r.jurisdiction} ${r.license_code} v${r.version}`,
+                  summary: r.summary,
+                };
+              }),
+              ...orgCustomRules,
+            ]}
+            supervisorOptions={supervisorOptionsForForm}
+          />
+        }
       />
 
       {atRiskCount > 0 && (
@@ -254,8 +270,8 @@ export default async function RosterPage({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-        <div className="panel panel-flush lg:col-span-2 overflow-hidden">
+      <div>
+        <div className="panel panel-flush overflow-hidden">
           {/* Mobile card-per-row (under md) */}
           <ul className="row-zebra md:hidden divide-y divide-[color:var(--divider)]">
             {rosterRows.map((row) => {
@@ -325,7 +341,7 @@ export default async function RosterPage({
               <li className="px-4 py-8 text-center text-[color:var(--text-muted)] text-sm">
                 {supervisorFilterId
                   ? "This supervisor has no supervisees assigned yet."
-                  : "No supervisees yet. Use the form below to invite one."}
+                  : "No supervisees yet. Click Invite supervisee to add one."}
               </li>
             )}
           </ul>
@@ -407,7 +423,7 @@ export default async function RosterPage({
                     <td colSpan={5} className="px-5 py-8 text-center text-[color:var(--text-muted)] text-sm">
                       {supervisorFilterId
                         ? "This supervisor has no supervisees assigned yet."
-                        : "No supervisees yet. Invite one using the form →"}
+                        : "No supervisees yet. Click Invite supervisee to add one."}
                     </td>
                   </tr>
                 )}
@@ -435,24 +451,6 @@ export default async function RosterPage({
               </tbody>
             </table>
           </div>
-        </div>
-
-        <div className="panel">
-          <p className="label-overline mb-3">Invite a supervisee</p>
-          <InviteForm
-            availableRules={[
-              ...[...loadAllRules().values()].map((r) => {
-                const id = `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`;
-                return {
-                  id,
-                  label: `${r.jurisdiction} ${r.license_code} v${r.version}`,
-                  summary: r.summary,
-                };
-              }),
-              ...orgCustomRules,
-            ]}
-            supervisorOptions={supervisorOptionsForForm}
-          />
         </div>
       </div>
     </>

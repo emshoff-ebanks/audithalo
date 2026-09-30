@@ -22,6 +22,7 @@ export function FilterBar({
   searchQuery,
   supervisorOptions,
   activeSupervisorId,
+  trailingSlot,
 }: {
   activeFilter: RosterFilter;
   filteredCount: number;
@@ -31,6 +32,7 @@ export function FilterBar({
    *  viewers (their roster is already implicitly filtered to themselves). */
   supervisorOptions: SupervisorOption[] | null;
   activeSupervisorId: string | null;
+  trailingSlot?: React.ReactNode;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -141,6 +143,7 @@ export function FilterBar({
             disabled={pending}
           />
         </div>
+        {trailingSlot}
       </div>
     </div>
   );
