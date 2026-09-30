@@ -257,8 +257,8 @@ export default async function RosterPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
         <div className="panel panel-flush lg:col-span-2 overflow-hidden">
           {/* Mobile card-per-row (under md) */}
-          <ul className="md:hidden divide-y divide-[color:var(--divider)]">
-            {rosterRows.map((row, idx) => {
+          <ul className="row-zebra md:hidden divide-y divide-[color:var(--divider)]">
+            {rosterRows.map((row) => {
               const pct = row.evaluation?.progress.practiceProgressPct ?? 0;
               const practiced = row.evaluation?.totals.practiceHours ?? 0;
               const accent =
@@ -267,13 +267,8 @@ export default async function RosterPage({
                   : row.evaluation?.riskLevel === "yellow"
                     ? "border-l-[3px] border-l-[color:var(--warn-500)]"
                     : "";
-              // Subtle zebra so rows don't blend together, especially in dark
-              // mode. Applied only to plain roster rows (pending-invite rows
-              // keep their own tint).
-              const zebra =
-                idx % 2 === 1 ? "bg-black/[0.025] dark:bg-white/[0.035]" : "";
               return (
-                <li key={row.userId} className={`px-4 py-3 ${accent} ${zebra}`}>
+                <li key={row.userId} className={`px-4 py-3 ${accent}`}>
                   <Link href={`/dashboard/roster/${row.userId}`} className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-[color:var(--text-primary)] truncate">{row.name}</p>
@@ -311,7 +306,7 @@ export default async function RosterPage({
               );
             })}
             {visiblePendingInvites.map((i) => (
-              <li key={i.id} className="px-4 py-3 bg-[color:var(--surface-muted)]/50">
+              <li key={i.id} data-no-zebra className="px-4 py-3 bg-[color:var(--surface-muted)]/50">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-[color:var(--text-primary)] truncate">
@@ -347,8 +342,8 @@ export default async function RosterPage({
                   <th scope="col" className="px-5 py-3 label-overline">Pending sigs</th>
                 </tr>
               </thead>
-              <tbody>
-                {rosterRows.map((row, idx) => {
+              <tbody className="row-zebra">
+                {rosterRows.map((row) => {
                   const pct = row.evaluation?.progress.practiceProgressPct ?? 0;
                   const practiced = row.evaluation?.totals.practiceHours ?? 0;
                   const rowClasses =
@@ -357,15 +352,11 @@ export default async function RosterPage({
                       : row.evaluation?.riskLevel === "yellow"
                         ? "border-l-[3px] border-l-[color:var(--warn-500)]"
                         : "";
-                  // Subtle zebra so rows don't blend together, especially in
-                  // dark mode. Skipped on odd rows so hover still stands out.
-                  const zebra =
-                    idx % 2 === 1 ? "bg-black/[0.025] dark:bg-white/[0.035]" : "";
                   return (
                     <ClickableRow
                       key={row.userId}
                       href={`/dashboard/roster/${row.userId}`}
-                      className={`border-b border-[color:var(--divider)] hover:bg-[color:var(--surface-muted)] ${rowClasses} ${zebra}`}
+                      className={`border-b border-[color:var(--divider)] hover:bg-[color:var(--surface-muted)] ${rowClasses}`}
                     >
                       <td className="px-5 py-3 font-medium text-[color:var(--text-primary)]">
                         <Link href={`/dashboard/roster/${row.userId}`} className="hover:underline">
@@ -421,7 +412,7 @@ export default async function RosterPage({
                   </tr>
                 )}
                 {visiblePendingInvites.map((i) => (
-                  <tr key={i.id} className="border-b border-[color:var(--divider)] bg-[color:var(--surface-muted)]/50">
+                  <tr key={i.id} data-no-zebra className="border-b border-[color:var(--divider)] bg-[color:var(--surface-muted)]/50">
                     <td className="px-5 py-3 font-medium text-[color:var(--text-primary)]">
                       {i.name ?? <span className="text-[color:var(--text-muted)] italic">unnamed</span>}
                     </td>

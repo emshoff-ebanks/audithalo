@@ -243,7 +243,7 @@ export default async function TeamPage() {
                   {canManage && <th className="px-5 py-3 label-overline">Reassign</th>}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="row-zebra">
                 {supervisees.map(({ membership: m, user: u }) => {
                   if (!u) return null;
                   const isSelf = u.id === session.user.id;
@@ -409,7 +409,7 @@ function MembersTable({
             {showDeactivate && <th className="px-5 py-3 label-overline">Actions</th>}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="row-zebra">
           {rows.map(({ membership: m, user: u }) => {
             if (!u) return null;
             const isSelf = u.id === viewerId;

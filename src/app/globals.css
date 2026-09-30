@@ -352,6 +352,19 @@ body {
   padding: var(--sp-4);
 }
 
+/* Opt-in row zebra for stacked lists inside a .panel-flush container
+ * (roster, signature queue, audit log, team, executive, admin tables,
+ * calendar list view, notifications). Works on <tbody> (children are
+ * <tr>), <ul> (children are <li>), and generic containers whose direct
+ * children are the row elements. Rows can opt out with data-no-zebra
+ * (used by pending-invite rows that carry their own tint). */
+.row-zebra > *:nth-child(even):not([data-no-zebra]) {
+  background: rgba(30, 30, 28, 0.025);
+}
+.dark .row-zebra > *:nth-child(even):not([data-no-zebra]) {
+  background: rgba(250, 247, 240, 0.035);
+}
+
 /* Evidence surface: seal-gold top border + cream ground (design-system-v2.md §12.1). */
 .panel-evidence {
   background: var(--paper-100);

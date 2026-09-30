@@ -79,7 +79,7 @@ export default async function OrgsPage() {
               <th className="px-4 py-3 label-overline"></th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="row-zebra">
             {rows.map((r) => (
               <tr key={r.id} className="border-b border-[color:var(--divider)]">
                 <td className="px-4 py-3">

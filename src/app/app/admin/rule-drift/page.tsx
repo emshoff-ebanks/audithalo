@@ -49,7 +49,7 @@ export default async function RuleDriftPage() {
               <th className="px-4 py-3 label-overline">Source</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="row-zebra">
             {rules.map((r) => {
               const ruleId =
                 `${r.jurisdiction}-${r.license_code}-v${r.version}`.toLowerCase();

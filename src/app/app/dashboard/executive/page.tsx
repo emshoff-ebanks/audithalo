@@ -208,7 +208,7 @@ export default async function ExecutiveDashboardPage() {
                   <th className="px-5 py-3 label-overline">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="row-zebra">
                 {needsAttention.map((r) => {
                   const supName = superviseeToSupervisorName.get(r.userId) ?? "—";
                   const practiceHrs = r.evaluation?.totals.practiceHours ?? 0;
@@ -257,7 +257,7 @@ export default async function ExecutiveDashboardPage() {
                   <th className="px-5 py-3 label-overline">Pending</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="row-zebra">
                 {[...pendingBySupervisor.entries()]
                   .sort((a, b) => b[1] - a[1])
                   .filter(([, n]) => n > 0)

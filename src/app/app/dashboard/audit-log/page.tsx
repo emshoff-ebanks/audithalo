@@ -141,7 +141,7 @@ export default async function AuditLogPage({
               <th className="px-4 py-3 label-overline">Details</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="row-zebra">
             {entries.map((e) => {
               const actor = e.actorUserId ? actorMap.get(e.actorUserId) : null;
               return (

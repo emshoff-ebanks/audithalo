@@ -55,20 +55,16 @@ export default async function SignatureQueuePage() {
           </p>
         </div>
       ) : (
-        <div className="panel panel-flush overflow-hidden">
-          {pending.map((row, idx) => {
+        <div className="panel panel-flush overflow-hidden row-zebra">
+          {pending.map((row) => {
             const days = Math.floor((nowMs - row.date.getTime()) / DAY_MS);
             const age =
               days <= 0 ? "today" : `${days} day${days === 1 ? "" : "s"}`;
-            // Subtle zebra so rows don't blend together, especially in dark
-            // mode. Skipped on odd rows so hover still stands out.
-            const zebra =
-              idx % 2 === 1 ? "bg-black/[0.025] dark:bg-white/[0.035]" : "";
             return (
               <Link
                 key={row.sessionId}
                 href={`/sign/${row.sessionId}`}
-                className={`flex items-center gap-3 px-5 py-4 border-b border-[color:var(--divider)] last:border-b-0 hover:bg-[color:var(--surface-muted)] transition-colors ${zebra}`}
+                className="flex items-center gap-3 px-5 py-4 border-b border-[color:var(--divider)] last:border-b-0 hover:bg-[color:var(--surface-muted)] transition-colors"
               >
                 <InitialsAvatar name={row.superviseeName} />
                 <div className="min-w-0 flex-1">
