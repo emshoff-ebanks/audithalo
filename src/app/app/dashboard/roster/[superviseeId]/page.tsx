@@ -5,22 +5,30 @@ import {
   AlertTriangle,
   CheckCircle2,
   Download,
+  ExternalLink,
   FileSignature,
+  ShieldAlert,
 } from "lucide-react";
 import { auth } from "@/auth";
-import { canSupervise, getCurrentMembership, isHrAdmin, isManagerRole } from "@/lib/authz";
+import {
+  canSupervise,
+  getCurrentMembership,
+  isHrAdmin,
+  isManagerRole,
+} from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { ReassignSupervisorDropdown } from "@/app/app/dashboard/team/_invite-forms";
 import {
   isCustomRuleId,
   latestVersionForState,
   loadAllRules,
+  riskBadgeLabel,
 } from "@/lib/rules";
 import { resolveEvaluationWithOverrides } from "@/lib/rules/evaluation-context-with-overrides";
+import { computeHourRings } from "@/lib/rules/hour-rings";
+import { pendingSignaturesForSupervisor } from "@/lib/supervisor-signatures";
 import { AssignRuleForm } from "./assign-rule-form";
-import { SessionsPanel } from "./sessions-panel";
-import { RuleSummaryCard } from "./rule-summary-card";
-import { SessionLog } from "@/components/app/session-log";
+import { HourProgressRing } from "@/app/app/dashboard/_hour-progress-ring";
 import { GapGroupRenderer } from "./_gap-renderer";
 import { groupGaps } from "@/lib/rules/gap-grouping";
 import { RuleVersionBanner } from "./_rule-version-banner";
@@ -28,43 +36,29 @@ import {
   CompletedAttestations,
   type CompletedAttestation,
 } from "./_completed-attestations";
-import { PracticeReviewQueue } from "./_practice-review-queue";
+import { NewSessionModal } from "./_new-session-modal";
+import { NeedsYourActionPanel } from "./_needs-your-action-panel";
+import {
+  SessionsPendingPanel,
+  type PendingSessionRow,
+} from "./_sessions-pending-panel";
+import { SessionLogModal } from "./_session-log-modal";
 
 export const metadata = {
   title: "Supervisee — AuditHalo",
 };
 
-function ProgressBar({ pct, label }: { pct: number; label: string }) {
-  const clamped = Math.min(100, Math.max(0, pct));
-  return (
-    <div>
-      <div className="flex justify-between text-sm mb-1.5">
-        <span className="text-[color:var(--text-secondary)]">{label}</span>
-        <span className="font-mono text-[color:var(--text-primary)]">{clamped.toFixed(1)}%</span>
-      </div>
-      <div className="h-2 rounded-full overflow-hidden bg-[color:var(--ink-100)] dark:bg-[rgba(250,247,240,0.12)]">
-        <div
-          className="h-full bg-[color:var(--seal-gold)]"
-          style={{ width: `${clamped}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-/**
- * Server-side: derive the user-facing list of "completed compliance tasks"
- * from the assignment row. The typed columns (supervisionContractFiledAt,
- * supervisorTrainingCompletedAt + hours, permitIssuedAt + permitExpiresAt)
- * each map to one row when populated. The jsonb attestations bag handles
- * any future-extensible checks we haven't pinned typed columns for.
- *
- * Keep labels and descriptions here so they stay co-located with the
- * mapping from checkId to typed-column shape in attestAction.
- */
 type AssignmentRow = NonNullable<
   Awaited<ReturnType<typeof db.query.superviseeRuleAssignments.findFirst>>
 >;
+
+/**
+ * Server-side: derive the user-facing list of "completed compliance tasks"
+ * from the assignment row. Typed columns (supervisionContractFiledAt,
+ * supervisorTrainingCompletedAt + hours, permitIssuedAt + permitExpiresAt)
+ * each map to one row when populated. The jsonb attestations bag handles
+ * any future-extensible checks we haven't pinned typed columns for.
+ */
 function deriveCompletedAttestations(
   assignment: AssignmentRow
 ): CompletedAttestation[] {
@@ -76,9 +70,7 @@ function deriveCompletedAttestations(
       label: "Supervision contract filed",
       description:
         "The supervisor + supervisee contract was filed with the state board on this date. Hours logged before this date do not count.",
-      date: assignment.supervisionContractFiledAt
-        .toISOString()
-        .slice(0, 10),
+      date: assignment.supervisionContractFiledAt.toISOString().slice(0, 10),
     });
   }
 
@@ -88,9 +80,7 @@ function deriveCompletedAttestations(
       label: "Supervisor training completed",
       description:
         "Date the assigned supervisor completed their state-required supervision training.",
-      date: assignment.supervisorTrainingCompletedAt
-        .toISOString()
-        .slice(0, 10),
+      date: assignment.supervisorTrainingCompletedAt.toISOString().slice(0, 10),
       ...(assignment.supervisorTrainingHoursAttested !== null
         ? { hours: assignment.supervisorTrainingHoursAttested }
         : {}),
@@ -114,7 +104,6 @@ function deriveCompletedAttestations(
     });
   }
 
-  // Future-extensible jsonb bag entries.
   const bag = assignment.attestations ?? {};
   for (const [checkId, entry] of Object.entries(bag)) {
     const value = entry.value as { date?: string; hours?: number };
@@ -142,25 +131,25 @@ export default async function SuperviseeDetailPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
+  // Supervisees never view this page — their dashboard is the canonical
+  // read-out surface (multi-ring tracker, next supervision, recently sealed,
+  // session log, log-practice-hours modal). Redirecting rather than gating
+  // means the page never needs to render a supervisee-safe layout.
+  const viewerIsManager = isManagerRole(session.user.role);
+  if (!viewerIsManager) redirect("/dashboard");
+
   const { superviseeId } = await params;
   const { flagged } = await searchParams;
-  // ?flagged=id1,id2 — set by the DataCorrection gap action so the session
-  // log can scroll into view + amber-highlight the rows that need editing.
+  // ?flagged=id1,id2 — set by the DataCorrection gap action so the session-log
+  // modal auto-opens with the flagged rows scrolled into view + highlighted.
   const flaggedSessionIds = flagged
-    ? flagged
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean)
+    ? flagged.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
 
-  // Supervisees can only view themselves
-  const viewerIsManager = isManagerRole(session.user.role);
   const viewerCanSupervise = canSupervise(session.user.role);
-  if (!viewerIsManager && session.user.id !== superviseeId) {
-    redirect(`/dashboard/roster/${session.user.id}`);
-  }
+  const viewerIsHrAdmin = isHrAdmin(session.user.role);
+  const viewerCanScheduleSession = viewerCanSupervise || viewerIsHrAdmin;
 
-  // Verify the viewer shares an org with this supervisee
   const myMembership = await getCurrentMembership(session.user.id);
   if (!myMembership) notFound();
 
@@ -177,19 +166,16 @@ export default async function SuperviseeDetailPage({
   });
   if (!supervisee) notFound();
 
-  // Who will *host* a session scheduled from this page:
-  //   - Supervisor viewing → themselves.
-  //   - HR Admin viewing → the supervisee's currently-assigned supervisor.
-  // For other roles the schedule form isn't shown.
-  // We resolve the active supervisor here so the form can fetch the
-  // right user's calendar integrations + show "Scheduling on behalf of …".
-  const viewerIsHrAdminEarly = isHrAdmin(session.user.role);
-  const viewerCanScheduleSession = viewerCanSupervise || viewerIsHrAdminEarly;
-  let hostingSupervisorIdForPage: string | null = null;
-  let hostingSupervisorNameForPage: string | null = null;
+  // Who hosts sessions scheduled from this page:
+  //   Supervisor viewing → themselves.
+  //   HR Admin viewing   → the supervisee's currently-assigned supervisor.
+  // Resolved here so the modal form can fetch the right user's calendar
+  // integrations + show "Scheduling on behalf of …".
+  let hostingSupervisorId: string | null = null;
+  let hostingSupervisorName: string | null = null;
   if (viewerCanSupervise) {
-    hostingSupervisorIdForPage = session.user.id;
-  } else if (viewerIsHrAdminEarly) {
+    hostingSupervisorId = session.user.id;
+  } else if (viewerIsHrAdmin) {
     const activeAssignmentForScheduling =
       await db.query.supervisorAssignments.findFirst({
         where: and(
@@ -199,19 +185,19 @@ export default async function SuperviseeDetailPage({
         ),
       });
     if (activeAssignmentForScheduling) {
-      hostingSupervisorIdForPage = activeAssignmentForScheduling.supervisorId ?? null;
-      const sup = hostingSupervisorIdForPage ? await db.query.users.findFirst({
-        where: eq(schema.users.id, hostingSupervisorIdForPage),
-        columns: { name: true, email: true },
-      }) : null;
-      hostingSupervisorNameForPage = sup?.name ?? sup?.email ?? null;
+      hostingSupervisorId =
+        activeAssignmentForScheduling.supervisorId ?? null;
+      const sup = hostingSupervisorId
+        ? await db.query.users.findFirst({
+            where: eq(schema.users.id, hostingSupervisorId),
+            columns: { name: true, email: true },
+          })
+        : null;
+      hostingSupervisorName = sup?.name ?? sup?.email ?? null;
     }
   }
 
-  // Other supervisees in the org the actor can pull into a group
-  // session (Phase 5). Same scope as the calendar-page roster: a
-  // supervisor sees their own assigned supervisees minus the primary;
-  // HR Admin sees the whole org's supervisees minus the primary.
+  // Group-session candidates (Phase 5): same scope as the calendar-page roster.
   let groupCandidates: { id: string; name: string }[] = [];
   if (viewerCanScheduleSession) {
     if (viewerCanSupervise) {
@@ -228,21 +214,15 @@ export default async function SuperviseeDetailPage({
         )
         .where(
           and(
-            eq(
-              schema.supervisorAssignments.supervisorId,
-              session.user.id
-            ),
-            eq(
-              schema.supervisorAssignments.orgId,
-              myMembership.orgId
-            ),
+            eq(schema.supervisorAssignments.supervisorId, session.user.id),
+            eq(schema.supervisorAssignments.orgId, myMembership.orgId),
             isNull(schema.supervisorAssignments.endedAt)
           )
         );
       groupCandidates = assignmentRows
         .filter((r) => r.id !== superviseeId)
         .map((r) => ({ id: r.id, name: r.name ?? r.email }));
-    } else if (viewerIsHrAdminEarly) {
+    } else if (viewerIsHrAdmin) {
       const orgSupervisees = await db
         .select({
           id: schema.users.id,
@@ -250,10 +230,7 @@ export default async function SuperviseeDetailPage({
           email: schema.users.email,
         })
         .from(schema.orgMemberships)
-        .innerJoin(
-          schema.users,
-          eq(schema.users.id, schema.orgMemberships.userId)
-        )
+        .innerJoin(schema.users, eq(schema.users.id, schema.orgMemberships.userId))
         .where(
           and(
             eq(schema.orgMemberships.orgId, myMembership.orgId),
@@ -267,12 +244,11 @@ export default async function SuperviseeDetailPage({
     }
   }
 
-  // Calendar integrations the HOSTING supervisor has connected — used by
-  // the schedule form to pick a meeting provider (Phase 1b/1c). Empty
-  // array = the form tells the actor to (have the host) connect one
-  // before scheduling a virtual session.
-  const viewerConnectedProviders =
-    viewerCanScheduleSession && hostingSupervisorIdForPage
+  // Calendar integrations for the hosting supervisor — feeds the schedule
+  // form's provider picker. Empty = form tells the actor to (have the host)
+  // connect one before scheduling a virtual session.
+  const connectedProviders =
+    viewerCanScheduleSession && hostingSupervisorId
       ? (
           await db
             .select({
@@ -285,7 +261,7 @@ export default async function SuperviseeDetailPage({
               and(
                 eq(
                   schema.userCalendarIntegrations.userId,
-                  hostingSupervisorIdForPage
+                  hostingSupervisorId
                 ),
                 isNull(schema.userCalendarIntegrations.disconnectedAt)
               )
@@ -311,9 +287,8 @@ export default async function SuperviseeDetailPage({
       )?.credentials as string[] | null
     : null;
 
-  // HR Admin only: fetch current supervisor + active supervisor options for
-  // the in-page reassignment dropdown (per spec §7).
-  const viewerIsHrAdmin = viewerIsHrAdminEarly;
+  // HR Admin only: current supervisor + active supervisor options for the
+  // in-page reassignment dropdown.
   let currentSupervisorId: string | null = null;
   let activeSupervisorOptions: { id: string; name: string }[] = [];
   if (viewerIsHrAdmin) {
@@ -383,9 +358,6 @@ export default async function SuperviseeDetailPage({
     summary: r.summary.split("\n")[0] ?? "",
   }));
 
-  // Append the org's active custom rules so HR Admins can assign them
-  // alongside canonical ones (Cycle 4). The custom-rule id format
-  // (`org:<orgId>:custom:<jur>-<lic>-v<n>`) is recognized by the resolver.
   const orgCustomRows = await db
     .select()
     .from(schema.orgRuleOverrides)
@@ -400,15 +372,11 @@ export default async function SuperviseeDetailPage({
     id: `org:${myMembership.orgId}:custom:${r.jurisdiction.toLowerCase()}-${r.licenseCode.toLowerCase()}-v${r.version}`,
     label: `${r.label} (org-created)`,
     summary:
-      (r.customMetadata as { summary?: string } | null)?.summary?.split(
-        "\n"
-      )[0] ?? "Org-created custom rule",
+      (r.customMetadata as { summary?: string } | null)?.summary?.split("\n")[0] ??
+      "Org-created custom rule",
   }));
   const allRules = [...canonicalRules, ...customRules];
 
-  // Per-rule guidance for the assignment form: key_warnings + window-close
-  // math from each rule's YAML. Surfaced inline so supervisors see the most
-  // common audit failures at the moment they're filling out the rule.
   const ruleGuidance = allRuleObjects.map((r) => {
     const id = `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`;
     const keyWarnings = r.page_content?.key_warnings ?? [];
@@ -424,16 +392,10 @@ export default async function SuperviseeDetailPage({
     return { ruleId: id, keyWarnings, permitWindowMonths, contractFieldHelp };
   });
 
-  // Read-out for the "Completed compliance tasks" section. Built from the
-  // typed columns on the assignment plus any future-extensible jsonb entries.
   const completedAttestations: CompletedAttestation[] = assignment
     ? deriveCompletedAttestations(assignment)
     : [];
 
-  // Cycle 7: look up any active override on the assignment's current
-  // canonical, independent of whether a newer version exists. Used both
-  // by the version-drift banner (Cycle 6) and the rule-summary card badge
-  // (Cycle 7) so a single query feeds both surfaces.
   const currentCanonicalOverride =
     rule && assignment && !isCustomRuleId(assignment.ruleId)
       ? await db.query.orgRuleOverrides.findFirst({
@@ -448,11 +410,6 @@ export default async function SuperviseeDetailPage({
         })
       : null;
 
-  // Phase 6.0 — surface a banner when the assignment is on an older version
-  // than the latest available for its (state, license) pair. Cycle 6 extends
-  // it: when this org has an active override on the *current* canonical, the
-  // banner offers a third option to re-author the override on the new
-  // canonical version instead of dropping it.
   const ruleVersionDrift = (() => {
     if (!rule || !assignment) return null;
     const latest = latestVersionForState(rule.jurisdiction, rule.license_code);
@@ -467,12 +424,74 @@ export default async function SuperviseeDetailPage({
     };
   })();
 
+  // Ring model — derived honestly from rule.structured + evaluation.totals;
+  // degrades to legend-only stats when the rule provides no denominator.
+  const ringModel =
+    rule && evalResult ? computeHourRings(evalResult.totals, rule.structured) : null;
+
+  // "Sessions to sign" for this viewer on THIS supervisee. Empty for HR
+  // Admins (they don't sign). The full-org query is React-cached so the
+  // layout's nav-badge query is shared.
+  const pendingSignaturesForThisSupervisee = viewerCanSupervise
+    ? (
+        await pendingSignaturesForSupervisor(session.user.id, myMembership.orgId)
+      ).filter((r) => r.superviseeId === superviseeId)
+    : [];
+
+  // Practice-hour approvals owed by supervisors on this supervisee.
+  const pendingPractice = viewerCanSupervise
+    ? events
+        .filter((e) => e.kind === "practice" && !e.approvedAt)
+        .map((e) => ({
+          id: e.id,
+          date: e.date.toISOString().slice(0, 10),
+          durationHours: e.durationHours,
+          directContactHours: e.directContactHours,
+          practiceState: e.practiceState,
+        }))
+    : [];
+
+  // Sessions pending — upcoming supervision that hasn't happened yet and
+  // isn't canceled or no-show. Server Component renders once per request;
+  // reading the clock here is intentional and stable across the render.
+  // eslint-disable-next-line react-hooks/purity
+  const nowMs = Date.now();
+  const sessionsPending: PendingSessionRow[] = events
+    .filter(
+      (e) =>
+        e.kind === "supervision" &&
+        e.scheduledStatus !== "canceled" &&
+        e.scheduledStatus !== "no_show" &&
+        e.date.getTime() >= nowMs
+    )
+    .map((e) => ({
+      id: e.id,
+      date: e.date,
+      durationHours: e.durationHours,
+      sessionType: e.sessionType,
+      meetingProvider: e.meetingProvider,
+      scheduledStatus: e.scheduledStatus,
+    }));
+
+  const subLine =
+    supervisee.state && rule?.license_code
+      ? `${supervisee.state} · ${rule.license_code}`
+      : supervisee.email;
+
   return (
     <>
       <div>
-        <p className="shell-eyebrow">{viewerIsManager ? "Supervisee" : "Your account"}</p>
-        <h1 className="shell-page-title mt-1">{supervisee.name}</h1>
-        <p className="shell-page-sub">{supervisee.email}</p>
+        <p className="shell-eyebrow">Supervisee</p>
+        <h1 className="shell-page-title mt-1">
+          {supervisee.name ?? supervisee.email}
+        </h1>
+        <p className="shell-page-sub">
+          {supervisee.state && rule?.license_code ? (
+            <span className="font-mono">{subLine}</span>
+          ) : (
+            subLine
+          )}
+        </p>
       </div>
 
       {viewerIsHrAdmin && (
@@ -487,7 +506,10 @@ export default async function SuperviseeDetailPage({
           ) : (
             <p className="text-sm text-[color:var(--text-secondary)]">
               No active supervisors in this org yet.{" "}
-              <Link href="/dashboard/team" className="underline text-[color:var(--text-primary)]">
+              <Link
+                href="/dashboard/team"
+                className="underline text-[color:var(--text-primary)]"
+              >
                 Invite a supervisor
               </Link>{" "}
               before assigning.
@@ -507,217 +529,140 @@ export default async function SuperviseeDetailPage({
         />
       )}
 
-      {!rule && (
-        <div className="panel panel-tight border-l-[3px] border-l-[color:var(--warn-500)]">
-          <div className="flex items-start gap-3">
+      {!rule ? (
+        <div className="panel border-l-[3px] border-l-[color:var(--warn-500)]">
+          <div className="flex items-start gap-3 mb-4">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--warn-500)]" />
             <div>
               <p className="font-medium text-[color:var(--text-primary)]">
-                {viewerCanSupervise || viewerIsManager
-                  ? "No state rule assigned"
-                  : "No state rule assigned yet"}
+                No state rule assigned
               </p>
               <p className="mt-1 text-sm text-[color:var(--text-secondary)]">
                 {viewerCanSupervise
-                  ? "This supervisee’s compliance tracking is paused. Assign a state rule below to start tracking hours and audit readiness."
-                  : viewerIsManager
-                    ? "The assigned supervisor needs to set a state rule before compliance tracking can begin."
-                    : "Your supervisor hasn’t assigned your state rule yet. Reach out to them so your hours can start counting toward your requirements."}
+                  ? "This supervisee's compliance tracking is paused. Assign a state rule below to start tracking hours and audit readiness."
+                  : "The assigned supervisor needs to set a state rule before compliance tracking can begin."}
               </p>
             </div>
           </div>
-        </div>
-      )}
-
-      {!rule ? (
-        <div className="panel">
-          <span className="status-pill status-warn mb-3 inline-flex">
-            <AlertTriangle className="h-3 w-3" />
-            No rule assigned
-          </span>
-          {viewerCanSupervise ? (
-            <>
-              <h2 className="font-display text-xl font-semibold text-[color:var(--text-primary)] mt-1">
-                Assign a state rule
-              </h2>
-              <p className="mt-2 text-[color:var(--text-secondary)]">
-                Pick the state and license type this supervisee is working toward. Their
-                hour progress and at-risk flags only start once a rule is assigned.
-              </p>
-              <AssignRuleForm
-                superviseeId={superviseeId}
-                availableRules={allRules}
-                guidance={ruleGuidance}
-              />
-            </>
-          ) : viewerIsManager ? (
-            <>
-              <h2 className="font-display text-xl font-semibold text-[color:var(--text-primary)] mt-1">
-                No rule assigned yet.
-              </h2>
-              <p className="mt-2 text-[color:var(--text-secondary)]">
-                This supervisee&apos;s licensed supervisor hasn&apos;t picked a state rule yet.
-                Hour progress and at-risk flags will start once they do.
-              </p>
-            </>
-          ) : (
-            <>
-              <h2 className="font-display text-xl font-semibold text-[color:var(--text-primary)] mt-1">
-                Your supervisor hasn&apos;t assigned your state rule yet.
-              </h2>
-              <p className="mt-2 text-[color:var(--text-secondary)]">
-                Reach out to your supervisor so they can pick the right rule (e.g., NC
-                LCMHCA). Once they do, your hour progress and at-risk flags will start
-                filling in here.
-              </p>
-            </>
+          {viewerCanSupervise && (
+            <AssignRuleForm
+              superviseeId={superviseeId}
+              availableRules={allRules}
+              guidance={ruleGuidance}
+            />
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-          <div className="panel lg:col-span-2 flex flex-col gap-6">
-              <RuleSummaryCard
-                superviseeId={superviseeId}
-                viewerCanSupervise={viewerCanSupervise}
-                currentRule={{
-                  jurisdiction: rule.jurisdiction,
-                  licenseCode: rule.license_code,
-                  version: rule.version,
-                  admincode: rule.citation.admincode,
-                  sourceUrl: rule.citation.url,
-                  riskLevel: evalResult?.riskLevel,
-                  isOrgCreated: assignment
-                    ? isCustomRuleId(assignment.ruleId)
-                    : false,
-                  hasActiveOverride: !!currentCanonicalOverride,
-                }}
-                currentRuleId={assignment!.ruleId}
-                currentObligationStartedAt={assignment!.obligationStartedAt
-                  .toISOString()
-                  .slice(0, 10)}
-                currentContractFiledAt={
-                  assignment!.supervisionContractFiledAt
-                    ?.toISOString()
-                    .slice(0, 10) ?? null
-                }
-                availableRules={allRules}
-                guidance={ruleGuidance}
-              />
-
-              <ProgressBar
-                pct={evalResult?.progress.practiceProgressPct ?? 0}
-                label={`Practice hours · ${evalResult?.totals.practiceHours.toFixed(1) ?? 0} of ${rule.structured.total_practice_hours_required}`}
-              />
-              <ProgressBar
-                pct={evalResult?.progress.supervisionProgressPct ?? 0}
-                label={`Supervision hours · ${evalResult?.totals.supervisionHours.toFixed(1) ?? 0} of ${rule.structured.total_supervision_hours_required}`}
-              />
-
-              {evalResult && evalResult.gaps.length > 0 && (
-                <div id="gaps">
-                  <p className="label-overline mb-2">Gaps and warnings</p>
-                  <div className="space-y-2">
-                    {groupGaps(evalResult.gaps).map((group) => (
-                      <GapGroupRenderer
-                        key={group.code}
-                        group={group}
-                        assignmentId={assignment!.id}
-                        superviseeId={superviseeId}
-                        viewerCanSupervise={viewerCanSupervise}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {evalResult && evalResult.gaps.length === 0 && (
-                <div className="flex gap-3 p-3 rounded-[8px] text-sm border border-[color:var(--ok-700)]/30 bg-[color:var(--ok-50)] dark:bg-[rgba(30,138,84,0.1)]">
-                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--ok-700)]" />
-                  <span className="text-[color:var(--text-primary)]">
-                    All checks pass. Hours are accruing correctly under{" "}
-                    {rule.jurisdiction} {rule.license_code} v{rule.version}.
+        <>
+          {/* Section 5: tracker + rule ID row + gaps in ONE panel. */}
+          <div className="panel space-y-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="label-overline">Licensure progress</p>
+                <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[color:var(--text-secondary)]">
+                  <span className="font-mono text-[color:var(--text-primary)]">
+                    {rule.jurisdiction} {rule.license_code} v{rule.version}
                   </span>
-                </div>
+                  <span className="font-mono text-xs text-[color:var(--text-muted)]">
+                    {rule.citation.admincode}
+                  </span>
+                  {currentCanonicalOverride && (
+                    <span className="status-pill status-warn">
+                      Override active
+                    </span>
+                  )}
+                  {assignment && isCustomRuleId(assignment.ruleId) && (
+                    <span className="status-pill status-warn inline-flex items-center gap-1">
+                      <ShieldAlert className="h-3 w-3" />
+                      Org-created · not board-verified
+                    </span>
+                  )}
+                  <a
+                    href={rule.citation.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] underline decoration-dotted"
+                  >
+                    View source
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </p>
+              </div>
+              {viewerCanScheduleSession && (
+                <NewSessionModal
+                  superviseeId={superviseeId}
+                  viewerCanSupervise={viewerCanSupervise}
+                  viewerCanScheduleSession={viewerCanScheduleSession}
+                  connectedProviders={connectedProviders}
+                  hostingSupervisorName={
+                    viewerCanSupervise ? null : hostingSupervisorName
+                  }
+                  hasAssignedSupervisor={
+                    !!hostingSupervisorId || viewerCanSupervise
+                  }
+                  groupCandidates={groupCandidates}
+                  supervisorCredentials={viewerCredentials}
+                  contractFiled={!!assignment?.supervisionContractFiledAt}
+                />
               )}
+            </div>
+
+            {ringModel && (
+              <HourProgressRing
+                rings={ringModel.rings}
+                stats={ringModel.stats}
+                riskLevel={evalResult?.riskLevel}
+                riskLabel={riskBadgeLabel(evalResult?.riskLevel)}
+              />
+            )}
+
+            {evalResult && evalResult.gaps.length > 0 && (
+              <div id="gaps">
+                <p className="label-overline mb-2">Gaps and warnings</p>
+                <div className="space-y-2">
+                  {groupGaps(evalResult.gaps).map((group) => (
+                    <GapGroupRenderer
+                      key={group.code}
+                      group={group}
+                      assignmentId={assignment!.id}
+                      superviseeId={superviseeId}
+                      viewerCanSupervise={viewerCanSupervise}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {evalResult && evalResult.gaps.length === 0 && (
+              <div className="flex gap-3 p-3 rounded-[8px] text-sm border border-[color:var(--ok-700)]/30 bg-[color:var(--ok-50)] dark:bg-[rgba(30,138,84,0.1)]">
+                <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-[color:var(--ok-700)]" />
+                <span className="text-[color:var(--text-primary)]">
+                  All checks pass. Hours are accruing correctly under{" "}
+                  {rule.jurisdiction} {rule.license_code} v{rule.version}.
+                </span>
+              </div>
+            )}
           </div>
 
-          <div className="panel">
-            <SessionsPanel
-              superviseeId={superviseeId}
-              viewerCanSupervise={viewerCanSupervise}
-              viewerCanScheduleSession={viewerCanScheduleSession}
-              connectedProviders={viewerConnectedProviders}
-              hostingSupervisorName={
-                viewerCanSupervise ? null : hostingSupervisorNameForPage
-              }
-              hasAssignedSupervisor={
-                !!hostingSupervisorIdForPage || viewerCanSupervise
-              }
-              groupCandidates={groupCandidates}
-              supervisorCredentials={viewerCredentials}
-              contractFiled={!!assignment?.supervisionContractFiledAt}
-            />
-          </div>
-        </div>
+          <NeedsYourActionPanel
+            pendingSignatures={pendingSignaturesForThisSupervisee}
+            pendingPractice={pendingPractice}
+          />
+
+          <SessionsPendingPanel rows={sessionsPending} />
+        </>
       )}
 
-      {/* Practice hour review queue — supervisors only */}
-      {viewerCanSupervise && (() => {
-        const pendingPractice = events.filter(
-          (e) => e.kind === "practice" && !e.approvedAt
-        );
-        if (pendingPractice.length === 0) return null;
-        return (
-          <div className="panel">
-            <PracticeReviewQueue
-              entries={pendingPractice.map((e) => ({
-                id: e.id,
-                date: e.date.toISOString().slice(0, 10),
-                durationHours: e.durationHours,
-                directContactHours: e.directContactHours,
-                practiceState: e.practiceState,
-              }))}
-            />
-          </div>
-        );
-      })()}
-
-      {/* Order on this page: Session log (most-touched) → Evidence packages
-          (sealed history) → Completed compliance tasks (rarely-touched
-          attestation receipts at the bottom). */}
-      <div id="session-log" className="panel">
-        <p className="label-overline mb-4">Session log ({events.length})</p>
-        {events.length === 0 ? (
-          <p className="text-sm text-[color:var(--text-muted)] py-4">
-            No sessions logged yet.
-          </p>
-        ) : (
-          <SessionLog
-            events={events.map((e) => ({
-              id: e.id,
-              kind: e.kind,
-              date: e.date,
-              durationHours: e.durationHours,
-              sessionType: e.sessionType,
-              signedAt: e.signedAt,
-              signatures: e.signatures ?? [],
-              scheduledStatus: e.scheduledStatus,
-              practiceState: e.practiceState,
-              approvedAt: e.approvedAt,
-            }))}
-            viewerIsManager={viewerIsManager}
-            viewerUserId={session.user.id}
-            superviseeId={superviseeId}
-            superviseeState={supervisee.state ?? null}
-            flaggedSessionIds={flaggedSessionIds}
-          />
-        )}
-      </div>
-
-      {/* Evidence packages — seal-gold treatment (design-system-v2.md §12.1). */}
-      <div className="panel panel-flush overflow-hidden border-t-2 border-t-[color:var(--seal-gold)]">
+      {/* Evidence packages — seal-gold treatment. id="evidence" wires the
+          notifications-bell deep link (/roster/[id]#evidence). */}
+      <div
+        id="evidence"
+        className="panel panel-flush overflow-hidden border-t-2 border-t-[color:var(--seal-gold)]"
+      >
         <div className="px-5 py-4 border-b border-[color:var(--border)] flex items-center justify-between">
-          <p className="label-overline">Evidence packages ({evidencePackages.length})</p>
+          <p className="label-overline">
+            Evidence packages ({evidencePackages.length})
+          </p>
           {evidencePackages.length === 0 && (
             <p className="text-xs text-[color:var(--text-muted)]">
               Minted when a session is fully signed
@@ -725,13 +670,12 @@ export default async function SuperviseeDetailPage({
           )}
         </div>
         {evidencePackages.length > 0 && (
-          <ul className="divide-y divide-[color:var(--divider)]">
+          <ul className="row-zebra">
             {evidencePackages.map((p) => {
-              // documentContent's exact shape has drifted across versions
-              // (the canonical hash is what audits verify, not the JSON
-              // shape). Accept both the current nested shape from
-              // generateEvidencePackage AND the flatter shape produced by
-              // older seed/test fixtures by reading whichever is present.
+              // documentContent's shape has drifted across versions (the
+              // canonical hash is what audits verify, not the JSON shape).
+              // Accept both the nested shape from generateEvidencePackage AND
+              // the flatter shape produced by older seed/test fixtures.
               const raw = (p.documentContent ?? {}) as Record<string, unknown>;
               const nested = raw.session as
                 | { date?: string; sessionType?: string | null; kind?: string }
@@ -748,7 +692,7 @@ export default async function SuperviseeDetailPage({
               return (
                 <li
                   key={p.id}
-                  className="px-5 py-4 flex items-center justify-between gap-4 hover:bg-[color:var(--surface-muted)]"
+                  className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-[color:var(--surface-muted)] transition-colors"
                 >
                   <div className="flex gap-3 items-start min-w-0">
                     <FileSignature className="h-4 w-4 mt-1 shrink-0 text-[color:var(--seal-gold)]" />
@@ -760,11 +704,12 @@ export default async function SuperviseeDetailPage({
                             : "Practice session"}{" "}
                           · {date.slice(0, 10)}
                         </p>
-                        {/* Sealed evidence badge is seal-gold, never green or
-                            halo-yellow (design-system-v2.md §7.1, §12.1). */}
                         <span className="status-pill status-sealed">Sealed</span>
                       </div>
-                      <p className="font-mono text-xs text-[color:var(--text-muted)] truncate">
+                      <p
+                        className="font-mono text-xs text-[color:var(--text-muted)] truncate"
+                        title={p.documentHash}
+                      >
                         {p.documentHash}
                       </p>
                     </div>
@@ -781,6 +726,31 @@ export default async function SuperviseeDetailPage({
             })}
           </ul>
         )}
+      </div>
+
+      {/* Session log lives inside a modal — the button also acts as the
+          "Recently sealed → View all" target via the #session-log fragment. */}
+      <div className="flex items-center justify-between gap-3">
+        <p className="label-overline">Session history</p>
+        <SessionLogModal
+          events={events.map((e) => ({
+            id: e.id,
+            kind: e.kind,
+            date: e.date,
+            durationHours: e.durationHours,
+            sessionType: e.sessionType,
+            signedAt: e.signedAt,
+            signatures: e.signatures ?? [],
+            scheduledStatus: e.scheduledStatus,
+            practiceState: e.practiceState,
+            approvedAt: e.approvedAt,
+          }))}
+          viewerUserId={session.user.id}
+          superviseeId={superviseeId}
+          superviseeState={supervisee.state ?? null}
+          flaggedSessionIds={flaggedSessionIds}
+          totalCount={events.length}
+        />
       </div>
 
       {assignment && (

@@ -49,6 +49,9 @@ type Props = {
   /** Other supervisees in the org the actor can add to a group session.
    *  Excludes the primary. */
   groupCandidates: { id: string; name: string }[];
+  /** Called after a successful schedule + form reset. Lets a hosting modal
+   *  close and refresh. Absent → behavior is unchanged. */
+  onSuccess?: () => void;
 };
 
 const PROVIDER_LABEL: Record<Provider, string> = {
@@ -61,6 +64,7 @@ export function ScheduleSessionForm({
   connectedProviders,
   onBehalfOfName,
   groupCandidates,
+  onSuccess,
 }: Props) {
   const [additionalAttendeeIds, setAdditionalAttendeeIds] = useState<
     Set<string>
@@ -123,8 +127,11 @@ export function ScheduleSessionForm({
   );
 
   useEffect(() => {
-    if (state?.ok) formRef.current?.reset();
-  }, [state]);
+    if (state?.ok) {
+      formRef.current?.reset();
+      onSuccess?.();
+    }
+  }, [state, onSuccess]);
 
   function buildStartUtc(formData: FormData): FormData {
     // Convert the datetime-local string to a UTC ISO instant before submit.
