@@ -110,6 +110,7 @@ export function HourProgressRing({
           <LegendRow
             key={ring.key}
             dot={RING_COLOR[ring.key]}
+            kind="ring"
             label={ring.label}
             value={ring.value}
             max={ring.max}
@@ -120,6 +121,7 @@ export function HourProgressRing({
           <LegendRow
             key={stat.key}
             dot={STAT_DOT[stat.key]}
+            kind="stat"
             label={stat.label}
             value={stat.value}
             max={stat.max}
@@ -133,12 +135,16 @@ export function HourProgressRing({
 
 function LegendRow({
   dot,
+  kind,
   label,
   value,
   max,
   met,
 }: {
   dot: string;
+  /** "ring" = ring-backed (filled dot); "stat" = legend-only, no corresponding
+   *  arc in the chart (hollow dot so viewers don't look for a missing ring). */
+  kind: "ring" | "stat";
   label: string;
   value: number;
   max: number | null;
@@ -148,7 +154,11 @@ function LegendRow({
     <li className="flex items-start gap-2.5">
       <span
         className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
-        style={{ background: dot }}
+        style={
+          kind === "stat"
+            ? { background: "transparent", border: `1.5px solid ${dot}` }
+            : { background: dot }
+        }
         aria-hidden
       />
       <div className="min-w-0">
