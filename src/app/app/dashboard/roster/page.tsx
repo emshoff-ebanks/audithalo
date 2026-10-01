@@ -14,7 +14,7 @@ import { loadAllRules, riskBadgeLabel } from "@/lib/rules";
 import { getOrgRosterWithCompliance } from "@/lib/db/roster-queries";
 import { PendingInviteActions } from "./pending-invite-actions";
 import { FilterBar } from "./_filter-bar";
-import { RosterInviteAction } from "./_invite-action";
+import { InviteSuperviseeAction } from "../_shared/_invite-supervisee-action";
 import { parseRosterFilter, parseSupervisorId } from "./_roster-filter";
 import { ClickableRow } from "@/components/app/clickable-row";
 
@@ -241,7 +241,7 @@ export default async function RosterPage({
         supervisorOptions={supervisorOptionsForForm ?? null}
         activeSupervisorId={supervisorFilterId}
         trailingSlot={
-          <RosterInviteAction
+          <InviteSuperviseeAction
             availableRules={[
               ...[...loadAllRules().values()].map((r) => {
                 const id = `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`;

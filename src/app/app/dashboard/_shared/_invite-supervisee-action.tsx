@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { InviteForm } from "./invite-form";
+import { InviteForm } from "../roster/invite-form";
 
 type AvailableRule = { id: string; label: string; summary: string };
 type SupervisorOption = { id: string; name: string };
@@ -14,7 +14,7 @@ type Props = {
   supervisorOptions?: SupervisorOption[];
 };
 
-export function RosterInviteAction({ availableRules, supervisorOptions }: Props) {
+export function InviteSuperviseeAction({ availableRules, supervisorOptions }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -55,7 +55,7 @@ export function RosterInviteAction({ availableRules, supervisorOptions }: Props)
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="invite-modal-title"
+          aria-labelledby="invite-supervisee-modal-title"
         >
           <button
             type="button"
@@ -66,7 +66,7 @@ export function RosterInviteAction({ availableRules, supervisorOptions }: Props)
           <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-md border border-border bg-card shadow-xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div>
-                <p id="invite-modal-title" className="label-overline">
+                <p id="invite-supervisee-modal-title" className="label-overline">
                   Invite supervisee
                 </p>
                 {supervisorOptions && (
