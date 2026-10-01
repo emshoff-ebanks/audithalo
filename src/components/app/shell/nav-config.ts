@@ -6,7 +6,6 @@ import {
   PenLine,
   Briefcase,
   ClipboardList,
-  BarChart3,
   SlidersHorizontal,
   ScrollText,
   CreditCard,
@@ -41,8 +40,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: null,
     items: [
-      { href: "/dashboard", label: "Overview", icon: Home, exact: true, roles: ["supervisee", "supervisor", "hr_admin"] },
-      { href: "/dashboard/executive", label: "Executive rollup", icon: BarChart3, roles: ["executive", "hr_admin"] },
+      { href: "/dashboard", label: "Overview", icon: Home, exact: true, roles: ["supervisee", "supervisor", "hr_admin", "executive"] },
       { href: "/dashboard/roster", label: "Supervisees", icon: Users, roles: ["supervisor", "hr_admin"], badgeKey: "supervisees", badgeTone: "neutral" },
       { href: "/dashboard/signature-queue", label: "Signature queue", icon: PenLine, roles: ["supervisor", "hr_admin"], badgeKey: "signature-queue", badgeTone: "risk" },
       { href: "/dashboard/calendar", label: "Calendar", icon: Calendar, roles: ["supervisee", "supervisor", "hr_admin", "executive"] },

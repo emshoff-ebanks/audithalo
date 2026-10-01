@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { getCurrentMembership, isAdminEmail } from "@/lib/authz";
 import { SupervisorDashboard } from "./_supervisor-dashboard";
 import { SuperviseeDashboard } from "./_supervisee-dashboard";
+import { AdminOverview } from "./_admin-overview";
 
 export const metadata = { title: "Dashboard — AuditHalo" };
 
@@ -41,18 +42,24 @@ export default async function DashboardPage({
 
   const weekOffset = parseWeekOffset((await searchParams).wk);
 
-  // Route by role. Executive lands on their dedicated rollup (no roster
-  // page for them — they're read-only oversight). HR Admin sees the
-  // supervisor dashboard for now; future iterations may build a dedicated
-  // HR Admin landing with practice-wide overview cards.
-  if (session.user.role === "executive") {
-    redirect("/dashboard/executive");
-  }
+  // Route by role. Executive + HR Admin both land on the org-wide Admin
+  // Overview (role-tailored affordances inside). Supervisor keeps the
+  // supervisor dashboard; supervisee keeps the supervisee dashboard.
   if (session.user.role === "supervisee") {
     return <SuperviseeDashboard {...baseProps} />;
   }
-  // supervisor + hr_admin both see the supervisor dashboard. The
-  // supervisor dashboard's queries already use org-scoped reads, so
-  // HR Admin sees the whole roster correctly.
+  if (session.user.role === "executive" || session.user.role === "hr_admin") {
+    const membership = await getCurrentMembership(session.user.id);
+    if (!membership) {
+      redirect("/login");
+    }
+    return (
+      <AdminOverview
+        role={session.user.role}
+        orgId={membership.orgId}
+        viewerUserId={session.user.id}
+      />
+    );
+  }
   return <SupervisorDashboard {...baseProps} weekOffset={weekOffset} />;
 }

@@ -53,10 +53,10 @@ export default async function RosterPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
   // Executive is read-only oversight — they don't get the roster view. Push
-  // them to /dashboard/executive instead. Must run BEFORE the manager check
-  // since isManagerRole returns true for executive too.
+  // them back to the Admin Overview at /dashboard. Must run BEFORE the
+  // manager check since isManagerRole returns true for executive too.
   if (isExecutive(session.user.role)) {
-    redirect("/dashboard/executive");
+    redirect("/dashboard");
   }
   // Roster + invitations are supervisor / hr_admin only.
   if (!isManagerRole(session.user.role)) {
