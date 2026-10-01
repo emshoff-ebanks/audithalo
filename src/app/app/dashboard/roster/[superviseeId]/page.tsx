@@ -44,7 +44,7 @@ import {
   SessionsPendingPanel,
   type PendingSessionRow,
 } from "./_sessions-pending-panel";
-import { SessionLogModal } from "./_session-log-modal";
+import { SessionLogModal } from "@/app/app/dashboard/_session-log-modal";
 
 export const metadata = {
   title: "Supervisee — AuditHalo",
@@ -662,6 +662,7 @@ export default async function SuperviseeDetailPage({
           viewerUserId={session.user.id}
           superviseeId={superviseeId}
           superviseeState={supervisee.state ?? null}
+          viewerIsManager
           flaggedSessionIds={flaggedSessionIds}
           totalCount={events.length}
         />

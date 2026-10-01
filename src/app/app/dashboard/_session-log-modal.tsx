@@ -34,9 +34,14 @@ type Props = {
   viewerUserId: string;
   superviseeId: string;
   superviseeState?: string | null;
+  /** True on supervisor / HR-Admin surfaces, false on the supervisee's own
+   *  dashboard. Forwarded to <SessionLog /> so manager-only affordances
+   *  (e.g. row-level actions) render only where appropriate. */
+  viewerIsManager: boolean;
   /** Session IDs passed through from ?flagged= — trigger auto-open + row
-   *  scroll/highlight inside SessionLog. */
-  flaggedSessionIds: string[];
+   *  scroll/highlight inside SessionLog. Supervisee surface currently has no
+   *  flagged deep-link, so default to []. */
+  flaggedSessionIds?: string[];
   /** Total event count, shown on the trigger button when > 0. */
   totalCount: number;
 };
@@ -49,15 +54,14 @@ type Props = {
  *
  * Inside the modal, SessionLog is rendered with hideAttentionZone so the page-
  * level "Needs your action" panel isn't duplicated when the modal is open.
- * viewerIsManager is always true because the /roster/[id] page redirects
- * supervisees to /dashboard before this component ever mounts.
  */
 export function SessionLogModal({
   events,
   viewerUserId,
   superviseeId,
   superviseeState,
-  flaggedSessionIds,
+  viewerIsManager,
+  flaggedSessionIds = [],
   totalCount,
 }: Props) {
   // Three open sources merged into a derived boolean:
@@ -161,7 +165,7 @@ export function SessionLogModal({
               ) : (
                 <SessionLog
                   events={events}
-                  viewerIsManager={true}
+                  viewerIsManager={viewerIsManager}
                   viewerUserId={viewerUserId}
                   superviseeId={superviseeId}
                   superviseeState={superviseeState ?? null}

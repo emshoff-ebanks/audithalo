@@ -15,9 +15,9 @@ import {
   type PendingSignatureItem,
 } from "@/lib/supervisee-evidence";
 import { InitialsAvatar } from "@/components/ui/initials-avatar";
-import { SessionLog } from "@/components/app/session-log";
 import { HourProgressRing } from "./_hour-progress-ring";
 import { LogHoursHeaderAction } from "./_log-hours-header-action";
+import { SessionLogModal } from "./_session-log-modal";
 
 type Props = {
   userId: string;
@@ -222,11 +222,9 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
       <RecentlySealed rows={recentRows} />
 
       {events.length > 0 && (
-        <section id="session-log">
-          <h2 className="font-display text-xl font-semibold text-[color:var(--text-primary)] mb-4">
-            Session log
-          </h2>
-          <SessionLog
+        <div className="flex items-center justify-between gap-3">
+          <p className="label-overline">Session history</p>
+          <SessionLogModal
             events={events.map((e) => ({
               id: e.id,
               kind: e.kind,
@@ -242,8 +240,9 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
             viewerUserId={userId}
             superviseeId={userId}
             superviseeState={null}
+            totalCount={events.length}
           />
-        </section>
+        </div>
       )}
     </div>
   );
