@@ -27,6 +27,7 @@ import {
 import { resolveEvaluationWithOverrides } from "@/lib/rules/evaluation-context-with-overrides";
 import { computeHourRings } from "@/lib/rules/hour-rings";
 import { pendingSignaturesForSupervisor } from "@/lib/supervisor-signatures";
+import { getNewSessionModalContext } from "@/lib/supervisee-new-session-context";
 import { AssignRuleForm } from "./assign-rule-form";
 import { HourProgressRing } from "@/app/app/dashboard/_hour-progress-ring";
 import { GapGroupRenderer } from "./_gap-renderer";
@@ -167,126 +168,15 @@ export default async function SuperviseeDetailPage({
   });
   if (!supervisee) notFound();
 
-  // Who hosts sessions scheduled from this page:
-  //   Supervisor viewing → themselves.
-  //   HR Admin viewing   → the supervisee's currently-assigned supervisor.
-  // Resolved here so the modal form can fetch the right user's calendar
-  // integrations + show "Scheduling on behalf of …".
-  let hostingSupervisorId: string | null = null;
-  let hostingSupervisorName: string | null = null;
-  if (viewerCanSupervise) {
-    hostingSupervisorId = session.user.id;
-  } else if (viewerIsHrAdmin) {
-    const activeAssignmentForScheduling =
-      await db.query.supervisorAssignments.findFirst({
-        where: and(
-          eq(schema.supervisorAssignments.superviseeId, superviseeId),
-          eq(schema.supervisorAssignments.orgId, myMembership.orgId),
-          isNull(schema.supervisorAssignments.endedAt)
-        ),
-      });
-    if (activeAssignmentForScheduling) {
-      hostingSupervisorId =
-        activeAssignmentForScheduling.supervisorId ?? null;
-      const sup = hostingSupervisorId
-        ? await db.query.users.findFirst({
-            where: eq(schema.users.id, hostingSupervisorId),
-            columns: { name: true, email: true },
-          })
-        : null;
-      hostingSupervisorName = sup?.name ?? sup?.email ?? null;
-    }
-  }
-
-  // Group-session candidates (Phase 5): same scope as the calendar-page roster.
-  let groupCandidates: { id: string; name: string }[] = [];
-  if (viewerCanScheduleSession) {
-    if (viewerCanSupervise) {
-      const assignmentRows = await db
-        .select({
-          id: schema.users.id,
-          name: schema.users.name,
-          email: schema.users.email,
-        })
-        .from(schema.supervisorAssignments)
-        .innerJoin(
-          schema.users,
-          eq(schema.users.id, schema.supervisorAssignments.superviseeId)
-        )
-        .where(
-          and(
-            eq(schema.supervisorAssignments.supervisorId, session.user.id),
-            eq(schema.supervisorAssignments.orgId, myMembership.orgId),
-            isNull(schema.supervisorAssignments.endedAt)
-          )
-        );
-      groupCandidates = assignmentRows
-        .filter((r) => r.id !== superviseeId)
-        .map((r) => ({ id: r.id, name: r.name ?? r.email }));
-    } else if (viewerIsHrAdmin) {
-      const orgSupervisees = await db
-        .select({
-          id: schema.users.id,
-          name: schema.users.name,
-          email: schema.users.email,
-        })
-        .from(schema.orgMemberships)
-        .innerJoin(schema.users, eq(schema.users.id, schema.orgMemberships.userId))
-        .where(
-          and(
-            eq(schema.orgMemberships.orgId, myMembership.orgId),
-            eq(schema.orgMemberships.role, "supervisee"),
-            isNull(schema.orgMemberships.deactivatedAt)
-          )
-        );
-      groupCandidates = orgSupervisees
-        .filter((r) => r.id !== superviseeId)
-        .map((r) => ({ id: r.id, name: r.name ?? r.email }));
-    }
-  }
-
-  // Calendar integrations for the hosting supervisor — feeds the schedule
-  // form's provider picker. Empty = form tells the actor to (have the host)
-  // connect one before scheduling a virtual session.
-  const connectedProviders =
-    viewerCanScheduleSession && hostingSupervisorId
-      ? (
-          await db
-            .select({
-              name: schema.userCalendarIntegrations.provider,
-              accountEmail: schema.userCalendarIntegrations.accountEmail,
-              isPreferred: schema.userCalendarIntegrations.isPreferred,
-            })
-            .from(schema.userCalendarIntegrations)
-            .where(
-              and(
-                eq(
-                  schema.userCalendarIntegrations.userId,
-                  hostingSupervisorId
-                ),
-                isNull(schema.userCalendarIntegrations.disconnectedAt)
-              )
-            )
-        ).filter(
-          (
-            r
-          ): r is {
-            name: "microsoft" | "google";
-            accountEmail: string | null;
-            isPreferred: boolean;
-          } => r.name === "microsoft" || r.name === "google"
-        )
-      : [];
-
-  // Viewer's professional credentials — auto-populate the log-session form.
-  const viewerCredentials = viewerCanSupervise
-    ? (
-        await db.query.users.findFirst({
-          where: eq(schema.users.id, session.user.id),
-          columns: { credentials: true },
-        })
-      )?.credentials as string[] | null
-    : null;
+  // NewSessionModal context (hosting supervisor, group candidates, calendar
+  // providers, credentials, contractFiled). Shared with the calendar page's
+  // query-param launcher so both open the same modal with the same data.
+  const newSessionCtx = await getNewSessionModalContext({
+    superviseeId,
+    viewerUserId: session.user.id,
+    viewerRole: session.user.role,
+    orgId: myMembership.orgId,
+  });
 
   // HR Admin only: current supervisor + active supervisor options for the
   // in-page reassignment dropdown.
@@ -593,21 +483,17 @@ export default async function SuperviseeDetailPage({
                   </a>
                 </p>
               </div>
-              {viewerCanScheduleSession && (
+              {viewerCanScheduleSession && newSessionCtx && (
                 <NewSessionModal
                   superviseeId={superviseeId}
-                  viewerCanSupervise={viewerCanSupervise}
-                  viewerCanScheduleSession={viewerCanScheduleSession}
-                  connectedProviders={connectedProviders}
-                  hostingSupervisorName={
-                    viewerCanSupervise ? null : hostingSupervisorName
-                  }
-                  hasAssignedSupervisor={
-                    !!hostingSupervisorId || viewerCanSupervise
-                  }
-                  groupCandidates={groupCandidates}
-                  supervisorCredentials={viewerCredentials}
-                  contractFiled={!!assignment?.supervisionContractFiledAt}
+                  viewerCanSupervise={newSessionCtx.viewerCanSupervise}
+                  viewerCanScheduleSession={newSessionCtx.viewerCanScheduleSession}
+                  connectedProviders={newSessionCtx.connectedProviders}
+                  hostingSupervisorName={newSessionCtx.hostingSupervisorName}
+                  hasAssignedSupervisor={newSessionCtx.hasAssignedSupervisor}
+                  groupCandidates={newSessionCtx.groupCandidates}
+                  supervisorCredentials={newSessionCtx.supervisorCredentials}
+                  contractFiled={newSessionCtx.contractFiled}
                 />
               )}
             </div>
