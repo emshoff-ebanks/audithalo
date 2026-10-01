@@ -307,12 +307,26 @@ export async function scheduleSessionAction(
   let calendarEventIds: Record<string, string> | null = null;
 
   if (parsed.data.modality === "virtual") {
-    const resolved = parsed.data.provider
-      ? await getNamedProviderForUser(
-          hostingSupervisorId,
-          parsed.data.provider as CalendarProvider
-        )
-      : await getProviderForUser(hostingSupervisorId);
+    // Resolving the provider refreshes the OAuth token, which can throw
+    // when the server lacks GOOGLE_CLIENT_ID/MS creds (local dev without
+    // the integration configured) or when the user's refresh token has
+    // been revoked. Treat both as "provider unavailable" so the request
+    // returns a readable error instead of crashing the route.
+    let resolved: Awaited<ReturnType<typeof getProviderForUser>>;
+    try {
+      resolved = parsed.data.provider
+        ? await getNamedProviderForUser(
+            hostingSupervisorId,
+            parsed.data.provider as CalendarProvider
+          )
+        : await getProviderForUser(hostingSupervisorId);
+    } catch (err) {
+      console.error("[scheduleSession] provider resolution failed:", err);
+      return {
+        ok: false,
+        error: `Calendar provider unavailable: ${(err as Error).message}. Reconnect the calendar in Account → Integrations and try again.`,
+      };
+    }
 
     if (!resolved) {
       return {
@@ -935,12 +949,24 @@ export async function scheduleRecurringSeriesAction(
   let providerEventId: string | null = null;
 
   if (parsed.data.modality === "virtual") {
-    const resolved = parsed.data.provider
-      ? await getNamedProviderForUser(
-          hostingSupervisorId,
-          parsed.data.provider as CalendarProvider
-        )
-      : await getProviderForUser(hostingSupervisorId);
+    // Same provider-resolution-can-throw caveat as scheduleSessionAction —
+    // wrap so missing OAuth env / revoked refresh token returns a readable
+    // error instead of crashing the route.
+    let resolved: Awaited<ReturnType<typeof getProviderForUser>>;
+    try {
+      resolved = parsed.data.provider
+        ? await getNamedProviderForUser(
+            hostingSupervisorId,
+            parsed.data.provider as CalendarProvider
+          )
+        : await getProviderForUser(hostingSupervisorId);
+    } catch (err) {
+      console.error("[scheduleRecurringSeries] provider resolution failed:", err);
+      return {
+        ok: false,
+        error: `Calendar provider unavailable: ${(err as Error).message}. Reconnect the calendar in Account → Integrations and try again.`,
+      };
+    }
     if (!resolved) {
       return {
         ok: false,
