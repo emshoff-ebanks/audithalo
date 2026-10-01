@@ -63,8 +63,8 @@ export function CompliancePrefsForm({
             onClick={handleToggle}
             className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${
               enabled
-                ? "bg-[color:var(--color-secondary)]"
-                : "bg-muted"
+                ? "bg-[color:var(--halo-yellow)]"
+                : "bg-[color:var(--surface-muted)] border border-[color:var(--border)]"
             } disabled:opacity-60`}
           >
             <span
@@ -73,7 +73,7 @@ export function CompliancePrefsForm({
               }`}
             />
             {pending && (
-              <Loader2 className="absolute inset-0 m-auto h-3.5 w-3.5 animate-spin text-white/80" />
+              <Loader2 className="absolute inset-0 m-auto h-3.5 w-3.5 animate-spin text-[color:var(--ink-900)]/70" />
             )}
           </button>
         </div>
