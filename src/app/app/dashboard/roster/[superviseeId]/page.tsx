@@ -535,9 +535,18 @@ export default async function SuperviseeDetailPage({
             )}
           </div>
 
-            <NeedsYourActionPanel
-              pendingSignatures={pendingSignaturesForThisSupervisee}
-            />
+            {/* Right column fills with role-appropriate action/context.
+                Supervisor sees sessions awaiting their signature; HR Admin
+                doesn't sign, so the signatures panel would be empty for
+                them. Give HR Admin the upcoming-sessions list in that slot
+                instead and skip rendering it below the grid. */}
+            {viewerCanSupervise ? (
+              <NeedsYourActionPanel
+                pendingSignatures={pendingSignaturesForThisSupervisee}
+              />
+            ) : (
+              <SessionsPendingPanel rows={sessionsPending} />
+            )}
           </div>
 
           {/* Practice-hours approvals live full-width here (not inside the
@@ -552,7 +561,9 @@ export default async function SuperviseeDetailPage({
             </div>
           )}
 
-          <SessionsPendingPanel rows={sessionsPending} />
+          {viewerCanSupervise && (
+            <SessionsPendingPanel rows={sessionsPending} />
+          )}
         </>
       )}
 
