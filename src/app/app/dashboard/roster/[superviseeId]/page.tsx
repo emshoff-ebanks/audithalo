@@ -38,6 +38,7 @@ import {
 } from "./_completed-attestations";
 import { NewSessionModal } from "./_new-session-modal";
 import { NeedsYourActionPanel } from "./_needs-your-action-panel";
+import { PracticeReviewQueue } from "./_practice-review-queue";
 import {
   SessionsPendingPanel,
   type PendingSessionRow,
@@ -554,8 +555,12 @@ export default async function SuperviseeDetailPage({
         </div>
       ) : (
         <>
+          {/* Sections 5 + 7: tracker + rule-id + gaps on the left, Needs-your-
+              action on the right. Stacks on mobile; 2:1 grid on lg so the
+              action panel absorbs the leftover room next to the ring. */}
+          <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
           {/* Section 5: tracker + rule ID row + gaps in ONE panel. */}
-          <div className="panel space-y-6">
+          <div className="panel space-y-6 lg:col-span-2">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <p className="label-overline">Licensure progress</p>
@@ -644,10 +649,22 @@ export default async function SuperviseeDetailPage({
             )}
           </div>
 
-          <NeedsYourActionPanel
-            pendingSignatures={pendingSignaturesForThisSupervisee}
-            pendingPractice={pendingPractice}
-          />
+            <NeedsYourActionPanel
+              pendingSignatures={pendingSignaturesForThisSupervisee}
+            />
+          </div>
+
+          {/* Practice-hours approvals live full-width here (not inside the
+              side panel) because the queue is table-shaped and doesn't fit
+              a narrow column cleanly. */}
+          {pendingPractice.length > 0 && (
+            <div className="panel">
+              <p className="label-overline mb-3">
+                Practice hours to approve ({pendingPractice.length})
+              </p>
+              <PracticeReviewQueue entries={pendingPractice} />
+            </div>
+          )}
 
           <SessionsPendingPanel rows={sessionsPending} />
         </>
