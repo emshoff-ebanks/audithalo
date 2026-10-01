@@ -203,17 +203,38 @@ export function CalendarView({
             {headerLabel}
           </span>
         </div>
-        <div className="inline-flex items-center gap-1.5">
-          {(["week", "month", "list"] as ViewMode[]).map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setView(v)}
-              className={`chip capitalize ${view === v ? "chip-active" : ""}`}
-            >
-              {v}
-            </button>
-          ))}
+        <div className="inline-flex items-center gap-3">
+          <div
+            className="hidden sm:inline-flex items-center gap-3 text-xs text-[color:var(--text-secondary)]"
+            aria-label="Session type legend"
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="h-2 w-2 rounded-full bg-[color:var(--halo-yellow)]"
+                aria-hidden
+              />
+              Individual
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="h-2 w-2 rounded-full bg-[color:var(--sage-500)]"
+                aria-hidden
+              />
+              Group
+            </span>
+          </div>
+          <div className="inline-flex items-center gap-1.5">
+            {(["week", "month", "list"] as ViewMode[]).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                className={`chip capitalize ${view === v ? "chip-active" : ""}`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

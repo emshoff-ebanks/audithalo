@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { blockClasses } from "./_status-badge";
+import { blockClasses, pillLabel } from "./_status-badge";
 import type { CalendarEvent } from "./_types";
 
 type Props = {
@@ -104,28 +104,36 @@ export function CalendarMonthView({
                 {d.getDate()}
               </div>
               <div className="space-y-1">
-                {shown.map((e) => (
-                  <button
-                    key={e.id}
-                    type="button"
-                    onClick={() => onEventClick(e.id)}
-                    className={`block w-full text-left rounded-sm border-l-2 px-1 py-0.5 text-[10px] truncate ${blockClasses(
-                      e,
-                      now
-                    )}`}
-                  >
-                    <span className="font-mono mr-1">
-                      {new Intl.DateTimeFormat(undefined, {
-                        hour: "numeric",
-                        minute: "2-digit",
-                        timeZone: e.timeZone ?? undefined,
-                      }).format(new Date(e.startIso))}
-                    </span>
-                    {viewerIsHrAdmin && e.supervisorName
-                      ? `${e.superviseeName} · ${initialsOf(e.supervisorName)}`
-                      : e.superviseeName}
-                  </button>
-                ))}
+                {shown.map((e) => {
+                  const timeFmt = new Intl.DateTimeFormat(undefined, {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    timeZone: e.timeZone ?? undefined,
+                  }).format(new Date(e.startIso));
+                  const label = pillLabel(e);
+                  const suffix =
+                    viewerIsHrAdmin && e.supervisorName
+                      ? ` · ${initialsOf(e.supervisorName)}`
+                      : "";
+                  return (
+                    <button
+                      key={e.id}
+                      type="button"
+                      onClick={() => onEventClick(e.id)}
+                      className={`flex w-full items-center gap-1 text-left rounded-sm border-l-2 px-1 py-0.5 text-[10px] ${blockClasses(
+                        e,
+                        now
+                      )}`}
+                    >
+                      <time className="font-mono shrink-0">{timeFmt}</time>
+                      <span className="shrink-0 opacity-60">·</span>
+                      <span className="truncate">
+                        {label}
+                        {suffix}
+                      </span>
+                    </button>
+                  );
+                })}
                 {more > 0 && (
                   <p className="text-[10px] text-foreground/60 px-1">
                     +{more} more

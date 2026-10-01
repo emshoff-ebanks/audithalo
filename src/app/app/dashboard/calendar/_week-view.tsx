@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { blockClasses } from "./_status-badge";
+import { blockClasses, pillLabel } from "./_status-badge";
 import type { CalendarEvent } from "./_types";
 
 type Props = {
@@ -195,17 +195,25 @@ export function CalendarWeekView({
                       style={{ top, height }}
                     >
                       <div className="font-medium truncate">
-                        {e.superviseeName}
-                      </div>
-                      <div className="text-[10px] opacity-80 truncate">
-                        {new Intl.DateTimeFormat(undefined, {
-                          hour: "numeric",
-                          minute: "2-digit",
-                          timeZone: e.timeZone ?? undefined,
-                        }).format(s)}
+                        {pillLabel(e)}
                         {viewerIsHrAdmin && e.supervisorName
                           ? ` · ${initialsOf(e.supervisorName)}`
                           : ""}
+                      </div>
+                      <div className="text-[10px] opacity-80 truncate font-mono">
+                        <time>
+                          {new Intl.DateTimeFormat(undefined, {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            timeZone: e.timeZone ?? undefined,
+                          }).format(s)}
+                          {"–"}
+                          {new Intl.DateTimeFormat(undefined, {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            timeZone: e.timeZone ?? undefined,
+                          }).format(en)}
+                        </time>
                       </div>
                     </button>
                   );
