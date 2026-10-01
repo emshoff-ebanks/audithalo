@@ -35,6 +35,18 @@ type Props = {
   groupCandidates: { id: string; name: string }[];
   supervisorCredentials?: string[] | null;
   contractFiled?: boolean;
+  /** When false, the halo-yellow "+ New session" trigger button is not
+   *  rendered. The modal still auto-opens via the #new-session URL hash,
+   *  so a parent that drives open-state externally (e.g. the calendar
+   *  page's query-param launcher) can mount this without a visible trigger. */
+  renderTrigger?: boolean;
+  /** Seed value for the schedule form's start input. Set by the calendar
+   *  launcher so a slot click lands in the modal with the clicked time
+   *  pre-filled. */
+  initialStartUtcIso?: string;
+  /** Fires alongside the modal's own close cleanup — lets a parent clear
+   *  any URL state it owns (query params the modal doesn't know about). */
+  onClose?: () => void;
 };
 
 /**
@@ -60,6 +72,9 @@ export function NewSessionModal({
   groupCandidates,
   supervisorCredentials,
   contractFiled,
+  renderTrigger = true,
+  initialStartUtcIso,
+  onClose: onExternalClose,
 }: Props) {
   const router = useRouter();
   // Two open sources: the user clicking the trigger, OR the URL fragment
@@ -94,7 +109,8 @@ export function NewSessionModal({
       // replaceState edit doesn't fire one, so nudge the snapshot manually.
       window.dispatchEvent(new HashChangeEvent("hashchange"));
     }
-  }, []);
+    onExternalClose?.();
+  }, [onExternalClose]);
 
   const openModal = useCallback(() => {
     setUserOpen(true);
@@ -116,14 +132,16 @@ export function NewSessionModal({
 
   return (
     <>
-      <Button
-        ref={triggerRef}
-        type="button"
-        onClick={openModal}
-      >
-        <Plus className="h-4 w-4 stroke-2" />
-        New session
-      </Button>
+      {renderTrigger && (
+        <Button
+          ref={triggerRef}
+          type="button"
+          onClick={openModal}
+        >
+          <Plus className="h-4 w-4 stroke-2" />
+          New session
+        </Button>
+      )}
 
       {open && (
         <div
@@ -199,6 +217,7 @@ export function NewSessionModal({
                     connectedProviders={connectedProviders}
                     onBehalfOfName={hostingSupervisorName}
                     groupCandidates={groupCandidates}
+                    initialStartUtcIso={initialStartUtcIso}
                     onSuccess={handleSuccess}
                   />
                 )

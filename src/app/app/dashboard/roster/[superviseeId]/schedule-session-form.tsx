@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DateTime12h } from "@/components/ui/datetime-12h";
-import { useSearchParams } from "next/navigation";
 import {
   scheduleRecurringSeriesAction,
   scheduleSessionAction,
@@ -49,6 +48,10 @@ type Props = {
   /** Other supervisees in the org the actor can add to a group session.
    *  Excludes the primary. */
   groupCandidates: { id: string; name: string }[];
+  /** Explicit start-time seed (UTC ISO) — e.g. the slot the user clicked
+   *  on the calendar. When absent, the form defaults to tomorrow at the
+   *  next 30-min boundary. */
+  initialStartUtcIso?: string;
   /** Called after a successful schedule + form reset. Lets a hosting modal
    *  close and refresh. Absent → behavior is unchanged. */
   onSuccess?: () => void;
@@ -64,6 +67,7 @@ export function ScheduleSessionForm({
   connectedProviders,
   onBehalfOfName,
   groupCandidates,
+  initialStartUtcIso,
   onSuccess,
 }: Props) {
   const [additionalAttendeeIds, setAdditionalAttendeeIds] = useState<
@@ -97,8 +101,6 @@ export function ScheduleSessionForm({
   // useEffect instead of useSyncExternalStore avoids the
   // snapshot-returns-a-new-value-per-render trap that infinite-loops
   // React (error #185).
-  const searchParams = useSearchParams();
-  const startFromUrl = searchParams?.get("start") ?? null;
   const [tz, setTz] = useState<string>("");
   const [defaultLocalStart, setDefaultLocalStart] = useState<string>("");
   useEffect(() => {
@@ -107,15 +109,15 @@ export function ScheduleSessionForm({
     // _calendar-view.tsx for the same SSR-safe pattern.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTz(Intl.DateTimeFormat().resolvedOptions().timeZone);
-    if (startFromUrl) {
-      const d = new Date(startFromUrl);
+    if (initialStartUtcIso) {
+      const d = new Date(initialStartUtcIso);
       if (!Number.isNaN(d.getTime())) {
         setDefaultLocalStart(toLocalDatetimeString(d));
         return;
       }
     }
     setDefaultLocalStart(computeDefaultLocalStart());
-  }, [startFromUrl]);
+  }, [initialStartUtcIso]);
 
   // Seed the provider picker with the user's preferred (or only) connected
   // provider. Derived from props, so safe to compute during render.
