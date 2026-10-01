@@ -7,7 +7,9 @@ import {
   isHrAdmin,
 } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
+import { getNewSessionModalContext } from "@/lib/supervisee-new-session-context";
 import { CalendarView } from "./_calendar-view";
+import { CalendarNewSessionLauncher } from "./_new-session-launcher";
 import type { CalendarEvent, ViewMode } from "./_types";
 
 export const metadata = { title: "Calendar — AuditHalo" };
@@ -52,7 +54,12 @@ function rangeFor(view: ViewMode, anchor: Date): { start: Date; end: Date } {
 export default async function CalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; date?: string }>;
+  searchParams: Promise<{
+    view?: string;
+    date?: string;
+    newSessionSuperviseeId?: string;
+    start?: string;
+  }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -261,19 +268,48 @@ export default async function CalendarPage({
           .from(schema.users)
           .where(inArray(schema.users.id, allowedSuperviseeIds));
 
+  // Query-param-driven "open NewSessionModal on the calendar page" flow.
+  // The ScheduleModal picker rewrites the URL to ?newSessionSuperviseeId=...
+  // instead of navigating to the detail page; the server reads it here,
+  // validates RBAC, and resolves the modal's context so the launcher can
+  // mount the exact same modal the detail page uses.
+  const newSessionSuperviseeId = sp.newSessionSuperviseeId ?? null;
+  const canOpenNewSessionLauncher =
+    !!newSessionSuperviseeId &&
+    viewerIsManager &&
+    allowedSuperviseeIds.includes(newSessionSuperviseeId);
+
+  const newSessionLauncherCtx = canOpenNewSessionLauncher
+    ? await getNewSessionModalContext({
+        superviseeId: newSessionSuperviseeId,
+        viewerUserId: session.user.id,
+        viewerRole: role,
+        orgId: membership.orgId,
+      })
+    : null;
+
   return (
-    <CalendarView
-      view={view}
-      anchorIso={anchor.toISOString()}
-      rangeStartIso={start.toISOString()}
-      rangeEndIso={end.toISOString()}
-      events={events}
-      supervisees={supervisees.map((s) => ({
-        id: s.id,
-        name: s.name ?? s.email,
-      }))}
-      viewerIsManager={viewerIsManager}
-      viewerIsHrAdmin={isHrAdmin(role)}
-    />
+    <>
+      <CalendarView
+        view={view}
+        anchorIso={anchor.toISOString()}
+        rangeStartIso={start.toISOString()}
+        rangeEndIso={end.toISOString()}
+        events={events}
+        supervisees={supervisees.map((s) => ({
+          id: s.id,
+          name: s.name ?? s.email,
+        }))}
+        viewerIsManager={viewerIsManager}
+        viewerIsHrAdmin={isHrAdmin(role)}
+      />
+      {newSessionLauncherCtx && newSessionSuperviseeId && (
+        <CalendarNewSessionLauncher
+          superviseeId={newSessionSuperviseeId}
+          startUtcIso={sp.start}
+          {...newSessionLauncherCtx}
+        />
+      )}
+    </>
   );
 }
