@@ -10,14 +10,18 @@ import {
   isManagerRole,
 } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
+import { loadAllRules } from "@/lib/rules";
 import { Button } from "@/components/ui/button";
 import {
-  InviteSupervisorForm,
-  InviteHrAdminForm,
-  InviteExecutiveForm,
   DeactivateMemberButton,
   ReassignSupervisorDropdown,
 } from "./_invite-forms";
+import {
+  InviteHrAdminAction,
+  InviteSupervisorAction,
+  InviteExecutiveAction,
+} from "./_invite-actions";
+import { InviteSuperviseeAction } from "../_shared/_invite-supervisee-action";
 import { PendingInviteActions } from "../roster/pending-invite-actions";
 
 export const metadata = { title: "Team — AuditHalo" };
@@ -57,27 +61,44 @@ export default async function TeamPage() {
   const isHr = isHrAdmin(viewerMembership.role);
   const canManage = canManageOrg(viewerMembership.role);
 
-  const [org, allMemberships, supervisorAssignments, allInvitations] =
-    await Promise.all([
-      db.query.organizations.findFirst({
-        where: eq(schema.organizations.id, viewerMembership.orgId),
-      }),
-      db.query.orgMemberships.findMany({
-        where: eq(schema.orgMemberships.orgId, viewerMembership.orgId),
-        orderBy: desc(schema.orgMemberships.createdAt),
-      }),
-      db.query.supervisorAssignments.findMany({
-        where: and(
-          eq(schema.supervisorAssignments.orgId, viewerMembership.orgId),
-          eq(schema.supervisorAssignments.isPrimary, true),
-          isNull(schema.supervisorAssignments.endedAt)
-        ),
-      }),
-      db.query.invitations.findMany({
-        where: eq(schema.invitations.orgId, viewerMembership.orgId),
-        orderBy: desc(schema.invitations.createdAt),
-      }),
-    ]);
+  const [
+    org,
+    allMemberships,
+    supervisorAssignments,
+    allInvitations,
+    orgCustomRows,
+  ] = await Promise.all([
+    db.query.organizations.findFirst({
+      where: eq(schema.organizations.id, viewerMembership.orgId),
+    }),
+    db.query.orgMemberships.findMany({
+      where: eq(schema.orgMemberships.orgId, viewerMembership.orgId),
+      orderBy: desc(schema.orgMemberships.createdAt),
+    }),
+    db.query.supervisorAssignments.findMany({
+      where: and(
+        eq(schema.supervisorAssignments.orgId, viewerMembership.orgId),
+        eq(schema.supervisorAssignments.isPrimary, true),
+        isNull(schema.supervisorAssignments.endedAt)
+      ),
+    }),
+    db.query.invitations.findMany({
+      where: eq(schema.invitations.orgId, viewerMembership.orgId),
+      orderBy: desc(schema.invitations.createdAt),
+    }),
+    canManage
+      ? db
+          .select()
+          .from(schema.orgRuleOverrides)
+          .where(
+            and(
+              eq(schema.orgRuleOverrides.orgId, viewerMembership.orgId),
+              eq(schema.orgRuleOverrides.isActive, true),
+              isNull(schema.orgRuleOverrides.canonicalRuleId)
+            )
+          )
+      : Promise.resolve([] as (typeof schema.orgRuleOverrides.$inferSelect)[]),
+  ]);
   if (!org) redirect("/dashboard");
 
   // Group pending (not-yet-accepted) invites by role so each section can
@@ -126,13 +147,37 @@ export default async function TeamPage() {
     if (a.superviseeId && a.supervisorId) supervisorByUserId.set(a.superviseeId, a.supervisorId);
   }
 
-  // Active (non-deactivated) supervisor options for the reassignment dropdown.
+  // Active (non-deactivated) supervisor options — reused by the reassignment
+  // dropdown AND by the supervisee invite modal's "assign to supervisor" field.
   const activeSupervisorOptions = supervisors
     .filter((e) => !e.membership.deactivatedAt)
     .map((e) => ({
       id: e.user!.id,
       name: e.user!.name ?? e.user!.email,
     }));
+
+  // Catalog of state rules + org-created custom rules — matches the shape the
+  // roster page builds. Only HR Admin needs this (they're the only ones who
+  // see the supervisee invite modal from Team).
+  const availableRules = canManage
+    ? [
+        ...[...loadAllRules().values()].map((r) => {
+          const id = `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`;
+          return {
+            id,
+            label: `${r.jurisdiction} ${r.license_code} v${r.version}`,
+            summary: r.summary,
+          };
+        }),
+        ...orgCustomRows.map((r) => ({
+          id: `org:${viewerMembership.orgId}:custom:${r.jurisdiction.toLowerCase()}-${r.licenseCode.toLowerCase()}-v${r.version}`,
+          label: `${r.label} (org-created)`,
+          summary:
+            (r.customMetadata as { summary?: string } | null)?.summary ??
+            "Org-created custom rule",
+        })),
+      ]
+    : [];
 
   return (
     <div className="flex flex-col gap-2">
@@ -156,7 +201,9 @@ export default async function TeamPage() {
       {/* HR Admins section */}
       <Section
         title="HR Admins"
+        count={hrAdmins.length}
         subtitle="Full org access — billing, team management, audit log export. 2FA required for sensitive actions."
+        action={canManage ? <InviteHrAdminAction /> : undefined}
       >
         <MembersTable
           rows={hrAdmins}
@@ -167,18 +214,14 @@ export default async function TeamPage() {
           invites={pendingByRole.get("hr_admin") ?? []}
           showActions={canManage}
         />
-        {canManage && (
-          <div className="panel mt-4">
-            <p className="label-overline mb-3">Add HR Admin</p>
-            <InviteHrAdminForm />
-          </div>
-        )}
       </Section>
 
       {/* Supervisors section */}
       <Section
         title="Supervisors"
+        count={supervisors.length}
         subtitle="Credentialed clinical supervisors. Sign supervision sessions, assign state rules, run their own roster."
+        action={canManage ? <InviteSupervisorAction /> : undefined}
       >
         <MembersTable
           rows={supervisors}
@@ -189,18 +232,18 @@ export default async function TeamPage() {
           invites={pendingByRole.get("supervisor") ?? []}
           showActions={canManage}
         />
-        {canManage && (
-          <div className="panel mt-4">
-            <p className="label-overline mb-3">Invite Supervisor</p>
-            <InviteSupervisorForm />
-          </div>
-        )}
       </Section>
 
       {/* Executives section */}
       <Section
         title="Executives"
+        count={executives.length}
         subtitle={`Read-only oversight role. ${activeExecCount} of ${MAX_EXECUTIVE_SEATS} seats used.`}
+        action={
+          canManage ? (
+            <InviteExecutiveAction seatsLeft={execSeatsLeft} />
+          ) : undefined
+        }
       >
         <MembersTable
           rows={executives}
@@ -211,18 +254,21 @@ export default async function TeamPage() {
           invites={pendingByRole.get("executive") ?? []}
           showActions={canManage}
         />
-        {canManage && (
-          <div className="panel mt-4">
-            <p className="label-overline mb-3">Invite Executive</p>
-            <InviteExecutiveForm seatsLeft={execSeatsLeft} />
-          </div>
-        )}
       </Section>
 
       {/* Supervisees section (HR Admin gets supervisor-reassignment dropdown) */}
       <Section
         title="Supervisees"
-        subtitle="Pre-licensed associates. Inviting happens at /dashboard/roster."
+        count={supervisees.length}
+        subtitle="Pre-licensed associates. Invitations here also appear on the roster."
+        action={
+          canManage ? (
+            <InviteSuperviseeAction
+              availableRules={availableRules}
+              supervisorOptions={activeSupervisorOptions}
+            />
+          ) : undefined
+        }
       >
         <PendingInvitesList
           invites={pendingByRole.get("supervisee") ?? []}
@@ -356,22 +402,32 @@ function PendingInvitesList({
 
 function Section({
   title,
+  count,
   subtitle,
+  action,
   children,
 }: {
   title: string;
+  count?: number;
   subtitle?: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section className="mt-10">
-      <div className="mb-4">
-        <h2 className="font-display text-xl font-semibold text-foreground">
-          {title}
-        </h2>
-        {subtitle && (
-          <p className="mt-1 text-sm text-foreground/60">{subtitle}</p>
-        )}
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="font-display text-xl font-semibold text-foreground">
+            {title}
+            {typeof count === "number" && (
+              <span className="ml-2 text-foreground/50 font-normal">({count})</span>
+            )}
+          </h2>
+          {subtitle && (
+            <p className="mt-1 text-sm text-foreground/60">{subtitle}</p>
+          )}
+        </div>
+        {action && <div className="shrink-0">{action}</div>}
       </div>
       {children}
     </section>
