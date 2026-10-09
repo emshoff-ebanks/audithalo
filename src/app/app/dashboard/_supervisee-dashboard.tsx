@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { and, eq, desc } from "drizzle-orm";
-import { AlertTriangle, CalendarDays, ShieldCheck, Video } from "lucide-react";
+import { AlertTriangle, CalendarDays, Download, ShieldCheck, Video } from "lucide-react";
 import { getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { riskBadgeLabel } from "@/lib/rules";
@@ -121,6 +121,7 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
   // ── Recently sealed — sealed packages + pending sessions, merged ───────
   const packages = await db
     .select({
+      id: schema.evidencePackages.id,
       sessionEventId: schema.evidencePackages.sessionEventId,
       documentHash: schema.evidencePackages.documentHash,
       createdAt: schema.evidencePackages.createdAt,
@@ -138,6 +139,7 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
   const eventById = new Map(events.map((e) => [e.id, e]));
   const sealedItems: SealedEvidenceItem[] = packages.map((p) => ({
     sessionId: p.sessionEventId,
+    packageId: p.id,
     documentHash: p.documentHash,
     sealedAt: p.createdAt,
     sessionDate: eventById.get(p.sessionEventId)?.date ?? p.createdAt,
@@ -427,13 +429,14 @@ function RecentlySealed({
           rows.map((row) => {
             const href = `/sign/${row.sessionId}`;
             if (row.type === "sealed") {
+              // Row is a div, not a Link: the PDF download is its own <a>
+              // and anchors can't nest.
               return (
-                <Link
+                <div
                   key={row.sessionId}
-                  href={href}
                   className="flex items-center justify-between gap-3 rounded-[8px] border border-[color:var(--border)] p-3.5 hover:border-[color:var(--border-strong)] transition-colors"
                 >
-                  <div className="min-w-0">
+                  <Link href={href} className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-[color:var(--text-primary)]">
                       Session · {dateFmt.format(row.sessionDate)}
                     </p>
@@ -444,9 +447,18 @@ function RecentlySealed({
                       sha256:{row.documentHash.slice(0, 10)}… ·{" "}
                       {stampFmt.format(row.sealedAt)}
                     </p>
+                  </Link>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <a
+                      href={`/api/evidence/${row.packageId}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      PDF
+                    </a>
+                    <span className="status-pill status-sealed">Sealed</span>
                   </div>
-                  <span className="status-pill status-sealed shrink-0">Sealed</span>
-                </Link>
+                </div>
               );
             }
             return (

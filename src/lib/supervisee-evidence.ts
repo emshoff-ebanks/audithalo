@@ -10,6 +10,8 @@
 
 export type SealedEvidenceItem = {
   sessionId: string;
+  /** Evidence package id — the row's PDF link points at /api/evidence/<id>. */
+  packageId: string;
   documentHash: string;
   sealedAt: Date;
   sessionDate: Date;

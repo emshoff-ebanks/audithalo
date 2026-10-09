@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, eq, isNull, ne, lt, count } from "drizzle-orm";
-import { ArrowLeft, FileSignature } from "lucide-react";
+import { ArrowLeft, Download, FileSignature } from "lucide-react";
 import { auth } from "@/auth";
 import { getCurrentMembership } from "@/lib/authz";
 import { signPermissions } from "@/lib/sign-permissions";
@@ -123,6 +123,18 @@ export default async function SignSessionPage({
     (s) => s.signerId === session.user.id
   );
   const fullySigned = !!sessionEvent.signedAt;
+  // Sealed sessions link straight to their evidence PDF. Supervisees can't
+  // open the roster detail page, so this is their in-app path to it.
+  const evidencePackage = fullySigned
+    ? await db.query.evidencePackages.findFirst({
+        where: and(
+          eq(schema.evidencePackages.sessionEventId, sessionEvent.id),
+          eq(schema.evidencePackages.orgId, sessionEvent.orgId)
+        ),
+        orderBy: (p, { desc }) => [desc(p.createdAt)],
+        columns: { id: true },
+      })
+    : null;
 
   // Pre-meeting branch: if the row was created by scheduleSessionAction
   // AND the meeting hasn't ended yet, show the scheduled-session card
@@ -417,9 +429,17 @@ export default async function SignSessionPage({
             <div className="pt-4 border-t border-[color:var(--border)]">
               <span className="status-pill status-sealed">Fully signed</span>
               <p className="mt-3 text-sm text-[color:var(--text-secondary)]">
-                This session is sealed. Its evidence package is available on the
-                supervisee&apos;s detail page.
+                This session is sealed.
               </p>
+              {evidencePackage && (
+                <a
+                  href={`/api/evidence/${evidencePackage.id}`}
+                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[color:var(--text-primary)] underline decoration-[color:var(--halo-yellow)] decoration-2 underline-offset-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Download evidence PDF
+                </a>
+              )}
             </div>
           ) : alreadySignedByMe ? (
             <div className="pt-4 border-t border-[color:var(--border)]">

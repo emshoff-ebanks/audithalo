@@ -8,12 +8,14 @@ import {
 const sealed: SealedEvidenceItem[] = [
   {
     sessionId: "s-sep9",
+    packageId: "p-sep9",
     documentHash: "c81a1234deadbeef3fd0",
     sealedAt: new Date("2026-09-09T19:22:00Z"),
     sessionDate: new Date("2026-09-09T14:00:00Z"),
   },
   {
     sessionId: "s-aug20",
+    packageId: "p-aug20",
     documentHash: "9f2caaaabbbb47e0",
     sealedAt: new Date("2026-08-20T13:00:00Z"),
     sessionDate: new Date("2026-08-20T13:00:00Z"),
