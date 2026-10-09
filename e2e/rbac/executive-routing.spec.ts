@@ -1,31 +1,30 @@
 import { test, expect } from "@playwright/test";
 
-// Executive role is read-only oversight. Per
-// docs/strategy/04-enterprise-rbac.md §"Edge cases" #6, an Executive
-// hitting /dashboard or /dashboard/roster should land at
-// /dashboard/executive instead. This proves the route-level guard
-// fires (not just the nav-level hiding).
+// Executive role is read-only oversight. Since the v2 redesign the org
+// rollup (AdminOverview) lives on /dashboard itself, so an Executive lands
+// there, manager-only routes like /dashboard/roster bounce back to it, and
+// the old /dashboard/executive URL redirects to it. This proves the
+// route-level guard fires (not just the nav-level hiding).
 
 test.use({ storageState: "playwright/.auth/executive.json" });
 
-test("executive lands on /dashboard/executive when hitting /dashboard", async ({
-  page,
-}) => {
+test("executive lands on the /dashboard overview", async ({ page }) => {
   await page.goto("/dashboard");
-  await expect(page).toHaveURL(/\/dashboard\/executive$/);
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("heading").first()).toBeVisible();
 });
 
-test("executive is redirected from /dashboard/roster to /dashboard/executive", async ({
+test("executive is redirected from /dashboard/roster to /dashboard", async ({
   page,
 }) => {
   await page.goto("/dashboard/roster");
-  await expect(page).toHaveURL(/\/dashboard\/executive$/);
+  await expect(page).toHaveURL(/\/dashboard$/);
 });
 
-test("executive can reach /dashboard/executive directly", async ({ page }) => {
+test("legacy /dashboard/executive redirects to /dashboard", async ({ page }) => {
   await page.goto("/dashboard/executive");
-  await expect(page).toHaveURL(/\/dashboard\/executive$/);
-  // Page renders content (no 500). The exec dashboard has practice-wide
-  // rollup metrics — at minimum a heading should be visible.
+  await expect(page).toHaveURL(/\/dashboard$/);
+  // Page renders content (no 500). The overview has org-wide rollup
+  // metrics — at minimum a heading should be visible.
   await expect(page.getByRole("heading").first()).toBeVisible();
 });

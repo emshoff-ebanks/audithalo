@@ -29,44 +29,29 @@ test.describe("HR Admin demo path", () => {
     await expect(page).toHaveURL(/\/dashboard(\?.*)?$/);
     await expect(page.getByRole("heading").first()).toBeVisible();
 
-    // Manage roster
-    await page.getByRole("link", { name: /manage roster/i }).click();
+    // Supervisees (sidebar; accessible name may include a count badge)
+    await page.getByRole("link", { name: /^supervisees\b/i }).first().click();
     await expect(page).toHaveURL(/\/dashboard\/roster/);
     // Roster table or empty state must render — no 500/error boundary.
     await expect(page.getByRole("heading").first()).toBeVisible();
 
-    // Team (HR Admin only — top-nav link)
+    // Team (sidebar)
     await page.getByRole("link", { name: /^team$/i }).first().click();
-    await expect(page).toHaveURL(/\/dashboard\/team/);
-    await expect(
-      page.getByRole("link", { name: /customize state rules/i })
-    ).toBeVisible();
+    await expect(page).toHaveURL(/\/dashboard\/team$/);
+    await expect(page.getByRole("heading").first()).toBeVisible();
 
-    // Customize state rules — verify the button is NOT red (post-fix).
-    const rulesButton = page.getByRole("link", {
-      name: /customize state rules/i,
-    });
-    const variant = await rulesButton.getAttribute("class");
-    expect(
-      variant,
-      "Customize state rules button must not use destructive (red) styling"
-    ).not.toMatch(/bg-destructive|text-destructive-foreground/);
+    // State rules (sidebar, HR Admin only) — must render.
+    await page.getByRole("link", { name: /^state rules$/i }).first().click();
+    await expect(page).toHaveURL(/\/dashboard\/team\/rules/);
+    await expect(page.getByRole("heading").first()).toBeVisible();
 
     // Calendar
-    await page.getByRole("link", { name: /calendar/i }).first().click();
+    await page.getByRole("link", { name: /^calendar$/i }).first().click();
     await expect(page).toHaveURL(/\/dashboard\/calendar/);
 
-    // Audit log via profile dropdown (or direct nav as a fallback)
-    const auditResp = await page.goto("/dashboard/audit-log");
-    expect(auditResp?.status() ?? 0).toBeLessThan(400);
-
-    // State rules — must render with at least one rule
-    const rulesResp = await page.goto("/dashboard/team/rules");
-    expect(rulesResp?.status() ?? 0).toBeLessThan(400);
-    // No raw rule slugs leaked in the "in use by your org" section. We
-    // can't easily assert the absence of every slug shape, but a quick
-    // sanity check: the page should show at least a properly cased
-    // jurisdiction label somewhere.
+    // Audit log (sidebar)
+    await page.getByRole("link", { name: /^audit log$/i }).first().click();
+    await expect(page).toHaveURL(/\/dashboard\/audit-log/);
     await expect(page.getByRole("heading").first()).toBeVisible();
   });
 });
@@ -86,18 +71,16 @@ test.describe("Supervisor demo path", () => {
     await expect(page).toHaveURL(/\/dashboard/);
     await expect(page.getByRole("heading").first()).toBeVisible();
 
-    // Manage roster and Calendar visible in nav; Team / Audit log /
-    // State rules NOT visible (those are HR Admin only).
+    // Supervisees and Calendar visible in the sidebar; State rules and
+    // Settings NOT visible (those are HR Admin only).
     await expect(
-      page.getByRole("link", { name: /manage roster/i }).first()
+      page.getByRole("link", { name: /^supervisees\b/i }).first()
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /calendar/i }).first()
+      page.getByRole("link", { name: /^calendar$/i }).first()
     ).toBeVisible();
-    // Don't pass strict — there can be sub-page links named "Team" elsewhere.
-    // Assert the top-nav variant by checking the dashboard top nav.
-    const teamLinks = page.getByRole("link", { name: /^team$/i });
-    await expect(teamLinks).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /^state rules$/i })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /^settings$/i })).toHaveCount(0);
   });
 });
 

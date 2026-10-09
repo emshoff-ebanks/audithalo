@@ -43,19 +43,21 @@ test.describe("Supervisor invites a Supervisee", () => {
     await page.goto("/dashboard/roster");
     await expect(page).toHaveURL(/\/dashboard\/roster/);
 
+    // The invite form lives in a modal opened next to the roster search.
+    await page.getByRole("button", { name: /^invite supervisee$/i }).first().click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+
     // The roster invite-form has id="invite-email"
-    const emailInput = page.locator("#invite-email");
+    const emailInput = dialog.locator("#invite-email");
     await emailInput.fill(testEmail);
     const form = emailInput.locator("xpath=ancestor::form");
-    // Button label uses "Send invite" or similar
     await form.locator("button[type='submit']").click();
 
-    // Either a success toast/state appears, or the form clears + a new
-    // pending row shows in the table. Verify via DB rather than UI text
-    // (UI feedback may vary).
-    await page.waitForTimeout(1500);
-    const inv = await findInvitationByEmail(ORG_ID!, testEmail);
-    expect(inv).not.toBeNull();
-    expect(inv?.role).toBe("supervisee");
+    // The modal closes itself on success; verify the row via DB.
+    await expect(dialog).toBeHidden({ timeout: 10_000 });
+    await expect
+      .poll(async () => (await findInvitationByEmail(ORG_ID!, testEmail))?.role ?? null, { timeout: 10_000 })
+      .toBe("supervisee");
   });
 });

@@ -45,21 +45,24 @@ test.describe("HR Admin invites a Supervisor", () => {
     await page.goto("/dashboard/team");
     await expect(page).toHaveURL(/\/dashboard\/team/);
 
+    // The invite form lives in a modal opened from the page header.
+    await page.getByRole("button", { name: /^invite supervisor$/i }).first().click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+
     // InviteSupervisorForm's email input is keyed with id="sup-email"
     // (vs the HR Admin form's "hr-email") — most reliable selector.
-    const emailInput = page.locator("#sup-email");
+    const emailInput = dialog.locator("#sup-email");
     await emailInput.fill(testEmail);
     const form = emailInput.locator("xpath=ancestor::form");
     await form.getByRole("button", { name: /send invitation/i }).click();
 
-    // Form replaces itself with a success message on completion.
-    await expect(
-      page.getByText(/supervisor invitation sent/i)
-    ).toBeVisible({ timeout: 10_000 });
+    // The modal closes itself on success.
+    await expect(dialog).toBeHidden({ timeout: 10_000 });
 
     // DB verifier — invitation row created with the right role.
-    const inv = await findInvitationByEmail(ORG_ID!, testEmail);
-    expect(inv).not.toBeNull();
-    expect(inv?.role).toBe("supervisor");
+    await expect
+      .poll(async () => (await findInvitationByEmail(ORG_ID!, testEmail))?.role ?? null, { timeout: 10_000 })
+      .toBe("supervisor");
   });
 });
