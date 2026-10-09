@@ -52,8 +52,8 @@ export function AppShell({
   // Next.js App Router pattern for this — there's no route-change event hook,
   // and lifting setMobileOpen to every Link would thread the setter through
   // the entire nav tree.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileOpen(false);
   }, [pathname]);
 

@@ -10,7 +10,7 @@ beforeAll(() => {
   process.env.STRIPE_PRICE_PRACTICE_SEAT = "price_test_practice_seat";
 });
 
-// Cold `await import("@/lib/stripe")` can take &gt;5s on a cold Vitest worker
+// Cold `await import("@/lib/stripe")` can take >5s on a cold Vitest worker
 // (large transitive graph through @sentry + drizzle). Raise the per-test
 // timeout so CI doesn't flake on the first case.
 describe("tierFromPriceId", { timeout: 15_000 }, () => {
