@@ -17,6 +17,10 @@ export type CalendarEvent = {
   endIso: string;
   durationMinutes: number;
   sessionType: string | null;
+  /** For group sessions: number of additional attendees beyond the primary
+   *  supervisee. Null for individual/triadic or when the field hasn't been
+   *  recorded. */
+  groupAttendees: number | null;
   /** 'scheduled' | 'completed' | 'canceled' | 'no_show' | null
    *  (null = legacy logged-after-the-fact event). */
   scheduledStatus: string | null;

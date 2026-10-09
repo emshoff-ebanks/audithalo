@@ -1,22 +1,39 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { and, eq, desc } from "drizzle-orm";
-import { ArrowRight } from "lucide-react";
+import { AlertTriangle, CalendarDays, ShieldCheck, Video } from "lucide-react";
 import { getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
-import { riskBadgeLabel, riskBadgeVariant } from "@/lib/rules";
+import { riskBadgeLabel } from "@/lib/rules";
+import { computeHourRings } from "@/lib/rules/hour-rings";
 import { resolveEvaluationWithOverrides } from "@/lib/rules/evaluation-context-with-overrides";
 import { pendingSignaturesForUser } from "@/lib/supervisee";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { LogSessionForm } from "@/app/app/dashboard/roster/[superviseeId]/log-session-form";
-import { SessionLog } from "@/components/app/session-log";
-import { SuperviseeThisWeek } from "./_supervisee-this-week";
+import { isSessionPendingSignature } from "@/lib/session-pending";
+import {
+  mergeRecentEvidence,
+  type SealedEvidenceItem,
+  type PendingSignatureItem,
+} from "@/lib/supervisee-evidence";
+import { InitialsAvatar } from "@/components/ui/initials-avatar";
+import { HourProgressRing } from "./_hour-progress-ring";
+import { LogHoursHeaderAction } from "./_log-hours-header-action";
+import { SessionLogModal } from "./_session-log-modal";
 
 type Props = {
   userId: string;
   userName: string | null;
   userEmail: string;
+};
+
+type SessionEventRow = typeof schema.sessionEvents.$inferSelect;
+
+const HOUR_MS = 60 * 60 * 1000;
+const JOIN_LEAD_MS = 10 * 60 * 1000;
+
+const MEETING_PROVIDER_LABEL: Record<string, string> = {
+  teams: "Microsoft Teams",
+  google_meet: "Google Meet",
+  in_person: "In person",
 };
 
 export async function SuperviseeDashboard({ userId, userName, userEmail }: Props) {
@@ -32,25 +49,27 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
 
   if (!assignment) {
     return (
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
-        <Badge variant="outline" className="mb-3">Your account</Badge>
-        <h1 className="font-display text-4xl font-semibold text-foreground">
-          Welcome, {userName ?? userEmail}
-        </h1>
-        <p className="mt-2 text-foreground/70">{userEmail}</p>
-        <Card className="mt-10">
-          <CardContent className="p-6">
-            <Badge variant="warning" className="mb-3">No rule assigned</Badge>
-            <h2 className="font-display text-xl font-semibold text-foreground">
-              Your supervisor hasn&apos;t assigned your state rule yet.
-            </h2>
-            <p className="mt-2 text-foreground/70">
-              Reach out to your supervisor so they can pick the right rule (e.g., NC
-              LCMHCA). Once they do, your hour progress and at-risk flags will start
-              filling in here.
-            </p>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col gap-6">
+        <div>
+          <p className="shell-eyebrow">Supervision</p>
+          <h1 className="shell-page-title mt-1">
+            Welcome, {firstName(userName, userEmail)}
+          </h1>
+        </div>
+        <div className="panel">
+          <span className="status-pill status-warn mb-3 inline-flex">
+            <AlertTriangle className="h-3 w-3" />
+            No rule assigned
+          </span>
+          <h2 className="font-display text-xl font-semibold text-[color:var(--text-primary)] mt-1">
+            Your supervisor hasn&apos;t assigned your state rule yet.
+          </h2>
+          <p className="mt-2 text-[color:var(--text-secondary)]">
+            Reach out to your supervisor so they can pick the right rule (e.g., NC
+            LCMHCA). Once they do, your hour progress and at-risk flags will start
+            filling in here.
+          </p>
+        </div>
       </div>
     );
   }
@@ -67,195 +86,145 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
   const rule = resolved?.rule ?? null;
   const evalResult = resolved?.evaluation ?? null;
 
-  const pendingForMe = pendingSignaturesForUser(events, userId);
-
-  const practiceRequired = rule?.structured.total_practice_hours_required ?? 0;
-  const supervisionRequired = rule?.structured.total_supervision_hours_required ?? 0;
-  const practiceHours = evalResult?.totals.practiceHours ?? 0;
-  const supervisionHours = evalResult?.totals.supervisionHours ?? 0;
-  const practicePct = evalResult?.progress.practiceProgressPct ?? 0;
-  const supervisionPct = evalResult?.progress.supervisionProgressPct ?? 0;
-
   const isOnLeave = membership.leaveStatus === "on_leave";
   const isPrn = membership.leaveStatus === "prn";
 
+  // ── Multi-ring model (derives only from real rule fields) ──────────────
+  const ringModel =
+    rule && evalResult
+      ? computeHourRings(evalResult.totals, rule.structured)
+      : null;
+
+  // ── Next supervision — earliest not-yet-ended, non-canceled session ────
+  // Server Components render once per request; reading the clock here is
+  // intentional and stable across the render.
+  // eslint-disable-next-line react-hooks/purity
+  const nowMs = Date.now();
+  const upcoming = events
+    .filter(
+      (e) =>
+        e.kind === "supervision" &&
+        e.scheduledStatus !== "canceled" &&
+        e.scheduledStatus !== "no_show" &&
+        !e.canceledAt &&
+        e.date.getTime() + (e.durationHours ?? 0) * HOUR_MS >= nowMs
+    )
+    .sort((a, b) => a.date.getTime() - b.date.getTime())[0] ?? null;
+
+  const supervisor = upcoming
+    ? await db.query.users.findFirst({
+        where: eq(schema.users.id, upcoming.loggedById),
+        columns: { name: true, email: true, credentials: true },
+      })
+    : null;
+
+  // ── Recently sealed — sealed packages + pending sessions, merged ───────
+  const packages = await db
+    .select({
+      sessionEventId: schema.evidencePackages.sessionEventId,
+      documentHash: schema.evidencePackages.documentHash,
+      createdAt: schema.evidencePackages.createdAt,
+    })
+    .from(schema.evidencePackages)
+    .where(
+      and(
+        eq(schema.evidencePackages.superviseeId, userId),
+        eq(schema.evidencePackages.orgId, membership.orgId)
+      )
+    )
+    .orderBy(desc(schema.evidencePackages.createdAt))
+    .limit(8);
+
+  const eventById = new Map(events.map((e) => [e.id, e]));
+  const sealedItems: SealedEvidenceItem[] = packages.map((p) => ({
+    sessionId: p.sessionEventId,
+    documentHash: p.documentHash,
+    sealedAt: p.createdAt,
+    sessionDate: eventById.get(p.sessionEventId)?.date ?? p.createdAt,
+  }));
+
+  const pendingForMe = new Set(
+    pendingSignaturesForUser(events, userId).map((e) => e.id)
+  );
+  const pendingItems: PendingSignatureItem[] = events
+    .filter((e) => isSessionPendingSignature(e))
+    .map((e) => ({
+      sessionId: e.id,
+      sessionDate: e.date,
+      awaitingSelf: pendingForMe.has(e.id),
+    }));
+
+  const recentRows = mergeRecentEvidence(sealedItems, pendingItems, 4);
+
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
-      <Badge variant="outline" className="mb-3">Your account</Badge>
-      <h1 className="font-display text-4xl font-semibold text-foreground">
-        Welcome, {userName ?? userEmail}
-      </h1>
-      <p className="mt-2 text-foreground/70">{userEmail}</p>
-      {rule && (
-        <p className="mt-1 text-foreground/70">
-          Tracking against {rule.jurisdiction} {rule.license_code} v{rule.version}
-        </p>
-      )}
-      {isOnLeave && (
-        <Card className="mt-5 border-[color:var(--color-warning)]/30 bg-[color:var(--color-warning)]/5">
-          <CardContent className="p-4">
-            <Badge variant="warning" className="mb-2">On leave</Badge>
-            <p className="text-sm text-foreground">
-              Your supervision hour clock is paused. Reminders and cadence
-              checks stop until HR flips your status back to active in Paycor.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-      {isPrn && (
-        <p className="mt-3 text-sm text-foreground/70">
-          <Badge variant="outline" className="mr-2">PRN</Badge>
-          You&apos;ll still receive supervision reminders so they happen
-          whenever you next pick up shifts.
-        </p>
-      )}
-
-      {rule && (
-        <div className="mt-5">
-          <Link
-            href={`/dashboard/roster/${userId}`}
-            className="inline-flex items-center gap-1.5 rounded-sm bg-primary text-primary-foreground hover:bg-primary/90 px-3 h-9 text-sm font-medium shadow-sm"
-          >
-            View full record
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      )}
-
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <p className="label-overline mb-2">Practice hours</p>
-            <p className="font-display text-3xl font-bold text-foreground">
-              {practiceHours.toFixed(1)}{" "}
-              <span className="text-base font-normal text-foreground/60">
-                / {practiceRequired}
-              </span>
-            </p>
-            <div className="mt-3 h-1.5 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[color:var(--color-gold)] transition-all"
-                style={{ width: `${Math.min(100, practicePct)}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <p className="label-overline mb-2">Supervision hours</p>
-            <p className="font-display text-3xl font-bold text-foreground">
-              {supervisionHours.toFixed(1)}{" "}
-              <span className="text-base font-normal text-foreground/60">
-                / {supervisionRequired}
-              </span>
-            </p>
-            <div className="mt-3 h-1.5 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[color:var(--color-gold)] transition-all"
-                style={{ width: `${Math.min(100, supervisionPct)}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {(() => {
-          // Only wrap the Status card in a Link when there are gaps to
-          // navigate to — the #gaps anchor on the detail page only
-          // renders when gaps.length > 0, so an unconditional link
-          // would scroll-to-nothing for clean accounts.
-          const hasGaps = !!(evalResult && evalResult.gaps.length > 0);
-          const card = (
-            <Card
-              className={
-                hasGaps
-                  ? "hover:bg-accent/40 transition-colors cursor-pointer h-full"
-                  : "h-full"
-              }
-            >
-              <CardContent className="p-6">
-                <p className="label-overline mb-2">Status</p>
-                {evalResult ? (
-                  <>
-                    <Badge variant={riskBadgeVariant(evalResult.riskLevel)}>
-                      {riskBadgeLabel(evalResult.riskLevel)}
-                    </Badge>
-                    {evalResult.gaps.length > 0 ? (
-                      <p className="mt-3 text-xs text-foreground/60">
-                        {evalResult.gaps.length} gap
-                        {evalResult.gaps.length !== 1 ? "s" : ""} flagged
-                        &middot; click to review
-                      </p>
-                    ) : (
-                      <p className="mt-3 text-xs text-foreground/60">
-                        No open gaps
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <Badge variant="outline">No rule</Badge>
-                )}
-              </CardContent>
-            </Card>
-          );
-          return hasGaps ? (
-            <Link
-              href={`/dashboard/roster/${userId}#gaps`}
-              aria-label="Open compliance gaps"
-            >
-              {card}
-            </Link>
-          ) : (
-            card
-          );
-        })()}
-
-        {pendingForMe.length > 0 ? (
-          <a
-            href="#session-log"
-            aria-label="Jump to pending signatures"
-            className="block"
-          >
-            <Card className="hover:bg-accent/40 transition-colors cursor-pointer h-full">
-              <CardContent className="p-6">
-                <p className="label-overline mb-2">Pending signatures</p>
-                <p className="font-display text-3xl font-bold text-[color:var(--color-warning)]">
-                  {pendingForMe.length}
-                </p>
-                <p className="mt-1 text-sm text-foreground/60">
-                  supervision session{pendingForMe.length === 1 ? "" : "s"}
-                  &middot; click to sign
-                </p>
-              </CardContent>
-            </Card>
-          </a>
-        ) : (
-          <Card className="h-full">
-            <CardContent className="p-6">
-              <p className="label-overline mb-2">Pending signatures</p>
-              <p className="font-display text-3xl font-bold text-foreground">
-                0
-              </p>
-              <p className="mt-1 text-sm text-foreground/60">All caught up</p>
-            </CardContent>
-          </Card>
+    <div className="flex flex-col gap-6">
+      <div>
+        {rule && (
+          <p className="shell-eyebrow">
+            {rule.license_code} · {rule.jurisdiction}
+          </p>
         )}
+        <h1 className="shell-page-title mt-1">
+          Welcome back, {firstName(userName, userEmail)}
+        </h1>
       </div>
 
-      <SuperviseeThisWeek
-        superviseeId={userId}
-        orgId={membership.orgId}
-        leaveStatus={
-          membership.leaveStatus as "active" | "on_leave" | "prn" | undefined
-        }
-      />
+      {rule && <LogHoursHeaderAction superviseeId={userId} />}
+
+      {isOnLeave && (
+        <div className="panel border-l-[3px] border-l-[color:var(--warn-500)]">
+          <span className="status-pill status-warn mb-2 inline-flex">
+            <AlertTriangle className="h-3 w-3" />
+            On leave
+          </span>
+          <p className="text-sm text-[color:var(--text-primary)]">
+            Your supervision hour clock is paused. Reminders and cadence checks
+            stop until HR flips your status back to active in Paycor.
+          </p>
+        </div>
+      )}
+      {isPrn && (
+        <p className="text-sm text-[color:var(--text-secondary)] flex items-center gap-2 flex-wrap">
+          <span className="status-pill status-pending">PRN</span>
+          You&apos;ll still receive supervision reminders so they happen whenever
+          you next pick up shifts.
+        </p>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <section className="panel">
+          <p className="label-overline mb-4">
+            Licensure progress{rule ? ` · ${rule.license_code}` : ""}
+          </p>
+          {ringModel ? (
+            <HourProgressRing
+              rings={ringModel.rings}
+              stats={ringModel.stats}
+              riskLevel={evalResult?.riskLevel}
+              riskLabel={riskBadgeLabel(evalResult?.riskLevel)}
+            />
+          ) : (
+            <p className="text-sm text-[color:var(--text-muted)]">
+              Progress will appear once your hours start logging.
+            </p>
+          )}
+        </section>
+
+        <NextSupervision
+          session={upcoming}
+          supervisorName={supervisor?.name ?? supervisor?.email ?? null}
+          supervisorCredential={supervisor?.credentials?.[0] ?? null}
+          rule={rule}
+          nowMs={nowMs}
+        />
+      </div>
+
+      <RecentlySealed rows={recentRows} />
 
       {events.length > 0 && (
-        <div className="mt-10" id="session-log">
-          <h2 className="font-display text-xl font-semibold text-foreground mb-4">
-            Session log
-          </h2>
-          <SessionLog
+        <div className="flex items-center justify-between gap-3">
+          <p className="label-overline">Session history</p>
+          <SessionLogModal
             events={events.map((e) => ({
               id: e.id,
               kind: e.kind,
@@ -271,18 +240,237 @@ export async function SuperviseeDashboard({ userId, userName, userEmail }: Props
             viewerUserId={userId}
             superviseeId={userId}
             superviseeState={null}
+            totalCount={events.length}
           />
         </div>
       )}
-
-      <div className="mt-10">
-        <Card>
-          <CardContent className="p-6">
-            <p className="label-overline mb-3">Log practice hours</p>
-            <LogSessionForm superviseeId={userId} allowSupervision={false} />
-          </CardContent>
-        </Card>
-      </div>
     </div>
+  );
+}
+
+function firstName(name: string | null, email: string): string {
+  const n = name?.trim();
+  if (n) return n.split(/\s+/)[0];
+  return email;
+}
+
+// ── Next supervision card ────────────────────────────────────────────────
+
+function NextSupervision({
+  session,
+  supervisorName,
+  supervisorCredential,
+  rule,
+  nowMs,
+}: {
+  session: SessionEventRow | null;
+  supervisorName: string | null;
+  supervisorCredential: string | null;
+  rule: { jurisdiction: string; license_code: string } | null;
+  nowMs: number;
+}) {
+  return (
+    <section className="panel flex flex-col">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <CalendarDays
+            className="h-4 w-4 shrink-0 text-[color:var(--text-secondary)]"
+            strokeWidth={2}
+          />
+          <h2 className="font-display text-lg font-semibold text-[color:var(--text-primary)]">
+            Next supervision
+          </h2>
+        </div>
+        {session?.meetingProvider && (
+          <span className="status-pill status-info shrink-0">
+            {MEETING_PROVIDER_LABEL[session.meetingProvider] ??
+              session.meetingProvider}
+          </span>
+        )}
+      </div>
+
+      {!session ? (
+        <p className="mt-4 text-sm text-[color:var(--text-muted)]">
+          No supervision scheduled. Your supervisor books sessions from their
+          dashboard.
+        </p>
+      ) : (
+        <div className="mt-4 flex flex-col gap-4">
+          <div className="flex items-start gap-4">
+            <DateChip date={session.date} />
+            <div className="min-w-0 flex-1">
+              <p className="font-mono text-sm text-[color:var(--text-primary)]">
+                {timeRange(session.date, session.durationHours)}
+              </p>
+              {supervisorName && (
+                <div className="mt-2 flex items-center gap-2 min-w-0">
+                  <InitialsAvatar name={supervisorName} size="sm" />
+                  <span className="text-sm text-[color:var(--text-primary)] truncate">
+                    {supervisorName}
+                    {supervisorCredential ? `, ${supervisorCredential}` : ""}
+                  </span>
+                </div>
+              )}
+              {rule && (
+                <p className="mt-2 font-mono text-xs text-[color:var(--text-muted)]">
+                  {rule.jurisdiction} {rule.license_code}
+                  {session.sessionType ? ` · ${session.sessionType}` : ""} ·
+                  counts toward hours
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isJoinable(session, nowMs) && (
+              <a
+                href={session.meetingJoinUrl!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-[8px] bg-[color:var(--halo-yellow)] px-3.5 h-9 text-sm font-semibold text-[color:var(--ink-900)] hover:bg-[color:var(--halo-yellow-hover)] transition-colors"
+              >
+                <Video className="h-4 w-4" strokeWidth={2} />
+                Join
+              </a>
+            )}
+            <Link
+              href={`/sign/${session.id}`}
+              className="inline-flex items-center rounded-[8px] border border-[color:var(--border)] px-3.5 h-9 text-sm font-medium text-[color:var(--text-primary)] hover:border-[color:var(--border-strong)] transition-colors"
+            >
+              Prep note
+            </Link>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function isJoinable(session: SessionEventRow, nowMs: number): boolean {
+  if (!session.meetingJoinUrl) return false;
+  const startMs = session.date.getTime();
+  const endMs = startMs + (session.durationHours ?? 0) * HOUR_MS;
+  return nowMs >= startMs - JOIN_LEAD_MS && nowMs < endMs;
+}
+
+function DateChip({ date }: { date: Date }) {
+  const weekday = new Intl.DateTimeFormat("en-US", { weekday: "short" })
+    .format(date)
+    .toUpperCase();
+  return (
+    <div className="flex w-14 shrink-0 flex-col items-center rounded-[8px] border border-[color:var(--border)] py-2">
+      <span className="label-overline">{weekday}</span>
+      <span className="font-mono text-xl font-bold leading-none text-[color:var(--text-primary)]">
+        {date.getDate()}
+      </span>
+    </div>
+  );
+}
+
+function timeRange(start: Date, durationHours: number): string {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const end = new Date(start.getTime() + durationHours * HOUR_MS);
+  return `${fmt.format(start)} – ${fmt.format(end)}`;
+}
+
+// ── Recently sealed panel ─────────────────────────────────────────────────
+
+function RecentlySealed({
+  rows,
+}: {
+  rows: ReturnType<typeof mergeRecentEvidence>;
+}) {
+  const dateFmt = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const stampFmt = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return (
+    <section className="panel flex flex-col">
+      <div className="flex items-center justify-between gap-3 pb-4 border-b border-[color:var(--divider)]">
+        <div className="flex items-center gap-2 min-w-0">
+          <ShieldCheck
+            className="h-4 w-4 shrink-0 text-[color:var(--seal-gold)]"
+            strokeWidth={2}
+          />
+          <h2 className="font-display text-lg font-semibold text-[color:var(--text-primary)]">
+            Recently sealed
+          </h2>
+        </div>
+        {rows.length > 0 && (
+          <a
+            href="#session-log"
+            className="text-xs font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] whitespace-nowrap"
+          >
+            View all &rarr;
+          </a>
+        )}
+      </div>
+
+      <div className="pt-4 flex flex-col gap-2.5">
+        {rows.length === 0 ? (
+          <p className="text-sm text-[color:var(--text-muted)] py-4 text-center">
+            Nothing sealed yet. Signed sessions land here as tamper-evident
+            evidence.
+          </p>
+        ) : (
+          rows.map((row) => {
+            const href = `/sign/${row.sessionId}`;
+            if (row.type === "sealed") {
+              return (
+                <Link
+                  key={row.sessionId}
+                  href={href}
+                  className="flex items-center justify-between gap-3 rounded-[8px] border border-[color:var(--border)] p-3.5 hover:border-[color:var(--border-strong)] transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[color:var(--text-primary)]">
+                      Session · {dateFmt.format(row.sessionDate)}
+                    </p>
+                    <p
+                      className="mt-1 font-mono text-xs text-[color:var(--text-muted)]"
+                      title={`sha256:${row.documentHash}`}
+                    >
+                      sha256:{row.documentHash.slice(0, 10)}… ·{" "}
+                      {stampFmt.format(row.sealedAt)}
+                    </p>
+                  </div>
+                  <span className="status-pill status-sealed shrink-0">Sealed</span>
+                </Link>
+              );
+            }
+            return (
+              <Link
+                key={row.sessionId}
+                href={href}
+                className="flex items-center justify-between gap-3 rounded-[8px] border border-[color:var(--border)] p-3.5 hover:border-[color:var(--border-strong)] transition-colors"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[color:var(--text-primary)]">
+                    Session · {dateFmt.format(row.sessionDate)}
+                  </p>
+                  <p className="mt-1 text-xs text-[color:var(--text-muted)]">
+                    {row.awaitingSelf
+                      ? "Awaiting your signature"
+                      : "Awaiting supervisor signature"}
+                  </p>
+                </div>
+                <span className="status-pill status-pending shrink-0">Pending</span>
+              </Link>
+            );
+          })
+        )}
+      </div>
+    </section>
   );
 }

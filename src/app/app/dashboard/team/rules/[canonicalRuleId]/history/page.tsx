@@ -7,7 +7,6 @@ import { canManageOrg, getCurrentMembership } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { getRule, parseRuleId } from "@/lib/rules/loader";
 import { summarizeOverrideDiff } from "@/lib/rules/diff";
 
@@ -101,22 +100,20 @@ export default async function OverrideHistoryPage({
   );
 
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-12 space-y-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-3">
-        <Link href={`/dashboard/team/rules/${canonicalRuleId}`}>
-          <ArrowLeft />
+    <div className="mx-auto max-w-4xl flex flex-col gap-6">
+      <div>
+        <Link
+          href={`/dashboard/team/rules/${canonicalRuleId}`}
+          className="inline-flex items-center gap-1.5 text-sm text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] mb-3"
+        >
+          <ArrowLeft className="h-4 w-4" />
           Back to override editor
         </Link>
-      </Button>
-
-      <div>
-        <Badge variant="outline" className="mb-3">
-          Override history
-        </Badge>
-        <h1 className="font-display text-3xl font-semibold text-foreground">
+        <p className="shell-eyebrow">Override history</p>
+        <h1 className="shell-page-title mt-1">
           {canonical.jurisdiction} {canonical.license_code} v{canonical.version}
         </h1>
-        <p className="mt-2 text-foreground/70">
+        <p className="shell-page-sub">
           Every override your org has saved on this canonical rule. Inactive
           rows are kept for audit and can&apos;t be edited or reactivated &mdash;
           create a new override via the editor instead.
@@ -124,13 +121,11 @@ export default async function OverrideHistoryPage({
       </div>
 
       {rows.length === 0 ? (
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-foreground/70">
-              No overrides have ever been saved for this rule.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="panel">
+          <p className="text-sm text-[color:var(--text-secondary)]">
+            No overrides have ever been saved for this rule.
+          </p>
+        </div>
       ) : (
         <ul className="space-y-3">
           {rows.map((row) => {
@@ -143,27 +138,26 @@ export default async function OverrideHistoryPage({
             const trail = trailById.get(row.id) ?? [];
             return (
               <li key={row.id}>
-                <Card>
-                  <CardContent className="p-5 space-y-4">
+                <div className="panel space-y-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                           {row.isActive ? (
-                            <Badge variant="outline-warn" className="text-[10px]">
-                              <CircleDot className="h-3 w-3 mr-1" />
+                            <span className="status-pill status-warn">
+                              <CircleDot className="h-3 w-3" />
                               Active
-                            </Badge>
+                            </span>
                           ) : (
-                            <Badge variant="outline" className="text-[10px]">
-                              <Circle className="h-3 w-3 mr-1" />
+                            <span className="status-pill status-pending">
+                              <Circle className="h-3 w-3" />
                               Inactive
-                            </Badge>
+                            </span>
                           )}
-                          <p className="font-medium text-foreground">
+                          <p className="font-medium text-[color:var(--text-primary)]">
                             {row.label}
                           </p>
                         </div>
-                        <p className="text-xs text-foreground/60">
+                        <p className="text-xs text-[color:var(--text-muted)]">
                           created {row.createdAt.toISOString().slice(0, 10)} by{" "}
                           {actorById.get(row.createdBy) ?? "unknown"}
                           {row.lastEditedBy && row.lastEditedBy !== row.createdBy ? (
@@ -187,7 +181,7 @@ export default async function OverrideHistoryPage({
                     </div>
 
                     {diff.isNoOp ? (
-                      <p className="text-xs text-foreground/60 italic">
+                      <p className="text-xs text-[color:var(--text-muted)] italic">
                         No effective changes from canonical.
                       </p>
                     ) : (
@@ -202,17 +196,14 @@ export default async function OverrideHistoryPage({
                         <p className="label-overline">Audit trail</p>
                         <ul className="space-y-1 text-xs">
                           {trail.map((a) => (
-                            <li
-                              key={a.id}
-                              className="flex flex-wrap items-baseline gap-2"
-                            >
-                              <span className="font-mono text-foreground/80">
+                            <li key={a.id} className="flex flex-wrap items-baseline gap-2">
+                              <span className="font-mono text-[color:var(--text-secondary)]">
                                 {a.action}
                               </span>
-                              <span className="text-foreground/60">
+                              <span className="text-[color:var(--text-muted)]">
                                 {a.createdAt.toISOString().slice(0, 16).replace("T", " ")}
                               </span>
-                              <span className="text-foreground/60">
+                              <span className="text-[color:var(--text-muted)]">
                                 by{" "}
                                 {a.actorUserId
                                   ? actorById.get(a.actorUserId) ?? "unknown"
@@ -223,8 +214,7 @@ export default async function OverrideHistoryPage({
                         </ul>
                       </div>
                     )}
-                  </CardContent>
-                </Card>
+                </div>
               </li>
             );
           })}

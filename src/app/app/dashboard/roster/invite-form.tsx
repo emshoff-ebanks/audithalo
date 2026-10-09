@@ -18,9 +18,12 @@ type Props = {
   // When set, an "Assign to supervisor" dropdown is rendered. HR Admin only
   // (supervisor inviters auto-assign to themselves; no dropdown shown).
   supervisorOptions?: SupervisorOption[];
+  // Called after a successful submit — the modal wrapper uses this to close
+  // itself and refresh the page. Absent when the form is used standalone.
+  onSuccess?: () => void;
 };
 
-export function InviteForm({ availableRules, supervisorOptions }: Props) {
+export function InviteForm({ availableRules, supervisorOptions, onSuccess }: Props) {
   const [state, formAction, pending] = useActionState<
     InviteResult | undefined,
     FormData
@@ -35,8 +38,9 @@ export function InviteForm({ availableRules, supervisorOptions }: Props) {
     if (state?.ok) {
       formRef.current?.reset();
       setSelectedRule("");
+      onSuccess?.();
     }
-  }, [state]);
+  }, [state, onSuccess]);
 
   const today = new Date().toISOString().slice(0, 10);
   const activeSummary = availableRules.find((r) => r.id === selectedRule)?.summary;

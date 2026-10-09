@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Shield, AlertTriangle } from "lucide-react";
+import { Shield, AlertTriangle } from "lucide-react";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import {
@@ -10,16 +10,18 @@ import {
   isManagerRole,
 } from "@/lib/authz";
 import { db, schema } from "@/lib/db";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { loadAllRules } from "@/lib/rules";
 import { Button } from "@/components/ui/button";
 import {
-  InviteSupervisorForm,
-  InviteHrAdminForm,
-  InviteExecutiveForm,
   DeactivateMemberButton,
   ReassignSupervisorDropdown,
 } from "./_invite-forms";
+import {
+  InviteHrAdminAction,
+  InviteSupervisorAction,
+  InviteExecutiveAction,
+} from "./_invite-actions";
+import { InviteSuperviseeAction } from "../_shared/_invite-supervisee-action";
 import { PendingInviteActions } from "../roster/pending-invite-actions";
 
 export const metadata = { title: "Team — AuditHalo" };
@@ -59,27 +61,44 @@ export default async function TeamPage() {
   const isHr = isHrAdmin(viewerMembership.role);
   const canManage = canManageOrg(viewerMembership.role);
 
-  const [org, allMemberships, supervisorAssignments, allInvitations] =
-    await Promise.all([
-      db.query.organizations.findFirst({
-        where: eq(schema.organizations.id, viewerMembership.orgId),
-      }),
-      db.query.orgMemberships.findMany({
-        where: eq(schema.orgMemberships.orgId, viewerMembership.orgId),
-        orderBy: desc(schema.orgMemberships.createdAt),
-      }),
-      db.query.supervisorAssignments.findMany({
-        where: and(
-          eq(schema.supervisorAssignments.orgId, viewerMembership.orgId),
-          eq(schema.supervisorAssignments.isPrimary, true),
-          isNull(schema.supervisorAssignments.endedAt)
-        ),
-      }),
-      db.query.invitations.findMany({
-        where: eq(schema.invitations.orgId, viewerMembership.orgId),
-        orderBy: desc(schema.invitations.createdAt),
-      }),
-    ]);
+  const [
+    org,
+    allMemberships,
+    supervisorAssignments,
+    allInvitations,
+    orgCustomRows,
+  ] = await Promise.all([
+    db.query.organizations.findFirst({
+      where: eq(schema.organizations.id, viewerMembership.orgId),
+    }),
+    db.query.orgMemberships.findMany({
+      where: eq(schema.orgMemberships.orgId, viewerMembership.orgId),
+      orderBy: desc(schema.orgMemberships.createdAt),
+    }),
+    db.query.supervisorAssignments.findMany({
+      where: and(
+        eq(schema.supervisorAssignments.orgId, viewerMembership.orgId),
+        eq(schema.supervisorAssignments.isPrimary, true),
+        isNull(schema.supervisorAssignments.endedAt)
+      ),
+    }),
+    db.query.invitations.findMany({
+      where: eq(schema.invitations.orgId, viewerMembership.orgId),
+      orderBy: desc(schema.invitations.createdAt),
+    }),
+    canManage
+      ? db
+          .select()
+          .from(schema.orgRuleOverrides)
+          .where(
+            and(
+              eq(schema.orgRuleOverrides.orgId, viewerMembership.orgId),
+              eq(schema.orgRuleOverrides.isActive, true),
+              isNull(schema.orgRuleOverrides.canonicalRuleId)
+            )
+          )
+      : Promise.resolve([] as (typeof schema.orgRuleOverrides.$inferSelect)[]),
+  ]);
   if (!org) redirect("/dashboard");
 
   // Group pending (not-yet-accepted) invites by role so each section can
@@ -128,7 +147,8 @@ export default async function TeamPage() {
     if (a.superviseeId && a.supervisorId) supervisorByUserId.set(a.superviseeId, a.supervisorId);
   }
 
-  // Active (non-deactivated) supervisor options for the reassignment dropdown.
+  // Active (non-deactivated) supervisor options — reused by the reassignment
+  // dropdown AND by the supervisee invite modal's "assign to supervisor" field.
   const activeSupervisorOptions = supervisors
     .filter((e) => !e.membership.deactivatedAt)
     .map((e) => ({
@@ -136,41 +156,54 @@ export default async function TeamPage() {
       name: e.user!.name ?? e.user!.email,
     }));
 
+  // Catalog of state rules + org-created custom rules — matches the shape the
+  // roster page builds. Only HR Admin needs this (they're the only ones who
+  // see the supervisee invite modal from Team).
+  const availableRules = canManage
+    ? [
+        ...[...loadAllRules().values()].map((r) => {
+          const id = `${r.jurisdiction.toLowerCase()}-${r.license_code.toLowerCase()}-v${r.version}`;
+          return {
+            id,
+            label: `${r.jurisdiction} ${r.license_code} v${r.version}`,
+            summary: r.summary,
+          };
+        }),
+        ...orgCustomRows.map((r) => ({
+          id: `org:${viewerMembership.orgId}:custom:${r.jurisdiction.toLowerCase()}-${r.licenseCode.toLowerCase()}-v${r.version}`,
+          label: `${r.label} (org-created)`,
+          summary:
+            (r.customMetadata as { summary?: string } | null)?.summary ??
+            "Org-created custom rule",
+        })),
+      ]
+    : [];
+
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8 sm:py-12">
-      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
-        <Link href="/dashboard">
-          <ArrowLeft />
-          Back to dashboard
-        </Link>
-      </Button>
-
-      <Badge variant="outline" className="mb-3">
-        Team
-      </Badge>
-      <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
-        {org.name}
-      </h1>
-      <p className="mt-3 text-foreground/70 max-w-2xl">
-        {isHr
-          ? "Invite supervisors, executives, and other HR Admins. Reassign supervisees, deactivate departing members."
-          : "Your practice's team. Invitations and reassignments are HR Admin actions."}
-      </p>
-
-      {canManage && (
-        <div className="mt-5 flex flex-wrap gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/team/import">
-              Import team from CSV
-            </Link>
-          </Button>
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="shell-eyebrow">Team</p>
+          <h1 className="shell-page-title mt-1">{org.name}</h1>
+          <p className="shell-page-sub max-w-2xl">
+            {isHr
+              ? "Invite supervisors, executives, and other HR Admins. Reassign supervisees, deactivate departing members."
+              : "Your practice's team. Invitations and reassignments are HR Admin actions."}
+          </p>
         </div>
-      )}
+        {canManage && (
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard/team/import">Import team from CSV</Link>
+          </Button>
+        )}
+      </div>
 
       {/* HR Admins section */}
       <Section
         title="HR Admins"
+        count={hrAdmins.length}
         subtitle="Full org access — billing, team management, audit log export. 2FA required for sensitive actions."
+        action={canManage ? <InviteHrAdminAction /> : undefined}
       >
         <MembersTable
           rows={hrAdmins}
@@ -181,20 +214,14 @@ export default async function TeamPage() {
           invites={pendingByRole.get("hr_admin") ?? []}
           showActions={canManage}
         />
-        {canManage && (
-          <Card className="mt-4">
-            <CardContent className="p-6">
-              <p className="label-overline mb-3">Add HR Admin</p>
-              <InviteHrAdminForm />
-            </CardContent>
-          </Card>
-        )}
       </Section>
 
       {/* Supervisors section */}
       <Section
         title="Supervisors"
+        count={supervisors.length}
         subtitle="Credentialed clinical supervisors. Sign supervision sessions, assign state rules, run their own roster."
+        action={canManage ? <InviteSupervisorAction /> : undefined}
       >
         <MembersTable
           rows={supervisors}
@@ -205,20 +232,18 @@ export default async function TeamPage() {
           invites={pendingByRole.get("supervisor") ?? []}
           showActions={canManage}
         />
-        {canManage && (
-          <Card className="mt-4">
-            <CardContent className="p-6">
-              <p className="label-overline mb-3">Invite Supervisor</p>
-              <InviteSupervisorForm />
-            </CardContent>
-          </Card>
-        )}
       </Section>
 
       {/* Executives section */}
       <Section
         title="Executives"
+        count={executives.length}
         subtitle={`Read-only oversight role. ${activeExecCount} of ${MAX_EXECUTIVE_SEATS} seats used.`}
+        action={
+          canManage ? (
+            <InviteExecutiveAction seatsLeft={execSeatsLeft} />
+          ) : undefined
+        }
       >
         <MembersTable
           rows={executives}
@@ -229,119 +254,102 @@ export default async function TeamPage() {
           invites={pendingByRole.get("executive") ?? []}
           showActions={canManage}
         />
-        {canManage && (
-          <Card className="mt-4">
-            <CardContent className="p-6">
-              <p className="label-overline mb-3">Invite Executive</p>
-              <InviteExecutiveForm seatsLeft={execSeatsLeft} />
-            </CardContent>
-          </Card>
-        )}
       </Section>
 
       {/* Supervisees section (HR Admin gets supervisor-reassignment dropdown) */}
       <Section
         title="Supervisees"
-        subtitle="Pre-licensed associates. Inviting happens at /dashboard/roster."
+        count={supervisees.length}
+        subtitle="Pre-licensed associates. Invitations here also appear on the roster."
+        action={
+          canManage ? (
+            <InviteSuperviseeAction
+              availableRules={availableRules}
+              supervisorOptions={activeSupervisorOptions}
+            />
+          ) : undefined
+        }
       >
         <PendingInvitesList
           invites={pendingByRole.get("supervisee") ?? []}
           showActions={canManage}
         />
         {supervisees.length === 0 ? (
-          <p className="text-sm text-foreground/50 py-8 text-center bg-card border border-border rounded-sm">
+          <p className="panel text-sm text-[color:var(--text-muted)] py-8 text-center">
             No supervisees yet.
           </p>
         ) : (
-          <Card>
-            <CardContent className="p-0">
-              <table className="w-full text-sm">
-                <thead className="bg-accent text-left">
-                  <tr>
-                    <th className="px-5 py-3 font-semibold">Name</th>
-                    <th className="px-5 py-3 font-semibold">Email</th>
-                    <th className="px-5 py-3 font-semibold">Primary supervisor</th>
-                    {canManage && (
-                      <th className="px-5 py-3 font-semibold">Reassign</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {supervisees.map(({ membership: m, user: u }) => {
-                    if (!u) return null;
-                    const isSelf = u.id === session.user.id;
-                    const currentSupervisorId =
-                      supervisorByUserId.get(u.id) ?? null;
-                    const currentSupervisor = currentSupervisorId
-                      ? activeSupervisorOptions.find(
-                          (s) => s.id === currentSupervisorId
-                        )
-                      : null;
-                    return (
-                      <tr
-                        key={u.id}
-                        className={`border-t border-border ${m.deactivatedAt ? "opacity-50" : ""}`}
-                      >
-                        <td className="px-5 py-3 font-medium">
+          <div className="panel panel-flush overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b border-[color:var(--border)] bg-[color:var(--surface-muted)]">
+                  <th className="px-5 py-3 label-overline">Name</th>
+                  <th className="px-5 py-3 label-overline">Email</th>
+                  <th className="px-5 py-3 label-overline">Primary supervisor</th>
+                  {canManage && <th className="px-5 py-3 label-overline">Reassign</th>}
+                </tr>
+              </thead>
+              <tbody className="row-zebra">
+                {supervisees.map(({ membership: m, user: u }) => {
+                  if (!u) return null;
+                  const isSelf = u.id === session.user.id;
+                  const currentSupervisorId =
+                    supervisorByUserId.get(u.id) ?? null;
+                  const currentSupervisor = currentSupervisorId
+                    ? activeSupervisorOptions.find(
+                        (s) => s.id === currentSupervisorId
+                      )
+                    : null;
+                  return (
+                    <tr
+                      key={u.id}
+                      className={`border-b border-[color:var(--divider)] ${m.deactivatedAt ? "opacity-50" : ""}`}
+                    >
+                      <td className="px-5 py-3 font-medium text-[color:var(--text-primary)]">
+                        <span className="inline-flex items-center gap-2 flex-wrap">
                           {u.name ?? u.email}
-                          {isSelf && (
-                            <Badge variant="outline" className="ml-2">
-                              You
-                            </Badge>
-                          )}
-                          {m.deactivatedAt && (
-                            <Badge variant="outline" className="ml-2">
-                              Deactivated
-                            </Badge>
-                          )}
-                          {m.leaveStatus === "on_leave" && (
-                            <Badge variant="warning" className="ml-2">
-                              On leave
-                            </Badge>
-                          )}
-                          {m.leaveStatus === "prn" && (
-                            <Badge variant="outline" className="ml-2">
-                              PRN
-                            </Badge>
-                          )}
-                        </td>
-                        <td className="px-5 py-3 text-foreground/70 break-all">
-                          {u.email}
-                        </td>
-                        <td className="px-5 py-3">
-                          {currentSupervisor ? (
-                            <span className="text-foreground/80">
-                              {currentSupervisor.name}
-                            </span>
-                          ) : (
-                            <span className="text-[color:var(--color-warning)] inline-flex items-center gap-1.5">
-                              <AlertTriangle className="h-3.5 w-3.5" />
-                              Unassigned
-                            </span>
-                          )}
-                        </td>
-                        {canManage && (
-                          <td className="px-5 py-3">
-                            {activeSupervisorOptions.length > 0 ? (
-                              <ReassignSupervisorDropdown
-                                superviseeId={u.id}
-                                currentSupervisorId={currentSupervisorId}
-                                supervisors={activeSupervisorOptions}
-                              />
-                            ) : (
-                              <span className="text-xs text-foreground/50">
-                                Add a supervisor first
-                              </span>
-                            )}
-                          </td>
+                          {isSelf && <span className="status-pill status-pending">You</span>}
+                          {m.deactivatedAt && <span className="status-pill status-pending">Deactivated</span>}
+                          {m.leaveStatus === "on_leave" && <span className="status-pill status-warn">On leave</span>}
+                          {m.leaveStatus === "prn" && <span className="status-pill status-pending">PRN</span>}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-[color:var(--text-secondary)] break-all">
+                        {u.email}
+                      </td>
+                      <td className="px-5 py-3">
+                        {currentSupervisor ? (
+                          <span className="text-[color:var(--text-secondary)]">
+                            {currentSupervisor.name}
+                          </span>
+                        ) : (
+                          <span className="status-pill status-warn">
+                            <AlertTriangle className="h-3 w-3" />
+                            Unassigned
+                          </span>
                         )}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
+                      </td>
+                      {canManage && (
+                        <td className="px-5 py-3">
+                          {activeSupervisorOptions.length > 0 ? (
+                            <ReassignSupervisorDropdown
+                              superviseeId={u.id}
+                              currentSupervisorId={currentSupervisorId}
+                              supervisors={activeSupervisorOptions}
+                            />
+                          ) : (
+                            <span className="text-xs text-[color:var(--text-muted)]">
+                              Add a supervisor first
+                            </span>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </Section>
     </div>
@@ -361,60 +369,65 @@ function PendingInvitesList({
 }) {
   if (invites.length === 0) return null;
   return (
-    <Card className="mt-3 bg-[color:var(--color-evidence-bg)]/30">
-      <CardContent className="p-4">
-        <p className="label-overline mb-2">
-          Pending invitations ({invites.length})
-        </p>
-        <ul className="space-y-2">
-          {invites.map((inv) => (
-            <li
-              key={inv.id}
-              className="flex flex-wrap items-center justify-between gap-3 text-sm"
-            >
-              <div className="min-w-0 flex-1">
-                <span className="font-medium">
-                  {inv.name ?? <span className="text-foreground/50 italic">unnamed</span>}
-                </span>
-                <span className="ml-2 text-foreground/60 break-all">
-                  {inv.email}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="warning">Pending</Badge>
-                {showActions && (
-                  <PendingInviteActions
-                    invitationId={inv.id}
-                    email={inv.email}
-                  />
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
+    <div className="panel panel-tight mt-3">
+      <p className="label-overline mb-2">
+        Pending invitations ({invites.length})
+      </p>
+      <ul className="space-y-2">
+        {invites.map((inv) => (
+          <li
+            key={inv.id}
+            className="flex flex-wrap items-center justify-between gap-3 text-sm"
+          >
+            <div className="min-w-0 flex-1">
+              <span className="font-medium text-[color:var(--text-primary)]">
+                {inv.name ?? <span className="text-[color:var(--text-muted)] italic">unnamed</span>}
+              </span>
+              <span className="ml-2 text-[color:var(--text-secondary)] break-all">
+                {inv.email}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="status-pill status-pending">Pending</span>
+              {showActions && (
+                <PendingInviteActions invitationId={inv.id} email={inv.email} />
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
 function Section({
   title,
+  count,
   subtitle,
+  action,
   children,
 }: {
   title: string;
+  count?: number;
   subtitle?: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section className="mt-10">
-      <div className="mb-4">
-        <h2 className="font-display text-xl font-semibold text-foreground">
-          {title}
-        </h2>
-        {subtitle && (
-          <p className="mt-1 text-sm text-foreground/60">{subtitle}</p>
-        )}
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="font-display text-xl font-semibold text-foreground">
+            {title}
+            {typeof count === "number" && (
+              <span className="ml-2 text-foreground/50 font-normal">({count})</span>
+            )}
+          </h2>
+          {subtitle && (
+            <p className="mt-1 text-sm text-foreground/60">{subtitle}</p>
+          )}
+        </div>
+        {action && <div className="shrink-0">{action}</div>}
       </div>
       {children}
     </section>
@@ -435,95 +448,68 @@ function MembersTable({
 }) {
   if (rows.length === 0) {
     return (
-      <p className="text-sm text-foreground/50 py-6 text-center bg-card border border-border rounded-sm">
+      <p className="panel text-sm text-[color:var(--text-muted)] py-6 text-center">
         None yet.
       </p>
     );
   }
 
   return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[640px]">
-            <thead className="bg-accent text-left">
-              <tr>
-                <th className="px-5 py-3 font-semibold">Name</th>
-                <th className="px-5 py-3 font-semibold">Email</th>
-                <th className="px-5 py-3 font-semibold">Role</th>
+    <div className="panel panel-flush overflow-x-auto">
+      <table className="w-full text-sm min-w-[640px]">
+        <thead>
+          <tr className="text-left border-b border-[color:var(--border)] bg-[color:var(--surface-muted)]">
+            <th className="px-5 py-3 label-overline">Name</th>
+            <th className="px-5 py-3 label-overline">Email</th>
+            <th className="px-5 py-3 label-overline">Role</th>
+            {showDeactivate && <th className="px-5 py-3 label-overline">Actions</th>}
+          </tr>
+        </thead>
+        <tbody className="row-zebra">
+          {rows.map(({ membership: m, user: u }) => {
+            if (!u) return null;
+            const isSelf = u.id === viewerId;
+            const isDeactivated = m.deactivatedAt !== null;
+            return (
+              <tr
+                key={u.id}
+                className={`border-b border-[color:var(--divider)] ${isDeactivated ? "opacity-50" : ""}`}
+              >
+                <td className="px-5 py-3 font-medium text-[color:var(--text-primary)]">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {m.role === "hr_admin" && (
+                      <Shield className="h-4 w-4 text-[color:var(--seal-gold)]" strokeWidth={2} />
+                    )}
+                    <span>{u.name ?? u.email}</span>
+                    {isSelf && <span className="status-pill status-pending">You</span>}
+                    {isDeactivated && <span className="status-pill status-pending">Deactivated</span>}
+                    {m.leaveStatus === "on_leave" && <span className="status-pill status-warn">On leave</span>}
+                    {m.leaveStatus === "prn" && <span className="status-pill status-pending">PRN</span>}
+                  </div>
+                </td>
+                <td className="px-5 py-3 text-[color:var(--text-secondary)] break-all">
+                  {u.email}
+                </td>
+                <td className="px-5 py-3">
+                  <span className="status-pill status-pending">{ROLE_LABEL[m.role] ?? m.role}</span>
+                </td>
                 {showDeactivate && (
-                  <th className="px-5 py-3 font-semibold">Actions</th>
+                  <td className="px-5 py-3">
+                    {isSelf || isDeactivated ? (
+                      <span className="text-xs text-[color:var(--text-muted)]">—</span>
+                    ) : (
+                      <DeactivateMemberButton
+                        membershipId={m.id}
+                        userLabel={u.name ?? u.email}
+                      />
+                    )}
+                  </td>
                 )}
               </tr>
-            </thead>
-            <tbody>
-              {rows.map(({ membership: m, user: u }) => {
-                if (!u) return null;
-                const isSelf = u.id === viewerId;
-                const isDeactivated = m.deactivatedAt !== null;
-                return (
-                  <tr
-                    key={u.id}
-                    className={`border-t border-border ${isDeactivated ? "opacity-50" : ""}`}
-                  >
-                    <td className="px-5 py-3 font-medium">
-                      <div className="flex items-center gap-2">
-                        {m.role === "hr_admin" && (
-                          <Shield
-                            className="h-4 w-4 text-[color:var(--color-gold)]"
-                            strokeWidth={1.75}
-                          />
-                        )}
-                        <span>{u.name ?? u.email}</span>
-                        {isSelf && (
-                          <Badge variant="outline" className="ml-2">
-                            You
-                          </Badge>
-                        )}
-                        {isDeactivated && (
-                          <Badge variant="outline" className="ml-2">
-                            Deactivated
-                          </Badge>
-                        )}
-                        {m.leaveStatus === "on_leave" && (
-                          <Badge variant="warning" className="ml-2">
-                            On leave
-                          </Badge>
-                        )}
-                        {m.leaveStatus === "prn" && (
-                          <Badge variant="outline" className="ml-2">
-                            PRN
-                          </Badge>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 text-foreground/70 break-all">
-                      {u.email}
-                    </td>
-                    <td className="px-5 py-3">
-                      <Badge variant="outline">
-                        {ROLE_LABEL[m.role] ?? m.role}
-                      </Badge>
-                    </td>
-                    {showDeactivate && (
-                      <td className="px-5 py-3">
-                        {isSelf || isDeactivated ? (
-                          <span className="text-xs text-foreground/40">—</span>
-                        ) : (
-                          <DeactivateMemberButton
-                            membershipId={m.id}
-                            userLabel={u.name ?? u.email}
-                          />
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }

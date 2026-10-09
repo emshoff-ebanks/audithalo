@@ -13,11 +13,15 @@ export function LogSessionForm({
   allowSupervision = true,
   supervisorCredentials,
   contractFiled = true,
+  onSuccess,
 }: {
   superviseeId: string;
   allowSupervision?: boolean;
   supervisorCredentials?: string[] | null;
   contractFiled?: boolean;
+  /** Called after a successful log + form reset. Lets a hosting modal close
+   *  and refresh. Absent → behavior is unchanged (inline form reset only). */
+  onSuccess?: () => void;
 }) {
   const [state, formAction, pending] = useActionState<
     ActionResult | undefined,
@@ -43,8 +47,11 @@ export function LogSessionForm({
   }
 
   useEffect(() => {
-    if (state?.ok) formRef.current?.reset();
-  }, [state]);
+    if (state?.ok) {
+      formRef.current?.reset();
+      onSuccess?.();
+    }
+  }, [state, onSuccess]);
 
   useEffect(() => {
     const d = new Date();

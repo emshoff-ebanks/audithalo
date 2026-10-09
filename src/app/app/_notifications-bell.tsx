@@ -366,7 +366,7 @@ export function NotificationsBell({ initialNotifications }: Props) {
               You&apos;re all caught up.
             </div>
           ) : (
-            <ul className="max-h-80 overflow-y-auto divide-y divide-border">
+            <ul className="row-zebra max-h-80 overflow-y-auto divide-y divide-border">
               {items.map((n) => (
                 <li key={n.id}>
                   <button

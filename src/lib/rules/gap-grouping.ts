@@ -68,6 +68,28 @@ function pickRepresentative(group: Gap[]): Gap {
 }
 
 /**
+ * Pick the single most-important gap to surface on a compact roster card
+ * (the supervisor overview "Supervisees at risk" panel, which shows one
+ * line per supervisee). Collapses same-code repeats via groupGaps, then
+ * ranks blocker > warning > info and returns the first. The sort is
+ * stable, so within a severity the earliest-emitted gap wins — matching
+ * the evaluator's own ordering. Returns null when there are no gaps.
+ */
+export function pickRosterRepresentativeGap(gaps: Gap[]): Gap | null {
+  if (gaps.length === 0) return null;
+  const severityRank: Record<Gap["severity"], number> = {
+    blocker: 0,
+    warning: 1,
+    info: 2,
+  };
+  const representatives = groupGaps(gaps).map((g) => g.representative);
+  representatives.sort(
+    (a, b) => severityRank[a.severity] - severityRank[b.severity]
+  );
+  return representatives[0];
+}
+
+/**
  * Extract a "size" for the gap when it has from/to dates in detail.
  * Returns -1 when no date pair is present, so any dated gap beats an
  * undated one in the representative pick.

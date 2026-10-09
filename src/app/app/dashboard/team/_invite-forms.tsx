@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,11 +16,19 @@ import {
 // field and slightly different button copy + audit messaging — keeping
 // them separate reads cleaner.
 
-export function InviteSupervisorForm() {
+export function InviteSupervisorForm({ onSuccess }: { onSuccess?: () => void }) {
   const [state, formAction, pending] = useActionState<
     TeamActionResult | undefined,
     FormData
   >(inviteSupervisorAction, undefined);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (state?.ok) {
+      formRef.current?.reset();
+      onSuccess?.();
+    }
+  }, [state, onSuccess]);
 
   if (state?.ok) {
     return (
@@ -31,7 +39,7 @@ export function InviteSupervisorForm() {
   }
 
   return (
-    <form action={formAction} className="space-y-3">
+    <form ref={formRef} action={formAction} className="space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <Label htmlFor="sup-name">Name (optional)</Label>
@@ -72,11 +80,19 @@ export function InviteSupervisorForm() {
   );
 }
 
-export function InviteHrAdminForm() {
+export function InviteHrAdminForm({ onSuccess }: { onSuccess?: () => void }) {
   const [state, formAction, pending] = useActionState<
     TeamActionResult | undefined,
     FormData
   >(inviteHrAdminAction, undefined);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (state?.ok) {
+      formRef.current?.reset();
+      onSuccess?.();
+    }
+  }, [state, onSuccess]);
 
   if (state?.ok) {
     return (
@@ -87,7 +103,7 @@ export function InviteHrAdminForm() {
   }
 
   return (
-    <form action={formAction} className="space-y-3">
+    <form ref={formRef} action={formAction} className="space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <Label htmlFor="hra-name">Name (optional)</Label>
@@ -144,11 +160,25 @@ export function InviteHrAdminForm() {
   );
 }
 
-export function InviteExecutiveForm({ seatsLeft }: { seatsLeft: number }) {
+export function InviteExecutiveForm({
+  seatsLeft,
+  onSuccess,
+}: {
+  seatsLeft: number;
+  onSuccess?: () => void;
+}) {
   const [state, formAction, pending] = useActionState<
     TeamActionResult | undefined,
     FormData
   >(inviteExecutiveAction, undefined);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (state?.ok) {
+      formRef.current?.reset();
+      onSuccess?.();
+    }
+  }, [state, onSuccess]);
 
   if (state?.ok) {
     return (
@@ -168,7 +198,7 @@ export function InviteExecutiveForm({ seatsLeft }: { seatsLeft: number }) {
   }
 
   return (
-    <form action={formAction} className="space-y-3">
+    <form ref={formRef} action={formAction} className="space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <Label htmlFor="exec-name">Name (optional)</Label>

@@ -87,14 +87,14 @@ export async function requireSession() {
 
 /**
  * Bounce supervisees away from manager-only routes back to their own
- * detail page. Executives go to the executive dashboard (they don't have
+ * detail page. Executives go to the Admin Overview (they don't have
  * a personal roster view). HR Admins and Supervisors pass through.
  */
 export async function requireManager() {
   const session = await requireSession();
   const role = session.user.role;
   if (isExecutive(role)) {
-    redirect("/dashboard/executive");
+    redirect("/dashboard");
   }
   if (!isManagerRole(role)) {
     redirect(`/dashboard/roster/${session.user.id}`);

@@ -35,6 +35,10 @@ type Props = {
   /** Session IDs flagged from a "Review flagged sessions" gap link — these
    *  rows get a sticky amber border + are scrolled into view on mount. */
   flaggedSessionIds?: string[];
+  /** Suppress the Zone-1 "Needs your attention" pending block. Set true when
+   *  rendered inside a modal on a page that already shows the same items in
+   *  a page-level urgent panel — avoids duplicating the list on one screen. */
+  hideAttentionZone?: boolean;
 };
 
 type Filter = "all" | "pending" | "signed";
@@ -46,6 +50,7 @@ export function SessionLog({
   superviseeId,
   superviseeState,
   flaggedSessionIds = [],
+  hideAttentionZone = false,
 }: Props) {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
@@ -173,7 +178,7 @@ export function SessionLog({
   return (
     <div>
       {/* Zone 1: Needs your attention */}
-      {pendingItems.length > 0 && (
+      {!hideAttentionZone && pendingItems.length > 0 && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle

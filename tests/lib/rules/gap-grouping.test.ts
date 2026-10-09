@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { groupGaps } from "@/lib/rules/gap-grouping";
+import { groupGaps, pickRosterRepresentativeGap } from "@/lib/rules/gap-grouping";
 import type { Gap } from "@/lib/rules/types";
 
 function cadenceGap(opts: { from: string; to: string; days: number }): Gap {
@@ -91,5 +91,70 @@ describe("groupGaps", () => {
     };
     const g2: Gap = { ...g1, message: "second" };
     expect(groupGaps([g1, g2])[0].representative).toBe(g1);
+  });
+});
+
+describe("pickRosterRepresentativeGap", () => {
+  const warn: Gap = {
+    code: "individual_supervision_cadence",
+    severity: "warning",
+    message: "Missed 2 individual sessions this month.",
+    action: {
+      kind: "recurring_behavior",
+      actionLabel: "Log individual supervision",
+      targetSessionType: "individual",
+    },
+  };
+  const blocker: Gap = {
+    code: "supervisor_qualification",
+    severity: "blocker",
+    message: "Supervisor qualification expired for 2 recent sessions.",
+    action: {
+      kind: "attestation",
+      checkId: "supervisor_qualification",
+      signalField: "permitExpiresAt",
+      actionLabel: "Attest",
+      valueShape: "date",
+    },
+  };
+  const info: Gap = {
+    code: "practice_hours",
+    severity: "info",
+    message: "Keep logging practice hours.",
+    action: {
+      kind: "data_accumulation",
+      progressTowards: { logged: 100, required: 3000, unit: "hrs" },
+    },
+  };
+
+  it("returns null for no gaps", () => {
+    expect(pickRosterRepresentativeGap([])).toBeNull();
+  });
+
+  it("prefers a blocker over a warning regardless of order", () => {
+    expect(pickRosterRepresentativeGap([warn, blocker])).toBe(blocker);
+    expect(pickRosterRepresentativeGap([blocker, warn])).toBe(blocker);
+  });
+
+  it("prefers a warning over info", () => {
+    expect(pickRosterRepresentativeGap([info, warn])).toBe(warn);
+  });
+
+  it("keeps the earliest gap within the same severity (stable)", () => {
+    const warnB: Gap = { ...warn, code: "weekly_cadence", message: "later warning" };
+    expect(pickRosterRepresentativeGap([warn, warnB])).toBe(warn);
+  });
+
+  it("collapses same-code repeats before ranking (largest-window representative)", () => {
+    const small: Gap = {
+      ...warn,
+      detail: { from: "2026-01-01", to: "2026-01-20" },
+    };
+    const large: Gap = {
+      ...warn,
+      message: "big gap",
+      detail: { from: "2026-02-01", to: "2026-04-01" },
+    };
+    expect(pickRosterRepresentativeGap([small, large])).toBe(large);
   });
 });

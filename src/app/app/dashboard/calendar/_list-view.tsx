@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { ChevronRight } from "lucide-react";
 import { EventStatusBadge } from "./_status-badge";
 import type { CalendarEvent } from "./_types";
+import { visualStatusFor } from "./_types";
 
 type Props = {
   events: CalendarEvent[];
@@ -26,6 +27,13 @@ export function CalendarListView({
   viewerIsHrAdmin,
   onEventClick,
 }: Props) {
+  function rowBorderColor(e: CalendarEvent): string {
+    const s = visualStatusFor(e, now);
+    if (s === "signed") return "var(--seal-gold)";
+    if (s === "no_show") return "var(--risk-600)";
+    if (s === "completed_pending_sign") return "var(--warn-500)";
+    return e.sessionType === "group" ? "var(--sage-500)" : "var(--halo-yellow)";
+  }
   const groups = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
     for (const e of events) {
@@ -64,7 +72,8 @@ export function CalendarListView({
               return (
                 <li
                   key={e.id}
-                  className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-accent/40 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-accent/40 transition-colors border-l-2"
+                  style={{ borderLeftColor: rowBorderColor(e) }}
                   onClick={() => onEventClick(e.id)}
                 >
                   <div className="font-mono text-sm w-16 shrink-0 text-foreground/80">

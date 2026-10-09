@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { AuthShell } from "@/components/app/auth-shell";
 import { RegisterForm } from "./register-form";
 
 export const metadata = {
@@ -14,23 +15,26 @@ export default async function RegisterPage() {
   if (session?.user) redirect("/dashboard");
 
   return (
-    <div className="mx-auto max-w-md px-6 py-20">
-      <p className="label-overline mb-4">Start free</p>
-      <h1 className="font-display text-3xl font-semibold text-foreground">
+    <AuthShell
+      footer={
+        <>
+          Already have an account?{" "}
+          <Link href="/login" className="font-medium text-[color:var(--text-primary)] underline">
+            Sign in
+          </Link>
+        </>
+      }
+    >
+      <p className="shell-eyebrow">Start free</p>
+      <h1 className="font-display text-2xl font-semibold text-[color:var(--text-primary)] mt-1">
         Create your supervisor account
       </h1>
-      <p className="mt-3 text-foreground/70">
+      <p className="text-sm text-[color:var(--text-secondary)] mt-2">
         Supervisees join later, by invite. They&apos;re always free.
       </p>
-
-      <RegisterForm />
-
-      <p className="mt-6 text-sm text-foreground/60">
-        Already have an account?{" "}
-        <Link href="/login" className="text-secondary font-medium hover:underline">
-          Sign in
-        </Link>
-      </p>
-    </div>
+      <div className="mt-6">
+        <RegisterForm />
+      </div>
+    </AuthShell>
   );
 }

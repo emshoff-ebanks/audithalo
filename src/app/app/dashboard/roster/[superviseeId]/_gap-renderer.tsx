@@ -273,7 +273,7 @@ function RecurringBehaviorGap({
   return (
     <GapShell gap={gap}>
       <Button asChild size="sm" variant="outline">
-        <Link href={`/dashboard/roster/${superviseeId}#log-session`}>
+        <Link href={`/dashboard/roster/${superviseeId}#new-session`}>
           {action.actionLabel}
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>

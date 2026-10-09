@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -14,27 +14,17 @@ type Props = {
 };
 
 /**
- * Standalone "schedule a new session" modal opened from the calendar
- * (either via the top-right "+ New session" button or an empty-slot
- * click). Differs from the supervisee-detail-page version by adding a
- * supervisee picker at the top — once a supervisee is selected, the
- * embedded ScheduleSessionForm renders for that supervisee.
- *
- * The form intentionally doesn't pre-fill the start time yet: passing
- * a derived datetime through useSyncExternalStore would need an action-
- * level refactor. The slot context is shown above the picker so the
- * supervisor knows they're filling out the form for that slot, and
- * the form's own default is "tomorrow at the next 30-min slot" which
- * stays inside the same calendar week most of the time.
- *
- * connectedProviders is NOT passed at this layer — the supervisee-
- * detail-page is the canonical entry point for booking with calendar
- * provider context. This modal exists for "I clicked an empty slot
- * but don't have a specific supervisee in mind yet" and routes the
- * user to the detail page on submit.
+ * Picker shim that sits in front of the shared NewSessionModal. The user
+ * picks who the session is with, we rewrite the calendar URL to
+ * ?newSessionSuperviseeId=...&start=... (preserving the current view/date
+ * filters), and the calendar page's server-side launcher takes over —
+ * resolves the modal's per-supervisee context and renders the SAME modal
+ * the supervisee detail page uses, right here on the calendar page. No
+ * navigation to the detail page.
  */
 export function ScheduleModal({ startUtcIso, supervisees, onClose }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [picked, setPicked] = useState<string>("");
 
   const slotLabel = useMemo(() => {
@@ -48,13 +38,17 @@ export function ScheduleModal({ startUtcIso, supervisees, onClose }: Props) {
     }).format(d);
   }, [startUtcIso]);
 
-  function goToDetail() {
+  function openNewSessionModal() {
     if (!picked) return;
-    // Carry the clicked-slot timestamp into the supervisee detail page so
-    // the schedule form lands pre-filled instead of forcing the user to
-    // re-enter the time they just clicked.
-    const qs = new URLSearchParams({ start: startUtcIso });
-    router.push(`/dashboard/roster/${picked}?${qs.toString()}#sessions`);
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    params.set("newSessionSuperviseeId", picked);
+    params.set("start", startUtcIso);
+    // router.replace instead of push so pressing Back doesn't trap the
+    // user in an invisible-modal history state.
+    router.replace(`/dashboard/calendar?${params.toString()}`, {
+      scroll: false,
+    });
+    onClose();
   }
 
   return (
@@ -112,10 +106,9 @@ export function ScheduleModal({ startUtcIso, supervisees, onClose }: Props) {
                 </select>
               </div>
               <p className="text-xs text-foreground/60">
-                We&apos;ll open the supervisee&apos;s page with the full
-                schedule form pre-filled at this start time. You can adjust
-                modality, duration, provider, and notes there before
-                submitting.
+                We&apos;ll open the new-session form for them with this start
+                time pre-filled. You can adjust modality, duration, provider,
+                and notes before submitting.
               </p>
               <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <Button variant="ghost" onClick={onClose} type="button">
@@ -123,7 +116,7 @@ export function ScheduleModal({ startUtcIso, supervisees, onClose }: Props) {
                 </Button>
                 <Button
                   type="button"
-                  onClick={goToDetail}
+                  onClick={openNewSessionModal}
                   disabled={!picked}
                 >
                   Continue
@@ -136,4 +129,3 @@ export function ScheduleModal({ startUtcIso, supervisees, onClose }: Props) {
     </div>
   );
 }
-

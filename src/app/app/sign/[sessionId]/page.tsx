@@ -6,9 +6,6 @@ import { auth } from "@/auth";
 import { getCurrentMembership } from "@/lib/authz";
 import { signPermissions } from "@/lib/sign-permissions";
 import { db, schema } from "@/lib/db";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { SignForm } from "./sign-form";
 import { SessionNoteForm } from "./session-note-form";
 import { SessionNoteDisplay } from "./session-note-display";
@@ -24,6 +21,19 @@ import type { ClinicalFormData } from "@/lib/clinical-form/types";
 export const metadata = {
   title: "Sign session — AuditHalo",
 };
+
+/** Consistent back link across all four sign-page branches. */
+function BackToSupervisee({ superviseeId }: { superviseeId: string }) {
+  return (
+    <Link
+      href={`/dashboard/roster/${superviseeId}`}
+      className="inline-flex items-center gap-1.5 text-sm text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] mb-4"
+    >
+      <ArrowLeft className="h-4 w-4" />
+      Back to supervisee
+    </Link>
+  );
+}
 
 export default async function SignSessionPage({
   params,
@@ -146,46 +156,37 @@ export default async function SignSessionPage({
           .replace("T", " ") + " UTC";
     return (
       <div className="mx-auto max-w-2xl px-6 py-8 sm:py-12">
-        <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
-          <Link href={`/dashboard/roster/${sessionEvent.superviseeId}`}>
-            <ArrowLeft />
-            Back to supervisee
-          </Link>
-        </Button>
-        <Card className="mt-2">
-          <CardContent className="p-6">
-            <ScheduledSessionCard
-              sessionId={sessionEvent.id}
-              scheduledForUtcIso={sessionEvent.date.toISOString()}
-              scheduledForLocal={scheduledForLocal}
-              durationMinutes={durationMinutes}
-              timeZone={sessionEvent.timeZone}
-              meetingProvider={
-                sessionEvent.meetingProvider as
-                  | "teams"
-                  | "google_meet"
-                  | "in_person"
-                  | null
-              }
-              meetingJoinUrl={sessionEvent.meetingJoinUrl}
-              location={null}
-              canCancel={canCancelScheduled}
-              canReschedule={
-                canCancelScheduled && !sessionEvent.recurringSeriesId
-              }
-              canMarkNoShow={canMarkNoShow}
-              isRecurring={!!sessionEvent.recurringSeriesId}
-            />
-            {showRecordPreMeeting && (
-              <div className="mt-6 pt-6 border-t border-border">
-                <p className="label-overline mb-3">In-person recording</p>
-                <RecordSessionPanel
-                  sessionEventId={sessionEvent.id}
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <BackToSupervisee superviseeId={sessionEvent.superviseeId} />
+        <div className="panel">
+          <ScheduledSessionCard
+            sessionId={sessionEvent.id}
+            scheduledForUtcIso={sessionEvent.date.toISOString()}
+            scheduledForLocal={scheduledForLocal}
+            durationMinutes={durationMinutes}
+            timeZone={sessionEvent.timeZone}
+            meetingProvider={
+              sessionEvent.meetingProvider as
+                | "teams"
+                | "google_meet"
+                | "in_person"
+                | null
+            }
+            meetingJoinUrl={sessionEvent.meetingJoinUrl}
+            location={null}
+            canCancel={canCancelScheduled}
+            canReschedule={
+              canCancelScheduled && !sessionEvent.recurringSeriesId
+            }
+            canMarkNoShow={canMarkNoShow}
+            isRecurring={!!sessionEvent.recurringSeriesId}
+          />
+          {showRecordPreMeeting && (
+            <div className="mt-6 pt-6 border-t border-[color:var(--border)]">
+              <p className="label-overline mb-3">In-person recording</p>
+              <RecordSessionPanel sessionEventId={sessionEvent.id} />
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -195,24 +196,17 @@ export default async function SignSessionPage({
   if (sessionEvent.scheduledStatus === "canceled") {
     return (
       <div className="mx-auto max-w-2xl px-6 py-8 sm:py-12">
-        <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
-          <Link href={`/dashboard/roster/${sessionEvent.superviseeId}`}>
-            <ArrowLeft />
-            Back to supervisee
-          </Link>
-        </Button>
-        <Card>
-          <CardContent className="p-6 space-y-3">
-            <Badge variant="outline">Canceled</Badge>
-            <h1 className="font-display text-2xl font-semibold text-foreground">
-              This session was canceled
-            </h1>
-            <p className="text-sm text-foreground/70">
-              No signature or transcript is required. The row stays in the audit
-              log.
-            </p>
-          </CardContent>
-        </Card>
+        <BackToSupervisee superviseeId={sessionEvent.superviseeId} />
+        <div className="panel flex flex-col gap-3">
+          <span className="status-pill status-pending self-start">Canceled</span>
+          <h1 className="font-display text-2xl font-semibold text-[color:var(--text-primary)]">
+            This session was canceled
+          </h1>
+          <p className="text-sm text-[color:var(--text-secondary)]">
+            No signature or transcript is required. The row stays in the audit
+            log.
+          </p>
+        </div>
       </div>
     );
   }
@@ -224,43 +218,27 @@ export default async function SignSessionPage({
   if (sessionEvent.scheduledStatus === "no_show") {
     return (
       <div className="mx-auto max-w-2xl px-6 py-8 sm:py-12">
-        <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
-          <Link href={`/dashboard/roster/${sessionEvent.superviseeId}`}>
-            <ArrowLeft />
-            Back to supervisee
-          </Link>
-        </Button>
-        <Card>
-          <CardContent className="p-6 space-y-3">
-            <Badge variant="outline">No-show</Badge>
-            <h1 className="font-display text-2xl font-semibold text-foreground">
-              This session was a no-show
-            </h1>
-            <p className="text-sm text-foreground/70">
-              No signature is required. The row stays in the audit log.
-            </p>
-          </CardContent>
-        </Card>
+        <BackToSupervisee superviseeId={sessionEvent.superviseeId} />
+        <div className="panel flex flex-col gap-3">
+          <span className="status-pill status-pending self-start">No-show</span>
+          <h1 className="font-display text-2xl font-semibold text-[color:var(--text-primary)]">
+            This session was a no-show
+          </h1>
+          <p className="text-sm text-[color:var(--text-secondary)]">
+            No signature is required. The row stays in the audit log.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-8 sm:py-12">
-      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
-        <Link href={`/dashboard/roster/${sessionEvent.superviseeId}`}>
-          <ArrowLeft />
-          Back to supervisee
-        </Link>
-      </Button>
+      <BackToSupervisee superviseeId={sessionEvent.superviseeId} />
 
-      <Badge variant="outline" className="mb-3">
-        E-signature
-      </Badge>
-      <h1 className="font-display text-3xl font-semibold text-foreground">
-        Sign this session
-      </h1>
-      <p className="mt-2 text-foreground/70">
+      <p className="shell-eyebrow">E-signature</p>
+      <h1 className="shell-page-title mt-1">Sign this session</h1>
+      <p className="mt-2 text-[color:var(--text-secondary)]">
         Your signature is recorded with your name, role, IP address, timestamp, and
         explicit intent confirmation. The supervisor signs first, then the supervisee
         countersigns. Once both have signed, the session is sealed and contributes
@@ -268,35 +246,34 @@ export default async function SignSessionPage({
         {supervisee.name}.
       </p>
 
-      <Card className="mt-8">
-        <CardContent className="p-6 space-y-5">
+      <div className="panel mt-8 flex flex-col gap-5">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="label-overline mb-1">Date</p>
-              <p className="font-mono text-foreground">
+              <p className="font-mono text-[color:var(--text-primary)]">
                 {sessionEvent.date.toISOString().slice(0, 10)}
               </p>
             </div>
             <div>
               <p className="label-overline mb-1">Duration</p>
-              <p className="font-mono text-foreground">
+              <p className="font-mono text-[color:var(--text-primary)]">
                 {sessionEvent.durationHours.toFixed(1)} hr
               </p>
             </div>
             <div>
               <p className="label-overline mb-1">Kind</p>
-              <p className="text-foreground capitalize">{sessionEvent.kind}</p>
+              <p className="text-[color:var(--text-primary)] capitalize">{sessionEvent.kind}</p>
             </div>
             <div>
               <p className="label-overline mb-1">Type</p>
-              <p className="text-foreground capitalize">
+              <p className="text-[color:var(--text-primary)] capitalize">
                 {sessionEvent.sessionType ?? "—"}
               </p>
             </div>
             {sessionEvent.supervisorCredentials && (
               <div className="col-span-2">
                 <p className="label-overline mb-1">Supervisor credentials</p>
-                <p className="font-mono text-xs text-foreground/80">
+                <p className="font-mono text-xs text-[color:var(--text-secondary)]">
                   {sessionEvent.supervisorCredentials.join(", ")}
                 </p>
               </div>
@@ -305,7 +282,7 @@ export default async function SignSessionPage({
 
           {/* Supervision type — visible for all orgs, editable pre-seal by supervisor */}
           {sessionEvent.kind === "supervision" && (
-            <div className="pt-4 border-t border-border">
+            <div className="pt-4 border-t border-[color:var(--border)]">
               <p className="label-overline mb-2">Type of supervision</p>
               {perms.canGenerateAiNote && !fullySigned ? (
                 <SupervisionTypeSelect
@@ -313,7 +290,7 @@ export default async function SignSessionPage({
                   currentValue={sessionEvent.supervisionType}
                 />
               ) : (
-                <p className="text-sm text-foreground capitalize">
+                <p className="text-sm text-[color:var(--text-primary)] capitalize">
                   {sessionEvent.supervisionType
                     ? sessionEvent.supervisionType === "app"
                       ? "Advance Practice Provider"
@@ -325,17 +302,17 @@ export default async function SignSessionPage({
           )}
 
           {signatures.length > 0 && (
-            <div className="pt-4 border-t border-border">
+            <div className="pt-4 border-t border-[color:var(--border)]">
               <p className="label-overline mb-3">Signatures</p>
               <ul className="space-y-2 text-sm">
                 {signatures.map((s, i) => (
                   <li
                     key={i}
-                    className="flex items-start justify-between gap-3 px-3 py-2 rounded-sm bg-[color:var(--color-evidence-bg)]"
+                    className="flex items-start justify-between gap-3 px-3 py-2 rounded-[8px] bg-[color:var(--surface-muted)]"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground">{s.signerName}</p>
-                      <p className="text-xs text-foreground/60 capitalize break-words">
+                      <p className="font-medium text-[color:var(--text-primary)]">{s.signerName}</p>
+                      <p className="text-xs text-[color:var(--text-muted)] capitalize break-words">
                         {s.signerRole} ·{" "}
                         <span className="font-mono">
                           {new Date(s.signedAt).toISOString().slice(0, 16).replace("T", " ")}Z
@@ -343,7 +320,7 @@ export default async function SignSessionPage({
                         · IP {s.ipAddress}
                       </p>
                     </div>
-                    <FileSignature className="h-4 w-4 mt-0.5 text-[color:var(--color-gold)] shrink-0" />
+                    <FileSignature className="h-4 w-4 mt-0.5 text-[color:var(--seal-gold)] shrink-0" />
                   </li>
                 ))}
               </ul>
@@ -356,7 +333,7 @@ export default async function SignSessionPage({
             !sessionEvent.transcript &&
             (!sessionEvent.meetingProvider ||
               sessionEvent.meetingProvider === "in_person") && (
-              <div className="pt-4 border-t border-border">
+              <div className="pt-4 border-t border-[color:var(--border)]">
                 <p className="label-overline mb-3">Record session</p>
                 <RecordSessionPanel
                   sessionEventId={sessionEvent.id}
@@ -366,7 +343,7 @@ export default async function SignSessionPage({
 
           {/* Saved transcript — view, edit, generate note from it */}
           {sessionEvent.kind === "supervision" && sessionEvent.transcript && (
-            <div className="pt-4 border-t border-border">
+            <div className="pt-4 border-t border-[color:var(--border)]">
               <TranscriptDisplay
                 sessionEventId={sessionEvent.id}
                 transcript={sessionEvent.transcript}
@@ -380,7 +357,7 @@ export default async function SignSessionPage({
               supervision-only, before sealing. HR Admin is intentionally
               excluded; clinical content authoring is supervisor-only. */}
           {sessionEvent.kind === "supervision" && perms.canGenerateAiNote && (
-            <div className="pt-4 border-t border-border">
+            <div className="pt-4 border-t border-[color:var(--border)]">
               {sessionEvent.aiNote ? (
                 <SessionNoteDisplay
                   note={sessionEvent.aiNote as never}
@@ -437,32 +414,32 @@ export default async function SignSessionPage({
             )}
 
           {fullySigned ? (
-            <div className="pt-4 border-t border-border">
-              <Badge variant="success">Fully signed</Badge>
-              <p className="mt-3 text-sm text-foreground/70">
+            <div className="pt-4 border-t border-[color:var(--border)]">
+              <span className="status-pill status-sealed">Fully signed</span>
+              <p className="mt-3 text-sm text-[color:var(--text-secondary)]">
                 This session is sealed. Its evidence package is available on the
                 supervisee&apos;s detail page.
               </p>
             </div>
           ) : alreadySignedByMe ? (
-            <div className="pt-4 border-t border-border">
-              <Badge variant="outline">Your signature is recorded</Badge>
-              <p className="mt-3 text-sm text-foreground/70">
+            <div className="pt-4 border-t border-[color:var(--border)]">
+              <span className="status-pill status-ok">Your signature is recorded</span>
+              <p className="mt-3 text-sm text-[color:var(--text-secondary)]">
                 Waiting for the other required signer.
               </p>
             </div>
           ) : signerRole === null ? (
-            <div className="pt-4 border-t border-border">
-              <Badge variant="outline">View only</Badge>
-              <p className="mt-3 text-sm text-foreground/70">
+            <div className="pt-4 border-t border-[color:var(--border)]">
+              <span className="status-pill status-pending">View only</span>
+              <p className="mt-3 text-sm text-[color:var(--text-secondary)]">
                 You aren&apos;t a required signer for this session.
               </p>
             </div>
           ) : signerRole === "supervisee" &&
             !signatures.some((s) => s.signerRole === "supervisor") ? (
-            <div className="pt-4 border-t border-border">
-              <Badge variant="outline">Awaiting supervisor</Badge>
-              <p className="mt-3 text-sm text-foreground/70">
+            <div className="pt-4 border-t border-[color:var(--border)]">
+              <span className="status-pill status-warn">Awaiting supervisor</span>
+              <p className="mt-3 text-sm text-[color:var(--text-secondary)]">
                 Your supervisor must sign this session first. Once they sign,
                 you&apos;ll be able to countersign here.
               </p>
@@ -487,8 +464,7 @@ export default async function SignSessionPage({
                 canCancel={perms.canCancel}
               />
             )}
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

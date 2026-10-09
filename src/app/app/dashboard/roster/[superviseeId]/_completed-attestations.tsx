@@ -9,7 +9,6 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -56,37 +55,33 @@ export function CompletedAttestations({
 
   if (items.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="label-overline mb-3">Completed compliance tasks</p>
-          <p className="text-sm text-foreground/60">
-            Nothing recorded yet. Attestations a supervisor confirms on this
-            page (e.g. &quot;supervision contract filed&quot;) will appear here
-            so they can be reviewed or corrected later.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="panel">
+        <p className="label-overline mb-3">Completed compliance tasks</p>
+        <p className="text-sm text-[color:var(--text-secondary)]">
+          Nothing recorded yet. Attestations a supervisor confirms on this
+          page (e.g. &quot;supervision contract filed&quot;) will appear here
+          so they can be reviewed or corrected later.
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <p className="label-overline mb-4">
-          Completed compliance tasks ({items.length})
-        </p>
-        <ul className="space-y-3">
-          {items.map((item) => (
-            <CompletedRow
-              key={item.checkId}
-              item={item}
-              assignmentId={assignmentId}
-              viewerCanSupervise={viewerCanSupervise}
-            />
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
+    <div className="panel">
+      <p className="label-overline mb-4">
+        Completed compliance tasks ({items.length})
+      </p>
+      <ul className="space-y-3">
+        {items.map((item) => (
+          <CompletedRow
+            key={item.checkId}
+            item={item}
+            assignmentId={assignmentId}
+            viewerCanSupervise={viewerCanSupervise}
+          />
+        ))}
+      </ul>
+    </div>
   );
 }
 

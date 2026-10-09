@@ -75,7 +75,7 @@ export async function IntegrationsSection({ userId }: { userId: string }) {
           parties&apos; calendars, and send reminders. We never store
           plaintext tokens.
         </p>
-        <div className="divide-y divide-border rounded-md border border-border">
+        <div className="row-zebra divide-y divide-border rounded-md border border-border">
           {(["microsoft", "google"] as const).map((provider) => {
             const meta = PROVIDER_META[provider];
             const row = byProvider.get(provider);

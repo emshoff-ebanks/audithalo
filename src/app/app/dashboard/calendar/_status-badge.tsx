@@ -39,30 +39,54 @@ export function EventStatusBadge({
   );
 }
 
+/** Pill label beside the time, e.g. "Ava V." or "Group (4)". */
+export function pillLabel(event: CalendarEvent): string {
+  if (event.sessionType === "group") {
+    const n = event.groupAttendees;
+    return typeof n === "number" && n > 0 ? `Group (${n})` : "Group";
+  }
+  const parts = (event.superviseeName ?? "").trim().split(/\s+/).filter(Boolean);
+  const first = parts[0] ?? "";
+  const lastInitial =
+    parts.length > 1 ? (parts[parts.length - 1]![0] ?? "").toUpperCase() : "";
+  const out = lastInitial ? `${first} ${lastInitial}.` : first;
+  return out || "Session";
+}
+
 /**
- * CSS class string for the colored block in week / month views. Maps
- * to the palette in docs/strategy/08 (Halo Blue scheduled, amber for
- * imminent, gold-accented green for signed, etc.).
+ * CSS class string for the colored block in week / month views. The
+ * color encodes session TYPE (yellow = individual, sage = group); the
+ * status overlays a left-border + ring/opacity treatment on top so a
+ * glance tells you both.
  */
-export function blockClasses(
-  event: CalendarEvent,
-  now: number
-): string {
+export function blockClasses(event: CalendarEvent, now: number): string {
+  const type = event.sessionType === "group" ? "group" : "individual";
   const s = visualStatusFor(event, now);
-  switch (s) {
+  return [typeBase(type), statusOverlay(s)].filter(Boolean).join(" ");
+}
+
+function typeBase(type: "individual" | "group"): string {
+  if (type === "group") {
+    return "bg-[color:var(--sage-500)]/15 border-l-[color:var(--sage-500)] text-[color:var(--text-primary)]";
+  }
+  return "bg-[color:var(--halo-yellow)]/15 border-l-[color:var(--halo-yellow)] text-[color:var(--text-primary)]";
+}
+
+function statusOverlay(status: ReturnType<typeof visualStatusFor>): string {
+  switch (status) {
     case "scheduled":
-      return "bg-secondary/15 border-l-secondary text-foreground";
+      return "";
     case "starts_soon":
-      return "bg-[color:var(--color-warning)]/15 border-l-[color:var(--color-warning)] text-foreground";
+      return "ring-1 ring-[color:var(--warn-500)]/40";
     case "happening_now":
-      return "bg-[color:var(--color-warning)]/20 border-l-[color:var(--color-warning)] text-foreground ring-1 ring-[color:var(--color-warning)] animate-pulse";
+      return "ring-1 ring-[color:var(--warn-500)] motion-safe:animate-pulse";
     case "completed_pending_sign":
-      return "bg-[color:var(--color-warning)]/10 border-l-[color:var(--color-warning)]/80 text-foreground/90";
+      return "!border-l-[color:var(--warn-500)] opacity-80";
     case "signed":
-      return "bg-[color:var(--color-success)]/15 border-l-[color:var(--color-success)] text-foreground";
+      return "!border-l-[color:var(--seal-gold)]";
     case "canceled":
-      return "bg-muted border-l-muted-foreground/30 text-foreground/50 line-through";
+      return "opacity-55 grayscale [&_time]:line-through";
     case "no_show":
-      return "bg-[color:var(--color-risk)]/10 border-l-[color:var(--color-risk)] border-l-[3px] text-foreground/80 border-dashed";
+      return "border-dashed !border-l-[color:var(--risk-600)] opacity-70";
   }
 }
