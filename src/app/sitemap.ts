@@ -34,6 +34,7 @@ const STATIC_PATHS = [
   // the cold-email campaign can also surface organically.
   "/founding",
   "/contact",
+  "/verify",
   "/legal/terms",
   "/legal/privacy",
 ];
