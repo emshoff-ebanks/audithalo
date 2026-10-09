@@ -10,7 +10,10 @@ beforeAll(() => {
   process.env.STRIPE_PRICE_PRACTICE_SEAT = "price_test_practice_seat";
 });
 
-describe("tierFromPriceId", () => {
+// Cold `await import("@/lib/stripe")` can take &gt;5s on a cold Vitest worker
+// (large transitive graph through @sentry + drizzle). Raise the per-test
+// timeout so CI doesn't flake on the first case.
+describe("tierFromPriceId", { timeout: 15_000 }, () => {
   it("returns 'solo' for the solo monthly price", async () => {
     const { tierFromPriceId } = await import("@/lib/stripe");
     expect(tierFromPriceId("price_test_solo_monthly")).toBe("solo");

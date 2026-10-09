@@ -48,7 +48,11 @@ export function AppShell({
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
-  // Close the mobile drawer on route change.
+  // Close the mobile drawer on route change. State-in-effect is the canonical
+  // Next.js App Router pattern for this — there's no route-change event hook,
+  // and lifting setMobileOpen to every Link would thread the setter through
+  // the entire nav tree.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
